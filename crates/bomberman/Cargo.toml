@@ -1,0 +1,16 @@
+[package]
+name = "bomberman"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+macroquad.workspace = true
+gilrs.workspace = true
+quad-snd = "=0.2.8"
+bomberman-assets.workspace = true
+bomberman-core.workspace = true

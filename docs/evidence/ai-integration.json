@@ -1,0 +1,45 @@
+{
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "evidence_type": "static assembly and integration regression tests",
+  "fixes": [
+    {
+      "behavior": "AI close-opponent attack guard uses original spawn/warp anchor, independent of bomb placement",
+      "fields": [
+        "entity+0x14",
+        "entity+0x18"
+      ],
+      "sources": [
+        "0x4214bc initialization",
+        "0x41ec84 warp destination update",
+        "0x40abed Manhattan distance guard"
+      ],
+      "evidence_ids": [
+        "ev_7b798dfa9380f863896c1a7e340d5d929e33abac5c2f64ac58fd7d462d7f08a4",
+        "ev_a96b838143007d8ae37f8df00d1dbea86037e5e3cc5ac3727f14cba0f06172e4"
+      ]
+    },
+    {
+      "behavior": "Player slots become active in native order on first update; later uninitialized slots are not AI targets",
+      "sources": [
+        "0x4214bc",
+        "0x41f29b"
+      ]
+    },
+    {
+      "behavior": "Inactive slots remain at initial pixel(0,0), mapping to tile(-1,-3) for regeneration exclusion",
+      "sources": [
+        "0x421198 control reset",
+        "0x4214bc saved-spawn initialization",
+        "0x41f29b control-zero early return",
+        "0x42665c/0x4266a3 asymmetric coordinate conversion"
+      ]
+    }
+  ],
+  "regressions": [
+    "original_ai_uses_spawn_anchor_and_skips_uninitialized_opponents",
+    "warp_destination_replaces_original_ai_anchor"
+  ],
+  "limitations": [
+    "Integration fixes are based on original assembly and bounded tests; full original Windows match execution is not compared."
+  ]
+}

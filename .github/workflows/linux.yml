@@ -1,0 +1,17 @@
+name: Linux
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: sudo apt-get update && sudo apt-get install -y pkg-config libudev-dev libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev
+      - run: tools/check.sh
+      - run: tools/package_linux.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atomic-bomberman-linux-x86_64
+          path: dist/*.tar.gz*

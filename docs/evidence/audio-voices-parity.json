@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "fixtures": 49,
+  "operations": 3081,
+  "admitted": 396,
+  "rejected_at_limit": 1580,
+  "missing_clip": 89,
+  "resource8": 5,
+  "actual_inclusive_voice_capacity": 6,
+  "native_entries": [
+    "0x427859",
+    "0x427374"
+  ],
+  "compared": [
+    "inclusive concurrent effect cap",
+    "missing clip does not consume a voice",
+    "completion code1 decrements once while positive",
+    "other completion codes leave count unchanged",
+    "burst of seven clips and same-update finish/re-admission"
+  ],
+  "hooks": [
+    "shipped resource8 accessor",
+    "clip-cache lookup availability as explicit fixture input",
+    "underlying audio handle allocation/setup/start; no sound hardware is accessed"
+  ],
+  "limitations": [
+    "Native cache memory eviction and original Miles PCM output are outside this admission oracle.",
+    "Real completion timing comes from the Rust mixer rather than estimated wall-clock leases; mixer lifecycle has separate deterministic buffer tests.",
+    "Hardware latency, speakers and full-original-application audio timing remain physical validation boundaries."
+  ]
+}

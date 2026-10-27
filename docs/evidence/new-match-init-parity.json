@@ -1,0 +1,263 @@
+{
+  "passed": true,
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "ai_init_cases": 42,
+  "native_configured_rematch_prefix_cases": 14,
+  "native_death_selection_cases": 84,
+  "native_disease_forced_release_cases": 192,
+  "rust_disease_forced_release_comparisons": 192,
+  "disease_release_coverage": {
+    "native_block": "0x420870..0x420cec",
+    "rust_path": "Simulation::step(0,held-bomb-input),special4 locked",
+    "disease_masks": "all8 combinations of Constipation,Diarrhea,Hyperactive",
+    "capacities": [
+      1,
+      2
+    ],
+    "directions": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "pickup_frames": [
+      0,
+      1,
+      2
+    ],
+    "compared": [
+      "carried pointer,animation state",
+      "bomb state,position,owner,range,fuse elapsed",
+      "selected sound sequence and use counts",
+      "final shared RNG"
+    ],
+    "hooks": [
+      "frozen original resource values",
+      "sound filename resolution",
+      "physical sound output"
+    ]
+  },
+  "resource900": 1,
+  "native_ranges": [
+    "0x40a140..0x40a1c5",
+    "0x410f81..0x411182",
+    "0x422c7a..0x422d3a",
+    "0x41de63..0x41df4b",
+    "0x41dcb2..0x41de03",
+    "0x420870..0x420cec"
+  ],
+  "findings": [
+    "40a140 uses original451940 memset(EAX=AIptr,EDX=0,EBX=680), then TEN shared rand draws; no srand/time call.",
+    "Resource900=1 leaves every phase0 while still consuming ten draws, including inactive/human slots.",
+    "Process bomb init422c7a calls422c13 before later new-match shuffle421793 and AI40a140.",
+    "Configured local rematch prefix clears scores and temporary type4 control bytes only; every other player byte remains unchanged.",
+    "421793 consumes400 draws with shuffling enabled, zero when disabled;40a140 follows immediately.",
+    "41de63/41dcb2 reset death kind,dead flag and shared frame+30 only;death remainder+32 and carried pointer+94 survive. A held bomb becomes inactive.",
+    "Diarrhea/Hyperactive force held-bomb release before the ordinary capacity/Constipation guarded automatic drop, even with special4 locked and bomb held."
+  ],
+  "rematches": [
+    {
+      "seed": 0,
+      "shuffle": false,
+      "draws": 11,
+      "calls": [
+        "0x422c7a",
+        "0x422c13",
+        "0x4211e7",
+        "0x421793",
+        "0x40a140"
+      ],
+      "final_seed": 2951033815,
+      "retained_player_bytes": 1474
+    },
+    {
+      "seed": 0,
+      "shuffle": true,
+      "draws": 411,
+      "calls": [
+        "0x422c7a",
+        "0x422c13",
+        "0x4211e7",
+        "0x421793",
+        "0x40a140"
+      ],
+      "final_seed": 1555744583,
+      "retained_player_bytes": 1474
+    },
+    {
+      "seed": 1,
+      "shuffle": false,
+      "draws": 11,
+      "calls": [
+        "0x422c7a",
+        "0x422c13",
+        "0x4211e7",
+        "0x421793",
+        "0x40a140"
+      ],
+      "final_seed": 180171308,
+      "retained_player_bytes": 1474
+    },
+    {
+      "seed": 1,
+      "shuffle": true,
+      "draws": 411,
+      "calls": [
+        "0x422c7a",
+        "0x422c13",
+        "0x4211e7",
+        "0x421793",
+        "0x40a140"
+      ],
+      "final_seed": 2100638428,
+      "retained_player_bytes": 1474
+    },
+    {
+      "seed": 2,
+      "shuffle": false,
+      "draws": 11,
+      "calls": [
+        "0x422c7a",
+        "0x422c13",
+        "0x4211e7",
+        "0x421793",
+        "0x40a140"
+      ],
+      "final_seed": 1704276097,
+      "retained_player_bytes": 1474
+    },
+    {
+      "seed": 2,
+      "shuffle": true,
+      "draws": 411,
+      "calls": [
+        "0x422c7a",
+        "0x422c13",
+        "0x4211e7",
+        "0x421793",
+        "0x40a140"
+      ],
+      "final_seed": 2645532273,
+      "retained_player_bytes": 1474
+    },
+    {
+      "seed": 1997,
+      "shuffle": false,
+      "draws": 11,
+      "calls": [
+        "0x422c7a",
+        "0x422c13",
+        "0x4211e7",
+        "0x421793",
+        "0x40a140"
+      ],
+      "final_seed": 1456484584,
+      "retained_player_bytes": 1474
+    },
+    {
+      "seed": 1997,
+      "shuffle": true,
+      "draws": 411,
+      "calls": [
+        "0x422c7a",
+        "0x422c13",
+        "0x4211e7",
+        "0x421793",
+        "0x40a140"
+      ],
+      "final_seed": 3082027160,
+      "retained_player_bytes": 1474
+    },
+    {
+      "seed": 305419896,
+      "shuffle": false,
+      "draws": 11,
+      "calls": [
+        "0x422c7a",
+        "0x422c13",
+        "0x4211e7",
+        "0x421793",
+        "0x40a140"
+      ],
+      "final_seed": 2010708399,
+      "retained_player_bytes": 1474
+    },
+    {
+      "seed": 305419896,
+      "shuffle": true,
+      "draws": 411,
+      "calls": [
+        "0x422c7a",
+        "0x422c13",
+        "0x4211e7",
+        "0x421793",
+        "0x40a140"
+      ],
+      "final_seed": 176505631,
+      "retained_player_bytes": 1474
+    },
+    {
+      "seed": 2147483648,
+      "shuffle": false,
+      "draws": 11,
+      "calls": [
+        "0x422c7a",
+        "0x422c13",
+        "0x4211e7",
+        "0x421793",
+        "0x40a140"
+      ],
+      "final_seed": 803550167,
+      "retained_player_bytes": 1474
+    },
+    {
+      "seed": 2147483648,
+      "shuffle": true,
+      "draws": 411,
+      "calls": [
+        "0x422c7a",
+        "0x422c13",
+        "0x4211e7",
+        "0x421793",
+        "0x40a140"
+      ],
+      "final_seed": 3703228231,
+      "retained_player_bytes": 1474
+    },
+    {
+      "seed": 4294967295,
+      "shuffle": false,
+      "draws": 11,
+      "calls": [
+        "0x422c7a",
+        "0x422c13",
+        "0x4211e7",
+        "0x421793",
+        "0x40a140"
+      ],
+      "final_seed": 1426929026,
+      "retained_player_bytes": 1474
+    },
+    {
+      "seed": 4294967295,
+      "shuffle": true,
+      "draws": 411,
+      "calls": [
+        "0x422c7a",
+        "0x422c13",
+        "0x4211e7",
+        "0x421793",
+        "0x40a140"
+      ],
+      "final_seed": 1010850738,
+      "retained_player_bytes": 1474
+    }
+  ],
+  "limitations": [
+    "The prefix stops before4148e5 background selection and before the local4214bc round initializer, which has its own native proof.",
+    "Gold roulette, changed control configuration, networking, menus and process startup time-based srand are outside these fixtures.",
+    "Seed is supplied before422c7a for deterministic local comparisons; the original GUI reseeds later during process startup.",
+    "Death footprint fixtures use an empty sound mapping; original logical sound helpers execute their unavailable-sound paths, without physical audio.",
+    "Disease-release native fixtures begin after input/presentation with effective held input; Rust runs the complete zero-elapsed frame. Gold updates and later native bomb passes are outside that block."
+  ]
+}

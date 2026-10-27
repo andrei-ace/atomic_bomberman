@@ -1,0 +1,35 @@
+{
+  "executable_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "passed": true,
+  "traces": {
+    "starts": {
+      "frames": 32,
+      "fingerprint": "0x8f0a9463d717f5c9"
+    },
+    "terrain": {
+      "frames": 320,
+      "fingerprint": "0x7cedcd256931da12"
+    },
+    "powers": {
+      "frames": 64,
+      "fingerprint": "0x39e7894463d415ec"
+    },
+    "clearing": {
+      "frames": 256,
+      "fingerprint": "0x600e435a7de54fa2"
+    },
+    "inventory": {
+      "frames": 280,
+      "fingerprint": "0x89a447ab7838cdaa"
+    }
+  },
+  "steps": 952,
+  "hooks": [
+    "Same rendering/resource/clock hooks as compare_hazards.py; no target application entry point executes.",
+    "403a9c: caller-selected Gold reward; original player bytes are initialized by4214bc."
+  ],
+  "limitations": [
+    "Routine equivalence does not establish whole-match seed parity while other RNG-consuming subsystems remain unverified.",
+    "All fifteen initial inventory bytes, including unused disease/random counters, are covered by items-parity.json."
+  ]
+}

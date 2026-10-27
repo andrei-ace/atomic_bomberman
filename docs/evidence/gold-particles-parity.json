@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "fixtures": 64,
+  "particle_updates": 4096,
+  "emission_attempts": 20772,
+  "particle_slots_compared_per_update": 100,
+  "native_entries": {
+    "emit": "0x420d4e",
+    "advance": "0x420e39"
+  },
+  "compared": [
+    "every particle active flag, position and frame",
+    "queued original frame and position",
+    "duration gate including indefinite and expired effects",
+    "full pool behavior",
+    "shared RNG state after every update",
+    "duplicate and wrapping global frame identifiers"
+  ],
+  "hooks": [
+    "Watcom TLS seed pointer",
+    "resource1010 value",
+    "elapsed displayed seconds accessor",
+    "sequence lookup/count13",
+    "frame lookup and graphics queue"
+  ],
+  "limitations": [
+    "No Windows application entry point executes.",
+    "Eligibility and HUD-time integration have separate native evidence; this probe executes the isolated unmodified emit and advance routines."
+  ]
+}

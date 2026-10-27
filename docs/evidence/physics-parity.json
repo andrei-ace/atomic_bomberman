@@ -1,0 +1,119 @@
+{
+  "schema": 2,
+  "executable_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "original_entries": [
+    "0x41ec84",
+    "0x422ede",
+    "0x42331c",
+    "0x426d06"
+  ],
+  "movement_fixtures": 2008,
+  "placement_fixtures": 2000,
+  "bomb_update_fixtures": 2016,
+  "flame_fixtures": 2000,
+  "failures": 0,
+  "compared": {
+    "movement": [
+      "position_x",
+      "position_y",
+      "facing",
+      "signed_hundredths_remainder",
+      "pixel_counter",
+      "kick_state",
+      "kicked_bomb_state"
+    ],
+    "placement": [
+      "rng_state",
+      "next_dud_deadline",
+      "dud_state",
+      "signed_elapsed_fuse",
+      "fuse_limit"
+    ],
+    "bomb_update": [
+      "position_x",
+      "position_y",
+      "movement",
+      "facing_when_moving",
+      "animation_frame",
+      "signed_animation_remainder",
+      "stop_request",
+      "signed_elapsed_fuse",
+      "flight_pixel_counter",
+      "flight_center_counter",
+      "signed_motion_remainder",
+      "dud_state",
+      "truncated_flight_projection",
+      "rng_state",
+      "queued_detonation_count",
+      "item_existence",
+      "item_visibility",
+      "terrain",
+      "flame_shape_palette_owner",
+      "chain_owner_transfer",
+      "head_stun_updates"
+    ],
+    "flame_update": [
+      "terrain",
+      "active_state",
+      "render_frame",
+      "animation_frame",
+      "signed_animation_remainder",
+      "age",
+      "terminal_danger_grid"
+    ]
+  },
+  "coverage": {
+    "kick_updates": 4,
+    "bomb_states": {
+      "0": 504,
+      "1": 502,
+      "2": 510,
+      "3": 500
+    },
+    "flight_landings": 6,
+    "flight_wraps": 11,
+    "dud_activations": 15,
+    "explosions": 22,
+    "queued_detonations": 50,
+    "head_stuns": 1,
+    "brick_expiry_frames": 71,
+    "floor_flame_expiry_frames": 637,
+    "elapsed_ms": [
+      0,
+      1,
+      7,
+      25,
+      33,
+      50,
+      67,
+      99,
+      150
+    ],
+    "flame_shapes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "brick_animation_arenas": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
+  },
+  "scope": "Original movement, collision, kick, allocation, dud scheduling, rolling/flight/carry, collision/landing, head-hit retries, explosion propagation, normal brick reveal, and flame lifetime helpers execute in Unicorn. Original executable SHA-256 is checked. Resource lookup, OS time, and RNG seed accessor are supplied external data dependencies. Graphics/animation asset queries and audio calls are intercepted; both sides have audio disabled. Movement fixtures exclude warp/trampoline player transit, visible-item collection, and flame deaths; those systems have separate tests. Bomb-update fixtures include arrows, conveyors, trampolines, walls, bricks, blocking bombs, normal visible/hidden items, existing flames, and off-board wrapping. Rare item relocation is verified by its separate reveal comparison, not this fixture set."
+}

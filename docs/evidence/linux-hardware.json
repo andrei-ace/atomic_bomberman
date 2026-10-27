@@ -1,0 +1,73 @@
+{
+  "timestamp_unix": 1793108990,
+  "status": "passed_with_controller_skipped",
+  "physical_prerequisites": {
+    "input_event_nodes": [],
+    "audio_pcm_nodes": [],
+    "controller_backend": {
+      "backend": "Gilrs0.11.2 using production Controllers",
+      "devices": [],
+      "initialized": true,
+      "status": ""
+    },
+    "x11": {
+      "display": ":1",
+      "available": true,
+      "window_manager": "GNOME Shell",
+      "report": "linux-desktop.json"
+    },
+    "wayland_display": null,
+    "audio_route_report": "audio-route.json",
+    "desktop_audio_sockets": [
+      "/run/user/1000/pulse/native",
+      "/run/user/1000/pipewire-0"
+    ]
+  },
+  "checks": {
+    "controller": {
+      "status": "skipped",
+      "passed": false,
+      "reason": "No physical gamepad connected; user explicitly authorized skipping."
+    },
+    "speakers": {
+      "status": "passed",
+      "passed": true,
+      "production_ALSA_PipeWire_output": true,
+      "user_confirmation": "audio seems to work, I heard the game sounds",
+      "report": "linux-speaker-probe.json"
+    },
+    "desktop_fullscreen": {
+      "status": "passed",
+      "passed": true,
+      "report": "linux-desktop.json",
+      "windowed_size": [
+        960,
+        720
+      ],
+      "fullscreen_size": [
+        5120,
+        1440
+      ],
+      "returned_to_windowed": true,
+      "software_rendering": true
+    }
+  },
+  "interactive": null,
+  "instructions": "On the Linux desktop with a connected gamepad and speakers: python3 tools/hardware-check.py --interactive --report /tmp/atomic-hardware.json",
+  "limitations": [
+    "A virtual X11 display, ALSA file/null sink, or synthetic event is not accepted as physical verification.",
+    "The ordinary sandbox blocks desktop audio sockets; the actual game and audio-only probe succeeded outside that sandbox through the existing physical HDMI route."
+  ],
+  "diagnostic_software_validation": {
+    "passed": true,
+    "checks": [
+      "Gilrs inventory initializes without claiming exercise",
+      "stray speaker confirmation cannot pass an unplayed channel",
+      "stray display confirmation cannot pass windowed mode",
+      "missing gamepad events cannot pass the controller gate",
+      "partial report saved and clean exit"
+    ],
+    "physical_hardware_verified": false,
+    "harness": "crates/bomberman/tests/verify_hardware_diagnostic.py"
+  }
+}

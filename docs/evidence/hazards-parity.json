@@ -1,0 +1,40 @@
+{
+  "executable_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "passed": true,
+  "traces": {
+    "fire": {
+      "frames": 8320,
+      "fingerprint": "0x9882c4f7b641f531"
+    },
+    "regeneration": {
+      "frames": 512,
+      "fingerprint": "0x6888c63a28f73029"
+    },
+    "ice": {
+      "frames": 480,
+      "fingerprint": "0x9dd8a6408f6f460d"
+    },
+    "transit": {
+      "frames": 7680,
+      "fingerprint": "0x6f81135e9ca04871"
+    },
+    "extras": {
+      "frames": 512,
+      "fingerprint": "0xe825b3efebfd7899"
+    }
+  },
+  "fixtures": 212,
+  "steps": 17504,
+  "hooks": [
+    "451900: Watcom thread-local seed address, original RNG instructions execute",
+    "412135: supplied VALUELST resources, 43acf8: caller-specified wall clock",
+    "410578: remaining seconds; 421969: two competing participants; 40c06a: battle mode",
+    "425d22/4151ad/415189/40fde8: terrain presentation and graphics locks",
+    "4278f2: exact sound; 45189e/4518d0/41d957/41daa7/41da5c: sprite/string lookup;415920: graphics queue;42c0c8: logging",
+    "421d3f/42708d: no player/flame at closing wall in these fixtures"
+  ],
+  "limitations": [
+    "Original mutation routines are compared outside full game scheduling.",
+    "Entity stomp effects and visual queue selection are covered by Rust regression tests; physical rendering/audio timing is unmeasured."
+  ]
+}

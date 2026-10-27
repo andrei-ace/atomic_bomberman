@@ -1,0 +1,68 @@
+{
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "findings": [
+    {
+      "question": "What does item birth frame do?",
+      "status": "implemented and matched",
+      "evidence": [
+        "ev_3f6946d2e2de801b42577b0472a1d1892463faf72ed974ca000ec191fccad947",
+        "ev_d3155750a0aef16d4ad3bc5ac683c5d26d1bbf8f8a297edecc37fbc16578e7b2",
+        "ev_660199752c0170a67a7305c534768719788b9c3ae531a0fa53c5ecf6de31d9f6"
+      ],
+      "observation": "Hidden-to-visible transition425107 stamps the current unsigned global update ID into+0x40. Visible spawn425383 leaves stale birth and pending-delete fields intact. Neither field provides local pickup immunity."
+    },
+    {
+      "question": "What does visible item age do?",
+      "status": "implemented and matched",
+      "evidence": [
+        "ev_5d27f066c8921d6ae993482362e7979428d294d8d5425982728e7e9072f6029c"
+      ],
+      "observation": "424f89 increments signed16 +0x44 once per visible update, independent of elapsed milliseconds; exactly4 may emit a network notice. +0x30 frame increments after the old frame is queued; both words wrap. This is not an item expiration timer."
+    },
+    {
+      "question": "What does pending deletion do?",
+      "status": "implemented and matched",
+      "evidence": [
+        "ev_306813812c7b7c872712186b7cdadc7e9966f15a96d93620d03ce61ae5eb12dc",
+        "ev_5d27f066c8921d6ae993482362e7979428d294d8d5425982728e7e9072f6029c"
+      ],
+      "observation": "4254b5 sets entity+8. The next item pass clears both active state and that flag if active; inactive stale flags are retained. Immediate4254f3 removal only clears active state."
+    },
+    {
+      "question": "Do relocation operations preserve metadata?",
+      "status": "implemented and matched",
+      "evidence": [
+        "ev_f8d78d3ccf582716255842c96e2d8b6c6e0423130deecf90976e76abf8185cb5",
+        "ev_32d568273b3fd6094ac312cd971756103b879befa485282daa4866fde63231b9"
+      ],
+      "observation": "425107 swaps or copies all152 bytes;425704 copies all152 bytes and then zeroes the entire source entity. Birth/age/deletion fields now follow this behavior rather than a partial powerup-only copy."
+    },
+    {
+      "question": "Are unused initial inventory fields retained?",
+      "status": "implemented and matched",
+      "observation": "Powers retains all15 unsigned bytes, including IDs2,11,12,14 and noncanonical counts in boolean gameplay fields. Initial born-with and Gold rules preserve byte wrapping. ID14 remainszero in shipped resources, valid schemes and Gold outcomes."
+    },
+    {
+      "question": "How does head stun remove acquired powers?",
+      "status": "implemented and matched",
+      "evidence": [
+        "ev_ecead936ef108fd4154997b0d250ababe358d514a00f3fa9a941f70f40873ea3",
+        "ev_82a6914b3ca22a57e84fdc711477107a7182fc7d246499feb791a77d42c03328"
+      ],
+      "observation": "421f7e sets16 update stun and resets action/frame. It makes1+rand%3 toss attempts, each trying at most200 random inventory IDs. It accepts a byte only when greater than its scheme-adjusted resource50+ID baseline, scatters before decrementing exactlyone byte, and includes unused inventory IDs. Gold gift increments are not baseline."
+    }
+  ],
+  "validation": {
+    "metadata_fixtures": 554,
+    "metadata_comparison": "items-parity.json",
+    "headhit_fixtures": 256,
+    "headhit_comparison": "headhit-parity.json",
+    "setup_fixture_rerun": 952,
+    "reveal_fixture_rerun": 1024,
+    "loader": "PE sections with raw offset zero remain zero-initialized; all listed original-x86 comparisons rerun after the loader correction."
+  },
+  "limitations": [
+    "The comparison runs isolated unmodified x86 routines with declared resource/presentation/network hooks, not a complete Windows match.",
+    "Synthetic nonzero reserved inventory14 can trigger an undefined original power object; it is not granted by any shipped resource, valid scheme or Gold outcome and is excluded from active-item tests."
+  ]
+}

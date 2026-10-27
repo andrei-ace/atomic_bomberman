@@ -1,0 +1,45 @@
+{
+  "passed": true,
+  "display": ":1",
+  "window_manager": "GNOME Shell",
+  "native_desktop": true,
+  "software_rendering": true,
+  "checks": [
+    {
+      "mode": "--windowed",
+      "frames": 360,
+      "fullscreen_property": false,
+      "size": [
+        960,
+        720
+      ],
+      "audio_unmuted": true
+    },
+    {
+      "mode": "--fullscreen",
+      "frames": 180,
+      "fullscreen_property": true,
+      "size": [
+        5120,
+        1440
+      ],
+      "audio_unmuted": true
+    },
+    {
+      "mode": "--windowed",
+      "frames": 180,
+      "fullscreen_property": false,
+      "size": [
+        960,
+        720
+      ],
+      "audio_unmuted": true
+    }
+  ],
+  "user_audibility_confirmation": "audio seems to work, I heard the game sounds",
+  "controller": "skipped: no physical controller; user authorized skipping",
+  "limitations": [
+    "Window modes and dimensions were observed through the real GNOME window manager; software rendering was required in the isolated execution environment.",
+    "The user confirmed actual game audio; stereo channel separation was not separately confirmed."
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "production_ai_decisions": 12616,
+  "arenas": 11,
+  "frames_per_arena": 120,
+  "elapsed_schedule_ms": [
+    16,
+    33,
+    50,
+    75,
+    150
+  ],
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "compared": [
+    "actual slot-by-slot production dispatcher decisions",
+    "all actor bytes",
+    "all persistent AI bytes",
+    "shared RNG after each dispatcher"
+  ],
+  "coverage": [
+    "ten participants",
+    "human and bot opponents",
+    "teams and individual play",
+    "real production danger grids",
+    "bombs, deaths, hazards and powerups"
+  ],
+  "limitations": [
+    "Original dispatcher runs against each production snapshot; complete original match dynamics are not emulated."
+  ]
+}

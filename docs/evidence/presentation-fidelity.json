@@ -1,0 +1,540 @@
+{
+  "status": "implemented and verified in the listed isolated scopes",
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "asset_manifest_sha256": "d3b83beeb76f9aecf0435468a94c2f7bda722e4e845c9f1af5a2da5b7aababbd",
+  "native_evidence": [
+    {
+      "address": "0x41f29b",
+      "role": "player sequence selection, clocks, death progression, palette and queue order",
+      "source": "crates/bomberman/evidence/native-player-update.c",
+      "assembly": "crates/bomberman/evidence/native-player-update.asm"
+    },
+    {
+      "address": "0x41de63",
+      "role": "death selection from the shared native RNG",
+      "source": "crates/bomberman/evidence/native-death-selection.c"
+    },
+    {
+      "address": "0x41daa7",
+      "role": "first FRAM image selection, unsigned modulo; no implicit metadata translation",
+      "source": "crates/bomberman/evidence/native-frame-lookup.c"
+    },
+    {
+      "address": "0x41db41",
+      "role": "explicit FRAM metadata accessor used for flame horizontal alignment",
+      "source": "crates/bomberman/evidence/native-state-metadata.c"
+    },
+    {
+      "address": "0x4156c7",
+      "role": "actual CIMG origin subtraction and palette blit",
+      "source": "crates/bomberman/evidence/native-palette-blit.c"
+    },
+    {
+      "address": "0x415b22",
+      "role": "insertion-order queue expansion; plain images before deferred color queues",
+      "source": "crates/bomberman/evidence/native-queue-order.c"
+    },
+    {
+      "address": "0x420d4e / 0x420e39",
+      "role": "100-slot Gold sparkle pool, shared RNG emission and frame advancement",
+      "source": "crates/bomberman-core/src/simulation/gold.rs"
+    }
+  ],
+  "implementation": {
+    "player_death_sequences": 24,
+    "corner_sequences": 13,
+    "actions": [
+      "stand",
+      "walk",
+      "carrying stand/walk",
+      "kick",
+      "punch",
+      "pickup",
+      "stun",
+      "trampoline",
+      "warp out/in",
+      "corner",
+      "death"
+    ],
+    "directional_actions": "all four original directions",
+    "clock": "simulation captures original selected frame before advancing; walking uses per-pixel counter/3, action/death clocks use original reference-frame arithmetic",
+    "graphics": "MASTER.ALI active namespace; first FRAM image, original CIMG origin, explicit metadata use at original call sites; original effective player remaps",
+    "native_cell_origin": [
+      20,
+      60
+    ],
+    "native_tile_size": [
+      40,
+      36
+    ],
+    "layers": [
+      "arena tiles/extras",
+      "plain powerups and shadows",
+      "free bombs",
+      "flames and brick destruction",
+      "players in slot order",
+      "Gold particles",
+      "carried bombs"
+    ],
+    "audio": "Exact core-selected sound IDs, original inclusive six-effect limit, actual sample-completion meter, looping music excluded from effect count.",
+    "window_flags": "--windowed / --fullscreen override saved preference; last flag wins; default resizable960x720, native640x480 letterbox, F11 persists toggles",
+    "item_visibility": "native item-pass snapshot; first frame after reveal/collection follows original queue timing",
+    "brick_animation": "Flame shape9, with per-arena source state count and native selected frame; native stored bomb palette is applied, including all ten arena brick variants."
+  },
+  "validation": {
+    "frontend_unit_tests": 8,
+    "gold_unit_tests": 4,
+    "presentation_original_x86": {
+      "passed": true,
+      "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+      "fixtures": 128,
+      "source_multi_record_states": 3,
+      "native_entries": [
+        "0x41daa7",
+        "0x41db41",
+        "0x41c5e0",
+        "0x4156c7"
+      ],
+      "compared": [
+        "first FRAM image ID with unsigned frame modulo",
+        "separately queried FRAM metadata",
+        "actual palette-blit destination rectangle",
+        "native CIMG origin subtraction",
+        "all three supplied multi-record states choose only their first image"
+      ],
+      "hooks": [
+        "scratch allocation/free",
+        "final bitmap copy records destination rectangle"
+      ],
+      "limitations": [
+        "Image/frame records come from the validated imported cache; this compares native lookup and placement, not the CHFILE parser.",
+        "Opaque synthetic image indices and an identity palette isolate geometry; full color output has separate imported-artwork graphics checks.",
+        "Clipping edges and full application entry points are outside this probe."
+      ]
+    },
+    "gold_original_x86": {
+      "passed": true,
+      "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+      "fixtures": 64,
+      "particle_updates": 4096,
+      "emission_attempts": 20772,
+      "particle_slots_compared_per_update": 100,
+      "native_entries": {
+        "emit": "0x420d4e",
+        "advance": "0x420e39"
+      },
+      "compared": [
+        "every particle active flag, position and frame",
+        "queued original frame and position",
+        "duration gate including indefinite and expired effects",
+        "full pool behavior",
+        "shared RNG state after every update",
+        "duplicate and wrapping global frame identifiers"
+      ],
+      "hooks": [
+        "Watcom TLS seed pointer",
+        "resource1010 value",
+        "elapsed displayed seconds accessor",
+        "sequence lookup/count13",
+        "frame lookup and graphics queue"
+      ],
+      "limitations": [
+        "No Windows application entry point executes.",
+        "Eligibility and HUD-time integration have separate native evidence; this probe executes the isolated unmodified emit and advance routines."
+      ]
+    },
+    "clippy": "cargo clippy -p bomberman --all-targets --no-deps --offline -- -D warnings passed",
+    "native_ui": "docs/evidence/linux-ui.json",
+    "graphics_harness": "cargo run -p bomberman --example verify_presentation -- <assets> <output>",
+    "graphics_contact_sheets": {
+      "checks": [
+        {
+          "frames_exercised": 93,
+          "sequences": [
+            [
+              "die green 1",
+              83
+            ],
+            [
+              "die green 2",
+              62
+            ],
+            [
+              "die green 3",
+              63
+            ],
+            [
+              "die green 4",
+              93
+            ],
+            [
+              "die green 5",
+              17
+            ],
+            [
+              "die green 6",
+              79
+            ],
+            [
+              "die green 7",
+              14
+            ],
+            [
+              "die green 8",
+              12
+            ],
+            [
+              "die green 9",
+              28
+            ],
+            [
+              "die green 10",
+              77
+            ],
+            [
+              "die green 11",
+              36
+            ],
+            [
+              "die green 12",
+              63
+            ],
+            [
+              "die green 13",
+              75
+            ],
+            [
+              "die green 14",
+              36
+            ],
+            [
+              "die green 15",
+              35
+            ],
+            [
+              "die green 16",
+              69
+            ],
+            [
+              "die green 17",
+              63
+            ],
+            [
+              "die green 18",
+              85
+            ],
+            [
+              "die green 19",
+              48
+            ],
+            [
+              "die green 20",
+              20
+            ],
+            [
+              "die green 21",
+              59
+            ],
+            [
+              "die green 22",
+              54
+            ],
+            [
+              "die green 23",
+              41
+            ],
+            [
+              "die green 24",
+              75
+            ]
+          ],
+          "sheet": "deaths"
+        },
+        {
+          "frames_exercised": 50,
+          "sequences": [
+            [
+              "cornerhead 0",
+              50
+            ],
+            [
+              "cornerhead 1",
+              50
+            ],
+            [
+              "cornerhead 2",
+              50
+            ],
+            [
+              "cornerhead 3",
+              50
+            ],
+            [
+              "cornerhead 4",
+              50
+            ],
+            [
+              "cornerhead 5",
+              50
+            ],
+            [
+              "cornerhead 6",
+              50
+            ],
+            [
+              "cornerhead 7",
+              50
+            ],
+            [
+              "cornerhead 8",
+              50
+            ],
+            [
+              "cornerhead 9",
+              50
+            ],
+            [
+              "cornerhead 10",
+              50
+            ],
+            [
+              "cornerhead 11",
+              50
+            ],
+            [
+              "cornerhead 12",
+              50
+            ],
+            [
+              "walk south",
+              15
+            ],
+            [
+              "kick south",
+              8
+            ],
+            [
+              "punch south",
+              10
+            ],
+            [
+              "walk south",
+              15
+            ],
+            [
+              "pickup south",
+              10
+            ],
+            [
+              "walk south",
+              15
+            ],
+            [
+              "spin",
+              4
+            ],
+            [
+              "spin",
+              4
+            ],
+            [
+              "standbomb south",
+              1
+            ],
+            [
+              "walkbomb south",
+              15
+            ]
+          ],
+          "sheet": "actions-and-corners"
+        },
+        {
+          "frames_exercised": 15,
+          "sequences": [
+            [
+              "stand north",
+              1
+            ],
+            [
+              "walk north",
+              15
+            ],
+            [
+              "kick north",
+              8
+            ],
+            [
+              "punch north",
+              10
+            ],
+            [
+              "pickup north",
+              10
+            ],
+            [
+              "standbomb north",
+              1
+            ],
+            [
+              "walkbomb north",
+              15
+            ],
+            [
+              "stand east",
+              1
+            ],
+            [
+              "walk east",
+              15
+            ],
+            [
+              "kick east",
+              8
+            ],
+            [
+              "punch east",
+              10
+            ],
+            [
+              "pickup east",
+              10
+            ],
+            [
+              "standbomb east",
+              1
+            ],
+            [
+              "walkbomb east",
+              15
+            ]
+          ],
+          "sheet": "north-east-actions"
+        },
+        {
+          "frames_exercised": 15,
+          "sequences": [
+            [
+              "stand south",
+              1
+            ],
+            [
+              "walk south",
+              15
+            ],
+            [
+              "kick south",
+              8
+            ],
+            [
+              "punch south",
+              10
+            ],
+            [
+              "pickup south",
+              10
+            ],
+            [
+              "standbomb south",
+              1
+            ],
+            [
+              "walkbomb south",
+              15
+            ],
+            [
+              "stand west",
+              1
+            ],
+            [
+              "walk west",
+              15
+            ],
+            [
+              "kick west",
+              8
+            ],
+            [
+              "punch west",
+              10
+            ],
+            [
+              "pickup west",
+              10
+            ],
+            [
+              "standbomb west",
+              1
+            ],
+            [
+              "walkbomb west",
+              15
+            ]
+          ],
+          "sheet": "south-west-actions"
+        }
+      ],
+      "limitations": [
+        "Contact sheets exercise native selectors, sequence states, source offsets and color remaps; they do not establish whole-game runtime equivalence."
+      ],
+      "passed": true,
+      "source": "original imported CHFILE artwork"
+    },
+    "graphics_artifacts": "/tmp/atomic-bomberman-presentation-native-final",
+    "battle_screenshot": "/tmp/atomic-battle-native-final.png",
+    "actual_native_sprite_pixels": {
+      "report": "docs/evidence/presentation-pixels-parity.json",
+      "native_entries": [
+        "0x4156c7",
+        "0x41c5e0",
+        "0x4428e4",
+        "0x44aed5"
+      ],
+      "coverage": "Actual imported sprite palette/clipping/transparency and production GPU output; all eleven exploding-brick arenas and all ten remaps.",
+      "fixtures": 257,
+      "canvas_pixels_compared": 78950400
+    },
+    "hardware_diagnostic": {
+      "report": "docs/evidence/linux-hardware.json",
+      "tool": "tools/hardware-check.py",
+      "example": "crates/bomberman/examples/hardware_check.rs",
+      "physical_status": "unavailable in implementation environment"
+    },
+    "effect_voice_admission": {
+      "report": "docs/evidence/audio-voices-parity.json",
+      "native_operations": 3081,
+      "native_capacity": 6,
+      "mixer_lifecycle_tests": 6,
+      "completion_clock": "actual mixer sample consumption and stop/delete events; no wall-clock duration leases"
+    }
+  },
+  "source_evidence_sha256": {
+    "native-death-bookkeeping.c": "5f391dcfa4b54596d10b59661b1b20dd87280294f2228927e9b7232ac8901271",
+    "native-death-selection.c": "f4e0cc84065973cb97ecc5792d16d0bf27b770a49ebda0ae8578e8c7454523cf",
+    "native-extra-update.c": "6186adbd9ce2496912d30af2379444f4a47fcb88df4dffa9fc8f5b27e7f9f7b5",
+    "native-flame-update.c": "f5865d3e283d985035a88a4b466e65675f023b49fb70461c8009fad859fdccd8",
+    "native-forced-death.c": "8ab2eb03e4bba15bd59dfa08cdc7300b7c95795560d19f8d95de517dff2db228",
+    "native-frame-accessor.asm": "38ec9404f773279752ddcc9d359514c59b2842b2aadbf37176ca1a49c3be41b2",
+    "native-frame-accessor.c": "ce5c7f60da8e75dcb3b770bf2a7d6499dc0c369b4a29a37854a2d74ce7b77290",
+    "native-frame-lookup.c": "f3806bbe19fcf2551e74e52c11d1771a6004fd2b2a4f5468dc1fa651c15bc52f",
+    "native-gold-advance.asm": "20bb5cd0e15e81d2f5af45daaad50f0880716ad5d95c3fa1fd4e2fa4cdb3eb88",
+    "native-gold-advance.c": "527e4d29dff74ded3478ec4d9307f9cb6f684a4013bc2a9b6c9b047530eff62d",
+    "native-gold-emit.asm": "16a735605168eed2385ebddcd304d137019385b745be0dd8fdaa207ff559b7a5",
+    "native-gold-emit.c": "e75c87aaa6ff1ac65e5fbc78352c3bf52a264c0252cc88739c3846636d9c19e7",
+    "native-palette-blit.asm": "ce2b20e8b9cf56bca65b5cb4a3e77046e4b457b231304c81054171fad895a863",
+    "native-palette-blit.c": "27b70d5948a0b9f07c61881f48d9eef27faff6d58beac61f68200941f82ee740",
+    "native-player-update.asm": "46b8d210987330984eccba0ebe64c172bf14248d057dfcf1b67f92a1d50b1936",
+    "native-player-update.c": "a8955bb91e24f0d35d707d32cabb85445299fdd8a2f799b0b2d46c94fbbe832c",
+    "native-queue-order.asm": "5b12358d2b54414220b04a61c955c026a528db34946431585f6c55b9e84d7890",
+    "native-queue-order.c": "9f6d2df210dbd347cb58a3ba4fb3a1a1075df3ae6a2d2b69206eee08e9ec5cf4",
+    "native-round-seconds.asm": "7941c6181e51fa824bbc0fd79531228c12cc8bf934ef50fea151a650032e2d6d",
+    "native-round-seconds.c": "7ecaaa221d26f827991f02b2af40feb3f114e5a0bb47508fe8ea856102baacab",
+    "native-sequence-lookup.c": "e709181332acaaaab9fbfdd93db2db3245f0cda95c58bd3be874f83cd272deca",
+    "native-state-metadata.asm": "f3168bc2237da2eb0d7b8bf97b3652acd40581cc0db5924879d89dcad6ec4f7d",
+    "native-state-metadata.c": "87d03bce91979ed23365132549bea6c02f03761904c07b5dd72860cc902ef171"
+  },
+  "limitations": [
+    "The isolated x86 probes do not establish whole-game or pixel-perfect application runtime equivalence.",
+    "Xvfb checks fullscreen properties and settings without a desktop window manager; physical fullscreen presentation still requires a desktop session.",
+    "No physical controller was exercised; virtual shared-keyboard checks do not measure hardware key rollover."
+  ]
+}

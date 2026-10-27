@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "fixtures": 256,
+  "native_entries": [
+    "0x421f7e",
+    "0x425bed",
+    "0x4255b2"
+  ],
+  "compared": [
+    "native16-update stun word and action/frame reset",
+    "all15 inventory bytes against scheme-configured nativeresource baselines",
+    "one-unit removal of noncanonical multi-count powers",
+    "full item slot metadata and all terrain cells after all scatter rejection loops",
+    "final shared RNG state"
+  ],
+  "coverage": [
+    "no acquired powers and exhausted200-attempt searches",
+    "default and custom born-with inventory baselines",
+    "walls-only scatter failures, open boards, mixed occupied/walled boards",
+    "unsigned byte counts through255 and unused Disease/SuperDisease/Random inventory counters"
+  ],
+  "limitations": [
+    "Head-hit is executed as an isolated original routine, not in a complete Windows match.",
+    "Reserved inventory ID14 stayszero because shipped resources/schemes/Gold cannot grant it."
+  ]
+}

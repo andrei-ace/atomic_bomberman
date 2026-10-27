@@ -1,0 +1,17 @@
+{
+  "format": "ALSA float32 stereo capture",
+  "sample_rate": 44100,
+  "channels": 2,
+  "samples": 131072,
+  "duration_seconds": 1.486077097505669,
+  "finite": true,
+  "nonzero_samples": 98288,
+  "rms": 0.24101319504251198,
+  "peak": 2.847416639328003,
+  "bytes": 524288,
+  "seed": 1997,
+  "gui_frames": 300,
+  "limitations": [
+    "This ALSA file capture verifies decoded/mixed output; the separate linux-speaker-probe.json records physical route and user-confirmed game sounds."
+  ]
+}

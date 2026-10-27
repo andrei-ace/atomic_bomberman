@@ -1,0 +1,176 @@
+{
+  "passed": true,
+  "verified_at_utc": "2026-10-27T13:55:41.597922+00:00",
+  "platform": "Linux x86_64; Ubuntu24.04 baseline",
+  "source_sha256": "4274683716fdfcc1d20c53edbd3904c2ec1c961ee068503dc16d8b20597e1c54",
+  "source_digest_definition": "Sorted relative paths and contents of Cargo manifests/lock, Rust/Python/shell/Java workspace sources, README and top-level documentation, separated by NUL. Generated caches/evidence excluded.",
+  "source_files": 103,
+  "release_binaries": {
+    "bomberman": "8cf120958fdfcbe6757a34197c68dd1f2411be7fd477acc5f0d7a80dd5db1a09",
+    "bomberman-assets": "f3c5d18dd0471896c5907e8ac18dd3d135fae9e753429ccfa8d49b9fe8b4fa4b",
+    "hardware-check": "6b8aef2b7604459a5a85707d21addf6872206579e1768c10c4656fadef1f3ffb",
+    "audio-probe": "fa1e7642f594fb22c98f087473acefd7bd7583b55141d478e4b5f2e8c4fbc2dc"
+  },
+  "workspace_checks": {
+    "format": true,
+    "clippy_all_targets_deny_warnings": true,
+    "workspace_tests_passed": 179,
+    "mixer_lifecycle_tests_passed": 6,
+    "total_tests_passed": 185,
+    "ignored_development_helpers": 3
+  },
+  "native_comparisons": {
+    "ai-context-parity": {
+      "passed": true,
+      "report": "ai-context-parity.json"
+    },
+    "ai-parity": {
+      "passed": true,
+      "report": "ai-parity.json"
+    },
+    "audio-voices-parity": {
+      "passed": true,
+      "report": "audio-voices-parity.json"
+    },
+    "behavior-parity": {
+      "passed": true,
+      "report": "behavior-parity.json"
+    },
+    "gold-particles-parity": {
+      "passed": true,
+      "report": "gold-particles-parity.json"
+    },
+    "hazards-parity": {
+      "passed": true,
+      "report": "hazards-parity.json"
+    },
+    "headhit-parity": {
+      "passed": true,
+      "report": "headhit-parity.json"
+    },
+    "items-parity": {
+      "passed": true,
+      "report": "items-parity.json"
+    },
+    "match-ai-parity": {
+      "passed": true,
+      "report": "match-ai-parity.json"
+    },
+    "new-match-init-parity": {
+      "passed": true,
+      "report": "new-match-init-parity.json"
+    },
+    "player-presentation-parity": {
+      "passed": true,
+      "report": "player-presentation-parity.json"
+    },
+    "powerups-parity": {
+      "passed": true,
+      "report": "powerups-parity.json"
+    },
+    "presentation-parity": {
+      "passed": true,
+      "report": "presentation-parity.json"
+    },
+    "presentation-pixels-parity": {
+      "passed": true,
+      "report": "presentation-pixels-parity.json"
+    },
+    "reveal-parity": {
+      "passed": true,
+      "report": "reveal-parity.json"
+    },
+    "roulette-parity": {
+      "passed": true,
+      "report": "roulette-parity.json"
+    },
+    "round-boundary-parity": {
+      "passed": true,
+      "report": "round-boundary-parity.json"
+    },
+    "round-setup-parity": {
+      "passed": true,
+      "report": "round-setup-parity.json"
+    },
+    "setup-parity": {
+      "passed": true,
+      "report": "setup-parity.json"
+    },
+    "whole-match-parity": {
+      "passed": true,
+      "report": "whole-match-parity.json"
+    }
+  },
+  "independent_original_engine": {
+    "cases": 12,
+    "frames": 20354,
+    "completed_rounds": 16,
+    "completed_matches": 1,
+    "arenas": 11,
+    "independent_native_memory": true,
+    "per_frame_state_reseeding": false
+  },
+  "battle_matrix": {
+    "cases": 1496,
+    "schemes": 68,
+    "arenas": 11,
+    "participants": [
+      2,
+      10
+    ],
+    "endurance_matches": 3,
+    "endurance_deaths": 389,
+    "stress_simulated_ms_per_arena": 600000
+  },
+  "deterministic_release_matches": {
+    "runs": 2,
+    "matches_per_run": 32,
+    "first_seed": 1997,
+    "rounds_per_run": 460,
+    "identical_output": true,
+    "results_report": "deterministic-matches.json",
+    "output_sha256": "3a82a4632a3d4a5932cb76d9ab2b4ddc12d390cc695ecc3789b5944011c21b00"
+  },
+  "linux_gui": {
+    "keyboard_and_window_regression": "linux-ui.json",
+    "real_GNOME_windowed_fullscreen_return": "linux-desktop.json",
+    "windowed_size": [
+      960,
+      720
+    ],
+    "fullscreen_size": [
+      5120,
+      1440
+    ],
+    "software_rendering": true
+  },
+  "linux_audio": {
+    "production_backend_route": "audio-route.json",
+    "actual_game_sounds_user_confirmed": true,
+    "physical_probe": "linux-speaker-probe.json",
+    "mixed_file_capture": "linux-audio.json"
+  },
+  "controller": {
+    "status": "skipped",
+    "reason": "No physical controller connected; user explicitly authorized skipping."
+  },
+  "limitations": [
+    "Component and controlled engine comparisons do not establish whole-program binary equivalence. Original Windows event-loop/results artwork and full Miles PCM latency are outside these probes.",
+    "Desktop verification required Mesa software rendering because isolated GPU access was unavailable; ordinary hardware rendering remains host-driver dependent.",
+    "Actual game audio was user confirmed; left/right spatial separation was not separately confirmed."
+  ],
+  "packaged_startup": {
+    "passed": true,
+    "archive": "dist/atomic-bomberman-linux-x86_64.tar.gz",
+    "extracted_startup": true,
+    "launcher_path_with_spaces": true,
+    "packaged_hardware_inventory": true,
+    "all_binary_hashes_match": true,
+    "generated_original_assets_in_archive": false,
+    "completed_game_match": {
+      "winner": 9,
+      "rounds": 7,
+      "checksum": "c28ea45b2d37fe9a"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "evidence_type": "unmodified x86 actor presentation/death blocks with actual supplied MASTER sequence lengths",
+  "findings": [
+    {
+      "entry": "0x41f8e5..0x41fa11",
+      "behavior": "Four blocked neighboring floor/bomb queries activate one of13 corner sequences using sharedrand%13, retaining the old fractional special clock. Reopening a neighboring route clears onlyspecial, preservingframe/remainder."
+    },
+    {
+      "entry": "0x41ff2f..0x420870",
+      "behavior": "Stand/walk uses movement intent; carrying selects standbomb/walkbomb. Standing stun displays oldspecialframe&3 direction. Original selected frame is captured before advancing; action counters use signed16 remainder and unsigned16 frame wrapping."
+    },
+    {
+      "entry": "0x41f3e4..0x420d45",
+      "behavior": "All24 death sequence lengths match supplied assets. Deaths always use storedbase/team palette, bypassing initial player-color reveal. Angelrise preserves prior motion remainder, captures oldposition, and can finish belowY=-20 before incrementingdeathframe."
+    },
+    {
+      "entry": "0x41f4b2..0x41f537",
+      "behavior": "Death power release executes before frame25 speechchance. Speechchance isresource95=5 and is checked afterframeadvance, so repeated updates onframe25 consume repeated shared draws even though suppliedsound700is absent."
+    }
+  ],
+  "comparison": "player-presentation-parity.json",
+  "harness": "tools/compare_player_presentation.py",
+  "fixture_count": 1792,
+  "native_ranges": {
+    "alive": "0x41ff2f..0x420870",
+    "dead": "0x41f3e4..0x420d45",
+    "corner_activation": "0x41f8e5..0x41fa11"
+  },
+  "shared_sources": [
+    "crates/bomberman/evidence/native-player-update.c",
+    "crates/bomberman/evidence/native-player-update.asm",
+    "local-assets/manifest.json",
+    "local-assets/tables/DATA/ANI/MASTER.ALI.txt",
+    "local-assets/tables/DATA/RES/VALUELST.RES.txt"
+  ],
+  "limitations": [
+    "Presentation/death block parity does not establish whole Windows application equivalence.",
+    "Transit and movement are checked by their own native component and complete battle-engine comparisons.",
+    "The queue records original selected sequence/frame/palette/position; actual raster output has a separate frontend comparison."
+  ]
+}

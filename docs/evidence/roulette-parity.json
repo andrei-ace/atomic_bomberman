@@ -1,0 +1,129 @@
+{
+  "fixtures": 128,
+  "frames": 28673,
+  "fingerprint": "0xaca9bdecb054a16d",
+  "executable_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "passed": true,
+  "hooks": [
+    "451900: thread-local seed pointer",
+    "412135: shipped resource 1004=70",
+    "427961: sound dispatch/tick counter"
+  ],
+  "limitations": [
+    "Original per-loop state verified; original render scheduling and physical audio timing unmeasured."
+  ],
+  "examples": [
+    {
+      "seed": 0,
+      "delay": 0,
+      "stop_frames": 219,
+      "final": [
+        -1,
+        70,
+        280,
+        0,
+        0,
+        2,
+        8
+      ]
+    },
+    {
+      "seed": 1,
+      "delay": 1,
+      "stop_frames": 207,
+      "final": [
+        -1,
+        210,
+        140,
+        0,
+        0,
+        2,
+        13
+      ]
+    },
+    {
+      "seed": 2,
+      "delay": 17,
+      "stop_frames": 214,
+      "final": [
+        -1,
+        140,
+        350,
+        0,
+        0,
+        2,
+        8
+      ]
+    },
+    {
+      "seed": 3,
+      "delay": 100,
+      "stop_frames": 185,
+      "final": [
+        1,
+        0,
+        140,
+        0,
+        0,
+        2,
+        3
+      ]
+    },
+    {
+      "seed": 4,
+      "delay": 0,
+      "stop_frames": 192,
+      "final": [
+        1,
+        210,
+        70,
+        0,
+        0,
+        2,
+        4
+      ]
+    },
+    {
+      "seed": 5,
+      "delay": 1,
+      "stop_frames": 212,
+      "final": [
+        1,
+        0,
+        280,
+        0,
+        0,
+        2,
+        4
+      ]
+    },
+    {
+      "seed": 6,
+      "delay": 17,
+      "stop_frames": 217,
+      "final": [
+        -1,
+        70,
+        210,
+        0,
+        0,
+        2,
+        3
+      ]
+    },
+    {
+      "seed": 7,
+      "delay": 100,
+      "stop_frames": 205,
+      "final": [
+        -1,
+        0,
+        280,
+        0,
+        0,
+        2,
+        4
+      ]
+    }
+  ]
+}

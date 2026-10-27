@@ -1,0 +1,43 @@
+/target/
+/local-assets/
+/dist/
+/build/
+/node_modules/
+/ghidra_*/
+/Atomic_Bomberman_Win_ROM_EN/
+/*.7z
+*.log
+__pycache__/
+/tools/rea-output/
+/.dev/
+
+# Local agent state, credentials, and development tools.
+/.agents/
+/.codex/
+/.aws/
+/package.json
+/package-lock.json
+/crates/bomberman/evidence/
+
+# Original game media, imported caches, and separate asset-transfer bundles.
+*.img
+*.iso
+*.bin
+*.cue
+*.7z
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.exe
+*.EXE
+
+# Local OS/editor state and secrets.
+.DS_Store
+._*
+.idea/
+.vscode/
+.env
+.env.*
+*.pem
+*.key

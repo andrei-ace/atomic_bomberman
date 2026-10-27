@@ -1,0 +1,70 @@
+{
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "evidence_bundle": "../../tools/rea-output/round-setup-evidence.json",
+  "status": "implemented native comparison helper; original block proof passed",
+  "round_initializers": [
+    "4260f5 terrain",
+    "42633c terrain presentation descriptors",
+    "422d3b bomb/request/auxiliary pools",
+    "426cdb flame pool",
+    "424f5e item pool",
+    "4214bc partial player initialization",
+    "4258e5 original item placement",
+    "40551f original extra arena parser/reset",
+    "410494,4104c2,4104f0 round clock"
+  ],
+  "findings": [
+    {
+      "question": "Which player fields survive a local round reset?",
+      "evidence": [
+        "ev_aee9aa4629d193f3cd3d3095e798b02b42a9c4062b697d896994627dff4e0c28",
+        "ev_7b798dfa9380f863896c1a7e340d5d929e33abac5c2f64ac58fd7d462d7f08a4"
+      ],
+      "observation": "The original local round chain leaves player+30 shared walk/death counter, +32 death remainder, +3a stun, +52 action remainder, +74 movement remainder, +80 freshness, +94 carried-bomb pointer, +2e direction and input edge/button bytes+36..39 intact. Only the low word of facing+2c is set to2. Match scores+6a/+6c also survive.",
+      "verification": "The native block proof poisons these fields before reinitialization and compares the complete ten-player pool byte for byte."
+    },
+    {
+      "question": "Which fields are set when the next life activates?",
+      "observation": "41f2fa..41f342 decrements life byte+68, sets active+0 to1, resets kind+4/dead+8 to0, and copies saved spawn+14/+18 to current coordinates+1c/+20. It does not clear the retained counters/remainders or carried pointer."
+    },
+    {
+      "question": "When does original AI state reset?",
+      "evidence": [
+        "ev_25f5d720059ecf7d5dce8c4a1a7e1ea1f2f9ee346e9f982b5de9bf6e3d7ef553",
+        "ev_d11e5323f5c626dd18c4950661f92d1c025489a52764ef4cc39a3b9e7603cd58"
+      ],
+      "observation": "40a140 is called by new-match initialization at41117d, after start-position shuffle421793; it is absent from local next-round initialization. AI state and input history remain in native memory across rounds."
+    },
+    {
+      "question": "Which hazard clocks survive?",
+      "evidence": [
+        "ev_7b309603ebc6a46994a4780f79c9207d74818b66d3377aff14823ea3e0a4070e",
+        "ev_dbc19824e75d7602cdef060d0c15aa72ced8d19c7bbc5a258df5321b4277a6d6"
+      ],
+      "observation": "The local round initializer does not reset Fire God active/cursor state45be9c/462230..244 or regeneration timestamp464978. Fire God426818 resets its own state when displayed remaining seconds exceed55. Original stomped-bomb option is464940, not464978."
+    },
+    {
+      "question": "Which clock and survivor globals are primed?",
+      "evidence": [
+        "ev_369e5115bdec1ba3ca758a460127b6e751d34be7624e17ca3f2500e2e7d376ee",
+        "ev_887088aaf13fd51a456f7da013f57783952e0fc7684313d6f5f21a3b8238ca23",
+        "ev_88db0f8608683abc39e08888fcbc7d4cd6e9a04f1b60295b7131abdb5963347a",
+        "ev_3b3a9144d4d2d3a3c46c01f11807e50e25bdd255fb208292e11ae3fa65426507",
+        "ev_34e8addf5d3cf181cd58cddb2c20b5708b02597fccc5d418f011edfcd11a47be"
+      ],
+      "observation": "Selected seconds464948 initialize601a8/601ac; timer reset clears601b8 and sets601b0; start sets601a0. Display601a4 is refreshed by paint4105d2, not the round initializer. Cached alive/team counts4621d4/4621d8/4621dc and frame timestamp46496c also remain unchanged by this chain."
+    }
+  ],
+  "validation": {
+    "report": "round-setup-parity.json",
+    "native_block_comparisons": 22,
+    "rust_source_initialization_comparisons": 22,
+    "arenas": 11,
+    "participants": [2, 10],
+    "direct_native_blocks": ["410cae..410d29", "410e9d..410eb1"]
+  },
+  "limitations": [
+    "The helper models local round initialization. It omits graphical palette/music output and does not reproduce Windows message delivery or paint scheduling.",
+    "The proof compares source initialization and direct round setup blocks, not entire consecutive matches. New-match AI phase randomization and message-paint priming are separate work."
+  ]
+}

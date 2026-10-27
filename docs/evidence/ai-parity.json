@@ -1,0 +1,61 @@
+{
+  "executable_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "fixtures": 4500,
+  "passed": {
+    "0x40bd44": 500,
+    "0x40be02": 500,
+    "0x40b20f": 500,
+    "0x40ad8d": 500,
+    "0x40abed": 500,
+    "0x40baf5": 500,
+    "0x40b8c2": 500,
+    "0x40a81f": 500,
+    "0x40a1c6": 500
+  },
+  "handled_outcomes": {
+    "0x40bd44": [
+      false,
+      true
+    ],
+    "0x40be02": [
+      false,
+      true
+    ],
+    "0x40b20f": [
+      false,
+      true
+    ],
+    "0x40ad8d": [
+      false,
+      true
+    ],
+    "0x40abed": [
+      false,
+      true
+    ],
+    "0x40baf5": [
+      false,
+      true
+    ],
+    "0x40b8c2": [
+      false,
+      true
+    ],
+    "0x40a81f": [
+      false,
+      true
+    ],
+    "0x40a1c6": [
+      false,
+      true
+    ]
+  },
+  "hooks": [
+    "451900: thread-local seed pointer",
+    "412135: resource lookup",
+    "4184d0/41863d: dispatcher diagnostic allocation/free"
+  ],
+  "limitations": [
+    "Fixtures do not establish whole-game timing or hazard/danger-map production equivalence."
+  ]
+}

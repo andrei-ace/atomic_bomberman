@@ -1,0 +1,185 @@
+{
+  "schema": 1,
+  "target": {
+    "path": "BM95.EXE",
+    "sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+    "architecture": "x86",
+    "compiler_abi": "Watcom register arguments, verified against assembly"
+  },
+  "implementation": "crates/bomberman-core/src/simulation/physics.rs",
+  "evidence_bundle": "tools/rea-output/physics-evidence.json",
+  "parity_report": "docs/evidence/physics-parity.json",
+  "comparison_harness": "tools/compare_physics.py",
+  "reproduction": "CARGO_HOME=/tmp/atomic-cargo python3 tools/compare_physics.py --exe /path/to/BM95.EXE --count 2000 --output docs/evidence/physics-parity.json",
+  "findings": [
+    {
+      "behavior": "Movement consumes signed hundredths while the remainder is positive, advances one pixel per iteration, and preserves negative remainder. Default923 advances10pixels then9. Center steering can advance both axes by one pixel, or assist into an open adjacent corridor. Blocked iterations consume the same budget; fatal flame contact returns before counter increment and budget subtraction.",
+      "native": [
+        "0x41ec84",
+        "0x41e5c3"
+      ],
+      "evidence": [
+        "ev_eeaed3adc51937ecf2e8198abf25e9b7d3557d61fb3d80260097d9b70f9ab9e5",
+        "ev_2667df613ae824e533debb4bdd329b5b0bea835995521e1673bf9b01f4582ca9"
+      ],
+      "verification": "Original movement and collision helpers execute in Unicorn; normal Rust movement regression tests."
+    },
+    {
+      "behavior": "Movement uses low32-bit multiplication before unsigned division by50. Slow divides speed by3; Fast/Hyperactive multiplies by3/2. Conveyors add/subtract their separately scaled budget; idle conveyor motion preserves facing.",
+      "native": [
+        "0x41f29b"
+      ],
+      "evidence": [
+        "ev_273516e2065dff21946a00cd96227693aee89fc5c7a73cf8f54ec97dec66adc6"
+      ],
+      "verification": "Assembly; conveyor bomb fixtures and separate player-hazard comparisons. No fixed-step accumulator in production simulation."
+    },
+    {
+      "behavior": "Placement allocates the first free slot among100. Fuse stores reference-frame count then multiplies by50: ShortFuse40/3*50=650ms. Spooge starts signed elapsed fuse at minus50ms per staggered bomb. GoldFlame overrides ShortFlame.",
+      "native": [
+        "0x41eb13",
+        "0x422ede"
+      ],
+      "evidence": [
+        "ev_a1560d1856d37aa0d6d7ecdf6919280eb45978ac903fecfa7871438aac3735b2"
+      ],
+      "verification": "Full original allocation executes in Unicorn with identical RNG state and original signed fields."
+    },
+    {
+      "behavior": "Offline regular bombs can be duds after a global deadline. A new deadline180+rand%180seconds is scheduled before the1-in3 dud draw. Round reset preserves that deadline. A dud becomes live only after animation_frame>120; the activation update advances its normal fuse. The configured extra dud-delay resource324 is not read by this build.",
+      "native": [
+        "0x422c13",
+        "0x422c7a",
+        "0x422ede",
+        "0x42331c"
+      ],
+      "evidence": [
+        "ev_df15478804fa6044894cb50db7ec3f4642b945827e0e88f29344442d6f6d9658",
+        "ev_50b241951f7efe6b03bdf309b67a18a45ad5b4421ed8e366bf0149d2e7ff8aa8",
+        "ev_a1560d1856d37aa0d6d7ecdf6919280eb45978ac903fecfa7871438aac3735b2",
+        "ev_d0203337baa90a12c3415766d5a45f831e9cf721dc1e34639f466c86777bd28c"
+      ],
+      "verification": "Original allocation/deadline and bomb-update comparisons; 121-update regression."
+    },
+    {
+      "behavior": "Bomb state0 rests/conveys,1 rolls,2 flies,3 is carried. Fuse pauses for dud, flight, carry, and Trigger state. Landing advances the fuse by the entire current elapsed update. Throw resets elapsed fuse but retains its original limit. Trigger bombs revert to regular with elapsed0 at death-animation completion.",
+      "native": [
+        "0x42331c",
+        "0x4248c6",
+        "0x424c47",
+        "0x41f29b"
+      ],
+      "evidence": [
+        "ev_d0203337baa90a12c3415766d5a45f831e9cf721dc1e34639f466c86777bd28c",
+        "ev_7ddcec16e7e6bd8455f951d7322952ebcd129134faab9bdaaf11f1c1bd7ad260",
+        "ev_273516e2065dff21946a00cd96227693aee89fc5c7a73cf8f54ec97dec66adc6"
+      ],
+      "verification": "All four movement states compared with original x86; throw and release regression tests."
+    },
+    {
+      "behavior": "Rolling uses pixel loops and center stops. Arrow changes occur only at the center and clear stop requests. Jelly reverses on obstruction. Brick-disintegration flame9 stops/bounces a rolling bomb without igniting it; ordinary flame contact queues detonation. Visible items ahead are destroyed only when the corridor collision helper is reached.",
+      "native": [
+        "0x42331c",
+        "0x4230a5",
+        "0x42464b",
+        "0x4247c5"
+      ],
+      "evidence": [
+        "ev_d0203337baa90a12c3415766d5a45f831e9cf721dc1e34639f466c86777bd28c",
+        "ev_e6a8dc9da72dce8ac73d13b56f82a1a124697bc2ab099a958efdb72428784c0c",
+        "ev_ea4f4abc8c06f85668646c5d821a18ca15ded8484b0b2ba9a78c4eb1aef306db",
+        "ev_205ebd1ef8bef779f1cbecbfb111af9ec30f52796f1000b7f0012d7f9cddf139"
+      ],
+      "verification": "Original rolling/kick/collision helpers and Rust stop/Jelly regressions."
+    },
+    {
+      "behavior": "Flight attempts first landing after three centers, then one center per bounce. It wraps through a board-size-plus3 period, collides with players/powers/bombs/terrain/trampolines, and preserves Jelly turning RNG. Arc amplitudes65/20 use literal PI3.14159. The final projected Y is truncated towardzero by the original x87 helper.",
+      "native": [
+        "0x42331c",
+        "0x433b0b",
+        "0x433b38"
+      ],
+      "evidence": [
+        "ev_d0203337baa90a12c3415766d5a45f831e9cf721dc1e34639f466c86777bd28c",
+        "ev_b21ebf4ec4ae94f31141044db80062910fd3917535b0d8e3fa318c21bc43c051",
+        "ev_126184cd56c93355308fbf6ecd275d14175523b70f3387e38be25bfe8c5a3bc5"
+      ],
+      "verification": "Original flight body, sin and truncation execute in Unicorn; landing/wrap/arc fixtures and distance regression tests."
+    },
+    {
+      "behavior": "Head hits impose16 player updates of stun, independent of elapsed time, and try1+rand%3 losses with up to200 random power retries each. Only the first living player in the tile is hit. Pickup carry offsets use four supplied resource pairs indexed by clamp(special_frame-1,0,3).",
+      "native": [
+        "0x421f7e",
+        "0x421cb5",
+        "0x42331c"
+      ],
+      "evidence": [
+        "ev_ecead936ef108fd4154997b0d250ababe358d514a00f3fa9a941f70f40873ea3",
+        "ev_1a17b6320da33c0bfcabe271c07c8157cf2a9f79e79c3aad62d5ebd5d7c8125d",
+        "ev_d0203337baa90a12c3415766d5a45f831e9cf721dc1e34639f466c86777bd28c"
+      ],
+      "verification": "Actual original retry/RNG routine compared with a baseline inventory; stun duration regression."
+    },
+    {
+      "behavior": "Detonation requests store slot pointers and take effect at the beginning of the next native frame. A freed/reused slot can receive an old request. Chains transfer kill credit immediately, retain the target bomb palette, and omit the incoming opposite direction when the target later explodes. Oldest Trigger selection excludes current-timestamp bombs and breaks timestamp ties by slot order.",
+      "native": [
+        "0x423209",
+        "0x42331c",
+        "0x424b41"
+      ],
+      "evidence": [
+        "ev_ee9d41777814407abbd8415181f09fba838456d7361ccc126e47671289c66047",
+        "ev_d0203337baa90a12c3415766d5a45f831e9cf721dc1e34639f466c86777bd28c",
+        "ev_216fa3a42b0b86269523d4812b3b23dde2f41f13e626e6ccc5d552f3b7c4d38c"
+      ],
+      "verification": "Queued counts/owner transfers compared in original x86; deferred chain, back-ray suppression, palette and slot-reuse regression tests."
+    },
+    {
+      "behavior": "Visible powerups stop explosion rays before a flame is written on their tile. Hidden powerups do not stop a ray before its brick is processed. Flame writes replace shape, palette, owner, age and animation state. Brick shape9 owner is signed-1. Normal shapes are tips0..3, middles4..7, center8.",
+      "native": [
+        "0x42331c",
+        "0x426fcc"
+      ],
+      "evidence": [
+        "ev_d0203337baa90a12c3415766d5a45f831e9cf721dc1e34639f466c86777bd28c",
+        "ev_09cd8b0ca14840f3b6ec84701cb9ac7e9633d8ee7d325c7bbc38f9908cb40249"
+      ],
+      "verification": "Exact native terrain/item/flame shape/palette/owner arrays compared after explosions."
+    },
+    {
+      "behavior": "425efc temporarily changes terrain for drawing and restores it. Thus an exploding brick remains solid through disintegration. Hidden items become state2 immediately via425107, while rendering still depends on terrain.426d06 permanently clears Brick at age>500 via425e9b; shape9 draws once more after becoming inactive. Floor flames expire without that last draw.",
+      "native": [
+        "0x425efc",
+        "0x425107",
+        "0x425e9b",
+        "0x426d06"
+      ],
+      "evidence": [
+        "ev_ebaa726a62db1804fcb8aeeff667a17fb9fcce84a993dd930b9628c673c2ece0",
+        "ev_4f63a2b9f1d01c96a9320b0e0d1f6d46fc136971d8cb43f99d55686961bff622",
+        "ev_3a30118e96062be79537de2cb1ba9611bc7c2e8e30c5391b8702de792294505b"
+      ],
+      "verification": "Full brick explosions and isolated426d06 original comparisons across Floor/Wall/Brick and all11 arena sequence lengths. Separate reveal oracle in docs/evidence/reveal-parity.json."
+    },
+    {
+      "behavior": "Each flame frame selects the previous animation counter before advancing the reference accumulator. Brick animation clamps to each original sequence length. Floor flames mark AI danger1000 even on their expiry update; fresh brick flames mark1000 only during creation. A remaining_ms0 brick record is a render snapshot and has no collision or damage effect.",
+      "native": [
+        "0x426fcc",
+        "0x426d06"
+      ],
+      "evidence": [
+        "ev_09cd8b0ca14840f3b6ec84701cb9ac7e9633d8ee7d325c7bbc38f9908cb40249"
+      ],
+      "verification": "Isolated x86 flame comparisons include age499/500 to501 transitions, elapsed0..150, frame wrap, signed accumulator overflow, terminal danger and final frame."
+    }
+  ],
+  "limits": [
+    "Parity is scoped to the fields and fixture coverage listed in physics-parity.json; it does not assert unrestricted whole-game equivalence.",
+    "Unicorn intercepts graphics/asset lookup and audio calls, supplies resource values/OS time/seed accessor data, and executes original simulation/collision/RNG arithmetic. Production audio fairness is handled by the separate native sound selector.",
+    "Movement fixture coverage excludes player warp/trampoline transit, visible-item collection and flame deaths; hazard and simulation regression suites cover those interactions separately.",
+    "Rare-item relocation and arena initialization have separate native comparison reports. Controller/graphics/audio host verification belongs to the client validation stage.",
+    "Decompiler prototypes do not establish the register ABI. The original0x42331c body was requested through interior0x42428c; assembly and execution determine the boundary and register values.",
+    "Logical coordinates in fixtures map coreX+20 and coreY+77 to original player/bomb foot positions.",
+    "The portable REA evidence bundle retains raw target material and development analysis; original game assets and executable are imported separately."
+  ]
+}

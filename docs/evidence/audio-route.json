@@ -1,0 +1,131 @@
+{
+  "checked_at_utc": "2026-10-27T13:34:39.961237+00:00",
+  "access": "outside sandbox, read-only host PipeWire/Xwayland queries",
+  "audio_samples_played": 0,
+  "server": {
+    "name": "pipewire-0",
+    "version": "1.0.5",
+    "default_clock_rate": 48000
+  },
+  "metadata": [
+    {
+      "subject": 0,
+      "key": "default.configured.audio.sink",
+      "type": "Spa:String:JSON",
+      "value": {
+        "name": "alsa_output.pci-0000_01_00.1.hdmi-stereo"
+      }
+    },
+    {
+      "subject": 0,
+      "key": "default.audio.sink",
+      "type": "Spa:String:JSON",
+      "value": {
+        "name": "alsa_output.pci-0000_01_00.1.hdmi-stereo"
+      }
+    }
+  ],
+  "sinks": [
+    {
+      "id": 54,
+      "state": "suspended",
+      "properties": {
+        "node.name": "alsa_output.pci-0000_01_00.1.hdmi-stereo",
+        "node.description": "GA102 High Definition Audio Controller Digital Stereo (HDMI)",
+        "device.id": 46,
+        "device.api": "alsa",
+        "factory.name": "api.alsa.pcm.sink",
+        "audio.channels": 2,
+        "audio.position": "FL,FR",
+        "priority.session": 696,
+        "api.alsa.path": "hdmi:0",
+        "api.alsa.card.name": "HDA NVidia"
+      }
+    },
+    {
+      "id": 41,
+      "state": "suspended",
+      "properties": {
+        "node.name": "alsa_output.usb-Generic_USB_Audio-00.iec958-stereo",
+        "node.description": "USB Audio Digital Stereo (IEC958)",
+        "device.id": 49,
+        "device.api": "alsa",
+        "factory.name": "api.alsa.pcm.sink",
+        "audio.channels": 2,
+        "audio.position": "FL,FR",
+        "priority.session": 1008,
+        "api.alsa.path": "iec958:1",
+        "api.alsa.card.name": "USB Audio"
+      }
+    }
+  ],
+  "audio_devices": [
+    {
+      "id": 46,
+      "properties": {
+        "device.name": "alsa_card.pci-0000_01_00.1",
+        "device.description": "GA102 High Definition Audio Controller",
+        "device.api": "alsa",
+        "device.bus": "pci",
+        "api.alsa.card": 0,
+        "api.alsa.card.name": "HDA NVidia",
+        "api.alsa.path": "hw:0"
+      }
+    },
+    {
+      "id": 48,
+      "properties": {
+        "device.name": "alsa_card.pci-0000_69_00.1",
+        "device.description": "Rembrandt Radeon High Definition Audio Controller",
+        "device.api": "alsa",
+        "device.bus": "pci",
+        "api.alsa.card": 2,
+        "api.alsa.card.name": "HD-Audio Generic",
+        "api.alsa.path": "hw:2"
+      }
+    },
+    {
+      "id": 49,
+      "properties": {
+        "device.name": "alsa_card.usb-Generic_USB_Audio-00",
+        "device.description": "USB Audio",
+        "device.api": "alsa",
+        "device.bus": "usb",
+        "api.alsa.card": 1,
+        "api.alsa.card.name": "USB Audio",
+        "api.alsa.path": "hw:1"
+      }
+    }
+  ],
+  "alsa_preflight": [
+    {
+      "device": "default",
+      "open_result": 0,
+      "float_stereo_44100_setup_result": 0,
+      "close_result": 0
+    },
+    {
+      "device": "pipewire",
+      "open_result": 0,
+      "float_stereo_44100_setup_result": 0,
+      "close_result": 0
+    }
+  ],
+  "host_display": {
+    "name": ":1",
+    "windows_opened": 0,
+    "input_events_sent": 0,
+    "accessible": true,
+    "server_details": [
+      "version number:    11.0",
+      "vendor string:    The X.Org Foundation",
+      "vendor release number:    12101011",
+      "dimensions:    5120x1440 pixels (1355x381 millimeters)"
+    ],
+    "wm_check": "_NET_SUPPORTING_WM_CHECK(WINDOW): window id # 0x400001",
+    "wm_name": "_NET_WM_NAME(UTF8_STRING) = \"GNOME Shell\"\nWM_NAME:  not found."
+  },
+  "limitations": [
+    "Read-only device setup proves host access and sample-format support; user hearing confirmation is tracked separately by the speaker probe."
+  ]
+}

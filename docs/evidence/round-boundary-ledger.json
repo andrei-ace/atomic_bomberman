@@ -1,0 +1,70 @@
+{
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "evidence_bundle": "../../tools/rea-output/round-boundary-evidence.json",
+  "immutable_instruction_ranges": "../../tools/rea-output/round-boundary-instructions.json",
+  "native_probe": "../../tools/probe_round_boundary.py",
+  "probe_report": "round-boundary-parity.json",
+  "status": "verified by original instructions and a native boundary probe",
+  "findings": [
+    {
+      "question": "Does end-of-initialization431360 prime the clock or survivor caches?",
+      "evidence": [
+        "ev_b1419b60c3d9766d8a8038ee5d697f8131b0f8f3b4e6610ee9936468507e7789",
+        "ev_169e530fd595be2d2d99ec027275c6c1e6251c22f2602a47aa077de179e356d2",
+        "ev_3b7ca83b2989ba97b45be049e2a13d407ef3b9e8e6433e5d3ca7d9c8b0cc2db1",
+        "ev_bc8518aefb551974310aa9277836242bb0a7fb43705d86982db64666e9ecc02e"
+      ],
+      "observation": "431360 prepares a screen rectangle and submits it to43da90/43dd08. It does not prime the battle timer or cached survivors."
+    },
+    {
+      "question": "What refreshes the old survivor cache before the first next-round stop guard?",
+      "evidence": [
+        "ev_9776101d46513ad3c831e82a59a1269f310eb35737cfc6fa88f7258d7b900a01",
+        "ev_2027c1e3fc87348a79bac4a0d8cf16dd6b4113e34fa39e3090e4692e1eb7492f",
+        "ev_ac0a549b24ba92dfb5d3c3935253792a06a702761361b24f20b3dd610250f172",
+        "ev_c316003bdaf048852bdd73f1093c4e5636fea7858d317f35ee4cf290b6578b1a",
+        "ev_7316e3f38c95d727c28a80c6509c696d9d419b7694474535f145a0d1af277a7f",
+        "ev_d21b832cd456a301e34ff089a9ee5b448e55153c8e024718fd20fbd650fd99cf"
+      ],
+      "observation": "42a457/42a45c register42a191 as an idle callback. The next loop calls43a508 at42a486; this invokes43a56c then43a6a4, which calls the registered42a191 before returning an input event. The unchanged engine callback runs player pass420f07, updating4621d4/4621d8/4621dc. Only afterward does42a62c call421969 and42a636 stop410522 when the refreshed live-player/team count is<=1."
+    },
+    {
+      "question": "How is the round timer restarted?",
+      "evidence": [
+        "ev_a6c352d2010e90e700ee1176a3fdd48dc7d8c34d8b2b7ca20913bf903f34db8c",
+        "ev_748f7575ae8501117ac5de38338d36611b917a09635c0d2458d15e52bbc2f610",
+        "ev_11787dce9c709bc87d20a2ee820af7581aced83c21f0801c334c34d16dfffa14"
+      ],
+      "observation": "New-round410b6e calls410494,4104c2,4104f0. The final call sets601b4 running and601a0 to the current wall time. First callback4105d2 then accrues only wall time since this new epoch. There is no separate survivor-cache reset or post-callback timer restart."
+    },
+    {
+      "question": "How does a results-screen delay affect the first new-round callback?",
+      "evidence": [
+        "ev_b3ef9226ab8e9d2b0b981fad0e6b4534935d57b26409f3c7c58fbcdfb0bc0df8",
+        "ev_2a7ae01eafb6ba35bb0e92fba305802f472c53cc7712cde314fc8d4dc83db3c8"
+      ],
+      "observation": "Results entry42a6e2..42a6e7 suspends battle callbacks with42a16f(1). Suspended42a191 returns before changing46496c. Local next-round initialization reenables battle and restarts the round timer but leaves46496c intact. Therefore after6000ms results and50ms until the next callback, native gameplay elapsed464958 is clamped to resource31=150 while round-timer elapsed601b8 is50. A1000ms countdown becomes850ms. Only the first-ever match entry42a468..42a46d explicitly samples46496c before the main loop."
+    }
+  ],
+  "boundary_driver_recommendation": [
+    "During results, advance wall time while suspending the battle callback; retain native cached counts and frame timestamp.",
+    "Invoke the original round initializer at the round boundary; do not copy updated Rust state into the original machine.",
+    "Advance wall time to the next frame and execute original42a191, or execute its original idle-dispatch path43a508.",
+    "Run original42a62c..42a63b survivor-stop guard after the battle callback.",
+    "Model gameplay elapsed and round-clock elapsed separately at boundaries: preserved46496c may produce a clamped150ms gameplay frame while freshly restarted601a0 yields a50ms timer increment."
+  ],
+  "validation": {
+    "cases": 32,
+    "participants": [2, 10],
+    "team_play": [false, true],
+    "countdown_ms": [0, 1000],
+    "results_delay_ms": [0, 6000],
+    "guard_orders": ["original callback then guard", "negative control guard then callback"],
+    "negative_control": "Moving the guard ahead of the callback stops the freshly restarted timer using the previous round's stale count. The next two callbacks retain running=0 and elapsed=0 despite refreshing all survivor caches."
+  },
+  "limitations": [
+    "The probe supplies empty Windows input/message queues and wall time through explicit platform hooks. It executes the original idle dispatcher and battle callback unchanged.",
+    "Results UI artwork, event handling and scoring presentation are outside this boundary probe; its suspension call and elapsed wall time are modeled explicitly.",
+    "Default Ghidra analysis does not define42a191 as a standalone function; direct immutable-byte Capstone decoding and native execution provide the instruction-level boundary evidence."
+  ]
+}

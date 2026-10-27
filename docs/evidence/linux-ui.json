@@ -1,0 +1,328 @@
+{
+  "passed": true,
+  "display": ":99",
+  "renderer": "native Macroquad on X11",
+  "cpu_sample_seconds": 1,
+  "cpu_seconds_per_thread": [
+    {
+      "tid": "33470",
+      "name": "bomberman",
+      "seconds": 0.04
+    },
+    {
+      "tid": "33484",
+      "name": "llvmpipe-0",
+      "seconds": 0.21
+    },
+    {
+      "tid": "33485",
+      "name": "llvmpipe-1",
+      "seconds": 0.21
+    },
+    {
+      "tid": "33486",
+      "name": "bomberman",
+      "seconds": 0.0
+    },
+    {
+      "tid": "33487",
+      "name": "bomberman",
+      "seconds": 0.0
+    },
+    {
+      "tid": "33488",
+      "name": "bomberm:disk$0",
+      "seconds": 0.0
+    },
+    {
+      "tid": "33489",
+      "name": "bomberman-audio",
+      "seconds": 0.0
+    },
+    {
+      "tid": "33490",
+      "name": "gilrs",
+      "seconds": 0.0
+    },
+    {
+      "tid": "33491",
+      "name": "gilrs",
+      "seconds": 0.0
+    }
+  ],
+  "controllers_detected": 0,
+  "checks": [
+    "menu navigation",
+    "participant count 2 and 10",
+    "arena and scheme selection",
+    "team assignment",
+    "match score target",
+    "team scoring restriction",
+    "round time",
+    "keyboard remapping",
+    "help",
+    "battle",
+    "pause and resume",
+    "resize 1100x600",
+    "fullscreen settings persistence",
+    "settings JSON persistence",
+    "clean exit"
+  ],
+  "limitations": [
+    "No physical gamepad was exercised.",
+    "Fullscreen checks on Xvfb verify the setting and continued rendering; desktop window-manager presentation requires a desktop session."
+  ],
+  "gold_roulette": {
+    "passed": true,
+    "seed": 42,
+    "participants": 10,
+    "controls": "all bots",
+    "round_seconds": 30,
+    "wins_target": 1,
+    "enclosure_depth": 3,
+    "observed_winner": "Cyan",
+    "observed_reward": "Skate",
+    "checks": [
+      "completed battle to results",
+      "native six-item wheel",
+      "Enter starts roulette",
+      "Space requests native deceleration",
+      "wheel settles on displayed reward",
+      "Enter rematches",
+      "new round countdown",
+      "clean exit"
+    ],
+    "note": "Wheel arithmetic has a separate original-x86 differential report. UI evidence verifies presentation and control wiring."
+  },
+  "graphics": {
+    "original_font": true,
+    "original_backgrounds": true,
+    "player_remaps": true,
+    "bomb_and_flame_owner_remaps": true,
+    "letterbox_after_resize": true,
+    "missing_blank_tile_sequences_leave_arena_background_visible": true
+  },
+  "windowed_mode": {
+    "passed": true,
+    "display": ":96",
+    "checks": [
+      {
+        "case": "windowed-overrides-saved-fullscreen",
+        "passed": true,
+        "fullscreen": false,
+        "flags": [
+          "--fullscreen",
+          "--windowed"
+        ],
+        "saved_before": true,
+        "resized": true,
+        "f11_both_directions": true
+      },
+      {
+        "case": "fullscreen-last-flag",
+        "passed": true,
+        "fullscreen": true,
+        "flags": [
+          "--windowed",
+          "--fullscreen"
+        ],
+        "saved_before": false,
+        "resized": false,
+        "f11_both_directions": true
+      },
+      {
+        "case": "saved-windowed-without-override",
+        "passed": true,
+        "fullscreen": false,
+        "flags": [],
+        "saved_before": false,
+        "resized": true,
+        "f11_both_directions": true
+      }
+    ],
+    "limitations": [
+      "Fullscreen EWMH property and settings changes were verified on Xvfb without a window manager; monitor-sized fullscreen presentation requires a desktop session.",
+      "No physical controller was exercised."
+    ],
+    "harness": "crates/bomberman/tests/verify_windowed.py",
+    "initial_window_size": [
+      960,
+      720
+    ],
+    "resized_window_size": [
+      1100,
+      600
+    ],
+    "letterbox_border_pixels_verified": true
+  },
+  "shared_keyboard_and_local_ai": {
+    "passed": true,
+    "display": ":96",
+    "input_source": "native X11 XTest events",
+    "observation": "debug-build F12 state snapshot after the real Macroquad input path and Simulation.step",
+    "checks": [
+      {
+        "case": "two-humans",
+        "passed": true,
+        "movement": [
+          "arrows separately",
+          "WASD separately",
+          "arrows and WASD simultaneously"
+        ],
+        "bombs": [
+          "Space separately",
+          "left Shift separately",
+          "Space and left Shift simultaneously"
+        ],
+        "positions_before": [
+          {
+            "x": 2000,
+            "y": 1800
+          },
+          {
+            "x": 58000,
+            "y": 37800
+          }
+        ],
+        "positions_after": [
+          {
+            "x": 2300,
+            "y": 1800
+          },
+          {
+            "x": 57700,
+            "y": 37800
+          }
+        ],
+        "simultaneous_bomb_owners": [
+          0,
+          1
+        ],
+        "unexpected_pause_or_menu": false
+      },
+      {
+        "case": "one-human-nine-bots",
+        "passed": true,
+        "participants": 10,
+        "humans": 1,
+        "bots": 9,
+        "bots_observed_moving": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          7,
+          8,
+          9
+        ],
+        "bomb_owners": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      }
+    ],
+    "limitations": [
+      "Virtual X11 key input verifies software keyboard handling; physical keyboard rollover limits vary by hardware.",
+      "No physical controller was exercised."
+    ],
+    "harness": "crates/bomberman/tests/verify_keyboard.py",
+    "source_unchanged": true,
+    "position_units": "hundredths of a pixel"
+  },
+  "fresh_battle_screenshot": {
+    "path": "dist/battle-preview.png",
+    "size": [
+      640,
+      480
+    ],
+    "frames": 360,
+    "seed": 1997,
+    "renderer": "release executable with native first-FRAM/CIMG placement and simulation-captured frames",
+    "passed": true
+  },
+  "verified_at_utc": "2026-10-27T09:51:39.659952+00:00",
+  "final_release_regression": {
+    "passed": true,
+    "display": ":95",
+    "renderer": "native Macroquad on X11",
+    "cpu_sample_seconds": 1,
+    "cpu_seconds_per_thread": [
+      {
+        "tid": "3509281",
+        "name": "bomberman",
+        "seconds": 0.02
+      },
+      {
+        "tid": "3509282",
+        "name": "llvmpipe-0",
+        "seconds": 0.22
+      },
+      {
+        "tid": "3509283",
+        "name": "llvmpipe-1",
+        "seconds": 0.21
+      },
+      {
+        "tid": "3509284",
+        "name": "bomberman",
+        "seconds": 0.0
+      },
+      {
+        "tid": "3509285",
+        "name": "bomberman",
+        "seconds": 0.0
+      },
+      {
+        "tid": "3509286",
+        "name": "bomberm:disk$0",
+        "seconds": 0.0
+      },
+      {
+        "tid": "3509287",
+        "name": "bomberman-audio",
+        "seconds": 0.0
+      },
+      {
+        "tid": "3509288",
+        "name": "gilrs",
+        "seconds": 0.0
+      },
+      {
+        "tid": "3509289",
+        "name": "gilrs",
+        "seconds": 0.0
+      }
+    ],
+    "controllers_detected": 0,
+    "checks": [
+      "menu navigation",
+      "participant count 2 and 10",
+      "arena and scheme selection",
+      "team assignment",
+      "match score target",
+      "team scoring restriction",
+      "round time",
+      "keyboard remapping",
+      "help",
+      "battle",
+      "pause and resume",
+      "resize 1100x600",
+      "fullscreen settings persistence",
+      "settings JSON persistence",
+      "clean exit"
+    ],
+    "limitations": [
+      "No physical gamepad was exercised.",
+      "Fullscreen checks on Xvfb verify the setting and continued rendering; desktop window-manager presentation requires a desktop session."
+    ]
+  },
+  "real_desktop_report": "linux-desktop.json"
+}

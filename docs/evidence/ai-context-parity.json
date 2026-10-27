@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "contexts": 768,
+  "native_bomb_projections": 2578,
+  "native_range": "0x424298..0x4243da",
+  "compared": "Every danger-grid cell",
+  "cases": [
+    "walls and bricks",
+    "stationary, kicked, airborne and held bombs",
+    "duds",
+    "negative Spooge delay",
+    "short fuses",
+    "visible/hidden items",
+    "overlapping threats",
+    "out-of-bounds flight and signed16 elapsed"
+  ],
+  "hooks": [],
+  "limitations": [
+    "This verifies production danger projection, not whole-game executable equivalence."
+  ]
+}

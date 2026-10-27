@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "fixtures": 128,
+  "source_multi_record_states": 3,
+  "native_entries": [
+    "0x41daa7",
+    "0x41db41",
+    "0x41c5e0",
+    "0x4156c7"
+  ],
+  "compared": [
+    "first FRAM image ID with unsigned frame modulo",
+    "separately queried FRAM metadata",
+    "actual palette-blit destination rectangle",
+    "native CIMG origin subtraction",
+    "all three supplied multi-record states choose only their first image"
+  ],
+  "hooks": [
+    "scratch allocation/free",
+    "final bitmap copy records destination rectangle"
+  ],
+  "limitations": [
+    "Image/frame records come from the validated imported cache; this compares native lookup and placement, not the CHFILE parser.",
+    "Opaque synthetic image indices and an identity palette isolate geometry; full color output has separate imported-artwork graphics checks.",
+    "Clipping edges and full application entry points are outside this probe."
+  ]
+}

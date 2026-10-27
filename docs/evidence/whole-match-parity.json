@@ -1,0 +1,961 @@
+{
+  "passed": true,
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "independent_native_memory": true,
+  "per_frame_state_reseeding": false,
+  "cases": 12,
+  "frames": 20354,
+  "completed_rounds": 16,
+  "completed_matches": 1,
+  "arenas": 11,
+  "participants": [
+    2,
+    10
+  ],
+  "includes_two_humans": true,
+  "includes_one_human_nine_bots": true,
+  "includes_team_play": true,
+  "entries": [
+    "0x42a191",
+    "original source-based round initializers"
+  ],
+  "compared": [
+    "RNG after every update",
+    "all terrain and bomb danger cells",
+    "all AI record bytes",
+    "player activity,position,facing,animation,inventory,disease and scores",
+    "all 165 item slot states,kind,frame,birth,age and deletion flags",
+    "active bomb modes,owner,palette,fuse,range,position and animation",
+    "active flame slots,shape,owner,palette,age and animation",
+    "ordered sound requests and all shared sound counters",
+    "integer round timer"
+  ],
+  "limitations": [
+    "The Windows entry point and results UI are outside the isolated original battle-engine trace.",
+    "Result-screen dwell is zero; source starts are fixed. Separate native probes cover shuffle and delayed round boundaries.",
+    "Raster output and mixer admission/lifecycle are checked separately; physical presentation latency is unmeasured."
+  ],
+  "results": [
+    {
+      "passed": true,
+      "frames": 65,
+      "completed_rounds": 1,
+      "completed_matches": 0,
+      "rounds": [
+        {
+          "ending_frame": 65,
+          "scores": [
+            0,
+            0
+          ],
+          "kills": [
+            -1,
+            -1
+          ],
+          "winner": null
+        }
+      ],
+      "participants": 2,
+      "humans": 2,
+      "team_play": false,
+      "arena": 1,
+      "seed": 2001,
+      "countdown_ms": 0,
+      "elapsed_schedule_ms": [
+        16,
+        33,
+        50,
+        75,
+        150
+      ],
+      "entry": "0x42a191",
+      "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+      "independent_native_memory": true,
+      "per_frame_state_reseeding": false,
+      "compared": [
+        "RNG after every update",
+        "all terrain and bomb danger cells",
+        "all AI record bytes",
+        "player activity,position,facing,animation,inventory,disease and scores",
+        "all 165 item slot states,kind,frame,birth,age and deletion flags",
+        "active bomb modes,owner,palette,fuse,range,position and animation",
+        "active flame slots,shape,owner,palette,age and animation",
+        "ordered sound requests and all shared sound counters",
+        "integer round timer"
+      ],
+      "hooks": [
+        "time/input platform boundaries",
+        "validated original resources and MASTER sequence metadata",
+        "physical graphics/audio I/O and diagnostic allocation"
+      ],
+      "limitations": [
+        "The Windows entry point and results UI are outside the isolated original battle-engine trace.",
+        "Result-screen dwell is zero; source starts are fixed. Separate native probes cover shuffle and delayed round boundaries.",
+        "Raster output and mixer admission/lifecycle are checked separately; physical presentation latency is unmeasured."
+      ]
+    },
+    {
+      "passed": true,
+      "frames": 2300,
+      "completed_rounds": 1,
+      "completed_matches": 0,
+      "rounds": [
+        {
+          "ending_frame": 2300,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "kills": [
+            1,
+            2,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": null
+        }
+      ],
+      "participants": 10,
+      "humans": 0,
+      "team_play": false,
+      "arena": 3,
+      "seed": 2003,
+      "countdown_ms": 0,
+      "elapsed_schedule_ms": [
+        16,
+        33,
+        50,
+        75,
+        150
+      ],
+      "entry": "0x42a191",
+      "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+      "independent_native_memory": true,
+      "per_frame_state_reseeding": false,
+      "compared": [
+        "RNG after every update",
+        "all terrain and bomb danger cells",
+        "all AI record bytes",
+        "player activity,position,facing,animation,inventory,disease and scores",
+        "all 165 item slot states,kind,frame,birth,age and deletion flags",
+        "active bomb modes,owner,palette,fuse,range,position and animation",
+        "active flame slots,shape,owner,palette,age and animation",
+        "ordered sound requests and all shared sound counters",
+        "integer round timer"
+      ],
+      "hooks": [
+        "time/input platform boundaries",
+        "validated original resources and MASTER sequence metadata",
+        "physical graphics/audio I/O and diagnostic allocation"
+      ],
+      "limitations": [
+        "The Windows entry point and results UI are outside the isolated original battle-engine trace.",
+        "Result-screen dwell is zero; source starts are fixed. Separate native probes cover shuffle and delayed round boundaries.",
+        "Raster output and mixer admission/lifecycle are checked separately; physical presentation latency is unmeasured."
+      ]
+    },
+    {
+      "passed": true,
+      "frames": 2300,
+      "completed_rounds": 1,
+      "completed_matches": 0,
+      "rounds": [
+        {
+          "ending_frame": 2300,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "kills": [
+            0,
+            0,
+            2,
+            0,
+            2,
+            0,
+            1,
+            1,
+            0,
+            0
+          ],
+          "winner": null
+        }
+      ],
+      "participants": 10,
+      "humans": 0,
+      "team_play": false,
+      "arena": 4,
+      "seed": 2004,
+      "countdown_ms": 0,
+      "elapsed_schedule_ms": [
+        16,
+        33,
+        50,
+        75,
+        150
+      ],
+      "entry": "0x42a191",
+      "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+      "independent_native_memory": true,
+      "per_frame_state_reseeding": false,
+      "compared": [
+        "RNG after every update",
+        "all terrain and bomb danger cells",
+        "all AI record bytes",
+        "player activity,position,facing,animation,inventory,disease and scores",
+        "all 165 item slot states,kind,frame,birth,age and deletion flags",
+        "active bomb modes,owner,palette,fuse,range,position and animation",
+        "active flame slots,shape,owner,palette,age and animation",
+        "ordered sound requests and all shared sound counters",
+        "integer round timer"
+      ],
+      "hooks": [
+        "time/input platform boundaries",
+        "validated original resources and MASTER sequence metadata",
+        "physical graphics/audio I/O and diagnostic allocation"
+      ],
+      "limitations": [
+        "The Windows entry point and results UI are outside the isolated original battle-engine trace.",
+        "Result-screen dwell is zero; source starts are fixed. Separate native probes cover shuffle and delayed round boundaries.",
+        "Raster output and mixer admission/lifecycle are checked separately; physical presentation latency is unmeasured."
+      ]
+    },
+    {
+      "passed": true,
+      "frames": 1723,
+      "completed_rounds": 1,
+      "completed_matches": 0,
+      "rounds": [
+        {
+          "ending_frame": 1723,
+          "scores": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "kills": [
+            0,
+            2,
+            0,
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            2
+          ],
+          "winner": 1
+        }
+      ],
+      "participants": 10,
+      "humans": 0,
+      "team_play": false,
+      "arena": 5,
+      "seed": 2005,
+      "countdown_ms": 0,
+      "elapsed_schedule_ms": [
+        16,
+        33,
+        50,
+        75,
+        150
+      ],
+      "entry": "0x42a191",
+      "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+      "independent_native_memory": true,
+      "per_frame_state_reseeding": false,
+      "compared": [
+        "RNG after every update",
+        "all terrain and bomb danger cells",
+        "all AI record bytes",
+        "player activity,position,facing,animation,inventory,disease and scores",
+        "all 165 item slot states,kind,frame,birth,age and deletion flags",
+        "active bomb modes,owner,palette,fuse,range,position and animation",
+        "active flame slots,shape,owner,palette,age and animation",
+        "ordered sound requests and all shared sound counters",
+        "integer round timer"
+      ],
+      "hooks": [
+        "time/input platform boundaries",
+        "validated original resources and MASTER sequence metadata",
+        "physical graphics/audio I/O and diagnostic allocation"
+      ],
+      "limitations": [
+        "The Windows entry point and results UI are outside the isolated original battle-engine trace.",
+        "Result-screen dwell is zero; source starts are fixed. Separate native probes cover shuffle and delayed round boundaries.",
+        "Raster output and mixer admission/lifecycle are checked separately; physical presentation latency is unmeasured."
+      ]
+    },
+    {
+      "passed": true,
+      "frames": 2300,
+      "completed_rounds": 1,
+      "completed_matches": 0,
+      "rounds": [
+        {
+          "ending_frame": 2300,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "kills": [
+            -1,
+            2,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          "winner": null
+        }
+      ],
+      "participants": 10,
+      "humans": 0,
+      "team_play": false,
+      "arena": 6,
+      "seed": 2006,
+      "countdown_ms": 0,
+      "elapsed_schedule_ms": [
+        16,
+        33,
+        50,
+        75,
+        150
+      ],
+      "entry": "0x42a191",
+      "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+      "independent_native_memory": true,
+      "per_frame_state_reseeding": false,
+      "compared": [
+        "RNG after every update",
+        "all terrain and bomb danger cells",
+        "all AI record bytes",
+        "player activity,position,facing,animation,inventory,disease and scores",
+        "all 165 item slot states,kind,frame,birth,age and deletion flags",
+        "active bomb modes,owner,palette,fuse,range,position and animation",
+        "active flame slots,shape,owner,palette,age and animation",
+        "ordered sound requests and all shared sound counters",
+        "integer round timer"
+      ],
+      "hooks": [
+        "time/input platform boundaries",
+        "validated original resources and MASTER sequence metadata",
+        "physical graphics/audio I/O and diagnostic allocation"
+      ],
+      "limitations": [
+        "The Windows entry point and results UI are outside the isolated original battle-engine trace.",
+        "Result-screen dwell is zero; source starts are fixed. Separate native probes cover shuffle and delayed round boundaries.",
+        "Raster output and mixer admission/lifecycle are checked separately; physical presentation latency is unmeasured."
+      ]
+    },
+    {
+      "passed": true,
+      "frames": 1185,
+      "completed_rounds": 1,
+      "completed_matches": 0,
+      "rounds": [
+        {
+          "ending_frame": 1185,
+          "scores": [
+            0,
+            1,
+            0,
+            1,
+            0,
+            1,
+            0,
+            1,
+            0,
+            1
+          ],
+          "kills": [
+            2,
+            1,
+            0,
+            0,
+            -1,
+            0,
+            1,
+            -1,
+            -1,
+            2
+          ],
+          "winner": 9
+        }
+      ],
+      "participants": 10,
+      "humans": 0,
+      "team_play": true,
+      "arena": 7,
+      "seed": 2007,
+      "countdown_ms": 0,
+      "elapsed_schedule_ms": [
+        16,
+        33,
+        50,
+        75,
+        150
+      ],
+      "entry": "0x42a191",
+      "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+      "independent_native_memory": true,
+      "per_frame_state_reseeding": false,
+      "compared": [
+        "RNG after every update",
+        "all terrain and bomb danger cells",
+        "all AI record bytes",
+        "player activity,position,facing,animation,inventory,disease and scores",
+        "all 165 item slot states,kind,frame,birth,age and deletion flags",
+        "active bomb modes,owner,palette,fuse,range,position and animation",
+        "active flame slots,shape,owner,palette,age and animation",
+        "ordered sound requests and all shared sound counters",
+        "integer round timer"
+      ],
+      "hooks": [
+        "time/input platform boundaries",
+        "validated original resources and MASTER sequence metadata",
+        "physical graphics/audio I/O and diagnostic allocation"
+      ],
+      "limitations": [
+        "The Windows entry point and results UI are outside the isolated original battle-engine trace.",
+        "Result-screen dwell is zero; source starts are fixed. Separate native probes cover shuffle and delayed round boundaries.",
+        "Raster output and mixer admission/lifecycle are checked separately; physical presentation latency is unmeasured."
+      ]
+    },
+    {
+      "passed": true,
+      "frames": 2300,
+      "completed_rounds": 1,
+      "completed_matches": 0,
+      "rounds": [
+        {
+          "ending_frame": 2300,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "kills": [
+            -1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            -1
+          ],
+          "winner": null
+        }
+      ],
+      "participants": 10,
+      "humans": 0,
+      "team_play": false,
+      "arena": 8,
+      "seed": 2008,
+      "countdown_ms": 0,
+      "elapsed_schedule_ms": [
+        16,
+        33,
+        50,
+        75,
+        150
+      ],
+      "entry": "0x42a191",
+      "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+      "independent_native_memory": true,
+      "per_frame_state_reseeding": false,
+      "compared": [
+        "RNG after every update",
+        "all terrain and bomb danger cells",
+        "all AI record bytes",
+        "player activity,position,facing,animation,inventory,disease and scores",
+        "all 165 item slot states,kind,frame,birth,age and deletion flags",
+        "active bomb modes,owner,palette,fuse,range,position and animation",
+        "active flame slots,shape,owner,palette,age and animation",
+        "ordered sound requests and all shared sound counters",
+        "integer round timer"
+      ],
+      "hooks": [
+        "time/input platform boundaries",
+        "validated original resources and MASTER sequence metadata",
+        "physical graphics/audio I/O and diagnostic allocation"
+      ],
+      "limitations": [
+        "The Windows entry point and results UI are outside the isolated original battle-engine trace.",
+        "Result-screen dwell is zero; source starts are fixed. Separate native probes cover shuffle and delayed round boundaries.",
+        "Raster output and mixer admission/lifecycle are checked separately; physical presentation latency is unmeasured."
+      ]
+    },
+    {
+      "passed": true,
+      "frames": 1293,
+      "completed_rounds": 1,
+      "completed_matches": 0,
+      "rounds": [
+        {
+          "ending_frame": 1293,
+          "scores": [
+            0,
+            1,
+            0,
+            1,
+            0,
+            1,
+            0,
+            1,
+            0,
+            1
+          ],
+          "kills": [
+            1,
+            -1,
+            -1,
+            1,
+            0,
+            0,
+            -1,
+            0,
+            0,
+            1
+          ],
+          "winner": 3
+        }
+      ],
+      "participants": 10,
+      "humans": 0,
+      "team_play": true,
+      "arena": 9,
+      "seed": 2009,
+      "countdown_ms": 0,
+      "elapsed_schedule_ms": [
+        16,
+        33,
+        50,
+        75,
+        150
+      ],
+      "entry": "0x42a191",
+      "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+      "independent_native_memory": true,
+      "per_frame_state_reseeding": false,
+      "compared": [
+        "RNG after every update",
+        "all terrain and bomb danger cells",
+        "all AI record bytes",
+        "player activity,position,facing,animation,inventory,disease and scores",
+        "all 165 item slot states,kind,frame,birth,age and deletion flags",
+        "active bomb modes,owner,palette,fuse,range,position and animation",
+        "active flame slots,shape,owner,palette,age and animation",
+        "ordered sound requests and all shared sound counters",
+        "integer round timer"
+      ],
+      "hooks": [
+        "time/input platform boundaries",
+        "validated original resources and MASTER sequence metadata",
+        "physical graphics/audio I/O and diagnostic allocation"
+      ],
+      "limitations": [
+        "The Windows entry point and results UI are outside the isolated original battle-engine trace.",
+        "Result-screen dwell is zero; source starts are fixed. Separate native probes cover shuffle and delayed round boundaries.",
+        "Raster output and mixer admission/lifecycle are checked separately; physical presentation latency is unmeasured."
+      ]
+    },
+    {
+      "passed": true,
+      "frames": 1376,
+      "completed_rounds": 1,
+      "completed_matches": 0,
+      "rounds": [
+        {
+          "ending_frame": 1376,
+          "scores": [
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "kills": [
+            1,
+            -1,
+            0,
+            0,
+            -1,
+            1,
+            1,
+            0,
+            0,
+            0
+          ],
+          "winner": 3
+        }
+      ],
+      "participants": 10,
+      "humans": 0,
+      "team_play": false,
+      "arena": 10,
+      "seed": 2010,
+      "countdown_ms": 0,
+      "elapsed_schedule_ms": [
+        16,
+        33,
+        50,
+        75,
+        150
+      ],
+      "entry": "0x42a191",
+      "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+      "independent_native_memory": true,
+      "per_frame_state_reseeding": false,
+      "compared": [
+        "RNG after every update",
+        "all terrain and bomb danger cells",
+        "all AI record bytes",
+        "player activity,position,facing,animation,inventory,disease and scores",
+        "all 165 item slot states,kind,frame,birth,age and deletion flags",
+        "active bomb modes,owner,palette,fuse,range,position and animation",
+        "active flame slots,shape,owner,palette,age and animation",
+        "ordered sound requests and all shared sound counters",
+        "integer round timer"
+      ],
+      "hooks": [
+        "time/input platform boundaries",
+        "validated original resources and MASTER sequence metadata",
+        "physical graphics/audio I/O and diagnostic allocation"
+      ],
+      "limitations": [
+        "The Windows entry point and results UI are outside the isolated original battle-engine trace.",
+        "Result-screen dwell is zero; source starts are fixed. Separate native probes cover shuffle and delayed round boundaries.",
+        "Raster output and mixer admission/lifecycle are checked separately; physical presentation latency is unmeasured."
+      ]
+    },
+    {
+      "passed": true,
+      "frames": 750,
+      "completed_rounds": 1,
+      "completed_matches": 0,
+      "rounds": [
+        {
+          "ending_frame": 750,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "kills": [
+            -1,
+            -1,
+            0,
+            0,
+            -1,
+            0,
+            1,
+            2,
+            -1,
+            -1
+          ],
+          "winner": null
+        }
+      ],
+      "participants": 10,
+      "humans": 1,
+      "team_play": false,
+      "arena": 2,
+      "seed": 1998,
+      "countdown_ms": 0,
+      "entry": "0x42a191",
+      "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+      "independent_native_memory": true,
+      "per_frame_state_reseeding": false,
+      "compared": [
+        "RNG after every update",
+        "all terrain and bomb danger cells",
+        "all AI record bytes",
+        "player activity,position,facing,animation,inventory,disease and scores",
+        "all 165 item slot states,kind,frame,birth,age and deletion flags",
+        "active bomb modes,owner,palette,fuse,range,position and animation",
+        "active flame slots,shape,owner,palette,age and animation",
+        "ordered sound requests and all shared sound counters",
+        "integer round timer"
+      ],
+      "hooks": [
+        "time/input platform boundaries",
+        "validated original resources and MASTER sequence metadata",
+        "physical graphics/audio I/O and diagnostic allocation"
+      ],
+      "limitations": [
+        "The Windows entry point and results UI are outside the isolated original battle-engine trace.",
+        "Result-screen dwell is zero; source starts are fixed. Separate native probes cover shuffle and delayed round boundaries.",
+        "Raster output and mixer admission/lifecycle are checked separately; physical presentation latency is unmeasured."
+      ]
+    },
+    {
+      "passed": true,
+      "frames": 2889,
+      "completed_rounds": 3,
+      "completed_matches": 0,
+      "rounds": [
+        {
+          "ending_frame": 994,
+          "scores": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "kills": [
+            0,
+            1,
+            0,
+            2,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": null
+        },
+        {
+          "ending_frame": 1895,
+          "scores": [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "kills": [
+            1,
+            1,
+            1,
+            2,
+            1,
+            1,
+            -1,
+            -1,
+            0,
+            0
+          ],
+          "winner": 2
+        },
+        {
+          "ending_frame": 2889,
+          "scores": [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "kills": [
+            1,
+            0,
+            0,
+            2,
+            2,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          "winner": null
+        }
+      ],
+      "participants": 10,
+      "humans": 0,
+      "team_play": false,
+      "arena": 0,
+      "seed": 1997,
+      "countdown_ms": 0,
+      "elapsed_schedule_ms": [
+        150
+      ],
+      "entry": "0x42a191",
+      "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+      "independent_native_memory": true,
+      "per_frame_state_reseeding": false,
+      "compared": [
+        "RNG after every update",
+        "all terrain and bomb danger cells",
+        "all AI record bytes",
+        "player activity,position,facing,animation,inventory,disease and scores",
+        "all 165 item slot states,kind,frame,birth,age and deletion flags",
+        "active bomb modes,owner,palette,fuse,range,position and animation",
+        "active flame slots,shape,owner,palette,age and animation",
+        "ordered sound requests and all shared sound counters",
+        "integer round timer"
+      ],
+      "hooks": [
+        "time/input platform boundaries",
+        "validated original resources and MASTER sequence metadata",
+        "physical graphics/audio I/O and diagnostic allocation"
+      ],
+      "limitations": [
+        "The Windows entry point and results UI are outside the isolated original battle-engine trace.",
+        "Result-screen dwell is zero; source starts are fixed. Separate native probes cover shuffle and delayed round boundaries.",
+        "Raster output and mixer admission/lifecycle are checked separately; physical presentation latency is unmeasured."
+      ]
+    },
+    {
+      "passed": true,
+      "frames": 1873,
+      "completed_rounds": 3,
+      "completed_matches": 1,
+      "rounds": [
+        {
+          "ending_frame": 304,
+          "scores": [
+            1,
+            0
+          ],
+          "kills": [
+            0,
+            -1
+          ],
+          "winner": 0
+        },
+        {
+          "ending_frame": 1199,
+          "scores": [
+            1,
+            1
+          ],
+          "kills": [
+            0,
+            0
+          ],
+          "winner": 1
+        },
+        {
+          "ending_frame": 1873,
+          "scores": [
+            2,
+            1
+          ],
+          "kills": [
+            0,
+            0
+          ],
+          "winner": 0
+        }
+      ],
+      "participants": 2,
+      "humans": 0,
+      "team_play": false,
+      "arena": 0,
+      "seed": 1997,
+      "countdown_ms": 0,
+      "elapsed_schedule_ms": [
+        150
+      ],
+      "entry": "0x42a191",
+      "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+      "independent_native_memory": true,
+      "per_frame_state_reseeding": false,
+      "compared": [
+        "RNG after every update",
+        "all terrain and bomb danger cells",
+        "all AI record bytes",
+        "player activity,position,facing,animation,inventory,disease and scores",
+        "all 165 item slot states,kind,frame,birth,age and deletion flags",
+        "active bomb modes,owner,palette,fuse,range,position and animation",
+        "active flame slots,shape,owner,palette,age and animation",
+        "ordered sound requests and all shared sound counters",
+        "integer round timer"
+      ],
+      "hooks": [
+        "time/input platform boundaries",
+        "validated original resources and MASTER sequence metadata",
+        "physical graphics/audio I/O and diagnostic allocation"
+      ],
+      "limitations": [
+        "The Windows entry point and results UI are outside the isolated original battle-engine trace.",
+        "Result-screen dwell is zero; source starts are fixed. Separate native probes cover shuffle and delayed round boundaries.",
+        "Raster output and mixer admission/lifecycle are checked separately; physical presentation latency is unmeasured."
+      ]
+    }
+  ]
+}

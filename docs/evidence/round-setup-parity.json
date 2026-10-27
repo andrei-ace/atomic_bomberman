@@ -1,0 +1,33 @@
+{
+  "passed": true,
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "native_round_block_cases": 22,
+  "rust_initialization_cases": 22,
+  "arenas": 11,
+  "participants": [
+    2,
+    10
+  ],
+  "native_blocks": [
+    "0x410cae..0x410d29",
+    "0x410e9d..0x410eb1"
+  ],
+  "source_inputs": [
+    "frozen GameConfig scheme rows/density/power rules",
+    "ten saved match start tiles",
+    "validated original arena extra command records"
+  ],
+  "compared": [
+    "complete terrain,bomb,item,flame,extra and player pool bytes",
+    "all AI bytes and input history bytes",
+    "Gold particle pool preservation",
+    "timer globals,round stat and retained score fields",
+    "frame/remainder/stun/freshness/carried-pointer/Fire-God/regeneration persistence",
+    "final native RNG state"
+  ],
+  "limitations": [
+    "Native graphical palette/music output is omitted; original terrain/entity/reset/parser code executes unchanged.",
+    "The Rust initial-state proof uses current fixtures with random starts disabled, the original dud-schedule draw and original ten-slot AI phase initialization.",
+    "The Windows message-paint scheduler and first cached-survivor/display priming are outside the round-initializer helper."
+  ]
+}

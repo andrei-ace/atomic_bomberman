@@ -1,0 +1,93 @@
+{
+  "arenas": [
+    {
+      "arena": "New Green Acres",
+      "deaths": 32,
+      "matches": 0,
+      "simulated_ms": 600000,
+      "team_play": false
+    },
+    {
+      "arena": "Classic Green Acres",
+      "deaths": 35,
+      "matches": 0,
+      "simulated_ms": 600000,
+      "team_play": true
+    },
+    {
+      "arena": "Hockey Rink",
+      "deaths": 30,
+      "matches": 0,
+      "simulated_ms": 600000,
+      "team_play": false
+    },
+    {
+      "arena": "Ancient Egypt",
+      "deaths": 32,
+      "matches": 1,
+      "simulated_ms": 600000,
+      "team_play": true
+    },
+    {
+      "arena": "Coal Mine",
+      "deaths": 29,
+      "matches": 0,
+      "simulated_ms": 600000,
+      "team_play": false
+    },
+    {
+      "arena": "Beach",
+      "deaths": 28,
+      "matches": 0,
+      "simulated_ms": 600000,
+      "team_play": true
+    },
+    {
+      "arena": "Aliens",
+      "deaths": 31,
+      "matches": 0,
+      "simulated_ms": 600000,
+      "team_play": false
+    },
+    {
+      "arena": "Haunted House",
+      "deaths": 32,
+      "matches": 1,
+      "simulated_ms": 600000,
+      "team_play": true
+    },
+    {
+      "arena": "Under the Ocean",
+      "deaths": 34,
+      "matches": 0,
+      "simulated_ms": 600000,
+      "team_play": false
+    },
+    {
+      "arena": "Deep Forest",
+      "deaths": 34,
+      "matches": 0,
+      "simulated_ms": 600000,
+      "team_play": true
+    },
+    {
+      "arena": "Inner City",
+      "deaths": 72,
+      "matches": 1,
+      "simulated_ms": 600000,
+      "team_play": false
+    }
+  ],
+  "invariants": [
+    "active living player tiles in bounds after deferred round spawn",
+    "ground bomb tiles and all bomb owners valid",
+    "unique bomb IDs"
+  ],
+  "matrix_cases": 1496,
+  "matrix_duration_ms_per_case": 3000,
+  "schemes": 68,
+  "stress_countdown_ms": 0,
+  "stress_players": 10,
+  "stress_round_over_ms": 100,
+  "stress_seed_base": 100
+}

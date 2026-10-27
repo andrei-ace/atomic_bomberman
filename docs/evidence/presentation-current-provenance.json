@@ -1,0 +1,49 @@
+{
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "evidence": [
+    {
+      "address": "0x44aed5",
+      "evidence_id": "ev_62951ccb1a50dbea281dc1bb71cece6e37a531f30451564dd986dfb9cca2565d",
+      "role": "Unmodified scalar and MMX zero-transparent raster copy",
+      "source": "crates/bomberman/evidence/native-transparent-copy.c"
+    },
+    {
+      "address": "0x4428e4",
+      "evidence_id": "ev_ca37fa5ba784e16a6a7fb1ee4fadef8766ae3ff5a076da2b5c11e3d3d061b940",
+      "role": "Native bitmap-copy calling convention and pitch parameters",
+      "source": "crates/bomberman/evidence/native-transparent-copy-wrapper.c"
+    },
+    {
+      "address": "0x427859",
+      "evidence_id": "ev_8d77931eca48ead21ce55b0b866e677bcf1db1deef8a8191e9ce7f769bea88a6",
+      "role": "Inclusive resource8 concurrency admission before cache lookup",
+      "source": "crates/bomberman/evidence/native-audio-admission.asm"
+    },
+    {
+      "address": "0x427374",
+      "evidence_id": "ev_81a4f0b5f5438e18e8df118bb1e1d1c5363e548e541818fcc29281835df06120",
+      "role": "Missed by default Ghidra function analysis; exact48-byte body read and disassembled, then executed in Unicorn for callback comparisons",
+      "complete_bytes": 48,
+      "source": "crates/bomberman/evidence/native-audio-completion.asm"
+    }
+  ],
+  "reports": [
+    "presentation-pixels-parity.json",
+    "audio-voices-parity.json",
+    "linux-hardware.json"
+  ],
+  "inferences": [
+    {
+      "behavior": "Exploding brick palette was incorrectly omitted by frontend",
+      "sources": [
+        "0x42331c call at0x4241dc..0x4241f7 copies bomb+3c intoECX",
+        "0x426d06 call at0x426f4d..0x426f6a selects flame+3c andqueuescolor"
+      ],
+      "verification": "11arena×10color pixel fixtures against original blitter"
+    }
+  ],
+  "limitations": [
+    "Isolated pixel and admission routines are compared; full Windows application graphics/audio scheduling remains a separate boundary.",
+    "The hardware inventory contains no physical device observations beyond device/desktop absence; virtual diagnostic tests do not pass physical acceptance."
+  ]
+}

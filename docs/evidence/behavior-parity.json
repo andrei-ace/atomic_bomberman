@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "clock_updates": 4096,
+  "sound_selections": 4096,
+  "mixed_sound_operations": 4096,
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "entries": {
+    "clock": "0x42a191..0x42a1ed",
+    "sound_shuffle": "0x427961",
+    "sound_exact": "0x4278f2",
+    "sound_throttled": "0x427abb"
+  },
+  "compared": [
+    "clamped elapsed",
+    "timestamp wrap",
+    "wall elapsed",
+    "selected sound IDs",
+    "every sound play count",
+    "final shared RNG state"
+  ],
+  "hooks": [
+    "timeGetTime helper",
+    "resource31 accessor",
+    "TLS seed pointer",
+    "filename lookup and audio output"
+  ],
+  "limitations": [
+    "No Windows application entry point executes.",
+    "Clock cap uses supplied resource31=150.",
+    "Sound playback hardware is outside routine equivalence."
+  ]
+}

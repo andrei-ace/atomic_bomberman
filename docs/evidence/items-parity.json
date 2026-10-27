@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "fixtures": 554,
+  "cases": {
+    "pass": 192,
+    "spawn": 64,
+    "reveal": 192,
+    "relocate": 64,
+    "inventory": 42
+  },
+  "native_entries": [
+    "0x424f89",
+    "0x425383",
+    "0x425107",
+    "0x425704",
+    "0x4214bc"
+  ],
+  "compared": [
+    "every item active state, type, pending deletion flag, unsigned birth stamp, frame and signed update age",
+    "old-frame/kind queue snapshot and all terrain cells",
+    "relocation/swaps preserve full native item metadata and zero the source where original memset does",
+    "all fifteen initial inventory bytes including unused disease/super/random bytes and reserved byte14",
+    "final shared RNG state"
+  ],
+  "hooks": [
+    "resource values from the supplied game and scheme/Gold fixtures",
+    "graphics queue captures frame and tile; no native parser or raster code executes",
+    "network notifications captured as output; no networking runs"
+  ],
+  "limitations": [
+    "This proves isolated lifecycle/initialization equivalence, not a complete original Windows match.",
+    "Original network-only side effects are outside the local-battle scope; native fourth-visible-update age is preserved.",
+    "Reserved inventory ID14 remains zero in shipped resources, schemes and Gold rewards."
+  ]
+}

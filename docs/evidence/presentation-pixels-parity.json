@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "asset_manifest_sha256": "d3b83beeb76f9aecf0435468a94c2f7bda722e4e845c9f1af5a2da5b7aababbd",
+  "fixtures": 257,
+  "canvas_pixels_compared": 78950400,
+  "coverage": {
+    "source_pixels": 1398980,
+    "transparent_pixels": 1128878,
+    "offscreen_cases": 58,
+    "mmx_cases": 128,
+    "scalar_cases": 129
+  },
+  "pixel_fingerprint_sha256": "0f3ce525c107b014b468b5b145ab8f8ea9970fdb7c85f5eea9311614ae84341e",
+  "native_entries": [
+    "0x4156c7",
+    "0x41c5e0",
+    "0x4428e4",
+    "0x44aed5"
+  ],
+  "compared": [
+    "all rendered RGBA pixels after explicit GL-bottom-left to DIB-top-left row normalization",
+    "actual imported indexed sprite pixels",
+    "all ten player remaps",
+    "native scalar and MMX transparent copy",
+    "CIMG origins and clipping against every canvas edge",
+    "production Macroquad texture, palette and sprite paths"
+  ],
+  "hooks": [
+    "scratch allocator returns a bounded mapped buffer",
+    "scratch free is a no-op"
+  ],
+  "limitations": [
+    "The validated imported cache supplies decoded image records; original CHFILE parsing is a separate boundary.",
+    "These are actual native sprite raster and production GPU comparisons, not a complete original application screenshot or monitor colorimetry comparison."
+  ]
+}

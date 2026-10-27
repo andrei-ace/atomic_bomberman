@@ -1,0 +1,35 @@
+{
+  "backend": "production audio_output::prepare and quad_snd ALSA/PipeWire mixer",
+  "channels": [
+    {
+      "attempts": 1,
+      "channel": "left",
+      "mixer_drained": true,
+      "mixer_elapsed_ms": 553,
+      "pending_after_play": 1
+    },
+    {
+      "attempts": 1,
+      "channel": "right",
+      "mixer_drained": true,
+      "mixer_elapsed_ms": 483,
+      "pending_after_play": 1
+    }
+  ],
+  "graphics_context_created": false,
+  "heard_correct_channel_user_confirmed": null,
+  "limitations": [
+    "Successful mixer consumption does not establish that the user heard both physical speakers; hearing confirmation is recorded separately.",
+    "User confirmed the actual game sounds; left/right spatial separation was not separately confirmed."
+  ],
+  "status": "game_audio_user_confirmed",
+  "tone": {
+    "amplitude": 0.15,
+    "channels": 2,
+    "duration_ms": 500,
+    "format": "PCM signed16 little endian",
+    "frequency_hz": 440,
+    "sample_rate_hz": 44100
+  },
+  "user_game_audio_confirmation": "audio seems to work, I heard the game sounds"
+}

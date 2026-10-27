@@ -1,0 +1,18 @@
+{
+  "executable_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "passed": true,
+  "frames": 1024,
+  "fingerprint": "0xf541b0c469a23f0d",
+  "coverage": [
+    "Logical Brick and Floor source cells; absent/ordinary/rare/already-visible source slots; inactive stale rare types.",
+    "Ordinary-item swap, empty-brick relocation, exhausted searches, out-of-bounds source.",
+    "Native elapsed counter39/40 boundary and exact RNG,states,retained kinds,animation counters across165slots."
+  ],
+  "hooks": [
+    "Same resource/clock/presentation hooks as compare_hazards.py;425107,42be0b,RNG,item queries and copies execute original instructions."
+  ],
+  "limitations": [
+    "This comparison covers item state/type/frame/RNG; birth stamps, pending deletion and update ages are covered by items-parity.json.",
+    "This is routine equivalence under explicit clock fixtures, not a running original Windows game."
+  ]
+}

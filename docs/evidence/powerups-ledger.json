@@ -1,0 +1,59 @@
+{
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "evidence_type": "original x86 execution, assembly, and integration regressions",
+  "findings": [
+    {
+      "entry": "0x41e21e",
+      "evidence_id": "ev_6599b1a3adb4a07b1f850542635b8b8a589e888d04248566d129d7893afd83fc",
+      "behavior": "Increment inventory bytes with wrapping before per-kind caps; Jelly group135, ordinary group400, roulette-onlyBrake has no ground-pickup effect or default sound. Counter milestone7/12/... overrides group1400; >50 resets7."
+    },
+    {
+      "entry": "0x41e21e",
+      "evidence_id": "ev_6599b1a3adb4a07b1f850542635b8b8a589e888d04248566d129d7893afd83fc",
+      "behavior": "Random retries at most200 with forbidden kinds; exhausted search keeps last rejected kind for common cap/counter tail without applying its effect."
+    },
+    {
+      "entry": "0x41e16a / 0x425c10",
+      "evidence_ids": [
+        "ev_d4879a97fc5f92eb366ddc9726e2c33f191340aad4138e061d27404f95ab3d12",
+        "ev_10f297f10e79de727a5c54ddbc78a67d76ff12738b0f50df6faa907851f3f767"
+      ],
+      "behavior": "Conflict exclusions spill only quantities above scheme-born baseline. IDs5/6/7/9/10 spill once then collapse to baseline; otherIDs spill per extra byte. Losing trigger invokes original bomb conversion."
+    },
+    {
+      "entry": "0x41dbfe",
+      "evidence_id": "ev_4f6208d7f5d75a3e84cdac811170d735a790eb30b29b5d5a1e683802e52a6be1",
+      "behavior": "Death release iterates15IDs in ascending order, preserves scheme-born baseline, and uses the same collapsed/per-unit distinction. Brake scatter is skipped; acquired brake count still decreases."
+    },
+    {
+      "entry": "0x41dfb6",
+      "evidence_id": "ev_8fbd7e722f884f4ef435980e76e255634ba99d71b61188f773b8157454cef14e",
+      "behavior": "Disease selection and audio consume shared RNG before activation. Swap is immediate, preserves existing disease timers, and rejects invalid partners up to200 times. Otherdiseases setelapsed1,duration300*50,andfreshness10."
+    },
+    {
+      "entry": "0x41df4c / 0x41f65c..0x41f871",
+      "behavior": "Cure clears elapsed/duration/flags but preserves freshness. Freshness decrements once perupdate evenwhenhealthy; active elapsed wraps, expiry is strict signed greater-than, and transmission copies shared timers within inclusive30x26 whole-pixel contact box."
+    },
+    {
+      "entry": "0x4255b2 / 0x425383",
+      "evidence_ids": [
+        "ev_3f6946d2e2de801b42577b0472a1d1892463faf72ed974ca000ec191fccad947"
+      ],
+      "behavior": "Scatter uses original nested rejection loops and excludes active livingactors/items/groundbombs. New visible item resetsframe/age while preserving stale birth/pendingdelete metadata."
+    }
+  ],
+  "regressions": [
+    "pickup_wraps_before_applying_the_native_cap",
+    "exclusion_keeps_scheme_born_inventory_and_death_drops_only_excess",
+    "cure_preserves_native_freshness_and_healthy_updates_still_decrement_it",
+    "roulette_only_brake_has_no_ground_pickup_effect_or_default_sound"
+  ],
+  "comparison": "powerups-parity.json",
+  "harness": "tools/compare_powerups.py",
+  "loader": "Uninitialized PE sections with raw file offset0 remainzero-filled; every selected global, actor, item and bomb input is explicitly initialized.",
+  "limitations": [
+    "No original Windows application entry point executes.",
+    "Shipped time-limited disease behavior is compared; the Rust option for indefinite diseases is outside those native fixtures.",
+    "Unused inventory14 is retained, but no missing original artwork is synthesized for it."
+  ]
+}
