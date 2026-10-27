@@ -73,6 +73,7 @@ dependencies = [
  "bomberman-assets",
  "bomberman-core",
  "gilrs",
+ "libc",
  "macroquad",
  "quad-snd",
  "serde",

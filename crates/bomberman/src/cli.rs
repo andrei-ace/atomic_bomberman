@@ -12,6 +12,7 @@ pub struct Cli {
     pub screenshot: Option<PathBuf>,
     pub smoke_menu: bool,
     pub mute: bool,
+    pub software_rendering: bool,
     /// None follows the saved preference; explicit flags override it in order.
     pub fullscreen: Option<bool>,
 }
@@ -26,6 +27,7 @@ Usage: bomberman --assets <cache-directory> [options]\n\n\
   --smoke-menu           Keep the main menu during a GUI smoke test\n\
   --screenshot <file>     Save the final 640 x 480 smoke-test frame as PNG\n\
   --mute                 Disable original disc audio\n\
+  --software-rendering   Force Mesa software rendering (Linux)\n\
   --windowed             Start in a resizable window, overriding saved fullscreen\n\
   --fullscreen           Start fullscreen (last display-mode flag wins)\n\
   -h, --help             Show this help\n\n\
@@ -53,6 +55,7 @@ impl Cli {
         let mut screenshot = None;
         let mut smoke_menu = false;
         let mut mute = false;
+        let mut software_rendering = false;
         let mut fullscreen = None;
         let mut arguments = arguments.into_iter();
         while let Some(arg) = arguments.next() {
@@ -85,6 +88,7 @@ impl Cli {
                 "--screenshot" => screenshot = Some(PathBuf::from(value()?)),
                 "--smoke-menu" => smoke_menu = true,
                 "--mute" => mute = true,
+                "--software-rendering" => software_rendering = true,
                 "--windowed" => fullscreen = Some(false),
                 "--fullscreen" => fullscreen = Some(true),
                 "--help" | "-h" => {
@@ -116,6 +120,7 @@ impl Cli {
             screenshot,
             smoke_menu,
             mute,
+            software_rendering,
             fullscreen,
         }))
     }

@@ -14,3 +14,6 @@ gilrs.workspace = true
 quad-snd = "=0.2.8"
 bomberman-assets.workspace = true
 bomberman-core.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2"

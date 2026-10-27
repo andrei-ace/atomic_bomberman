@@ -88,7 +88,7 @@ impl Simulation {
         if !matches!(id, 2 | 11) {
             let p = &mut self.players[player];
             p.powerup_pickups = p.powerup_pickups.wrapping_add(1);
-            if p.powerup_pickups > 6 && (p.powerup_pickups - 7) % 5 == 0 {
+            if p.powerup_pickups > 6 && (p.powerup_pickups - 7).is_multiple_of(5) {
                 sound = Some(1400);
             }
             if p.powerup_pickups > 50 {

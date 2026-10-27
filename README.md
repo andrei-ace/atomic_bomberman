@@ -81,6 +81,10 @@ simulation randomness. The game starts in a resizable window by default.
 fullscreen. F11 switches modes while playing and saves the choice. Run `--help`
 for all command-line options.
 
+On Linux, a driver context failure before the game loads automatically retries
+once with Mesa software rendering. Use `--software-rendering` to select it
+explicitly. Headless mode and `--help` do not initialize graphics.
+
 ## Verify
 
 ```bash
@@ -93,6 +97,9 @@ cargo run -p bomberman --release -- --assets local-assets \
   --smoke-test 600 --screenshot /tmp/bomberman.png \
   --settings /tmp/bomberman-smoke.json --mute
 ```
+
+CI uses the validated Rust 1.89.0 toolchain so changes to the latest stable
+Clippy do not unexpectedly turn existing code into a failed build.
 
 Headless mode opens no window or sound device and runs all participants as bots.
 It prints match winners, round counts, elapsed simulation time, and deterministic

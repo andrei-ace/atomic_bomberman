@@ -4,6 +4,7 @@ mod audio_policy;
 mod catalog;
 mod cli;
 mod controls;
+mod graphics_startup;
 mod headless;
 mod media;
 mod presentation;
@@ -24,6 +25,9 @@ fn launch() -> Result<()> {
     let Some(mut cli) = Cli::parse()? else {
         return Ok(());
     };
+    if let Some(exit_code) = graphics_startup::supervise(&cli)? {
+        std::process::exit(exit_code);
+    }
     let manifest =
         bomberman_assets::validate(&cli.assets).context("validate imported original assets")?;
     if manifest.arenas.len() != 11 || manifest.schemes.is_empty() {
@@ -73,6 +77,7 @@ fn launch() -> Result<()> {
         ..Default::default()
     };
     macroquad::Window::from_config(conf, async move {
+        graphics_startup::ready();
         match app::App::load(cli, manifest, settings, settings_warning).await {
             Ok(mut app) => {
                 if let Err(error) = app.run().await {
