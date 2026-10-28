@@ -49,10 +49,13 @@ impl Simulation {
             _ => i32::from(p.presentation.frame as i16) as u32,
         };
         p.presentation.palette = if special != 5 && p.disease_elapsed_ms & 8 != 0 {
+            p.presentation.personal_palette = false;
             self.rng.range(10) as u8
         } else if self.config.team_play && self.round_elapsed_ms >= 40 * FRAME_MS {
+            p.presentation.personal_palette = false;
             (p.config.team * 2) % 10
         } else {
+            p.presentation.personal_palette = true;
             p.id as u8
         };
     }
@@ -94,6 +97,7 @@ impl Simulation {
         p.presentation.render_position = p.position;
         p.presentation.render_frame = p.presentation.death_frame;
         p.presentation.palette = palette;
+        p.presentation.personal_palette = !self.config.team_play;
         let mut angel_finished = false;
         if p.presentation.death_animation == 9 {
             p.presentation.death_rise_accumulator_ms = p

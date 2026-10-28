@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "fixtures": 128,
+  "native_entries": [
+    "0x421f7e",
+    "0x425bed",
+    "0x4255b2"
+  ],
+  "compared": [
+    "head-hit does not mutate stun/action/frame, inventory, item slots, terrain or shared RNG in network mode"
+  ],
+  "coverage": [
+    "same varied inventories/boards as local fixtures; the network guard leaves each intact"
+  ],
+  "limitations": [
+    "Head-hit is executed as an isolated original routine, not in a complete Windows match.",
+    "Reserved inventory ID14 stayszero because shipped resources/schemes/Gold cannot grant it."
+  ],
+  "mode": "network host (2)"
+}

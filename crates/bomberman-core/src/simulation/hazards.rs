@@ -412,7 +412,9 @@ impl Simulation {
                     placements.push((TilePos::new(x, y), Hazard::Warp(id as u8)));
                 }
             }
-            Arena::DeepForest => {
+            // The original trampoline parser (0x404e99) ignores both fixed
+            // and hidden placements in network mode, including RNG draws.
+            Arena::DeepForest if !self.config.network_play => {
                 for (x, y) in [(2, 2), (12, 2), (2, 8), (12, 8)] {
                     placements.push((TilePos::new(x, y), Hazard::Trampoline));
                 }
@@ -768,7 +770,10 @@ impl Simulation {
             return;
         };
         let source = ItemSlot::read(cell);
-        if self.round_elapsed_seconds() < 40 && rare_early_power(source.kind) {
+        if !self.config.network_play
+            && self.round_elapsed_seconds() < 40
+            && rare_early_power(source.kind)
+        {
             let mut swapped = false;
             for _ in 0..200 {
                 let destination = TilePos::new(

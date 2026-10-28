@@ -75,16 +75,23 @@ def main():
     p.add_argument('--exe',type=Path,required=True)
     p.add_argument('--count',type=int,default=256)
     p.add_argument('--report',type=Path,default=Path('docs/evidence/headhit-parity.json'))
+    p.add_argument('--network',action='store_true',help='compare the original network-mode head-hit guard')
     args=p.parse_args()
     machine=OriginalItems(args.exe)
     machine.put(0x46220c,0x1100000)
     machine.put(0x462210,100)
-    cases=[original_case(machine,f)for f in fixtures(args.count)]
+    if args.network:
+        machine.hooks[0x40c06a]=lambda:machine.ret(2)
+    cases=[original_case(machine,dict(f, network=args.network))for f in fixtures(args.count)]
     with tempfile.TemporaryDirectory(prefix='atomic-headhit-native-') as d:
         source=Path(d)/'fixtures.json';source.write_text(json.dumps(cases))
         env={**os.environ,'BOMBERMAN_NATIVE_HEADHIT_FIXTURES':str(source)}
         subprocess.run(['cargo','test','--offline','-p','bomberman-core','simulation::physics::headhit_fixtures::native_headhit_fixture_bridge','--','--exact','--nocapture'],cwd=ROOT,env=env,check=True)
     report={'passed':True,'target_sha256':hashlib.sha256(args.exe.read_bytes()).hexdigest(),'fixtures':len(cases),'native_entries':['0x421f7e','0x425bed','0x4255b2'],'compared':['native16-update stun word and action/frame reset','all15 inventory bytes against scheme-configured nativeresource baselines','one-unit removal of noncanonical multi-count powers','full item slot metadata and all terrain cells after all scatter rejection loops','final shared RNG state'],'coverage':['no acquired powers and exhausted200-attempt searches','default and custom born-with inventory baselines','walls-only scatter failures, open boards, mixed occupied/walled boards','unsigned byte counts through255 and unused Disease/SuperDisease/Random inventory counters'],'limitations':['Head-hit is executed as an isolated original routine, not in a complete Windows match.','Reserved inventory ID14 stayszero because shipped resources/schemes/Gold cannot grant it.']}
+    if args.network:
+        report['mode'] = 'network host (2)'
+        report['compared'] = ['head-hit does not mutate stun/action/frame, inventory, item slots, terrain or shared RNG in network mode']
+        report['coverage'] = ['same varied inventories/boards as local fixtures; the network guard leaves each intact']
     args.report.parent.mkdir(parents=True,exist_ok=True);args.report.write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps(report,indent=2))
 

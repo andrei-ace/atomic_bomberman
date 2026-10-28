@@ -93,7 +93,8 @@ documented in [the Mac development guide](https://github.com/andrei-ace/atomic_b
 
 ## Private online and LAN games
 
-Version 0.2.0 adds **Create Online Game**, **Join Game**, and **LAN games**.
+Open **Multiplayer**, directly below **Start local battle**, then choose **LAN**
+or **Internet**. Internet contains **Create Online Game** and **Join Game**.
 Paste a private invitation with the Paste button or **Command-V**. The host's
 **Copy Invite** supplies one full invitation for friends. Returning players can
 use an eight-character room code with their saved private server profile.

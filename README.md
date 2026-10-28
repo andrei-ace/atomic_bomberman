@@ -223,11 +223,19 @@ Choose an original `.7z`, `.img`, `.iso` or extracted folder on first launch. Se
 Build on Ubuntu 24.04 with `libgtk-3-dev libarchive-tools librsvg2-common squashfs-tools` in
 addition to the desktop libraries above, then run `tools/package_linux.sh`.
 
-**Create Online Game**, **Join Game**, and **LAN games** are in the main menu.
+**Multiplayer** appears directly below **Start local battle**. Inside it, choose
+**LAN** or **Internet**; Internet contains **Create Online Game** and **Join Game**.
 A first-time online player pastes one private invitation; returning friends can
-use a short room code. Each computer can share keyboards/controllers, up to ten
-players total. All online connections are outbound TLS WebSockets on TCP 443.
-No server endpoint is shipped. See [multiplayer](docs/online-play.md) and
+use a short room code. One host and up to nine clients share ten player slots;
+each computer chooses its local keyboards/controllers and personal colors. The
+host chooses **Arena and battle rules** in the lobby and starts once at least
+one client has joined and every computer has selected controls. Clients wait
+for the host. Free-for-all and White/Red team battles follow the confirmed
+original network gameplay restrictions.
+All online connections are outbound TLS WebSockets on TCP 443. Use protocol 2
+and rebuild/upgrade the relay and every client from the same commit. No server
+endpoint is shipped. See [multiplayer](docs/online-play.md),
+[original-rule evidence](docs/multiplayer-original-rules.md), and
 [native ARM64 relay deployment](docs/relay.md).
 
 The workspace contains `bomberman-core` (deterministic simulation and native AI),

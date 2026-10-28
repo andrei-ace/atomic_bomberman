@@ -40,7 +40,12 @@ class Original:
         self.values=resource_values()
         self.slots=sound_slots()
         self.m.hooks[0x412135]=lambda:self.m.ret(self.values.get(self.m.uc.reg_read(UC_X86_REG_EAX),0))
-        self.m.hooks[0x40c06a]=lambda:self.m.ret(0)
+        self.network = False
+        self.m.hooks[0x40c06a]=lambda:self.m.ret(2 if self.network else 0)
+        # Observe gameplay with packet-output boundaries disabled; no sockets
+        # or original application entry point execute in this routine harness.
+        for address in [0x410065, 0x410021, 0x40f710]:
+            self.m.hooks[address]=lambda:self.m.ret(0)
         self.m.hooks[0x411d17]=lambda:self.m.ret(NAMES)
         self.m.hooks[0x427859]=lambda:self.m.ret(0)
         self.sound_bases=[]
@@ -56,6 +61,7 @@ class Original:
 
     def execute(self,f):
         m=self.m
+        self.network = f.get('network', False)
         m.uc.mem_write(PLAYER,bytes(10*0x98))
         m.uc.mem_write(POWERS,bytes(165*0x98))
         m.uc.mem_write(BOMBS,bytes(100*0x98))
@@ -175,10 +181,15 @@ def main():
     p.add_argument('--exe',required=True,type=Path)
     p.add_argument('--count',type=int,default=256)
     p.add_argument('--report',type=Path,default=Path('docs/evidence/powerups-parity.json'))
+    p.add_argument('--network',action='store_true',help='compare network-mode pickups/infection/contact instead of local play')
     args=p.parse_args()
     o=Original(args.exe)
     cases=[]
     for i,f in enumerate(fixtures(args.count)):
+        if args.network and f['mode'] not in ['pickup', 'infect', 'update']:
+            continue
+        if args.network:
+            f['network'] = True
         try:
             expected=o.execute(f)
         except Exception as e:
@@ -194,6 +205,10 @@ def main():
     fingerprint=hashlib.sha256()
     for v in cases:fingerprint.update(json.dumps(v,sort_keys=True,separators=(',',':')).encode())
     report=dict(passed=True,target_sha256=SHA256,fixtures=len(cases),per_routine=args.count,failures=0,fixture_sha256=fingerprint.hexdigest(),coverage=coverage,entries={'pickup':'0x41e21e','infection':'0x41dfb6','expiry_transmission':'0x41f65c..0x41f871','scatter':'0x4255b2','death_release':'0x41dbfe;0x424c47'},compared=['all15 inventory bytes','pickup counters','trigger charges','disease flags/elapsed/duration/freshness','all actor positions','all165 item states/kinds/frames/birth/age/pending flags','bomb conversion and elapsed fuse','selected sound ID sequence and every play count','final shared RNG'],hooks=['Watcom TLS seed address','supplied resources and local-battle mode','filename lookup and physical sound output'],limitations=['Whole original Windows application entry point and physical audio output do not execute.','Unused inventory14 has no supplied pickup artwork and is preserved rather than spawned in death-release fixtures.','Fixtures use the shipped time-limited disease behavior.'])
+    if args.network:
+        report['mode'] = 'network host (2)'
+        report['hooks'] = ['Watcom TLS seed address', 'supplied resources and network-host mode', 'packet output boundaries', 'filename lookup and physical sound output']
+        report['limitations'].append('Network packets are not transmitted; this compares authoritative gameplay mutations, sounds and RNG.')
     args.report.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
 
 

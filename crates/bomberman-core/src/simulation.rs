@@ -3,6 +3,8 @@ mod clock_boundary_tests;
 mod gold;
 mod hazards;
 mod items;
+#[cfg(test)]
+mod network_tests;
 mod physics;
 mod powerups;
 mod presentation;
@@ -72,6 +74,10 @@ fn round_timer_started() -> bool {
 
 impl Simulation {
     pub fn new(mut config: GameConfig, seed: u64) -> Result<Self, ConfigError> {
+        if config.network_play {
+            config.gold_bomberman = false;
+            config.diseases_destroyable = true;
+        }
         // The original disables kill-total scoring during team play.
         if config.team_play {
             config.win_by_kills = false;
@@ -424,7 +430,12 @@ impl Simulation {
             p.powerup_pickups = 0;
             p.trigger_charges = 0;
         }
-        setup::place_initial_powerups(&mut self.board, &self.config.scheme, &mut self.rng);
+        setup::place_initial_powerups(
+            &mut self.board,
+            &self.config.scheme,
+            &mut self.rng,
+            self.config.network_play,
+        );
         self.install_arena_hazards();
         self.initial_spawn_pending = vec![true; self.players.len()];
         self.sudden_death = self.enclosure_path();

@@ -3,9 +3,7 @@ use anyhow::{Context, Result};
 use bomberman_assets::Manifest;
 use bomberman_core::{Arena, ControlKind, GameConfig, PlayerConfig, Scheme};
 
-pub const COLOR_NAMES: [&str; 10] = [
-    "White", "Black", "Red", "Blue", "Green", "Yellow", "Cyan", "Magenta", "Orange", "Purple",
-];
+pub use bomberman_net::COLOR_NAMES;
 
 pub fn game_config(manifest: &Manifest, settings: &Settings, all_bots: bool) -> Result<GameConfig> {
     let imported = manifest

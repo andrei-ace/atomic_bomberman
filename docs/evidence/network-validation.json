@@ -7,15 +7,19 @@
   "repository_checks": {
     "format": "passed",
     "clippy_all_targets": "passed",
-    "workspace_tests_passed": 193,
+    "workspace_tests_passed": 199,
     "existing_ignored_core_tests": 3,
     "vendored_audio_tests_passed": 6
   },
   "network_tests": {
-    "protocol_replay_tests": 5,
+    "protocol_replay_tests": 8,
     "aggregate_queue_budget_tests": 1,
     "real_tls_tests": 2,
-    "real_lan_coordinator_and_discovery_tests": 1
+    "real_lan_coordinator_and_discovery_tests": 1,
+    "native_network_routine_comparison_cases": 512,
+    "original_rules": "REA/Ghidra static analysis of the supplied BM95.EXE; documented in docs/multiplayer-original-rules.md",
+    "lobby_ui": "Two game windows verified at loopback and 80 ms injected latency: menus, host start/settings/teams, colors, two local keyboards, saved profiles, short-code reuse, shared pause and matching simulations",
+    "room_load": "Two concurrent rooms, each one host plus nine clients, over twenty real outbound TLS connections; x86-64 and emulated ARM64 passed"
   },
   "linux_launcher": {
     "synthetic_recovery_tests_passed": 3,
@@ -40,13 +44,13 @@
       "PNG desktop icon"
     ],
     "test_environment_workaround": "None needed by the fixed AppImage: automatic extraction via a glibc bootstrap supports old AppImageLauncher and systems without FUSE.",
-    "final_source_digest": "84d494f367af70fdd57f4c1087e7eb0f2b7b1d1b787fe773e8d264eea0f138c0"
+    "final_source_digest": "e57870e890c3b65a234635ed71cd0c893be68749ac8ac36438c5100392a6faf4"
   },
   "arm64": {
     "binary": "built with cargo-zigbuild 0.20.1 / Zig 0.14.1 for glibc 2.39",
     "execution": "QEMU user-mode on Linux x86-64; real TLS, room routing, token rotation and restart passed",
     "native_hardware": "not available in this environment; native ARM64 release job configured",
-    "replay_digest": "Matches Linux x86-64 after ARM64 execution under QEMU"
+    "replay_digest": "cde66048dda395535dfa29fc2992bd37e922f48c43830de8605b3f8a434f9ac0 (x86-64 native and ARM64 QEMU match)"
   },
   "evidence": [
     "network-ui-linux.json",
@@ -55,7 +59,9 @@
     "relay-latency-x86_64.json",
     "network-replay-digest.txt",
     "network-ui-linux-latency.json",
-    "appimage-startup-linux.json"
+    "appimage-startup-linux.json",
+    "network-powerups-parity.json",
+    "network-headhit-parity.json"
   ],
   "pending_external_checks": [
     "Native macOS build, launcher tests and Cmd-V on Mac hardware",
@@ -65,5 +71,12 @@
     "Physical controllers",
     "Tagged clean-source release workflow and verified draft release execution"
   ],
-  "privacy": "No deployed relay endpoint supplied or embedded; all live tests use ephemeral loopback destinations and private temporary state."
+  "privacy": "No deployed relay endpoint supplied or embedded; all live tests use ephemeral loopback destinations and private temporary state.",
+  "protocol": 2,
+  "capacity": {
+    "game_computers_per_room": 10,
+    "host_computers": 1,
+    "client_computers": 9,
+    "total_players": 10
+  }
 }

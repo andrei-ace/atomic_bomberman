@@ -77,7 +77,7 @@ class WebSocket:
 
     def open(self, invitation, room=None, token=None):
         self.send({'Open': {'token': token or invitation['server']['token'], 'room': room,
-                           'compatibility': {'protocol': 1, 'application': '0.2.0', 'assets': 'a'*64}}})
+                           'compatibility': {'protocol': 2, 'application': '0.2.0', 'assets': 'a'*64}}})
         return self.receive()
 
     def close(self):
@@ -155,6 +155,7 @@ def main():
     parser.add_argument('--report', type=Path, required=True)
     parser.add_argument('--latency-ms', type=float, default=0)
     parser.add_argument('--frames', type=int, default=250)
+    parser.add_argument('--clients-per-room', type=int, default=9, choices=range(1, 10))
     args = parser.parse_args()
     command = [str(args.binary.resolve())]
     if args.emulator:
@@ -205,41 +206,60 @@ def main():
             for _ in range(2):
                 host = WebSocket(port, invitation['server']['fingerprint']); clients.append(host)
                 welcome = host.open(invitation)['Welcome']
-                friend = WebSocket(port, invitation['server']['fingerprint']); clients.append(friend)
-                assert friend.open(invitation, welcome['room'])['Welcome']['id'] == 2
-                assert host.receive() == {'PeerJoined': 2}
-                rooms.append((host, friend, welcome['room']))
+                friends = []
+                for peer in range(2, args.clients_per_room+2):
+                    friend = WebSocket(port, invitation['server']['fingerprint']); clients.append(friend)
+                    assert friend.open(invitation, welcome['room'])['Welcome']['id'] == peer
+                    assert host.receive() == {'PeerJoined': peer}
+                    friends.append(friend)
+                rooms.append((host, friends, welcome['room']))
+            if args.clients_per_room == 9:
+                extra = WebSocket(port, invitation['server']['fingerprint']); clients.append(extra)
+                assert extra.open(invitation, rooms[0][2]) == {'Error': 'Full'}
             sample = {'direction': 'Down', 'direction_mask': 4, 'bomb': True, 'action': False}
             latencies = []
             cpu_before = cpu_seconds(process.pid)
             started = time.perf_counter()
             for tick in range(1, args.frames+1):
-                for host, friend, _ in rooms:
+                for host, friends, _ in rooms:
                     before = time.perf_counter()
                     frame = {'Frame': {'tick': tick, 'inputs': [sample]*10, 'actions': [], 'hash': None}}
                     host.send({'Send': {'to': None, 'message': frame}})
-                    delivery = friend.receive()
-                    assert 'Message' in delivery, delivery
-                    event = delivery['Message']
-                    assert event['from'] == 1 and event['message']['Frame']['tick'] == tick
+                    for friend in friends:
+                        delivery = friend.receive()
+                        assert 'Message' in delivery, delivery
+                        event = delivery['Message']
+                        assert event['from'] == 1 and event['message']['Frame']['tick'] == tick
                     latencies.append((time.perf_counter()-before)*1000)
+                    # Nine remote computers each return their own seat's
+                    # controls through an outbound-only connection.
+                    for peer, friend in enumerate(friends, 2):
+                        friend.send({'Send': {'to': 1, 'message': {'Input': {'sequence': tick, 'seats': [{'seat': peer-1, 'input': sample}]}}}})
+                    received = set()
+                    for _ in friends:
+                        event = host.receive()['Message']
+                        assert event['message']['Input']['sequence'] == tick
+                        received.add(event['from'])
+                    assert received == set(range(2, args.clients_per_room+2))
                 time.sleep(max(0, started+tick*.020-time.perf_counter()))
             elapsed = time.perf_counter()-started
             cpu = cpu_seconds(process.pid)-cpu_before
             rss = memory_kib(process.pid)
             bandwidth = sum(c.sent+c.received for c in clients)/elapsed
             # A stalled peer resumes with intact ordered messages; no inbound
-            # listening socket exists on any of the four client connections.
-            host, friend, _ = rooms[0]
-            for tick in range(251, 256):
-                host.send({'Send': {'to': None, 'message': {'Ready': bool(tick%2)}}})
+            # listening socket exists on any of these game connections.
+            host, friends, _ = rooms[0]
+            for tick in range(args.frames+1, args.frames+6):
+                host.send({'Send': {'to': None, 'message': {'Frame': {'tick': tick, 'inputs': [sample]*10, 'actions': [], 'hash': None}}}})
             time.sleep(.08)
-            for tick in range(251, 256):
-                assert friend.receive()['Message']['message'] == {'Ready': bool(tick%2)}
-            friend.close()
+            for friend in friends:
+                for tick in range(args.frames+1, args.frames+6):
+                    assert friend.receive()['Message']['message']['Frame']['tick'] == tick
+            friends[0].close()
             assert host.receive() == {'PeerLeft': 2}
             rooms[1][0].send('Leave')
-            assert rooms[1][1].receive() == {'Error': 'HostLeft'}
+            for friend in rooms[1][1]:
+                assert friend.receive() == {'Error': 'HostLeft'}
             process.terminate(); process.wait(timeout=10); process = None
             subprocess.run([*command, 'rotate-token', *common], check=True, capture_output=True)
             renewed = invite()
@@ -258,12 +278,12 @@ def main():
             report = {'passed': True, 'version': '0.2.0',
                       'environment': 'ARM64 QEMU user emulation on Ubuntu 24.04 x86-64' if args.emulator else 'Ubuntu 24.04 x86-64 native loopback',
                       'binary_sha256': hashlib.sha256(args.binary.read_bytes()).hexdigest(),
-                      'rooms': 2, 'outbound_clients': 4, 'inputs_per_frame': 10, 'frames_per_room': args.frames, 'injected_round_trip_tcp_delay_ms': args.latency_ms,
+                      'rooms': 2, 'outbound_connections': 2*(1+args.clients_per_room), 'remote_clients_per_room': args.clients_per_room, 'inputs_per_frame': 10, 'frames_per_room': args.frames, 'injected_round_trip_tcp_delay_ms': args.latency_ms,
                       'duration_seconds': elapsed, 'process_cpu_seconds': cpu, 'process_peak_rss_kib': rss,
                       'application_websocket_bytes_per_second': bandwidth,
                       'forward_latency_ms': {'median': latencies[len(latencies)//2], 'p95': latencies[int(len(latencies)*.95)], 'max': max(latencies)},
                       'checks': ['initialization and persistent TLS identity', 'private state permissions', 'real TLS and pinned certificate',
-                                 'two concurrent isolated rooms', 'ordered authoritative frames with target 50 Hz', '80 ms receive interruption',
+                                 'two concurrent isolated rooms', 'one server plus nine clients capacity (with default arguments)', 'client inputs forwarded to host', 'ordered authoritative frames with target 50 Hz', '80 ms receive interruption',
                                  'peer disconnection', 'host departure', 'token rotation and restart', 'credential-free logs'],
                       'limitations': ['Loopback measurements include client scheduling and TLS; not WAN latency.',
                                       'QEMU measurements include emulator overhead; not native ARM64 production capacity.',

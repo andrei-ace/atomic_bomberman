@@ -207,10 +207,19 @@ impl Media {
     /// Upload newly selected native action/death artwork without loading all
     /// ten color variants of every death animation at startup.
     pub async fn ensure_players(&mut self, players: &[Player]) -> Result<()> {
+        self.ensure_players_with_colors(players, &bomberman_net::DEFAULT_COLORS)
+            .await
+    }
+
+    pub async fn ensure_players_with_colors(
+        &mut self,
+        players: &[Player],
+        colors: &[u8; 10],
+    ) -> Result<()> {
         for player in players {
             let sprite = crate::presentation::player_sprite(player);
-            self.ensure_sequence(&sprite.sequence, Some(player.presentation.palette as usize))
-                .await?;
+            let color = crate::presentation::player_palette(player, colors);
+            self.ensure_sequence(&sprite.sequence, Some(color)).await?;
         }
         Ok(())
     }

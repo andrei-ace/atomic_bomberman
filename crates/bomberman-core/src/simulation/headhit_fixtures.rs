@@ -14,6 +14,8 @@ struct Item {
 }
 #[derive(Deserialize)]
 struct Fixture {
+    #[serde(default)]
+    network: bool,
     seed: u32,
     slots: Vec<Item>,
     inventory: [u8; 15],
@@ -35,6 +37,7 @@ fn native_headhit_fixture_bridge() {
         serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
     for (index, f) in fixtures.into_iter().enumerate() {
         let mut config = GameConfig {
+            network_play: f.network,
             countdown_ms: 0,
             random_starts: false,
             ..Default::default()
@@ -81,7 +84,12 @@ fn native_headhit_fixture_bridge() {
             "head-hit fixture{index} RNG"
         );
         assert_eq!(
-            sim.physics.stun_updates[&0], f.expected_stun,
+            sim.physics
+                .stun_updates
+                .get(&0)
+                .copied()
+                .unwrap_or_default(),
+            f.expected_stun,
             "head-hit fixture{index} stun"
         );
         assert_eq!(sim.players[0].presentation.special, f.expected_special);

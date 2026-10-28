@@ -48,10 +48,15 @@ enum Screen {
     Battle,
     Results,
     Roulette,
+    Multiplayer,
+    Internet,
     Online,
     Lan,
     NetworkLobby,
     NetworkDevices,
+    NetworkColors,
+    NetworkRules,
+    NetworkTeams,
 }
 
 pub struct App {
@@ -280,7 +285,7 @@ impl App {
                     "simulation": self.simulation,
                     "network": self.network.as_ref().map(|n| serde_json::json!({
                         "id": n.id, "host": n.host, "room": n.room,
-                        "lobby": n.lobby, "tick": n.replay.as_ref().map(|r| r.tick),
+                        "lobby": n.lobby, "actions": network_ui::lobby_actions(n.host).iter().map(|action| format!("{action:?}")).collect::<Vec<_>>(), "tick": n.replay.as_ref().map(|r| r.tick),
                     })),
                 });
                 std::fs::write(&temporary, serde_json::to_vec(&state)?)?;
@@ -357,8 +362,8 @@ impl App {
         }
         match self.screen {
             Screen::Main => {
-                self.navigation(9);
-                let click = self.hover_rows(330., 108., 295., 33., 9);
+                self.navigation(7);
+                let click = self.hover_rows(330., 108., 295., 43., 7);
                 if self.confirm() || click {
                     match self.selection {
                         0 => {
@@ -366,23 +371,14 @@ impl App {
                                 self.notify(format!("Cannot start battle: {error:#}"));
                             }
                         }
-                        1 => self.change_screen(Screen::Setup),
-                        2 => self.change_screen(Screen::Settings),
-                        3 => self.change_screen(Screen::Controls),
-                        4 => {
+                        1 => self.change_screen(Screen::Multiplayer),
+                        2 => self.change_screen(Screen::Setup),
+                        3 => self.change_screen(Screen::Settings),
+                        4 => self.change_screen(Screen::Controls),
+                        5 => {
                             self.previous = Screen::Main;
                             self.previous_selection = self.selection;
                             self.change_screen(Screen::Help);
-                        }
-                        5 | 6 => {
-                            self.network_ui.create = self.selection == 5;
-                            self.network_ui.text.clear();
-                            self.change_screen(Screen::Online);
-                        }
-                        7 => {
-                            self.network_ui.text.clear();
-                            self.refresh_lan();
-                            self.change_screen(Screen::Lan);
                         }
                         _ => self.quit = true,
                     }
@@ -394,10 +390,15 @@ impl App {
             Screen::Setup => self.update_setup().await?,
             Screen::Settings => self.update_settings(),
             Screen::Controls => self.update_controls(),
+            Screen::Multiplayer => self.update_multiplayer_menu(false),
+            Screen::Internet => self.update_multiplayer_menu(true),
             Screen::Online => self.update_online(),
             Screen::Lan => self.update_lan(),
             Screen::NetworkLobby => self.update_network_lobby(),
             Screen::NetworkDevices => self.update_network_devices(),
+            Screen::NetworkColors => self.update_network_colors(),
+            Screen::NetworkRules => self.update_network_rules(),
+            Screen::NetworkTeams => self.update_network_teams(),
             Screen::Help => {
                 if self.back() || self.confirm() {
                     self.screen = self.previous;
@@ -801,10 +802,15 @@ impl App {
             Screen::Battle => self.draw_battle(),
             Screen::Results => self.draw_results(),
             Screen::Roulette => self.draw_roulette(),
+            Screen::Multiplayer => self.draw_multiplayer_menu(false),
+            Screen::Internet => self.draw_multiplayer_menu(true),
             Screen::Online => self.draw_online(),
             Screen::Lan => self.draw_lan(),
             Screen::NetworkLobby => self.draw_network_lobby(),
             Screen::NetworkDevices => self.draw_network_devices(),
+            Screen::NetworkColors => self.draw_network_colors(),
+            Screen::NetworkRules => self.draw_network_rules(),
+            Screen::NetworkTeams => self.draw_network_teams(),
         }
         if let Some((message, until)) = &self.message {
             if get_time() < *until {
@@ -872,17 +878,15 @@ impl App {
         self.media.text("ATOMIC BOMBERMAN", 335., 82., 20., GOLD);
         let labels = [
             "Start local battle",
+            "Multiplayer",
             "Players and arena",
             "Battle settings",
             "Controls",
             "Help",
-            "Create Online Game",
-            "Join Game",
-            "LAN games",
             "Exit",
         ];
         for (i, text) in labels.iter().enumerate() {
-            let y = 114. + i as f32 * 33.;
+            let y = 114. + i as f32 * 43.;
             if self.selection == i {
                 draw_rectangle(328., y - 6., 297., 30., Color::new(0.13, 0.2, 0.3, 0.98));
                 self.media.text(">", 335., y, 17., GOLD);
@@ -1192,6 +1196,31 @@ impl App {
         } else { "Enter or Escape returns to the previous screen. Battle pauses while help is open." });
     }
 
+    fn palette_index(&self, original: usize) -> usize {
+        self.network
+            .as_ref()
+            .and_then(|network| network.lobby.as_ref())
+            .and_then(|lobby| lobby.colors.get(original))
+            .map_or(original, |color| *color as usize)
+    }
+
+    fn battle_palette(&self, original: usize) -> usize {
+        if self.simulation.as_ref().is_some_and(|s| s.config.team_play) {
+            original
+        } else {
+            self.palette_index(original)
+        }
+    }
+
+    fn player_palette(&self, player: &bomberman_core::Player) -> usize {
+        let colors = self
+            .network
+            .as_ref()
+            .and_then(|n| n.lobby.as_ref())
+            .map_or(&bomberman_net::DEFAULT_COLORS, |l| &l.colors);
+        crate::presentation::player_palette(player, colors)
+    }
+
     fn draw_battle(&self) {
         let Some(simulation) = &self.simulation else {
             return;
@@ -1257,8 +1286,13 @@ impl App {
                     let name = format!("flame brick {}", arena.id);
                     let frame = (flame.render_frame as usize)
                         .min(self.media.sequence_len(&name).saturating_sub(1));
-                    self.media
-                        .state(&name, frame, x, y + 17., Some(flame.palette as usize));
+                    self.media.state(
+                        &name,
+                        frame,
+                        x,
+                        y + 17.,
+                        Some(self.battle_palette(flame.palette as usize)),
+                    );
                     continue;
                 }
                 let wanted = match flame.shape {
@@ -1281,7 +1315,7 @@ impl App {
                     frame,
                     x + metadata[1] as f32 - 18.,
                     y + 17.,
-                    Some(flame.palette as usize),
+                    Some(self.battle_palette(flame.palette as usize)),
                 );
             }
         }
@@ -1302,7 +1336,7 @@ impl App {
                 sprite.frame,
                 x,
                 y - height,
-                Some(player.presentation.palette as usize),
+                Some(self.player_palette(player)),
             );
             if simulation.config.team_play && player.presentation.render_alive {
                 self.media.text(
@@ -1347,7 +1381,10 @@ impl App {
                         if simulation.config.team_play {
                             format!("TEAM {} WINS!", simulation.players[p].config.team + 1)
                         } else {
-                            format!("{} WINS!", COLOR_NAMES[p].to_ascii_uppercase())
+                            format!(
+                                "{} WINS!",
+                                COLOR_NAMES[self.palette_index(p)].to_ascii_uppercase()
+                            )
                         }
                     },
                 ),
@@ -1404,7 +1441,7 @@ impl App {
             bomb.animation_frame as usize,
             x,
             y - bomb.flight_height as f32,
-            Some(bomb.palette as usize),
+            Some(self.battle_palette(bomb.palette as usize)),
         );
     }
 
@@ -1412,8 +1449,8 @@ impl App {
         for (i, player) in simulation.players.iter().enumerate() {
             let x = 11. + (i % 5) as f32 * 100.;
             let y = 6. + (i / 5) as f32 * 20.;
-            draw_rectangle(x, y + 2., 7., 10., PLAYER_COLORS[i]);
-            let label = format!("{} {}", COLOR_NAMES[i], player.wins);
+            draw_rectangle(x, y + 2., 7., 10., PLAYER_COLORS[self.palette_index(i)]);
+            let label = format!("{} {}", COLOR_NAMES[self.palette_index(i)], player.wins);
             self.media.text(
                 &label,
                 x + 11.,
@@ -1509,7 +1546,10 @@ impl App {
                     simulation.players[winner].config.team + 1
                 )
             } else {
-                format!("{} wins the match!", COLOR_NAMES[winner])
+                format!(
+                    "{} wins the match!",
+                    COLOR_NAMES[self.palette_index(winner)]
+                )
             };
             self.media.center_text(&text, 70., 22., GOLD);
         }
@@ -1518,11 +1558,11 @@ impl App {
         self.media.text("Kills", 440., 111., 14., MUTED);
         for (i, player) in simulation.players.iter().enumerate() {
             let y = 140. + i as f32 * 20.;
-            draw_rectangle(89., y + 1., 11., 11., PLAYER_COLORS[i]);
+            draw_rectangle(89., y + 1., 11., 11., PLAYER_COLORS[self.palette_index(i)]);
             self.media.text(
                 &format!(
                     "{}{}",
-                    COLOR_NAMES[i],
+                    COLOR_NAMES[self.palette_index(i)],
                     if player.config.control == bomberman_core::ControlKind::Bot {
                         " (CPU)"
                     } else {
@@ -1617,9 +1657,10 @@ impl App {
             self.ui_elapsed_ms,
             320.,
             260.,
-            Some(winner),
+            Some(self.palette_index(winner)),
         );
-        self.media.center_text(COLOR_NAMES[winner], 300., 20., GOLD);
+        self.media
+            .center_text(COLOR_NAMES[self.palette_index(winner)], 300., 20., GOLD);
         if let Some(powerup) = wheel.reward() {
             draw_rectangle(70., 402., 500., 39., Color::new(0.01, 0.025, 0.07, 0.96));
             self.media.center_text(powerup.name(), 411., 20., GOLD);

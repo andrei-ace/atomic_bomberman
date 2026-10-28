@@ -4,19 +4,21 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, VecDeque};
 
 impl Lobby {
-    pub fn new(config: bomberman_core::GameConfig, host_seats: u8) -> Result<Self, NetError> {
-        config.validate().map_err(|_| NetError::Protocol)?;
+    pub fn new(mut config: bomberman_core::GameConfig, host_seats: u8) -> Result<Self, NetError> {
+        Self::network_rules(&mut config);
         let mut lobby = Self {
             owners: vec![None; config.players.len()],
             config,
-            ready: BTreeMap::new(),
+            peers: [HOST].into(),
+            colors: DEFAULT_COLORS,
         };
-        lobby.ready.insert(HOST, false);
+        lobby.validate()?;
         lobby.assign(HOST, host_seats)?;
+        lobby.update_color_names();
         Ok(lobby)
     }
     pub fn assign(&mut self, peer: PeerId, count: u8) -> Result<(), NetError> {
-        if count == 0 || count as usize > MAX_PLAYERS || !self.ready.contains_key(&peer) {
+        if count == 0 || count as usize > MAX_PLAYERS || !self.peers.contains(&peer) {
             return Err(NetError::Ownership);
         }
         let available = self
@@ -27,13 +29,19 @@ impl Lobby {
         if available < count as usize {
             return Err(NetError::Full);
         }
-        // Transactional: rejected allocations preserve the previous assignment.
+        // Preserve each existing device's seat/color while growing or shrinking
+        // its assignment. Rejected allocations leave every assignment intact.
+        let mut retained = 0;
         for owner in &mut self.owners {
             if *owner == Some(peer) {
-                *owner = None;
+                if retained < count {
+                    retained += 1;
+                } else {
+                    *owner = None;
+                }
             }
         }
-        let mut remaining = count;
+        let mut remaining = count - retained;
         for owner in &mut self.owners {
             if owner.is_none() && remaining > 0 {
                 *owner = Some(peer);
@@ -47,29 +55,129 @@ impl Lobby {
                 ControlKind::Bot
             };
         }
-        self.ready.values_mut().for_each(|r| *r = false);
         Ok(())
     }
     pub fn add(&mut self, peer: PeerId) {
-        self.ready.insert(peer, false);
-        self.ready.values_mut().for_each(|r| *r = false);
+        self.peers.insert(peer);
+    }
+    pub fn owned_seats(&self, peer: PeerId) -> Vec<usize> {
+        self.owners
+            .iter()
+            .enumerate()
+            .filter_map(|(seat, owner)| (*owner == Some(peer)).then_some(seat))
+            .collect()
+    }
+    pub fn color_available(&self, seat: usize, color: u8) -> bool {
+        color < MAX_PLAYERS as u8
+            && self
+                .colors
+                .iter()
+                .position(|c| *c == color)
+                .is_some_and(|other| {
+                    other == seat || self.owners.get(other).is_none_or(|owner| owner.is_none())
+                })
+    }
+    pub fn choose_color(&mut self, peer: PeerId, seat: usize, color: u8) -> Result<(), NetError> {
+        if self.owners.get(seat) != Some(&Some(peer)) || color >= MAX_PLAYERS as u8 {
+            return Err(NetError::Ownership);
+        }
+        // Human colors are reserved. Bots and unused slots give up their
+        // placeholder color in exchange for this player's previous color.
+        if !self.color_available(seat, color) {
+            return Err(NetError::ColorTaken);
+        }
+        let other = self
+            .colors
+            .iter()
+            .position(|c| *c == color)
+            .ok_or(NetError::Protocol)?;
+        self.colors.swap(seat, other);
+        self.update_color_names();
+        Ok(())
+    }
+    fn update_color_names(&mut self) {
+        for (seat, player) in self.config.players.iter_mut().enumerate() {
+            player.name = COLOR_NAMES[self.colors[seat] as usize].into();
+        }
     }
     pub fn remove(&mut self, peer: PeerId) {
-        self.ready.remove(&peer);
+        self.peers.remove(&peer);
         for (i, owner) in self.owners.iter_mut().enumerate() {
             if *owner == Some(peer) {
                 *owner = None;
                 self.config.players[i].control = ControlKind::Bot;
             }
         }
-        self.ready.values_mut().for_each(|r| *r = false);
     }
     pub fn can_start(&self) -> bool {
-        !self.ready.is_empty()
+        // The original host advances after peers choose controls. There is no
+        // extra per-computer Ready toggle (0x411b4b..0x411c69).
+        self.peers.len() >= 2
             && self
-                .ready
+                .peers
                 .iter()
-                .all(|(peer, ready)| *ready && self.owners.contains(&Some(*peer)))
+                .all(|peer| self.owners.contains(&Some(*peer)))
+            && self.config.validate().is_ok()
+    }
+    fn network_rules(config: &mut bomberman_core::GameConfig) {
+        config.network_play = true;
+        config.gold_bomberman = false;
+        config.diseases_destroyable = true;
+        for player in &mut config.players {
+            player.team %= 2;
+        }
+        if config.team_play {
+            config.win_by_kills = false;
+        }
+    }
+    pub fn validate(&self) -> Result<(), NetError> {
+        // A host may move players between teams before satisfying the start
+        // condition. Validate both-team participation when starting instead.
+        let mut config = self.config.clone();
+        config.team_play = false;
+        config.validate().map_err(|_| NetError::Protocol)?;
+        if !self.config.network_play
+            || self.config.gold_bomberman
+            || !self.config.diseases_destroyable
+            || !valid_colors(&self.colors)
+            || self.config.players.iter().any(|p| p.team > 1)
+            || self.owners.len() != self.config.players.len()
+            || !self.peers.contains(&HOST)
+            || self.peers.len() > MAX_PLAYERS
+            || self
+                .owners
+                .iter()
+                .flatten()
+                .any(|id| !self.peers.contains(id))
+        {
+            return Err(NetError::Protocol);
+        }
+        Ok(())
+    }
+    pub fn configure(&mut self, mut config: bomberman_core::GameConfig) -> Result<(), NetError> {
+        Self::network_rules(&mut config);
+        if self
+            .owners
+            .iter()
+            .skip(config.players.len())
+            .any(Option::is_some)
+        {
+            return Err(NetError::Full);
+        }
+        let mut next = self.clone();
+        next.owners.resize(config.players.len(), None);
+        for (player, owner) in config.players.iter_mut().zip(&next.owners) {
+            player.control = if owner.is_some() {
+                ControlKind::Human
+            } else {
+                ControlKind::Bot
+            };
+        }
+        next.config = config;
+        next.update_color_names();
+        next.validate()?;
+        *self = next;
+        Ok(())
     }
 }
 
@@ -216,14 +324,6 @@ impl Replay {
         for action in &frame.actions {
             match action {
                 Action::Pause(paused) => self.simulation.paused = *paused,
-                Action::StartRoulette => {
-                    if self.stage != Stage::Results {
-                        return Err(NetError::Protocol);
-                    }
-                    self.simulation.start_roulette();
-                    self.stage = Stage::Roulette;
-                }
-                Action::StopRoulette => self.simulation.stop_roulette(),
                 Action::Rematch => {
                     self.simulation.rematch();
                     self.stage = Stage::Battle;
@@ -248,10 +348,6 @@ impl Replay {
                     self.stage = Stage::Results;
                 }
                 events
-            }
-            Stage::Roulette => {
-                self.simulation.advance_roulette(STEP_MS);
-                self.simulation.events.clone()
             }
             Stage::Results => vec![],
         };

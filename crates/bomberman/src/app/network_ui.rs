@@ -8,6 +8,24 @@ use std::{
     sync::mpsc,
 };
 
+#[derive(Debug, Clone, Copy)]
+pub(super) enum LobbyAction {
+    CopyInvite,
+    Start,
+    Rules,
+    Colors,
+    Devices,
+    Leave,
+}
+pub(super) fn lobby_actions(host: bool) -> &'static [LobbyAction] {
+    use LobbyAction::*;
+    if host {
+        &[CopyInvite, Start, Rules, Colors, Devices, Leave]
+    } else {
+        &[CopyInvite, Colors, Devices, Leave]
+    }
+}
+
 pub(super) struct NetworkUi {
     pub create: bool,
     pub text: String,
@@ -16,6 +34,7 @@ pub(super) struct NetworkUi {
     scan: Option<mpsc::Receiver<std::io::Result<Vec<FoundGame>>>>,
     games: Vec<FoundGame>,
     devices_return: Screen,
+    lobby_settings: Settings,
 }
 impl NetworkUi {
     pub fn new(settings: &Settings) -> Self {
@@ -37,10 +56,41 @@ impl NetworkUi {
             scan: None,
             games: vec![],
             devices_return: Screen::Online,
+            lobby_settings: settings.clone(),
         }
     }
 }
 impl App {
+    pub(super) fn update_multiplayer_menu(&mut self, internet: bool) {
+        self.navigation(3);
+        let clicked = self.hover_rows(30., 180., 580., 42., 3);
+        if self.back() || ((self.confirm() || clicked) && self.selection == 2) {
+            self.change_screen(if internet {
+                Screen::Multiplayer
+            } else {
+                Screen::Main
+            });
+            self.selection = 1;
+        } else if self.confirm() || clicked {
+            self.network_ui.text.clear();
+            if internet {
+                self.network_ui.create = self.selection == 0;
+                self.change_screen(Screen::Online);
+            } else if self.selection == 0 {
+                self.refresh_lan();
+                self.change_screen(Screen::Lan);
+            } else {
+                self.change_screen(Screen::Internet);
+            }
+        }
+    }
+
+    fn back_from_online(&mut self) {
+        self.network_ui.text.clear();
+        self.change_screen(Screen::Internet);
+        self.selection = usize::from(!self.network_ui.create);
+    }
+
     fn input_invitation(&mut self) {
         let paste = (is_key_down(KeyCode::LeftControl)
             || is_key_down(KeyCode::RightControl)
@@ -79,6 +129,7 @@ impl App {
         destination: Destination,
         host: bool,
     ) -> std::result::Result<(), NetError> {
+        self.network_ui.lobby_settings = self.settings.clone();
         let config = if host {
             Some(
                 game_config(&self.media.manifest, &self.settings, false)
@@ -130,12 +181,11 @@ impl App {
                     }
                 }
                 2 => self.open_devices(),
-                _ => self.change_screen(Screen::Main),
+                _ => self.back_from_online(),
             }
         }
         if self.back() {
-            self.network_ui.text.clear();
-            self.change_screen(Screen::Main);
+            self.back_from_online();
         }
     }
     pub(super) fn refresh_lan(&mut self) {
@@ -194,7 +244,7 @@ impl App {
                     None
                 }
                 5 => {
-                    self.change_screen(Screen::Main);
+                    self.change_screen(Screen::Multiplayer);
                     None
                 }
                 i => self
@@ -210,7 +260,7 @@ impl App {
             }
         }
         if self.back() {
-            self.change_screen(Screen::Main);
+            self.change_screen(Screen::Multiplayer);
         }
     }
     pub(super) fn update_network_devices(&mut self) {
@@ -249,6 +299,329 @@ impl App {
             self.change_screen(self.network_ui.devices_return);
         }
     }
+
+    pub(super) fn update_network_rules(&mut self) {
+        if !self
+            .network
+            .as_ref()
+            .is_some_and(|n| n.host && n.replay.is_none())
+        {
+            self.change_screen(Screen::NetworkLobby);
+            return;
+        }
+        self.navigation(12);
+        let clicked = self.hover_rows(30., 70., 580., 27., 12);
+        let activate = self.confirm() || clicked;
+        if self.back() || (activate && self.selection == 11) {
+            self.change_screen(Screen::NetworkLobby);
+            return;
+        }
+        if activate && self.selection == 10 {
+            if self
+                .network
+                .as_ref()
+                .and_then(|n| n.lobby.as_ref())
+                .is_some_and(|l| l.config.team_play)
+            {
+                self.change_screen(Screen::NetworkTeams);
+            } else {
+                self.notify("Select Two teams to assign the red and white teams.");
+            }
+            return;
+        }
+        let delta = self.delta();
+        if delta == 0 && !activate {
+            return;
+        }
+        let d = if delta == 0 { 1 } else { delta };
+        let mut settings = self.network_ui.lobby_settings.clone();
+        // Team edits and participant ownership belong to the network session.
+        if let Some(lobby) = self.network.as_ref().and_then(|n| n.lobby.as_ref()) {
+            for (participant, player) in settings.participants.iter_mut().zip(&lobby.config.players)
+            {
+                participant.team = player.team;
+            }
+        }
+        match self.selection {
+            0 => settings.arena = cycle(settings.arena, self.media.manifest.arenas.len(), d),
+            1 => settings.scheme = cycle(settings.scheme, self.media.manifest.schemes.len(), d),
+            2 => {
+                settings.teams = !settings.teams;
+                if settings.teams {
+                    settings.win_by_kills = false;
+                }
+            }
+            3 => settings.wins = (cycle((settings.wins - 1) as usize, 100, d) + 1) as u16,
+            4 if !settings.teams => settings.win_by_kills = !settings.win_by_kills,
+            4 => {
+                self.notify("Team battles are scored by round wins.");
+                return;
+            }
+            5 => {
+                let options = [60, 90, 120, 150, 180, 240, 300, 600, 0];
+                let current = options
+                    .iter()
+                    .position(|s| *s == settings.round_seconds)
+                    .unwrap_or(3);
+                settings.round_seconds = options[cycle(current, options.len(), d)];
+            }
+            6 => {
+                settings.enclosement_depth = cycle(settings.enclosement_depth as usize, 4, d) as u8;
+                settings.sudden_death = settings.enclosement_depth != 0;
+            }
+            7 => settings.random_starts = !settings.random_starts,
+            8 => settings.conveyor_speed = cycle(settings.conveyor_speed as usize, 3, d) as u8,
+            9 => settings.participant_count = cycle(settings.participant_count - 2, 9, d) + 2,
+            _ => return,
+        }
+        let result = game_config(&self.media.manifest, &settings, false)
+            .map_err(|_| NetError::Protocol)
+            .and_then(|config| {
+                self.network
+                    .as_mut()
+                    .ok_or(NetError::Unavailable)?
+                    .configure(config)
+            });
+        match result {
+            Ok(()) => self.network_ui.lobby_settings = settings,
+            Err(NetError::Full) => self.notify("Those player slots are occupied. Friends must remove their controls before reducing the total."),
+            Err(error) => self.notify(error.to_string()),
+        }
+    }
+
+    pub(super) fn draw_network_rules(&self) {
+        self.background("MAINMENU.PCX", 0.97);
+        self.heading("ARENA AND BATTLE RULES");
+        let Some(lobby) = self.network.as_ref().and_then(|n| n.lobby.as_ref()) else {
+            return;
+        };
+        let config = &lobby.config;
+        let settings = &self.network_ui.lobby_settings;
+        let scheme = &self.media.manifest.schemes[settings.scheme].id;
+        let rows = [
+            ("Arena", config.arena.name().to_string()),
+            ("Scheme", truncate(scheme, 27)),
+            (
+                "Battle mode",
+                if config.team_play {
+                    "Two teams"
+                } else {
+                    "Free-for-all"
+                }
+                .into(),
+            ),
+            ("Victory target", config.wins_to_match.to_string()),
+            (
+                "Scoring",
+                if config.win_by_kills {
+                    "Kills"
+                } else {
+                    "Round wins"
+                }
+                .into(),
+            ),
+            (
+                "Round time",
+                config
+                    .round_time_ms
+                    .map_or_else(|| "Infinite".into(), |ms| format!("{} seconds", ms / 1000)),
+            ),
+            ("Sudden death depth", config.enclosement_depth.to_string()),
+            (
+                "Random starts",
+                if config.random_starts { "Yes" } else { "No" }.into(),
+            ),
+            (
+                "Conveyors",
+                ["Slow", "Normal", "Fast"][config.conveyor_speed as usize].into(),
+            ),
+            (
+                "Players (unclaimed slots are bots)",
+                config.players.len().to_string(),
+            ),
+            ("Team assignments", "Enter".into()),
+            ("Back", "Enter".into()),
+        ];
+        for (i, (label, value)) in rows.iter().enumerate() {
+            self.row(label, value, i, 73. + i as f32 * 27., 13.);
+        }
+        self.media.center_text(
+            "Original network rules: no Gold roulette, trampolines, Random or Swap.",
+            410.,
+            10.,
+            MUTED,
+        );
+        self.footer("Host settings apply to everyone. Left / right: change  |  Escape: back");
+    }
+
+    pub(super) fn update_network_teams(&mut self) {
+        let Some(network) = self
+            .network
+            .as_ref()
+            .filter(|n| n.host && n.replay.is_none())
+        else {
+            self.change_screen(Screen::NetworkLobby);
+            return;
+        };
+        let Some(lobby) = &network.lobby else {
+            return;
+        };
+        let count = lobby.config.players.len();
+        self.navigation(count + 1);
+        let clicked = self.hover_rows(30., 80., 580., 27., count + 1);
+        if self.back() || ((self.confirm() || clicked) && self.selection == count) {
+            self.change_screen(Screen::NetworkRules);
+            return;
+        }
+        if self.selection < count
+            && (self.delta() != 0
+                || self.confirm()
+                || clicked
+                || is_key_pressed(KeyCode::T)
+                || is_key_pressed(KeyCode::Tab))
+        {
+            let network = self.network.as_mut().expect("active host");
+            let mut config = network.lobby.as_ref().expect("active lobby").config.clone();
+            config.players[self.selection].team ^= 1;
+            if let Err(error) = network.configure(config) {
+                self.notify(error.to_string());
+            }
+        }
+    }
+
+    pub(super) fn draw_network_teams(&self) {
+        self.background("MAINMENU.PCX", 0.97);
+        self.heading("TEAM ASSIGNMENTS");
+        let Some(lobby) = self.network.as_ref().and_then(|n| n.lobby.as_ref()) else {
+            return;
+        };
+        for (i, player) in lobby.config.players.iter().enumerate() {
+            self.row(
+                &format!(
+                    "Player {}: {}",
+                    i + 1,
+                    COLOR_NAMES[lobby.colors[i] as usize]
+                ),
+                if player.team == 0 {
+                    "White team"
+                } else {
+                    "Red team"
+                },
+                i,
+                83. + i as f32 * 27.,
+                14.,
+            );
+        }
+        let count = lobby.config.players.len();
+        self.row("Back", "Enter", count, 83. + count as f32 * 27., 14.);
+        self.footer(
+            "Enter / T / left / right: change team  |  Each team needs a player  |  Escape: back",
+        );
+    }
+
+    pub(super) fn update_network_colors(&mut self) {
+        let seats = self
+            .network
+            .as_ref()
+            .and_then(|n| n.lobby.as_ref().map(|l| l.owned_seats(n.id)))
+            .unwrap_or_default();
+        self.navigation(seats.len() + 1);
+        let clicked = self.hover_rows(30., 80., 580., 26., seats.len() + 1);
+        if self.back() || ((self.confirm() || clicked) && self.selection == seats.len()) {
+            self.change_screen(Screen::NetworkLobby);
+            return;
+        }
+        let delta = self.delta();
+        if self.selection < seats.len() && (delta != 0 || self.confirm() || clicked) {
+            let network = self.network.as_mut().expect("active network");
+            let lobby = network.lobby.as_ref().expect("active lobby");
+            let seat = seats[self.selection];
+            let current = lobby.colors[seat];
+            let direction = if delta == 0 { 1 } else { delta };
+            let next = (1..10)
+                .map(|step| (i32::from(current) + direction * step).rem_euclid(10) as u8)
+                .find(|color| lobby.color_available(seat, *color));
+            let result = next.map_or(Err(NetError::ColorTaken), |color| {
+                network.choose_color(self.selection, color)
+            });
+            if let Err(error) = result {
+                self.notify(error.to_string());
+            }
+        }
+    }
+
+    pub(super) fn draw_network_colors(&self) {
+        self.background("MAINMENU.PCX", 0.97);
+        self.heading("PLAYER COLORS");
+        let Some(network) = &self.network else {
+            return;
+        };
+        let Some(lobby) = &network.lobby else {
+            return;
+        };
+        let seats = lobby.owned_seats(network.id);
+        for (local, seat) in seats.iter().copied().enumerate() {
+            let color = lobby.colors[seat] as usize;
+            let device = network
+                .devices
+                .get(local)
+                .map_or_else(|| format!("Player {}", local + 1), Device::name);
+            self.row(
+                &device,
+                &format!("< {} >", COLOR_NAMES[color]),
+                local,
+                83. + local as f32 * 26.,
+                14.,
+            );
+            draw_rectangle(
+                274.,
+                86. + local as f32 * 26.,
+                14.,
+                14.,
+                PLAYER_COLORS[color],
+            );
+        }
+        self.row(
+            "Back",
+            "Enter",
+            seats.len(),
+            83. + seats.len() as f32 * 26.,
+            14.,
+        );
+        for color in 0..10 {
+            let x = 34. + (color % 5) as f32 * 120.;
+            let y = 365. + (color / 5) as f32 * 32.;
+            let slot = lobby
+                .colors
+                .iter()
+                .position(|c| *c as usize == color)
+                .unwrap();
+            let owner = lobby.owners.get(slot).copied().flatten();
+            draw_rectangle(x, y, 10., 10., PLAYER_COLORS[color]);
+            self.media.text(
+                COLOR_NAMES[color],
+                x + 14.,
+                y,
+                11.,
+                if owner.is_some() { MUTED } else { LIGHT },
+            );
+            self.media.text(
+                if owner == Some(network.id) {
+                    "Yours"
+                } else if owner.is_some() {
+                    "Taken"
+                } else {
+                    "Available"
+                },
+                x + 14.,
+                y + 13.,
+                9.,
+                MUTED,
+            );
+        }
+        self.footer("Left / right: choose a free color  |  Enter: next color  |  Escape: back");
+    }
+
     pub(super) fn update_network_lobby(&mut self) {
         if self.network.as_ref().is_none_or(|network| network.id == 0) {
             if self.back() {
@@ -256,19 +629,18 @@ impl App {
             }
             return;
         }
-        self.navigation(5);
-        let clicked = self.hover_rows(30., 305., 580., 27., 5);
+        let actions = lobby_actions(self.network.as_ref().is_some_and(|n| n.host));
+        self.navigation(actions.len());
+        let clicked = self.hover_rows(30., 300., 580., 24., actions.len());
         if self.confirm() || clicked {
-            let result = match self.selection {
-                0 => self
-                    .network
-                    .as_mut()
-                    .map_or(Err(NetError::Unavailable), |n| n.ready()),
-                1 if self.network.as_ref().is_some_and(|n| n.server.is_none()) => {
+            let result = match actions[self.selection] {
+                LobbyAction::CopyInvite
+                    if self.network.as_ref().is_some_and(|n| n.server.is_none()) =>
+                {
                     self.notify("Friends can find this game in LAN games, or join your local IP on port 1997.");
                     Ok(())
                 }
-                1 => self
+                LobbyAction::CopyInvite => self
                     .network
                     .as_ref()
                     .ok_or(NetError::Unavailable)
@@ -277,21 +649,30 @@ impl App {
                         macroquad::miniquad::window::clipboard_set(&invite);
                         self.notify("Invitation copied. Share it privately with friends.");
                     }),
-                2 => self
-                    .network
-                    .as_mut()
-                    .ok_or(NetError::Unavailable)
-                    .and_then(|n| {
-                        n.start(
-                            self.cli.seed.wrapping_add(self.ui_elapsed_ms),
-                            (get_time() * 1000.) as u64,
-                        )
-                    }),
-                3 => {
+                LobbyAction::Start => {
+                    self.network
+                        .as_mut()
+                        .ok_or(NetError::Unavailable)
+                        .and_then(|n| {
+                            n.start(
+                                self.cli.seed.wrapping_add(self.ui_elapsed_ms),
+                                (get_time() * 1000.) as u64,
+                            )
+                        })
+                }
+                LobbyAction::Colors => {
+                    self.change_screen(Screen::NetworkColors);
+                    Ok(())
+                }
+                LobbyAction::Rules => {
+                    self.change_screen(Screen::NetworkRules);
+                    Ok(())
+                }
+                LobbyAction::Devices => {
                     self.open_devices();
                     Ok(())
                 }
-                _ => {
+                LobbyAction::Leave => {
                     self.leave_network();
                     Ok(())
                 }
@@ -345,21 +726,29 @@ impl App {
             self.paused = replay.simulation.paused;
             let arena = replay.simulation.config.arena.index();
             self.media.ensure_arena(arena).await?;
+            let colors = network
+                .lobby
+                .as_ref()
+                .map_or(bomberman_net::DEFAULT_COLORS, |lobby| lobby.colors);
             self.media
-                .ensure_players(&replay.simulation.players)
+                .ensure_players_with_colors(&replay.simulation.players, &colors)
                 .await?;
             match replay.stage {
                 Stage::Battle => Screen::Battle,
                 Stage::Results => Screen::Results,
-                Stage::Roulette => Screen::Roulette,
             }
         } else {
             Screen::NetworkLobby
         };
-        if self.screen != Screen::Help
-            && self.screen != Screen::NetworkDevices
-            && self.screen != target
-        {
+        let editing_lobby = target == Screen::NetworkLobby
+            && matches!(
+                self.screen,
+                Screen::NetworkDevices
+                    | Screen::NetworkColors
+                    | Screen::NetworkRules
+                    | Screen::NetworkTeams
+            );
+        if self.screen != Screen::Help && !editing_lobby && self.screen != target {
             self.change_screen(target);
             if target == Screen::Battle {
                 let arena = self.simulation.as_ref().unwrap().config.arena.index();
@@ -414,17 +803,7 @@ impl App {
                     None
                 } else if self.confirm() || click {
                     match self.selection {
-                        0 if host => Some(
-                            if self
-                                .simulation
-                                .as_ref()
-                                .is_some_and(|s| s.config.gold_bomberman)
-                            {
-                                Action::StartRoulette
-                            } else {
-                                Action::Rematch
-                            },
-                        ),
+                        0 if host => Some(Action::Rematch),
                         1 if host => {
                             if let Some(n) = &mut self.network {
                                 let _ = n.return_to_lobby();
@@ -441,43 +820,6 @@ impl App {
                         }
                     }
                 } else {
-                    None
-                }
-            }
-            Screen::Roulette if self.back() => {
-                self.leave_network();
-                None
-            }
-            Screen::Roulette
-                if self.confirm() || is_key_pressed(KeyCode::Space) || self.clicked =>
-            {
-                let settled = self
-                    .simulation
-                    .as_ref()
-                    .and_then(|s| s.gold_wheel.as_ref())
-                    .is_some_and(|w| w.is_settled());
-                if settled && host {
-                    Some(Action::Rematch)
-                } else if !settled
-                    && (host
-                        || self.network.as_ref().is_some_and(|network| {
-                            self.simulation.as_ref().is_some_and(|simulation| {
-                                match simulation.phase {
-                                    RoundPhase::MatchOver { winner } => {
-                                        network.lobby.as_ref().is_some_and(|lobby| {
-                                            lobby.owners.get(winner) == Some(&Some(network.id))
-                                        })
-                                    }
-                                    _ => false,
-                                }
-                            })
-                        }))
-                {
-                    Some(Action::StopRoulette)
-                } else {
-                    self.notify(
-                        "The winner or host stops roulette. The host starts the next match.",
-                    );
                     None
                 }
             }
@@ -499,6 +841,34 @@ impl App {
         } else {
             truncate(&self.network_ui.text, 35)
         }
+    }
+
+    pub(super) fn draw_multiplayer_menu(&self, internet: bool) {
+        self.background("MAINMENU.PCX", 0.97);
+        self.heading(if internet {
+            "INTERNET MULTIPLAYER"
+        } else {
+            "MULTIPLAYER"
+        });
+        self.media.center_text(
+            if internet {
+                "Create a private game or join with an invitation."
+            } else {
+                "Choose LAN for nearby computers or Internet to play online."
+            },
+            100.,
+            13.,
+            LIGHT,
+        );
+        let labels = if internet {
+            ["Create Online Game", "Join Game", "Back"]
+        } else {
+            ["LAN", "Internet", "Back"]
+        };
+        for (i, label) in labels.iter().enumerate() {
+            self.row(label, "Enter", i, 186. + i as f32 * 42., 16.);
+        }
+        self.footer("Arrow keys + Enter  |  Escape: back");
     }
     pub(super) fn draw_online(&self) {
         self.background("MAINMENU.PCX", 0.97);
@@ -642,60 +1012,59 @@ impl App {
                     Some(id) => format!("Friend {}", id),
                 };
                 self.media.text(
-                    &format!("{}: {}  -  {}", i + 1, COLOR_NAMES[i], label),
+                    &format!(
+                        "{}: {}  -  {}",
+                        i + 1,
+                        COLOR_NAMES[lobby.colors[i] as usize],
+                        label
+                    ),
                     48.,
                     94. + i as f32 * 18.,
                     12.,
                     LIGHT,
                 );
             }
-            let ready = lobby.ready.values().filter(|v| **v).count();
             self.media.center_text(
                 &format!(
-                    "{}  /  {} of {} computers ready",
+                    "{}  /  {}  /  {} of 10 computers",
                     lobby.config.arena.name(),
-                    ready,
-                    lobby.ready.len()
+                    if lobby.config.team_play {
+                        "Two teams"
+                    } else {
+                        "Free-for-all"
+                    },
+                    lobby.peers.len()
                 ),
                 282.,
                 12.,
                 GOLD,
             );
         }
-        let ready = network
-            .lobby
-            .as_ref()
-            .and_then(|l| l.ready.get(&network.id))
-            .copied()
-            .unwrap_or(false);
-        for (i, label) in [
-            if ready {
-                "Ready: YES (change)"
-            } else {
-                "Ready: NO (change)"
-            },
-            "Copy Invite",
-            "Start game (host)",
-            "Local keyboards and controllers",
-            "Leave game",
-        ]
-        .iter()
-        .enumerate()
-        {
+        for (i, action) in lobby_actions(network.host).iter().enumerate() {
+            let label = match action {
+                LobbyAction::CopyInvite => "Copy Invite",
+                LobbyAction::Start => "Start game",
+                LobbyAction::Rules => "Arena and battle rules",
+                LobbyAction::Colors => "Player colors",
+                LobbyAction::Devices => "Local keyboards and controllers",
+                LobbyAction::Leave => "Leave game",
+            };
             self.row(
                 label,
-                if i == 1 && network.server.is_none() {
+                if matches!(action, LobbyAction::CopyInvite) && network.server.is_none() {
                     "LAN: share host IP"
                 } else {
                     "Enter"
                 },
                 i,
-                308. + i as f32 * 27.,
+                303. + i as f32 * 24.,
                 13.,
             );
         }
-        self.footer(
-            "Seats change in the lobby. The host uses the arena and rules from Battle Setup.",
-        );
+        self.footer(if network.host {
+            "Choose arena and rules, then start when friends have selected their controls."
+        } else {
+            "Choose your controls and color, then wait for the host to start."
+        });
     }
 }

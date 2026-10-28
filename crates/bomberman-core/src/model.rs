@@ -409,6 +409,10 @@ pub struct PlayerPresentation {
     pub render_special: u16,
     pub render_frame: u32,
     pub palette: u8,
+    /// Capture the identity branch separately from canonical team/disease
+    /// palettes. Later infection updates can change the live disease state.
+    #[serde(default = "personal_palette_default")]
+    pub personal_palette: bool,
     pub death_finished: bool,
     pub death_accumulator_ms: i32,
     pub death_rise_accumulator_ms: i32,
@@ -431,6 +435,7 @@ impl Default for PlayerPresentation {
             render_special: 0,
             render_frame: 0,
             palette: 0,
+            personal_palette: true,
             death_finished: false,
             death_accumulator_ms: 0,
             death_rise_accumulator_ms: 0,
@@ -442,6 +447,10 @@ impl Default for PlayerPresentation {
             render_position: Position::default(),
         }
     }
+}
+
+fn personal_palette_default() -> bool {
+    true
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -601,6 +610,8 @@ pub struct GameConfig {
     pub random_starts: bool,
     pub enclosement_depth: u8,
     pub gold_bomberman: bool,
+    /// Original network gameplay restrictions, independent of the transport.
+    pub network_play: bool,
     pub win_by_kills: bool,
     /// 0=250, 1=350, 2=450 hundredths of a pixel/reference frame.
     pub conveyor_speed: u8,
@@ -635,6 +646,7 @@ impl Default for GameConfig {
             random_starts: true,
             enclosement_depth: 1,
             gold_bomberman: true,
+            network_play: false,
             win_by_kills: false,
             conveyor_speed: 1,
             stomped_bombs_detonate: true,

@@ -62,7 +62,8 @@ impl Simulation {
                 }
                 2 | 11 => {
                     for call in 0..if id == 11 { 3 } else { 1 } {
-                        let kind = Disease::ALL[self.rng.range(9) as usize];
+                        // 0x41dfb6 rerolls Swap (ID7) in network mode.
+                        let kind = self.random_disease();
                         if call == 0 {
                             let group = if self.rng.one_in(3) {
                                 3000 + u32::from(kind.id()) * 50
@@ -182,8 +183,17 @@ impl Simulation {
         // 0x41df4c deliberately leaves +80 (freshness) untouched.
     }
 
+    fn random_disease(&mut self) -> Disease {
+        loop {
+            let kind = Disease::ALL[self.rng.range(9) as usize];
+            if !self.config.network_play || kind != Disease::Swap {
+                return kind;
+            }
+        }
+    }
+
     pub fn infect(&mut self, player: usize, kind: Disease) {
-        if player >= self.players.len() {
+        if player >= self.players.len() || (self.config.network_play && kind == Disease::Swap) {
             return;
         }
         if kind == Disease::Swap {
@@ -318,6 +328,8 @@ mod tests {
     #[derive(Deserialize)]
     struct Fixture {
         mode: String,
+        #[serde(default)]
+        network: bool,
         seed: u32,
         player: usize,
         kind: u8,
@@ -442,6 +454,7 @@ mod tests {
         ) in cases.into_iter().enumerate()
         {
             let mut sim = empty(f.actors.len());
+            sim.config.network_play = f.network;
             sim.config.diseases_curable = f.curable;
             sim.config.disease_cure_chance = f.cure_chance;
             sim.config.diseases_multiply = f.multiply;
@@ -541,7 +554,7 @@ mod tests {
             match f.mode.as_str() {
                 "pickup" => resolved = sim.collect_powerup_id(f.player, f.kind),
                 "infect" => {
-                    let kind = Disease::ALL[sim.rng.range(9) as usize];
+                    let kind = sim.random_disease();
                     if f.announce != 0 {
                         let group = if sim.rng.one_in(3) {
                             3000 + u32::from(kind.id()) * 50

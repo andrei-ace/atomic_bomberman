@@ -1136,6 +1136,10 @@ impl Simulation {
     }
 
     pub(super) fn head_hit(&mut self, tile: TilePos, _owner: usize) {
+        // 0x421f7e guards the entire stun/spill routine with local mode == 0.
+        if self.config.network_play {
+            return;
+        }
         let Some(player) = self
             .players
             .iter()

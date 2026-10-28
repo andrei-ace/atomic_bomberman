@@ -3,6 +3,9 @@
 Version **0.2.0**, Rust **1.89.0**, one annotated Git tag for all three packages:
 Linux x86-64 AppImage (Ubuntu 24.04 baseline, X11/XWayland), Apple Silicon Mac ZIP,
 and native Linux ARM64 relay (Ubuntu 26 deployment; glibc 2.39 minimum).
+The multiplayer protocol is **2**. Rebuild and upgrade the relay and all clients
+from the same commit; the application version alone does not identify a
+compatible protocol build.
 Original game assets, imported caches, media, private relay state and invitations
 are excluded. Keep `dist/`, `build/` and private server state out of source commits.
 
@@ -12,9 +15,32 @@ Run `tools/check.sh`. Linux additionally needs `libarchive-tools libgtk-3-dev
 librsvg2-common squashfs-tools` alongside the desktop build libraries in README. Run
 `python3 tools/test_linux_launcher.py` on Linux and `tools/test_macos_launcher.sh`
 on a Mac. `bomberman-net` tests deterministic replay, transitions, ownership,
-readiness, disconnects, roulette and rematches; relay tests use real loopback TLS.
-The network replay fixture is checked against the same committed digest on
-Linux x86-64, macOS ARM64/Intel and native ARM64 CI.
+host start authority, personal colors, disconnects and rematches; relay tests
+use real loopback TLS. Local gameplay retains its roulette checks. The
+`tools/verify_relay.py` benchmark defaults to two isolated rooms with twenty
+outbound game connections: one host and nine clients per room.
+CI is configured to compare the network replay fixture with the same committed
+digest on Linux x86-64, macOS ARM64/Intel and native ARM64 runners.
+
+Network gameplay comparisons cover
+[384 pickup/infection/contact cases](evidence/network-powerups-parity.json),
+including 17 disease transmissions, and
+[128 head-hit cases](evidence/network-headhit-parity.json). In network-host mode
+2, compared gameplay state and shared RNG match the original routines; head
+hits leave the compared state unchanged. These are isolated native-routine
+emulation checks with packet and physical output intercepted. They do not
+execute the full original Windows application. The
+[original-rule ledger](multiplayer-original-rules.md) records static evidence
+and unresolved claims.
+
+Reproduce those comparisons with the supplied executable:
+
+```sh
+python3 tools/compare_powerups.py --exe /path/to/BM95.EXE --network --count 128 \
+  --report docs/evidence/network-powerups-parity.json
+python3 tools/compare_headhit.py --exe /path/to/BM95.EXE --network --count 128 \
+  --report docs/evidence/network-headhit-parity.json
+```
 
 Review and commit the intended source, then build from that clean commit:
 
@@ -53,7 +79,8 @@ ad-hoc signed, with no Developer ID signing/notarization setup.
 ## One draft release
 
 Create and push an annotated `v0.2.0` tag only after reviewing the commit and
-platform checks. Run **Desktop and relay release** for that existing tag. The
+platform checks. Its push starts **Desktop and relay release**; the same workflow
+can also be dispatched manually for an existing annotated version tag. The
 workflow uses separate native Linux x86-64, Mac ARM64 and Linux ARM64 runners.
 Each validates the annotated tag/version, tests the source, compares the shared
 replay digest, builds from a clean checkout and verifies its package.

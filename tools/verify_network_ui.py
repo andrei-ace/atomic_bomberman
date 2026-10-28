@@ -77,7 +77,16 @@ def main():
         while not probe.exists() and time.monotonic()<deadline:
             time.sleep(.2); press('F12')
         state = json.loads(probe.read_text())
-        count = {'Main':9,'Online':4,'NetworkLobby':5,'NetworkDevices':13,'Battle':4}[state['screen']]
+        counts = {'Main':7,'Multiplayer':3,'Internet':3,'Online':4,'NetworkDevices':13,'NetworkRules':12,'Battle':4}
+        if state['screen'] == 'NetworkLobby':
+            count = len(state['network']['actions'])
+        elif state['screen'] == 'NetworkColors':
+            network = state['network']
+            count = network['lobby']['owners'].count(network['id'])+1
+        elif state['screen'] == 'NetworkTeams':
+            count = len(state['network']['lobby']['owners'])+1
+        else:
+            count = counts[state['screen']]
         for _ in range((index-state['selection'])%count): press('Down')
         press('Return')
 
@@ -136,21 +145,60 @@ def main():
             if screen: assert value['screen']==screen, (screen,value['screen'],value.get('message'))
             return value
 
+        def open_online(player, create):
+            focus(player[0]); select(1); snapshot(player,'Multiplayer')
+            select(1); snapshot(player,'Internet')
+            select(0 if create else 1); snapshot(player,'Online')
+
+        def lobby_action(player, action):
+            state = snapshot(player, 'NetworkLobby')
+            select(state['network']['actions'].index(action))
+
         try:
             host=launch('host'); snapshot(host,'Main')
-            select(5); snapshot(host,'Online'); paste(invitation); select(1); time.sleep(.5)
+            select(1); snapshot(host,'Multiplayer'); select(0); snapshot(host,'Lan')
+            press('Escape'); snapshot(host,'Multiplayer'); select(1); snapshot(host,'Internet')
+            press('Escape'); snapshot(host,'Multiplayer'); press('Escape'); snapshot(host,'Main')
+            open_online(host, True); paste(invitation); select(1); time.sleep(.5)
             state_host=snapshot(host,'NetworkLobby'); assert state_host['network']['id']==1
+            assert 'Ready' not in state_host['network']['actions']
+            lobby_action(host, 'Start'); snapshot(host, 'NetworkLobby')
             profile=host[1]/'config/atomic-bomberman/connections.json'; assert profile.exists()
             assert profile.stat().st_mode&0o777==0o600
-            select(1); game_invitation=clipboard(); assert game_invitation.startswith('AB1.')
-            friend=launch('friend'); snapshot(friend,'Main'); select(6); paste(game_invitation); select(1); time.sleep(.5)
+            lobby_action(host, 'CopyInvite'); game_invitation=clipboard(); assert game_invitation.startswith('AB1.')
+            friend=launch('friend'); snapshot(friend,'Main'); open_online(friend, False); paste(game_invitation); select(1); time.sleep(.5)
             state_friend=snapshot(friend,'NetworkLobby'); assert state_friend['network']['id']==2
+            assert not {'Start', 'Rules', 'Ready'} & set(state_friend['network']['actions'])
             # A second keyboard is assigned locally through the actual lobby UI.
-            select(3); snapshot(friend,'NetworkDevices'); select(1); press('Escape'); time.sleep(.3)
+            lobby_action(friend, 'Devices'); snapshot(friend,'NetworkDevices'); select(1); press('Escape'); time.sleep(.3)
             focus(host[0]); state_host=snapshot(host,'NetworkLobby')
             assert state_host['network']['lobby']['owners'].count(2)==2
-            focus(friend[0]); press('Return')
-            focus(host[0]); select(0); time.sleep(.3); select(2); time.sleep(2)
+            # Edit both local players, preserving independent per-seat claims.
+            lobby_action(friend, 'Colors'); snapshot(friend, 'NetworkColors')
+            press('Right'); press('Down'); press('Right'); press('Escape'); time.sleep(.3)
+            lobby = snapshot(host, 'NetworkLobby')['network']['lobby']
+            assert lobby['colors'][1:3] == [3, 4], lobby['colors']
+            assert len(set(lobby['colors'])) == 10
+            lobby_action(host, 'Colors'); snapshot(host, 'NetworkColors')
+            press('Left'); press('Escape'); time.sleep(.3)
+            assert snapshot(friend, 'NetworkLobby')['network']['lobby']['colors'][0] == 9
+            # The host changes shared modes/settings/teams without rewriting
+            # either computer's saved local settings.
+            settings_file = host[1]/'settings.json'
+            saved_settings = settings_file.read_bytes() if settings_file.exists() else None
+            lobby_action(host, 'Rules'); snapshot(host, 'NetworkRules')
+            press('Right')
+            select(2); state=snapshot(host, 'NetworkRules')
+            assert state['network']['lobby']['config']['team_play']
+            select(10); snapshot(host, 'NetworkTeams'); select(0); press('Escape')
+            snapshot(host, 'NetworkRules'); select(2); press('Escape'); time.sleep(.3)
+            lobby = snapshot(friend, 'NetworkLobby')['network']['lobby']
+            assert lobby['config']['arena'] == 'ClassicGreenAcres'
+            assert not lobby['config']['team_play']
+            assert lobby['config']['players'][0]['team'] == 1
+            assert lobby['config']['network_play'] and not lobby['config']['gold_bomberman']
+            assert (settings_file.read_bytes() if settings_file.exists() else None) == saved_settings
+            lobby_action(host, 'Start'); time.sleep(2)
             snapshot(friend,'Battle'); snapshot(host,'Battle')
             press('p'); time.sleep(.4)
             paused_host=snapshot(host,'Battle'); paused_friend=snapshot(friend,'Battle')
@@ -165,9 +213,9 @@ def main():
             assert snapshot(friend)['network'] is None
             assert snapshot(host)['network'] is None
             # Returning host uses saved profile; friend reuses its new short code.
-            focus(host[0]); select(5); select(1); time.sleep(.4)
+            open_online(host, True); select(1); time.sleep(.4)
             state_host=snapshot(host,'NetworkLobby'); code=state_host['network']['room']
-            focus(friend[0]); select(6); paste(code); select(1); time.sleep(.4)
+            open_online(friend, False); paste(code); select(1); time.sleep(.4)
             assert snapshot(friend,'NetworkLobby')['network']['id']==2
             for log in logs: log.flush()
             for file in base.rglob('*.log'):
@@ -175,9 +223,12 @@ def main():
                 assert invitation not in text and game_invitation not in text
             report={'passed':True,'platform':'Ubuntu 24.04 x86-64, isolated Xvfb, Mesa software rendering',
                     'injected_round_trip_tcp_delay_ms':args.latency_ms,
-                    'checks':['fresh server invitation pasted with Ctrl-V','create room','private profile mode 0600',
+                    'checks':['Multiplayer directly below Start local battle','LAN and Internet submenus and back navigation','fresh server invitation pasted with Ctrl-V','create room','private profile mode 0600',
                               'Copy Invite through system clipboard','fresh friend joins with one full invitation',
-                              'multiple local keyboards/controllers in lobby','readiness and start','actual two-window battle',
+                              'multiple local keyboards/controllers in lobby','host-only Start and shared arena/rules/team editing',
+                              'start after controls without added Ready toggle','personal colors for both local players and host',
+                              'ten unique colors synchronized to both computers','session settings preserve saved local settings',
+                              'original network flags disable Gold roulette','actual two-window battle',
                               'shared pause and identical serialized simulation','host departure ends session',
                               'saved server reuse','short room-code reuse','credentials absent from logs'],
                     'limitations':['No physical controller tested.','macOS Cmd-V and Linux/macOS WAN play require Mac hardware.']}

@@ -87,28 +87,21 @@ impl Network {
     fn broadcast_lobby(&self) -> Result<(), NetError> {
         self.connection.message(
             None,
-            GameMessage::Lobby(self.lobby.clone().ok_or(NetError::Protocol)?),
+            GameMessage::Lobby(Box::new(self.lobby.clone().ok_or(NetError::Protocol)?)),
         )
     }
-    pub fn ready(&mut self) -> Result<(), NetError> {
+    pub fn configure(&mut self, config: GameConfig) -> Result<(), NetError> {
+        if !self.host {
+            return Err(NetError::Ownership);
+        }
         if self.replay.is_some() {
             return Err(NetError::InProgress);
         }
-        if self.host {
-            let lobby = self.lobby.as_mut().ok_or(NetError::Protocol)?;
-            let ready = lobby.ready.get_mut(&HOST).ok_or(NetError::Protocol)?;
-            *ready = !*ready;
-            self.broadcast_lobby()
-        } else {
-            let current = self
-                .lobby
-                .as_ref()
-                .and_then(|l| l.ready.get(&self.id))
-                .copied()
-                .unwrap_or(false);
-            self.connection
-                .message(Some(HOST), GameMessage::Ready(!current))
-        }
+        self.lobby
+            .as_mut()
+            .ok_or(NetError::Protocol)?
+            .configure(config)?;
+        self.broadcast_lobby()
     }
     pub fn change_devices(&mut self, devices: Vec<Device>) -> Result<(), NetError> {
         if self.replay.is_some() {
@@ -134,7 +127,7 @@ impl Network {
         }
         let lobby = self.lobby.as_ref().ok_or(NetError::Protocol)?;
         if !lobby.can_start() {
-            return Err(NetError::NotReady);
+            return Err(NetError::WaitingForPlayers);
         }
         let simulation =
             Simulation::new(lobby.config.clone(), seed).map_err(|_| NetError::Protocol)?;
@@ -144,6 +137,7 @@ impl Network {
             GameMessage::Start {
                 simulation: Box::new(simulation.clone()),
                 owners: lobby.owners.clone(),
+                colors: lobby.colors,
             },
         )?;
         self.buffer = Some(InputBuffer::new(lobby.owners.clone(), now_ms));
@@ -165,11 +159,30 @@ impl Network {
         } else {
             match action {
                 Action::Pause(_) => self.connection.message(Some(HOST), GameMessage::Pause),
-                Action::StopRoulette => self
-                    .connection
-                    .message(Some(HOST), GameMessage::StopRoulette),
                 _ => Err(NetError::Ownership),
             }
+        }
+    }
+    pub fn choose_color(&mut self, local_player: usize, color: u8) -> Result<(), NetError> {
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
+        let lobby = self.lobby.as_mut().ok_or(NetError::Protocol)?;
+        let seats = lobby.owned_seats(self.id);
+        let seat = *seats.get(local_player).ok_or(NetError::Ownership)?;
+        if !lobby.color_available(seat, color) {
+            return Err(NetError::ColorTaken);
+        }
+        if self.host {
+            lobby.choose_color(HOST, seat, color)?;
+            self.broadcast_lobby()
+        } else {
+            self.connection
+                .message(Some(HOST), GameMessage::Color { seat, color })?;
+            // Keep cycling responsive while waiting for the host. Requests
+            // identify one seat, so rapid edits of two local players cannot
+            // reset one another using a stale whole-assignment snapshot.
+            lobby.choose_color(self.id, seat, color)
         }
     }
     pub fn return_to_lobby(&mut self) -> Result<(), NetError> {
@@ -181,9 +194,6 @@ impl Network {
         self.actions.clear();
         self.last_input.clear();
         self.expected_hashes.clear();
-        if let Some(lobby) = &mut self.lobby {
-            lobby.ready.values_mut().for_each(|r| *r = false);
-        }
         self.connection.send(Request::Playing(false))?;
         self.broadcast_lobby()
     }
@@ -231,33 +241,43 @@ impl Network {
                         if let Err(error) = result {
                             self.connection
                                 .message(Some(from), GameMessage::Error(error))?;
-                            if !matches!(error, NetError::Full | NetError::InProgress) {
+                            if !matches!(
+                                error,
+                                NetError::Full | NetError::InProgress | NetError::ColorTaken
+                            ) {
                                 self.connection.send(Request::Kick(from))?;
+                            } else if self.replay.is_none() {
+                                self.broadcast_lobby()?;
                             }
                         }
                     } else if from == HOST {
                         match message {
                             GameMessage::Lobby(lobby) => {
-                                lobby.config.validate().map_err(|_| NetError::Protocol)?;
-                                if lobby.owners.len() != lobby.config.players.len() {
-                                    return Err(NetError::Protocol);
-                                }
-                                self.lobby = Some(lobby);
+                                lobby.validate()?;
+                                self.lobby = Some(*lobby);
                                 self.replay = None;
                                 self.last_input.clear();
                             }
-                            GameMessage::Start { simulation, owners } => {
+                            GameMessage::Start {
+                                simulation,
+                                owners,
+                                colors,
+                            } => {
                                 simulation
                                     .config
                                     .validate()
                                     .map_err(|_| NetError::Protocol)?;
-                                if owners.len() != simulation.players.len()
+                                if !valid_colors(&colors)
+                                    || owners.len() != simulation.players.len()
                                     || owners.len() > MAX_PLAYERS
+                                    || !simulation.config.network_play
+                                    || simulation.config.gold_bomberman
                                 {
                                     return Err(NetError::Protocol);
                                 }
                                 let lobby = self.lobby.as_mut().ok_or(NetError::Protocol)?;
                                 lobby.owners = owners;
+                                lobby.colors = colors;
                                 self.replay = Some(Replay::new(*simulation));
                                 self.last_input.clear();
                             }
@@ -275,7 +295,10 @@ impl Network {
                                 }
                             }
                             GameMessage::Error(error)
-                                if matches!(error, NetError::Full | NetError::InProgress) =>
+                                if matches!(
+                                    error,
+                                    NetError::Full | NetError::InProgress | NetError::ColorTaken
+                                ) =>
                             {
                                 self.warning = Some(error.to_string())
                             }
@@ -355,11 +378,7 @@ impl Network {
         message: GameMessage,
         now_ms: u64,
     ) -> Result<(), NetError> {
-        if !self
-            .lobby
-            .as_ref()
-            .is_some_and(|l| l.ready.contains_key(&peer))
-        {
+        if !self.lobby.as_ref().is_some_and(|l| l.peers.contains(&peer)) {
             return Err(NetError::Ownership);
         }
         match message {
@@ -367,12 +386,11 @@ impl Network {
                 self.lobby.as_mut().unwrap().assign(peer, count)?;
                 self.broadcast_lobby()?;
             }
-            GameMessage::Ready(ready) if self.replay.is_none() => {
-                let lobby = self.lobby.as_mut().unwrap();
-                if !lobby.owners.contains(&Some(peer)) {
-                    return Err(NetError::Ownership);
-                }
-                lobby.ready.insert(peer, ready);
+            GameMessage::Color { seat, color } if self.replay.is_none() => {
+                self.lobby
+                    .as_mut()
+                    .unwrap()
+                    .choose_color(peer, seat, color)?;
                 self.broadcast_lobby()?;
             }
             GameMessage::Input { sequence, seats } => self
@@ -389,17 +407,6 @@ impl Network {
                     .paused;
                 self.action(Action::Pause(!paused))?;
             }
-            GameMessage::StopRoulette => {
-                let replay = self.replay.as_ref().ok_or(NetError::Protocol)?;
-                if let bomberman_core::RoundPhase::MatchOver { winner } = replay.simulation.phase {
-                    if self.lobby.as_ref().unwrap().owners[winner] != Some(peer) {
-                        return Err(NetError::Ownership);
-                    }
-                } else {
-                    return Err(NetError::Protocol);
-                }
-                self.action(Action::StopRoulette)?;
-            }
             GameMessage::Hash { tick, hash } => {
                 if self
                     .expected_hashes
@@ -409,7 +416,7 @@ impl Network {
                     return Err(NetError::Desync);
                 }
             }
-            GameMessage::Seats(_) | GameMessage::Ready(_) => return Err(NetError::InProgress),
+            GameMessage::Seats(_) | GameMessage::Color { .. } => return Err(NetError::InProgress),
             _ => return Err(NetError::Protocol),
         }
         Ok(())
@@ -480,6 +487,7 @@ mod tests {
             thread::sleep(Duration::from_millis(20));
         }
         assert_eq!(client.id, 2);
+        assert_eq!(client.start(1997, now), Err(NetError::Ownership));
         assert_eq!(
             host.lobby
                 .as_ref()
@@ -490,19 +498,27 @@ mod tests {
                 .count(),
             2
         );
-        host.ready().unwrap();
-        client.ready().unwrap();
-        for _ in 0..30 {
+        // Queue both requests before either reply. Whole-vector requests used
+        // to undo the first local player's choice using a stale snapshot.
+        client.choose_color(0, 4).unwrap();
+        client.choose_color(1, 5).unwrap();
+        for _ in 0..100 {
             now += 20;
             host.pump(20, now, vec![PlayerInput::default(); 2]).unwrap();
             client
                 .pump(20, now, vec![PlayerInput::default(); 2])
                 .unwrap();
-            if host.lobby.as_ref().unwrap().can_start() {
+            if host.lobby.as_ref().unwrap().colors[2..4] == [4, 5]
+                && client.lobby.as_ref().unwrap().colors[2..4] == [4, 5]
+            {
                 break;
             }
             thread::sleep(Duration::from_millis(20));
         }
+        assert_eq!(&host.lobby.as_ref().unwrap().colors[2..4], &[4, 5]);
+        assert_eq!(&client.lobby.as_ref().unwrap().colors[2..4], &[4, 5]);
+        assert_eq!(host.choose_color(0, 4), Err(NetError::ColorTaken));
+        assert!(host.lobby.as_ref().unwrap().can_start());
         host.start(1997, now).unwrap();
         let mut hashes = BTreeMap::new();
         for step in 0..120 {

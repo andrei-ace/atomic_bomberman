@@ -41,13 +41,18 @@ pub(super) fn place_initial_powerups(
     board: &mut Board,
     scheme: &Scheme,
     rng: &mut DeterministicRng,
+    network_play: bool,
 ) {
-    let counts = std::array::from_fn(|id| {
+    let mut counts = std::array::from_fn(|id| {
         scheme
             .powerup(Powerup::from_id(id as u8).unwrap())
             .and_then(|p| p.override_count)
             .unwrap_or(POWER_COUNTS[id])
     });
+    // 0x425aa0: network play zeroes ID12 before any placement draws.
+    if network_play {
+        counts[Powerup::Random.id() as usize] = 0;
+    }
     place_powerups_with_counts(board, &counts, rng);
 }
 
@@ -471,7 +476,7 @@ mod tests {
                     c.powerup = Some(Powerup::Flame);
                 }
                 let mut rng = DeterministicRng::new(seed);
-                place_initial_powerups(&mut board, &scheme, &mut rng);
+                place_initial_powerups(&mut board, &scheme, &mut rng, false);
                 powers.add([layout, seed as i32, rng.state as i32]);
                 powers.add(item_values(&board));
                 powers.frames += 1;

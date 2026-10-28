@@ -136,7 +136,7 @@ try:
     for thread in cpu:
         if thread['name'] == 'bomberman-audio':
             assert thread['seconds'] < 0.15, 'silent audio thread is busy-spinning'
-    key('Down'); key('Return')
+    key('Down'); key('Down'); key('Return')
     screenshot('setup')
     key('Right')
     assert json.load(open(settings))['participant_count'] == 2
@@ -150,7 +150,7 @@ try:
     key('Down'); key('Tab')
     assert json.load(open(settings))['participants'][0]['team'] == 1
     key('Escape')
-    key('Down'); key('Down'); key('Return')
+    key('Down'); key('Down'); key('Down'); key('Return')
     key('Right')
     assert json.load(open(settings))['wins'] == 3
     key('Down'); key('Right')
@@ -159,7 +159,7 @@ try:
     assert json.load(open(settings))['round_seconds'] == 180
     screenshot('settings')
     key('Escape')
-    key('Down'); key('Down'); key('Down'); key('Return')
+    key('Down'); key('Down'); key('Down'); key('Down'); key('Return')
     key('Return'); key('z')
     assert json.load(open(settings))['keyboard'][0]['keys'][0] == 'Z'
     screenshot('controls')

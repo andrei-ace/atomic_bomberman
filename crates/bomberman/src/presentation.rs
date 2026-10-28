@@ -11,6 +11,19 @@ pub struct PlayerSprite {
     pub dead: bool,
 }
 
+/// Personal colors are an explicit network extension. Team colors and disease
+/// flicker retain the native palette selected when presentation was captured.
+pub fn player_palette(player: &Player, colors: &[u8; 10]) -> usize {
+    let original = player.presentation.palette as usize;
+    if player.presentation.personal_palette {
+        colors
+            .get(original)
+            .map_or(original, |color| *color as usize)
+    } else {
+        original
+    }
+}
+
 /// 0x41daa7 returns the first FRAM image. Extra records and following metadata
 /// words do not translate or add drawing layers in the native battle renderer.
 pub fn native_image(sequence: &AnimationSequence, frame: usize) -> Option<u32> {

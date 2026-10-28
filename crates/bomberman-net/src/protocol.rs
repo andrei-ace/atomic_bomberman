@@ -1,14 +1,23 @@
 use bomberman_core::{GameConfig, PlayerInput, Simulation};
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeMap, fmt};
+use std::{collections::BTreeSet, fmt};
 
 pub type PeerId = u32;
 pub const HOST: PeerId = 1;
-pub const PROTOCOL_VERSION: u32 = 1;
+pub const PROTOCOL_VERSION: u32 = 2;
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const PORT: u16 = 1997;
 pub const STEP_MS: u32 = 20;
 pub const MAX_PLAYERS: usize = 10;
+pub const COLOR_NAMES: [&str; MAX_PLAYERS] = [
+    "White", "Black", "Red", "Blue", "Green", "Yellow", "Cyan", "Magenta", "Orange", "Purple",
+];
+pub const DEFAULT_COLORS: [u8; MAX_PLAYERS] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+pub fn valid_colors(colors: &[u8; MAX_PLAYERS]) -> bool {
+    let mut sorted = *colors;
+    sorted.sort_unstable();
+    sorted == DEFAULT_COLORS
+}
 pub const MAX_MESSAGE: usize = 512 * 1024;
 pub const QUEUE: usize = 128;
 
@@ -45,10 +54,11 @@ pub enum NetError {
     Unauthorized,
     RoomExpired,
     Full,
+    ColorTaken,
     Version,
     Assets,
     Ownership,
-    NotReady,
+    WaitingForPlayers,
     InProgress,
     RateLimit,
     TooLarge,
@@ -73,6 +83,7 @@ impl fmt::Display for NetError {
             }
             Self::RoomExpired => "Room expired or not found. Request a new room invitation.",
             Self::Full => "This game is full (ten players maximum).",
+            Self::ColorTaken => "That color is already assigned. Choose an available color.",
             Self::Version => {
                 "Incompatible game or protocol version. Everyone must use the same release."
             }
@@ -80,7 +91,7 @@ impl fmt::Display for NetError {
                 "Original game assets differ. Everyone must import the same game edition."
             }
             Self::Ownership => "Player assignment is not owned by this connection.",
-            Self::NotReady => "Every connected player must be ready before starting.",
+            Self::WaitingForPlayers => "Connect a client and assign its controls before starting. Team games need players on both teams.",
             Self::InProgress => "This game has started. Join or change players in the lobby.",
             Self::RateLimit => "Connection limit reached. Please try again later.",
             Self::TooLarge => "Network message or queue exceeded its limit.",
@@ -135,16 +146,21 @@ pub enum Event {
 pub struct Lobby {
     pub config: GameConfig,
     pub owners: Vec<Option<PeerId>>,
-    pub ready: BTreeMap<PeerId, bool>,
+    pub peers: BTreeSet<PeerId>,
+    pub colors: [u8; MAX_PLAYERS],
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum GameMessage {
     Seats(u8),
-    Ready(bool),
-    Lobby(Lobby),
+    Color {
+        seat: usize,
+        color: u8,
+    },
+    Lobby(Box<Lobby>),
     Start {
         simulation: Box<Simulation>,
         owners: Vec<Option<PeerId>>,
+        colors: [u8; MAX_PLAYERS],
     },
     Input {
         sequence: u64,
@@ -152,7 +168,6 @@ pub enum GameMessage {
     },
     Frame(InputFrame),
     Pause,
-    StopRoulette,
     Hash {
         tick: u64,
         hash: [u8; 32],
@@ -182,8 +197,6 @@ pub struct InputFrame {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Action {
     Pause(bool),
-    StartRoulette,
-    StopRoulette,
     Rematch,
     Bots(Vec<usize>),
 }
@@ -191,7 +204,6 @@ pub enum Action {
 pub enum Stage {
     Battle,
     Results,
-    Roulette,
 }
 
 pub fn encode<T: Serialize>(value: &T) -> Result<Vec<u8>, NetError> {

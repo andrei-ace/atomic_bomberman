@@ -73,8 +73,9 @@ fn opaque_invites_saved_server_and_private_profile() {
 }
 
 #[test]
-fn lobby_allocates_multiple_local_players_transactionally_and_requires_readiness() {
+fn lobby_allocates_multiple_local_players_transactionally_and_host_can_start_after_assignment() {
     let mut lobby = Lobby::new(GameConfig::default(), 2).unwrap();
+    assert!(!lobby.can_start());
     for peer in 2..=5 {
         lobby.add(peer);
         lobby.assign(peer, 2).unwrap();
@@ -90,12 +91,10 @@ fn lobby_allocates_multiple_local_players_transactionally_and_requires_readiness
     assert_eq!(lobby.assign(6, 1), Err(NetError::Full));
     assert_eq!(lobby.owners, before);
     lobby.remove(6);
-    assert!(!lobby.can_start());
-    lobby.ready.values_mut().for_each(|r| *r = true);
     assert!(lobby.can_start());
     lobby.remove(3);
     assert_eq!(lobby.owners.iter().filter(|o| o.is_none()).count(), 2);
-    assert!(!lobby.can_start());
+    assert!(lobby.can_start());
     assert_eq!(lobby.assign(42, 1), Err(NetError::Ownership));
 }
 
@@ -143,8 +142,11 @@ fn button_transitions_ownership_sequences_stale_controls_and_disconnect_grace() 
 }
 
 #[test]
-fn ten_player_fixed_step_replay_pause_disconnect_roulette_and_rematch() {
-    let mut config = GameConfig::default();
+fn ten_player_network_replay_pause_disconnect_and_rematch_without_roulette() {
+    let mut config = GameConfig {
+        network_play: true,
+        ..Default::default()
+    };
     config
         .players
         .iter_mut()
@@ -181,18 +183,8 @@ fn ten_player_fixed_step_replay_pause_disconnect_roulette_and_rematch() {
         replay.simulation.phase = RoundPhase::MatchOver { winner: 0 };
         replay.stage = Stage::Results;
     }
-    for tick in 0..1200 {
-        let actions = match tick {
-            0 => vec![Action::StartRoulette],
-            30 => vec![Action::StopRoulette],
-            _ => vec![],
-        };
-        let (frame, _) = host
-            .advance(vec![PlayerInput::default(); 10], actions)
-            .unwrap();
-        client.apply(&frame).unwrap();
-    }
-    assert!(host.simulation.gold_reward.is_some());
+    assert!(decode::<Action>(br#""StartRoulette""#).is_err());
+    assert!(host.simulation.gold_reward.is_none());
     let (frame, _) = host
         .advance(vec![PlayerInput::default(); 10], vec![Action::Rematch])
         .unwrap();
@@ -239,7 +231,7 @@ fn relay_authentication_rooms_permissions_expiry_backpressure_and_limits() {
             peer,
             Request::Send {
                 to: Some(HOST),
-                message: GameMessage::Ready(true),
+                message: GameMessage::Seats(1),
             },
         )
         .unwrap();
@@ -255,7 +247,9 @@ fn relay_authentication_rooms_permissions_expiry_backpressure_and_limits() {
             peer,
             Request::Send {
                 to: None,
-                message: GameMessage::Lobby(Lobby::new(GameConfig::default(), 1).unwrap())
+                message: GameMessage::Lobby(Box::new(
+                    Lobby::new(GameConfig::default(), 1).unwrap()
+                ))
             }
         )
         .is_err());
@@ -289,4 +283,102 @@ fn relay_authentication_rooms_permissions_expiry_backpressure_and_limits() {
         decode::<Request>(&vec![0; MAX_MESSAGE + 1]).err(),
         Some(NetError::TooLarge)
     );
+}
+
+#[test]
+fn one_server_and_nine_clients_share_ten_seats_and_reject_an_eleventh_computer() {
+    let token = random_token();
+    let mut broker = Broker::new(Some(token.clone()));
+    let mut receivers = Vec::new();
+    let (tx, rx) = mpsc::channel(QUEUE);
+    receivers.push(rx);
+    let (room, id) = broker.open(open(&token, None), tx).unwrap();
+    assert_eq!(id, HOST);
+    let mut lobby = Lobby::new(GameConfig::default(), 1).unwrap();
+    for peer in 2..=10 {
+        let (tx, rx) = mpsc::channel(QUEUE);
+        receivers.push(rx);
+        assert_eq!(
+            broker.open(open(&token, Some(room.clone())), tx).unwrap().1,
+            peer
+        );
+        lobby.add(peer);
+        lobby.assign(peer, 1).unwrap();
+    }
+    assert_eq!(broker.connections(), 10);
+    assert_eq!(lobby.owners, (1..=10).map(Some).collect::<Vec<_>>());
+    assert!(lobby.can_start());
+    lobby.validate().unwrap();
+    let (tx, _rx) = mpsc::channel(QUEUE);
+    assert_eq!(
+        broker
+            .open(open(&token, Some(room.clone())), tx)
+            .unwrap_err(),
+        NetError::Full
+    );
+    for peer in 2..=10 {
+        assert_eq!(
+            broker.route(&room, peer, Request::Playing(true)),
+            Err(NetError::Ownership)
+        );
+    }
+}
+
+#[test]
+fn personal_colors_are_unique_owned_and_transactional_with_multiple_local_players() {
+    let mut lobby = Lobby::new(GameConfig::default(), 2).unwrap();
+    lobby.add(2);
+    lobby.assign(2, 2).unwrap();
+    lobby.choose_color(HOST, 0, 4).unwrap();
+    assert_eq!((lobby.colors[0], lobby.colors[4]), (4, 0));
+    assert_eq!(lobby.config.players[0].name, "Green");
+    let before = encode(&lobby).unwrap();
+    assert_eq!(lobby.choose_color(2, 0, 5), Err(NetError::Ownership));
+    assert_eq!(lobby.choose_color(2, 2, 4), Err(NetError::ColorTaken));
+    assert_eq!(lobby.choose_color(2, 2, 3), Err(NetError::ColorTaken));
+    assert_eq!(lobby.choose_color(2, 2, 10), Err(NetError::Ownership));
+    assert_eq!(encode(&lobby).unwrap(), before);
+    // Independent per-seat requests retain both rapid local choices.
+    lobby.choose_color(2, 2, 5).unwrap();
+    lobby.choose_color(2, 3, 6).unwrap();
+    assert_eq!(&lobby.colors[..4], &[4, 1, 5, 6]);
+    assert!(valid_colors(&lobby.colors));
+    lobby.remove(2);
+    assert!(lobby.color_available(0, 5));
+    lobby.choose_color(HOST, 0, 5).unwrap();
+    assert!(valid_colors(&lobby.colors));
+}
+
+#[test]
+fn host_configuration_preserves_humans_and_colors_and_enforces_original_network_rules() {
+    let mut lobby = Lobby::new(GameConfig::default(), 1).unwrap();
+    lobby.add(2);
+    lobby.assign(2, 1).unwrap();
+    lobby.choose_color(2, 1, 7).unwrap();
+    let owners = lobby.owners.clone();
+    let colors = lobby.colors;
+    let mut config = lobby.config.clone();
+    config.arena = bomberman_core::Arena::DeepForest;
+    config.team_play = true;
+    config.win_by_kills = true;
+    config.gold_bomberman = true;
+    config.diseases_destroyable = false;
+    config.players[0].team = 1;
+    lobby.configure(config).unwrap();
+    assert_eq!(lobby.owners, owners);
+    assert_eq!(lobby.colors, colors);
+    assert!(lobby.config.network_play && lobby.config.diseases_destroyable);
+    assert!(!lobby.config.gold_bomberman && !lobby.config.win_by_kills);
+    assert!(lobby.can_start());
+    let mut one_team = lobby.config.clone();
+    one_team.players.iter_mut().for_each(|p| p.team = 0);
+    lobby.configure(one_team).unwrap();
+    assert!(!lobby.can_start());
+    lobby.validate().unwrap();
+    // Lobby may temporarily have one team, but the host cannot start it.
+    let before = encode(&lobby).unwrap();
+    let mut too_small = lobby.config.clone();
+    too_small.players.truncate(1);
+    assert_eq!(lobby.configure(too_small), Err(NetError::Full));
+    assert_eq!(encode(&lobby).unwrap(), before);
 }
