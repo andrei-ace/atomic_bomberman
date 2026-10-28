@@ -4,7 +4,7 @@ For macOS Apple Silicon, see [the Mac build and app guide](docs/macos-handoff.md
 The portable app imports your `.7z` archive, disc image, or extracted game folder
 on first launch. Original game data stays separate from the release archive.
 
-A native Linux and macOS local battle reconstruction that imports graphics, animations,
+A native Linux and macOS battle reconstruction with private online and LAN multiplayer that imports graphics, animations,
 bitmap fonts, palettes, schemes, and audio from the supplied Atomic Bomberman CD.
 The game runs in Rust; Ghidra, REA, Windows, and an emulator are not runtime
 dependencies. Macroquad is pinned to **0.4.16**, Gilrs to **0.11.2**.
@@ -32,7 +32,7 @@ Choose the built Mac ZIP asset; GitHub's **Source code** downloads require compi
 
    ```bash
    cd ~/Downloads
-   shasum -a 256 -c atomic-bomberman-0.1.0-macos-arm64.zip.sha256
+   shasum -a 256 -c atomic-bomberman-0.2.0-macos-arm64.zip.sha256
    ```
 
 2. Extract the ZIP and move **Atomic Bomberman.app** into **Applications**.
@@ -79,7 +79,7 @@ cargo run --locked --release -p bomberman -- --assets local-assets --windowed
 Linux x86-64, Ubuntu 24.04 baseline, X11 or XWayland; Rust 1.89 or newer.
 
 ```bash
-sudo apt-get install build-essential pkg-config libudev-dev libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev
+sudo apt-get install build-essential pkg-config libudev-dev libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libarchive-tools
 cargo build --locked --release
 
 cargo run -p bomberman-assets -- import \
@@ -206,25 +206,37 @@ execute unchanged. The dispatcher return value is void and is not compared.
 See [asset formats](docs/asset-formats.md) and the [behavior ledger](docs/behavior-ledger.md)
 for exact boundaries and reproduction details.
 
-## Linux archive
+## Linux AppImage and private multiplayer
 
-```bash
-tools/package_linux.sh
-tar -xzf dist/atomic-bomberman-linux-x86_64.tar.gz
-cd atomic-bomberman-linux-x86_64
-./bomberman-assets import --source /path/to/disc.img --output /path/to/cache
-./run.sh --assets /path/to/cache --windowed
+Download the versioned Linux x86-64 AppImage and matching checksum. It bundles a
+native first-launch importer, archive helper, desktop libraries and diagnostics:
+
+```sh
+sha256sum -c atomic-bomberman-0.2.0-linux-x86_64.AppImage.sha256
+chmod +x atomic-bomberman-0.2.0-linux-x86_64.AppImage
+./atomic-bomberman-0.2.0-linux-x86_64.AppImage
+# Without FUSE:
+APPIMAGE_EXTRACT_AND_RUN=1 ./atomic-bomberman-0.2.0-linux-x86_64.AppImage
 ```
 
-The archive includes the game, importer, hardware checker, audio probe, and documentation.
-Run `./hardware-check --interactive /tmp/atomic-hardware.json` on a desktop with
-a controller and speakers; see [hardware verification](docs/hardware-check.md). Original game data
-is imported separately. Networking, campaign, an editor, and Windows packaging
-remain outside this release. macOS has a separate Apple Silicon app package.
+Choose an original `.7z`, `.img`, `.iso` or extracted folder on first launch. See
+[Linux installation](docs/INSTALL-linux.md) for XDG paths, repair and logs.
+Build on Ubuntu 24.04 with `libgtk-3-dev libarchive-tools squashfs-tools` in
+addition to the desktop libraries above, then run `tools/package_linux.sh`.
+
+**Create Online Game**, **Join Game**, and **LAN games** are in the main menu.
+A first-time online player pastes one private invitation; returning friends can
+use a short room code. Each computer can share keyboards/controllers, up to ten
+players total. All online connections are outbound TLS WebSockets on TCP 443.
+No server endpoint is shipped. See [multiplayer](docs/online-play.md) and
+[native ARM64 relay deployment](docs/relay.md).
 
 The workspace contains `bomberman-core` (deterministic simulation and native AI),
-`bomberman-assets` (original format readers/cache), and `bomberman` (presentation,
-audio, input, settings, and headless CLI).
+`bomberman-assets` (original format readers/cache), `bomberman-net` (protocol,
+private invitations, LAN transport, lobby and synchronization), `bomberman-relay`
+(private TLS relay), and `bomberman` (presentation, audio, input and settings).
+Original Windows interoperability, public matchmaking, accounts, host migration,
+spectators, campaign and an editor remain follow-ups.
 
 The vendored `quad-snd` patch keeps silent audio paced when no playback
 device exists and tracks real effect completion for the native six-voice limit.

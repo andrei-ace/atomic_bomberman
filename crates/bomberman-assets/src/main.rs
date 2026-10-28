@@ -60,6 +60,5 @@ fn run() -> Result<()> {
 }
 fn print_help() {
     println!("Original Atomic Bomberman asset importer\n\n  bomberman-assets import --source <MODE1-2352.img-or-game-directory> --output <new-cache-directory>\n  bomberman-assets validate --assets <cache-directory>\n\nOriginal source files are opened read-only. Output must be new or empty; distribute the native program separately from original game assets.");
-    #[cfg(target_os = "macos")]
-    println!("macOS also accepts .7z archives containing exactly one .img or .iso image, using the system bsdtar.");
+    println!("Also accepts .7z archives containing exactly one .img or .iso image. Linux packages bundle bsdtar; source builds need libarchive-tools. macOS uses system bsdtar.");
 }

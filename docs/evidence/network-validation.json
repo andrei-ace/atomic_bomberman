@@ -1,0 +1,64 @@
+{
+  "version": "0.2.0",
+  "relay_target": "aarch64-unknown-linux-gnu",
+  "relay_deployment": "Linux ARM64, Ubuntu 26 (Hetzner CAX11)",
+  "desktop_target": "x86_64-unknown-linux-gnu, Ubuntu 24.04 baseline, X11/XWayland",
+  "toolchain": "rustc 1.89.0",
+  "repository_checks": {
+    "format": "passed",
+    "clippy_all_targets": "passed",
+    "workspace_tests_passed": 193,
+    "existing_ignored_core_tests": 3,
+    "vendored_audio_tests_passed": 6
+  },
+  "network_tests": {
+    "protocol_replay_tests": 5,
+    "aggregate_queue_budget_tests": 1,
+    "real_tls_tests": 2,
+    "real_lan_coordinator_and_discovery_tests": 1
+  },
+  "linux_launcher": {
+    "synthetic_recovery_tests_passed": 3,
+    "actual_original_7z_import_without_fuse": "passed",
+    "failed_real_import_preserved_previous_cache": "passed",
+    "original_data_in_artifacts": false,
+    "import_source_formats": "Actual .7z plus disc image through bundled bsdtar; extracted directory/ISO readers retain existing unit tests"
+  },
+  "linux_packaging": {
+    "versioned_appimage": "built and verified",
+    "checks": [
+      "checksums",
+      "embedded and external provenance",
+      "executable hashes",
+      "dependency closure",
+      "relocation with spaces",
+      "extract-and-run without FUSE",
+      "original data and credential exclusion"
+    ],
+    "test_environment_workaround": "Legacy AppImageLauncher requires TARGET_APPIMAGE and APPIMAGELAUNCHER_DISABLE=1 on this host; documented in INSTALL-linux.md.",
+    "final_source_digest": "5d633eb5d2b4ffc9c2f356ebfbcf28aba9c1a494739616aeafa2e3ae390c2d37"
+  },
+  "arm64": {
+    "binary": "built with cargo-zigbuild 0.20.1 / Zig 0.14.1 for glibc 2.39",
+    "execution": "QEMU user-mode on Linux x86-64; real TLS, room routing, token rotation and restart passed",
+    "native_hardware": "not available in this environment; native ARM64 release job configured",
+    "replay_digest": "Matches Linux x86-64 after ARM64 execution under QEMU"
+  },
+  "evidence": [
+    "network-ui-linux.json",
+    "relay-loopback-x86_64.json",
+    "relay-loopback-arm64-emulated.json",
+    "relay-latency-x86_64.json",
+    "network-replay-digest.txt",
+    "network-ui-linux-latency.json"
+  ],
+  "pending_external_checks": [
+    "Native macOS build, launcher tests and Cmd-V on Mac hardware",
+    "Linux/macOS replay on real separate computers (shared digest checked by configured CI)",
+    "Native ARM64 runner execution and actual Ubuntu 26/CAX11 deployment",
+    "WAN/firewall acceptance on the private relay address",
+    "Physical controllers",
+    "Tagged clean-source release workflow and verified draft release execution"
+  ],
+  "privacy": "No deployed relay endpoint supplied or embedded; all live tests use ephemeral loopback destinations and private temporary state."
+}

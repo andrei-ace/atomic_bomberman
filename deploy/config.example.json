@@ -1,0 +1,6 @@
+{
+  "listen": "0.0.0.0:443",
+  "advertised_endpoint": "wss://ENTER_ADDRESS_LOCALLY:443/v1/ws",
+  "max_connections": 128,
+  "max_rooms": 64
+}

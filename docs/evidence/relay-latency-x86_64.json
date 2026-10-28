@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "version": "0.2.0",
+  "environment": "Ubuntu 24.04 x86-64 native loopback",
+  "binary_sha256": "847a6cf9b84af13d8bf9e73d2456198b90439f0e3a3d124cf6d85db9eacc3e08",
+  "rooms": 2,
+  "outbound_clients": 4,
+  "inputs_per_frame": 10,
+  "frames_per_room": 60,
+  "injected_round_trip_tcp_delay_ms": 80.0,
+  "duration_seconds": 9.674811932000011,
+  "process_cpu_seconds": 0.01,
+  "process_peak_rss_kib": 7272,
+  "application_websocket_bytes_per_second": 19092.257430766953,
+  "forward_latency_ms": {
+    "median": 80.59665200016752,
+    "p95": 80.6741479991615,
+    "max": 81.21933199981868
+  },
+  "checks": [
+    "initialization and persistent TLS identity",
+    "private state permissions",
+    "real TLS and pinned certificate",
+    "two concurrent isolated rooms",
+    "ordered authoritative frames with target 50 Hz",
+    "80 ms receive interruption",
+    "peer disconnection",
+    "host departure",
+    "token rotation and restart",
+    "credential-free logs"
+  ],
+  "limitations": [
+    "Loopback measurements include client scheduling and TLS; not WAN latency.",
+    "QEMU measurements include emulator overhead; not native ARM64 production capacity.",
+    "Linux/macOS hardware interoperability and Hetzner deployment require those machines."
+  ]
+}

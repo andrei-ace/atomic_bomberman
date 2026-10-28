@@ -1,0 +1,23 @@
+[package]
+name = "bomberman-relay"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+bomberman-net.workspace = true
+tokio.workspace = true
+rustls.workspace = true
+futures-util.workspace = true
+axum = { version = "=0.8.4", features = ["ws"] }
+axum-server = { version = "=0.7.3", default-features = false, features = ["tls-rustls-no-provider"] }
+rcgen = { version = "=0.14.3", default-features = false, features = ["ring", "pem", "crypto"] }
+time = "=0.3.44"
+
+[dev-dependencies]
+tokio-tungstenite.workspace = true

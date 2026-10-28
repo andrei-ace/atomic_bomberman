@@ -7,6 +7,7 @@ mod controls;
 mod graphics_startup;
 mod headless;
 mod media;
+mod network;
 mod presentation;
 mod settings;
 

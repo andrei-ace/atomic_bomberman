@@ -36,9 +36,9 @@ def version():
     return result
 
 
-def dependency_notices(app):
+def dependency_notices(app, target='aarch64-apple-darwin', output=None):
     packages = json.loads(run('cargo', 'metadata', '--locked', '--offline', '--format-version', '1',
-                              '--filter-platform', 'aarch64-apple-darwin'))
+                              '--filter-platform', target))
     libc = next(item for item in packages['packages'] if item['name'] == 'libc')
     mit = (Path(libc['manifest_path']).parent / 'LICENSE-MIT').read_text()
     mit = mit[mit.index('Permission is hereby granted'):]
@@ -73,7 +73,7 @@ def dependency_notices(app):
                 notices.append('\nApache-2.0 license terms:\n' + apache)
             if 'MIT' not in declared and 'Apache-2.0' not in declared:
                 raise ValueError(f'Missing published license text for {package["name"]}')
-    (app / 'Contents/Resources/licenses/THIRD-PARTY-NOTICES.txt').write_text('\n'.join(notices))
+    (output or app / 'Contents/Resources/licenses/THIRD-PARTY-NOTICES.txt').write_text('\n'.join(notices))
     return inventory
 
 

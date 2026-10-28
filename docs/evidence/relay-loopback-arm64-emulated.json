@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "version": "0.2.0",
+  "environment": "ARM64 QEMU user emulation on Ubuntu 24.04 x86-64",
+  "binary_sha256": "f85707b185dec9695c1a33723f8b2b58c645a04d7745577c5fa2091e05702bf4",
+  "rooms": 2,
+  "outbound_clients": 4,
+  "inputs_per_frame": 10,
+  "frames_per_room": 250,
+  "injected_round_trip_tcp_delay_ms": 0,
+  "duration_seconds": 5.000067428001785,
+  "process_cpu_seconds": 0.14,
+  "process_peak_rss_kib": 22296,
+  "application_websocket_bytes_per_second": 153339.93211895667,
+  "forward_latency_ms": {
+    "median": 0.34665299972402863,
+    "p95": 0.7200260006356984,
+    "max": 37.2666230014147
+  },
+  "checks": [
+    "initialization and persistent TLS identity",
+    "private state permissions",
+    "real TLS and pinned certificate",
+    "two concurrent isolated rooms",
+    "ordered authoritative frames with target 50 Hz",
+    "80 ms receive interruption",
+    "peer disconnection",
+    "host departure",
+    "token rotation and restart",
+    "credential-free logs"
+  ],
+  "limitations": [
+    "Loopback measurements include client scheduling and TLS; not WAN latency.",
+    "QEMU measurements include emulator overhead; not native ARM64 production capacity.",
+    "Linux/macOS hardware interoperability and Hetzner deployment require those machines."
+  ]
+}

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Atomic Bomberman
+Comment=Native battle game with private online and LAN multiplayer
+Exec=atomic-bomberman-launcher
+Icon=atomic-bomberman
+Terminal=false
+Categories=Game;ActionGame;

@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "platform": "Ubuntu 24.04 x86-64, isolated Xvfb, Mesa software rendering",
+  "injected_round_trip_tcp_delay_ms": 80.0,
+  "checks": [
+    "fresh server invitation pasted with Ctrl-V",
+    "create room",
+    "private profile mode 0600",
+    "Copy Invite through system clipboard",
+    "fresh friend joins with one full invitation",
+    "multiple local keyboards/controllers in lobby",
+    "readiness and start",
+    "actual two-window battle",
+    "shared pause and identical serialized simulation",
+    "host departure ends session",
+    "saved server reuse",
+    "short room-code reuse",
+    "credentials absent from logs"
+  ],
+  "limitations": [
+    "No physical controller tested.",
+    "macOS Cmd-V and Linux/macOS WAN play require Mac hardware."
+  ]
+}

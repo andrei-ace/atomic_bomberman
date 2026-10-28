@@ -17,7 +17,7 @@ pub struct Cli {
     pub fullscreen: Option<bool>,
 }
 
-pub const HELP: &str = "Atomic Bomberman — native Rust local battle\n\n\
+pub const HELP: &str = "Atomic Bomberman — native Rust local, LAN and private online battle\n\n\
 Usage: bomberman --assets <cache-directory> [options]\n\n\
   --settings <file>       Settings JSON (default: platform configuration directory)\n\
   --seed <number>         Deterministic match seed (default: current time)\n\

@@ -30,6 +30,8 @@ jobs:
           components: rustfmt, clippy
       - run: tools/check.sh
       - run: tools/test_macos_launcher.sh
+      - run: cargo run --locked -p bomberman-net --example replay_digest > build/replay-digest.txt
+      - run: diff docs/evidence/network-replay-digest.txt build/replay-digest.txt
       - run: cargo build --locked --release --workspace
       - name: Package Apple Silicon app
         if: matrix.runner == 'macos-15'

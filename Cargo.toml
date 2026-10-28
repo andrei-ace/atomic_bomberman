@@ -1,10 +1,10 @@
 [workspace]
-members = ["crates/bomberman-core", "crates/bomberman-assets", "crates/bomberman"]
+members = ["crates/bomberman-core", "crates/bomberman-assets", "crates/bomberman-net", "crates/bomberman-relay", "crates/bomberman"]
 exclude = ["vendor/quad-snd"]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.89"
 license = "MIT"
@@ -19,6 +19,15 @@ macroquad = { version = "=0.4.16", features = ["audio"] }
 gilrs = "=0.11.2"
 bomberman-core = { path = "crates/bomberman-core" }
 bomberman-assets = { path = "crates/bomberman-assets" }
+bomberman-net = { path = "crates/bomberman-net" }
+tokio = { version = "=1.47.1", features = ["rt-multi-thread", "macros", "net", "sync", "time", "io-util", "signal"] }
+rustls = { version = "=0.23.31", default-features = false, features = ["ring", "std", "tls12"] }
+tokio-tungstenite = { version = "=0.27.0", default-features = false, features = ["connect", "rustls-tls-webpki-roots"] }
+futures-util = { version = "=0.3.31", features = ["sink"] }
+base64 = "=0.22.1"
+rand = "=0.8.5"
+subtle = "=2.6.1"
+url = "=2.5.7"
 
 [patch.crates-io]
 quad-snd = { path = "vendor/quad-snd" }

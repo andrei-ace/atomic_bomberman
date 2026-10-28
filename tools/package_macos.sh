@@ -40,7 +40,7 @@ install -m755 build/AtomicBomberman target/release/bomberman target/release/bomb
 install -m755 target/release/examples/hardware_check "$app/Contents/MacOS/hardware-check"
 install -m755 target/release/examples/audio_probe "$app/Contents/MacOS/audio-probe"
 install -m644 build/AtomicBomberman.icns LICENSE "$app/Contents/Resources/"
-install -m644 docs/INSTALL-macos.md docs/macos-handoff.md docs/asset-formats.md docs/behavior-ledger.md "$app/Contents/Resources/docs/"
+install -m644 docs/INSTALL-macos.md docs/macos-handoff.md docs/asset-formats.md docs/behavior-ledger.md docs/online-play.md docs/relay.md "$app/Contents/Resources/docs/"
 install -m644 docs/INSTALL-macos.md "$stage/payload/README.txt"
 install -m644 vendor/quad-snd/NOTICE.md vendor/quad-snd/LICENSE-APACHE "$app/Contents/Resources/licenses/"
 cat > "$app/Contents/Info.plist" <<'PLIST'

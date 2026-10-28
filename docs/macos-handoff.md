@@ -21,8 +21,8 @@ open "dist/Atomic Bomberman.app"
 ```
 
 The build produces `dist/Atomic Bomberman.app` and versioned release assets under
-`dist/github/`: `atomic-bomberman-0.1.0-macos-arm64.zip`, its SHA-256 sidecar, and
-`atomic-bomberman-0.1.0-macos-arm64.build.json`. The ZIP includes the app and an
+`dist/github/`: `atomic-bomberman-0.2.0-macos-arm64.zip`, its SHA-256 sidecar, and
+`atomic-bomberman-0.2.0-macos-arm64.build.json`. The ZIP includes the app and an
 installation `README.txt`. The deployment
 target is macOS 11.0; native runtime verification is performed on the current
 Mac, not every older macOS version. To move the game to another Apple Silicon

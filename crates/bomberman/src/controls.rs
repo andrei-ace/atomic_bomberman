@@ -277,6 +277,18 @@ impl Controllers {
             .collect()
     }
 
+    pub fn network_inputs(&self, devices: &[Device], settings: &Settings) -> Vec<PlayerInput> {
+        devices
+            .iter()
+            .map(|device| match device {
+                Device::Keyboard1 => keyboard(&settings.keyboard[0]),
+                Device::Keyboard2 => keyboard(&settings.keyboard[1]),
+                Device::Controller(slot) => self.pad_input(*slot, settings),
+                Device::Bot => PlayerInput::default(),
+            })
+            .collect()
+    }
+
     fn pad_input(&self, slot: u8, settings: &Settings) -> PlayerInput {
         let Some((&id, gilrs)) = self.slots.get(slot as usize).zip(self.gilrs.as_ref()) else {
             return PlayerInput::default();

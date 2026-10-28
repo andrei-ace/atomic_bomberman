@@ -13,6 +13,8 @@ use bomberman_core::{
     Simulation, Terrain, TilePos, TILE_HEIGHT, TILE_WIDTH,
 };
 use macroquad::prelude::*;
+mod network_ui;
+use network_ui::NetworkUi;
 
 const GOLD: Color = Color::new(1., 0.87, 0.23, 1.);
 const LIGHT: Color = Color::new(0.91, 0.94, 1., 1.);
@@ -46,6 +48,10 @@ enum Screen {
     Battle,
     Results,
     Roulette,
+    Online,
+    Lan,
+    NetworkLobby,
+    NetworkDevices,
 }
 
 pub struct App {
@@ -70,6 +76,8 @@ pub struct App {
     mouse: Vec2,
     clicked: bool,
     quit: bool,
+    network: Option<crate::network::Network>,
+    network_ui: NetworkUi,
 }
 
 impl App {
@@ -84,6 +92,7 @@ impl App {
         media.ensure_arena(settings.arena).await?;
         let target = render_target(640, 480);
         target.texture.set_filter(FilterMode::Nearest);
+        let network_ui = NetworkUi::new(&settings);
         let mut this = Self {
             cli,
             settings,
@@ -106,6 +115,8 @@ impl App {
             mouse: vec2(-1., -1.),
             clicked: false,
             quit: false,
+            network: None,
+            network_ui,
         };
         // Invalid hand-edited bindings are recovered individually.
         let defaults = Settings::default();
@@ -142,12 +153,16 @@ impl App {
     }
 
     fn change_screen(&mut self, screen: Screen) {
+        // Macroquad retains typed characters until consumed. Gameplay/menu
+        // keystrokes must not become invitation text when a form is opened.
+        while get_char_pressed().is_some() {}
         self.screen = screen;
         self.selection = 0;
         self.capture = None;
     }
 
     async fn start_battle(&mut self, bots: bool) -> Result<()> {
+        self.network = None;
         let config = game_config(&self.media.manifest, &self.settings, bots)?;
         self.simulation =
             Some(Simulation::new(config, self.cli.seed).context("start local battle")?);
@@ -212,6 +227,9 @@ impl App {
                 }
             }
             self.update(elapsed_ms).await?;
+            if !matches!(self.screen, Screen::Online | Screen::Lan) {
+                while get_char_pressed().is_some() {}
+            }
             #[cfg(debug_assertions)]
             self.write_state_probe()?;
             self.draw();
@@ -256,8 +274,14 @@ impl App {
                 let state = serde_json::json!({
                     "frame": self.frame,
                     "screen": format!("{:?}", self.screen),
+                    "selection": self.selection,
                     "paused": self.paused,
+                    "message": self.message.as_ref().map(|m| &m.0),
                     "simulation": self.simulation,
+                    "network": self.network.as_ref().map(|n| serde_json::json!({
+                        "id": n.id, "host": n.host, "room": n.room,
+                        "lobby": n.lobby, "tick": n.replay.as_ref().map(|r| r.tick),
+                    })),
                 });
                 std::fs::write(&temporary, serde_json::to_vec(&state)?)?;
                 std::fs::rename(&temporary, &path)?;
@@ -316,10 +340,25 @@ impl App {
     }
 
     async fn update(&mut self, elapsed_ms: u32) -> Result<()> {
+        if self.network.is_some() {
+            self.update_network_session(elapsed_ms).await?;
+            if self.network.is_none() {
+                return Ok(());
+            }
+            if self.network.is_some()
+                && matches!(
+                    self.screen,
+                    Screen::Battle | Screen::Results | Screen::Roulette
+                )
+            {
+                self.update_network_controls();
+                return Ok(());
+            }
+        }
         match self.screen {
             Screen::Main => {
-                self.navigation(6);
-                let click = self.hover_rows(330., 112., 295., 43., 6);
+                self.navigation(9);
+                let click = self.hover_rows(330., 108., 295., 33., 9);
                 if self.confirm() || click {
                     match self.selection {
                         0 => {
@@ -335,6 +374,16 @@ impl App {
                             self.previous_selection = self.selection;
                             self.change_screen(Screen::Help);
                         }
+                        5 | 6 => {
+                            self.network_ui.create = self.selection == 5;
+                            self.network_ui.text.clear();
+                            self.change_screen(Screen::Online);
+                        }
+                        7 => {
+                            self.network_ui.text.clear();
+                            self.refresh_lan();
+                            self.change_screen(Screen::Lan);
+                        }
                         _ => self.quit = true,
                     }
                 }
@@ -345,6 +394,10 @@ impl App {
             Screen::Setup => self.update_setup().await?,
             Screen::Settings => self.update_settings(),
             Screen::Controls => self.update_controls(),
+            Screen::Online => self.update_online(),
+            Screen::Lan => self.update_lan(),
+            Screen::NetworkLobby => self.update_network_lobby(),
+            Screen::NetworkDevices => self.update_network_devices(),
             Screen::Help => {
                 if self.back() || self.confirm() {
                     self.screen = self.previous;
@@ -748,6 +801,10 @@ impl App {
             Screen::Battle => self.draw_battle(),
             Screen::Results => self.draw_results(),
             Screen::Roulette => self.draw_roulette(),
+            Screen::Online => self.draw_online(),
+            Screen::Lan => self.draw_lan(),
+            Screen::NetworkLobby => self.draw_network_lobby(),
+            Screen::NetworkDevices => self.draw_network_devices(),
         }
         if let Some((message, until)) = &self.message {
             if get_time() < *until {
@@ -819,12 +876,15 @@ impl App {
             "Battle settings",
             "Controls",
             "Help",
+            "Create Online Game",
+            "Join Game",
+            "LAN games",
             "Exit",
         ];
         for (i, text) in labels.iter().enumerate() {
-            let y = 122. + i as f32 * 43.;
+            let y = 114. + i as f32 * 33.;
             if self.selection == i {
-                draw_rectangle(328., y - 8., 297., 36., Color::new(0.13, 0.2, 0.3, 0.98));
+                draw_rectangle(328., y - 6., 297., 30., Color::new(0.13, 0.2, 0.3, 0.98));
                 self.media.text(">", 335., y, 17., GOLD);
             }
             self.media.text(
@@ -1127,9 +1187,9 @@ impl App {
             12.,
             GOLD,
         );
-        self.footer(
-            "Enter or Escape returns to the previous screen. Battle pauses while help is open.",
-        );
+        self.footer(if self.network.is_some() {
+            "Enter / Escape: back. Online play continues; your controls are released while help is open."
+        } else { "Enter or Escape returns to the previous screen. Battle pauses while help is open." });
     }
 
     fn draw_battle(&self) {
@@ -1480,13 +1540,21 @@ impl App {
                 .text(&player.kills.to_string(), 452., y, 13., LIGHT);
         }
         for (i, label) in [
-            if self.settings.gold {
+            if simulation.config.gold_bomberman {
                 "Rematch / Gold roulette"
             } else {
                 "Rematch"
             },
-            "Change players and arena",
-            "Main menu",
+            if self.network.is_some() {
+                "Return to lobby (host)"
+            } else {
+                "Change players and arena"
+            },
+            if self.network.is_some() {
+                "Leave game"
+            } else {
+                "Main menu"
+            },
         ]
         .iter()
         .enumerate()
@@ -1555,11 +1623,19 @@ impl App {
         if let Some(powerup) = wheel.reward() {
             draw_rectangle(70., 402., 500., 39., Color::new(0.01, 0.025, 0.07, 0.96));
             self.media.center_text(powerup.name(), 411., 20., GOLD);
-            self.footer("Enter: start rematch with reward  |  Escape: match results");
+            self.footer(if self.network.is_some() {
+                "Host: Enter to start rematch with reward  |  Escape: leave game"
+            } else {
+                "Enter: start rematch with reward  |  Escape: match results"
+            });
         } else {
             self.media.center_text(
                 if wheel.phase == RoulettePhase::Spinning {
-                    "Enter or Space: stop the wheel"
+                    if self.network.is_some() {
+                        "Winner or host: Enter / Space to stop"
+                    } else {
+                        "Enter or Space: stop the wheel"
+                    }
                 } else {
                     "Slowing down..."
                 },

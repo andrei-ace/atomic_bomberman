@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+atomic_appdir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+# Legacy AppImageLauncher interposes readlink(/proc/self/exe) in every child,
+# which otherwise makes native helpers look beside the outer AppImage.
+case "${LD_PRELOAD:-}" in
+    *libbinfmt-bypass-preload.so*)
+        atomic_preload=
+        for atomic_library in $(printf '%s' "$LD_PRELOAD" | tr ':' ' '); do
+            case "$atomic_library" in
+                *libbinfmt-bypass-preload.so) ;;
+                *) atomic_preload="${atomic_preload:+$atomic_preload:}$atomic_library" ;;
+            esac
+        done
+        export LD_PRELOAD="$atomic_preload"
+        ;;
+esac
+export LD_LIBRARY_PATH="$atomic_appdir/usr/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export XDG_DATA_DIRS="$atomic_appdir/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+export GDK_BACKEND=x11
+export GTK_THEME=Adwaita
+export GSETTINGS_BACKEND=memory
+exec "$atomic_appdir/usr/bin/atomic-bomberman-launcher" "$@"

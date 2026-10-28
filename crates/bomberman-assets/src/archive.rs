@@ -1,4 +1,4 @@
-//! macOS ships libarchive's bsdtar; extracting to stdout avoids trusting paths
+//! Bundle libarchive's bsdtar on Linux; macOS ships it. Streaming avoids trusting paths
 //! from an archive or needing an independently installed 7-Zip executable.
 use anyhow::{ensure, Context, Result};
 use std::{
@@ -9,6 +9,18 @@ use std::{
 };
 
 const MAX_IMAGE: u64 = 2 * 1024 * 1024 * 1024;
+
+fn bsdtar() -> PathBuf {
+    if cfg!(target_os = "linux") {
+        if let Ok(executable) = std::env::current_exe() {
+            let bundled = executable.parent().unwrap().join("bsdtar");
+            if bundled.is_file() {
+                return bundled;
+            }
+        }
+    }
+    PathBuf::from("/usr/bin/bsdtar")
+}
 
 pub(crate) struct ArchiveImage {
     directory: PathBuf,
@@ -52,11 +64,11 @@ fn image_member(listing: &[u8]) -> Result<&str> {
 
 impl ArchiveImage {
     pub(crate) fn extract(archive: &Path, stage: &Path) -> Result<Self> {
-        let listing = Command::new("/usr/bin/bsdtar")
+        let listing = Command::new(bsdtar())
             .arg("-tf")
             .arg(archive)
             .output()
-            .context("list 7-Zip archive with macOS bsdtar")?;
+            .context("list 7-Zip archive with bsdtar")?;
         ensure!(
             listing.status.success(),
             "cannot read archive: {}",
@@ -71,7 +83,7 @@ impl ArchiveImage {
         };
         let mut output = File::create_new(&image.path)?;
         let diagnostics = image.directory.join("extract.stderr");
-        let mut child = Command::new("/usr/bin/bsdtar")
+        let mut child = Command::new(bsdtar())
             .arg("-xOf")
             .arg(archive)
             .arg("--")
@@ -79,7 +91,7 @@ impl ArchiveImage {
             .stdout(Stdio::piped())
             .stderr(File::create(&diagnostics)?)
             .spawn()
-            .context("extract disc image with macOS bsdtar")?;
+            .context("extract disc image with bsdtar")?;
         let result = (|| -> Result<()> {
             let count = std::io::copy(
                 &mut child
@@ -139,7 +151,7 @@ mod tests {
         let original = b"synthetic disc bytes, not original game data";
         fs::write(root.join("disc with spaces.img"), original).unwrap();
         let archive = root.join("source.7z");
-        assert!(Command::new("/usr/bin/bsdtar")
+        assert!(Command::new(bsdtar())
             .args(["-c", "--format=7zip", "-f"])
             .arg(&archive)
             .arg("-C")

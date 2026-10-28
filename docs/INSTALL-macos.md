@@ -14,14 +14,14 @@ Playing requires no Rust, Homebrew, Python, Windows, or emulator.
 ## Download and install
 
 1. Open [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases)
-   and download `atomic-bomberman-0.1.0-macos-arm64.zip` and the matching
+   and download `atomic-bomberman-0.2.0-macos-arm64.zip` and the matching
    `.zip.sha256` file. Use the Mac ZIP asset; GitHub's automatic **Source code**
    archives contain source, rather than a built application.
 2. In Terminal, change to the download directory and verify the ZIP:
 
    ```bash
    cd ~/Downloads
-   shasum -a 256 -c atomic-bomberman-0.1.0-macos-arm64.zip.sha256
+   shasum -a 256 -c atomic-bomberman-0.2.0-macos-arm64.zip.sha256
    ```
 
    The result should be `OK`. Download the files again if the checksum fails.
@@ -90,3 +90,14 @@ The signed app contains the source/build provenance at
 `Contents/Resources/BUILD-INFO.json`; executable hashes are recorded after
 signing to avoid a circular signature dependency. Source and additional diagnostics are
 documented in [the Mac development guide](https://github.com/andrei-ace/atomic_bomberman/blob/main/docs/macos-handoff.md).
+
+## Private online and LAN games
+
+Version 0.2.0 adds **Create Online Game**, **Join Game**, and **LAN games**.
+Paste a private invitation with the Paste button or **Command-V**. The host's
+**Copy Invite** supplies one full invitation for friends. Returning players can
+use an eight-character room code with their saved private server profile.
+Choose both keyboards and controllers in the network lobby; those assignments
+are separate from saved local participants. See [multiplayer](online-play.md)
+and [relay setup](relay.md). All online players use outbound TLS WebSockets;
+no player port forwarding or certificate installation is needed.

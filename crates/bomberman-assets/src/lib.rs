@@ -1,5 +1,4 @@
 //! Original-disc asset import and validated native cache.
-#[cfg(target_os = "macos")]
 mod archive;
 mod formats;
 mod manifest;
@@ -16,7 +15,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-/// Import a CD image or extracted game directory (also .7z on macOS).
+/// Import a CD image, .7z archive containing one image, or extracted game directory.
 /// The source is opened read-only.
 /// Output must be new or empty, preventing accidental replacement of user files.
 /// A manifest is published only after every source asset has decoded successfully.
@@ -56,7 +55,6 @@ pub fn import(source_path: &Path, output: &Path) -> Result<Manifest> {
         }
     }
     let stage = Staging(stage_path);
-    #[cfg(target_os = "macos")]
     let archive = if source_path.is_file()
         && source_path
             .extension()
@@ -66,16 +64,12 @@ pub fn import(source_path: &Path, output: &Path) -> Result<Manifest> {
     } else {
         None
     };
-    #[cfg(target_os = "macos")]
     let source_path = archive
         .as_ref()
         .map_or(source_path.as_path(), |image| &image.path);
-    #[cfg(not(target_os = "macos"))]
-    let source_path = source_path.as_path();
     let mut source = source::Source::open(source_path)?;
     let manifest = import_inner(&mut source, &stage.0)?;
     drop(source);
-    #[cfg(target_os = "macos")]
     drop(archive);
     fs::write(
         stage.0.join("manifest.json"),
