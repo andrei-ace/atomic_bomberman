@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "ordinary_invocation_without_runtime_environment_overrides": true,
+  "legacy_appimagelauncher": true,
+  "actual_game_rendered_frames": 30,
+  "fuse_required": false,
+  "concurrent_and_detached_runtime_tests": "passed",
+  "temporary_directories_cleaned": true,
+  "png_icon": true
+}

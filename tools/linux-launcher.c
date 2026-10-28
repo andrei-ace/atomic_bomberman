@@ -115,7 +115,11 @@ static void finished(gboolean success) {
 }
 static gboolean pulse(gpointer unused) {
     (void)unused;
-    if (interrupted && child) { cancelled = TRUE; terminate_child(); interrupted = 0; }
+    if (interrupted) {
+        interrupted = 0;
+        if (child) { cancelled = TRUE; terminate_child(); }
+        else if (window) { close_after_cancel = TRUE; gtk_main_quit(); }
+    }
     if (child && progress) gtk_progress_bar_pulse(GTK_PROGRESS_BAR(progress));
     return G_SOURCE_CONTINUE;
 }

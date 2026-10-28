@@ -19,23 +19,20 @@ needed as runtime dependencies. Original data is supplied by you and opened
 read-only. Allow roughly 0.6 GB for imported assets plus staging space during
 import/repair (and up to 2 GB for an archived disc).
 
-## Without FUSE, and relocation
+## Launching and relocation
+
+The ordinary launch command works without FUSE. A small native bootstrap passes
+the image path to the bundled, pinned runtime and extracts into a private,
+per-launch temporary directory. That directory is removed when the app exits.
+This also supports older AppImageLauncher installations; environment overrides
+and certificate or system configuration changes are unnecessary. The portable
+image stays at the path where you placed it. Its desktop icon is bundled as PNG.
+
+To extract once into any writable location, including paths with spaces:
 
 ```sh
-APPIMAGE_EXTRACT_AND_RUN=1 ./atomic-bomberman-0.2.0-linux-x86_64.AppImage
-# Or extract once into any writable location, including paths with spaces:
 ./atomic-bomberman-0.2.0-linux-x86_64.AppImage --appimage-extract
 ./squashfs-root/AppRun
-```
-
-An old AppImageLauncher installation can detach modern runtimes from their image.
-If it reports an invalid image, explicitly select the downloaded image and bypass
-that integration:
-
-```sh
-APPIMAGELAUNCHER_DISABLE=1 \
-TARGET_APPIMAGE="$(readlink -f ./atomic-bomberman-0.2.0-linux-x86_64.AppImage)" \
-APPIMAGE_EXTRACT_AND_RUN=1 ./atomic-bomberman-0.2.0-linux-x86_64.AppImage
 ```
 
 The AppImage is portable: move or replace it without moving game data. glibc and
@@ -62,7 +59,7 @@ recover space. The active `assets` directory remains intact.
 Terminal import and validation, without a display:
 
 ```sh
-APPIMAGE_EXTRACT_AND_RUN=1 ./atomic-bomberman-0.2.0-linux-x86_64.AppImage \
+./atomic-bomberman-0.2.0-linux-x86_64.AppImage \
   --import-source /path/to/original.7z --import-only
 ```
 

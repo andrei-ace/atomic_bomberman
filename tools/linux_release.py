@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build/verify the Ubuntu 24.04 x86-64 AppImage without original assets."""
 import argparse
+import ctypes
 import datetime
 import hashlib
 import json
@@ -20,6 +21,47 @@ RUNTIME_COMMIT = 'fedfad51acc2860b2916a1eef32ba4a500ff31ef'
 RUNTIME_URL = 'https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64'
 SYSTEM = re.compile(r'^(ld-linux.*|lib(c|m|pthread|dl|rt|resolv)\.so\..*|libnss_.*|lib(GL.*|EGL.*|drm.*|gbm.*|vulkan.*)\.so.*)$')
 BINARIES = ['bomberman', 'bomberman-assets', 'hardware-check', 'audio-probe', 'atomic-bomberman-launcher', 'bsdtar']
+
+
+def bootstrap_runtime(runtime):
+    """Keep the upstream extractor pinned; make the entrypoint glibc-compatible."""
+    include = ROOT / 'build/appimage-runtime.inc'
+    data = runtime.read_bytes()
+    with include.open('w') as output:
+        output.write('static const unsigned char embedded_runtime[] = {\n')
+        for offset in range(0, len(data), 32):
+            output.write(','.join(str(byte) for byte in data[offset:offset+32]) + ',\n')
+        output.write('};\n')
+    executable = ROOT / 'build/atomic-bomberman-runtime'
+    checked('cc', '-std=c11', '-O2', '-Wall', '-Wextra', '-Werror', '-I', 'build',
+            'tools/appimage-bootstrap.c', '-o', str(executable))
+    return executable
+
+
+def render_icon(destination):
+    """Rasterize the existing vector with GTK's build-time SVG/PNG loaders."""
+    pixbuf = ctypes.CDLL('libgdk_pixbuf-2.0.so.0')
+    pixbuf.gdk_pixbuf_new_from_file_at_scale.argtypes = [ctypes.c_char_p, ctypes.c_int, ctypes.c_int,
+                                                       ctypes.c_int, ctypes.POINTER(ctypes.c_void_p)]
+    pixbuf.gdk_pixbuf_new_from_file_at_scale.restype = ctypes.c_void_p
+    pixbuf.gdk_pixbuf_savev.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p,
+                                       ctypes.c_void_p, ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p)]
+    pixbuf.gdk_pixbuf_savev.restype = ctypes.c_int
+    gobject = ctypes.CDLL('libgobject-2.0.so.0')
+    gobject.g_object_unref.argtypes = [ctypes.c_void_p]
+    error = ctypes.c_void_p()
+    image = pixbuf.gdk_pixbuf_new_from_file_at_scale(
+        os.fsencode(ROOT / 'tools/linux/atomic-bomberman.svg'), 256, 256, True, ctypes.byref(error))
+    if not image:
+        raise ValueError('SVG icon loader unavailable; install librsvg2-common')
+    try:
+        if not pixbuf.gdk_pixbuf_savev(image, os.fsencode(destination), b'png', None, None, ctypes.byref(error)):
+            raise ValueError('Cannot write the PNG application icon')
+    finally:
+        gobject.g_object_unref(image)
+    header = destination.read_bytes()[:24]
+    if header[:8] != b'\x89PNG\r\n\x1a\n' or header[16:24] != (256).to_bytes(4, 'big') * 2:
+        raise ValueError('Invalid application icon dimensions')
 
 
 def checked(*args, **kwargs):
@@ -119,6 +161,9 @@ def build(clean):
     license_path = runtime.with_name('AppImage-runtime-LICENSE')
     if not license_path.exists():
         download(f'https://raw.githubusercontent.com/AppImage/type2-runtime/{RUNTIME_COMMIT}/LICENSE', license_path)
+    bootstrap = bootstrap_runtime(runtime)
+    icon = ROOT / 'build/atomic-bomberman.png'
+    render_icon(icon)
     dist = ROOT / 'dist/github'
     dist.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='.linux-package-', dir=ROOT / 'dist') as temporary:
@@ -132,8 +177,11 @@ def build(clean):
         copy(helper, app / 'usr/bin/bsdtar')
         copy(ROOT / 'tools/linux/AppRun', app / 'AppRun')
         (app / 'AppRun').chmod(0o755)
-        for name in ['atomic-bomberman.desktop', 'atomic-bomberman.svg']:
+        for name in ['atomic-bomberman.desktop']:
             copy(ROOT / 'tools/linux' / name, app / name)
+        copy(icon, app / 'atomic-bomberman.png')
+        copy(icon, app / '.DirIcon')
+        copy(icon, app / 'usr/share/icons/hicolor/256x256/apps/atomic-bomberman.png')
         copy(ROOT / 'tools/linux/atomic-bomberman.desktop', app / 'usr/share/applications/atomic-bomberman.desktop')
         copy(ROOT / 'tools/linux/atomic-bomberman.svg', app / 'usr/share/icons/hicolor/scalable/apps/atomic-bomberman.svg')
         for document in ['INSTALL-linux.md', 'online-play.md', 'relay.md', 'hardware-check.md', 'asset-formats.md']:
@@ -144,7 +192,10 @@ def build(clean):
         shutil.copytree('/usr/share/common-licenses', docs / 'licenses/common', symlinks=False)
         info['libraries'] = bundle_libraries(app)
         info['dependencies'] = dependency_notices(app, info['target'], docs / 'licenses/THIRD-PARTY-NOTICES.txt')
-        info['appimage_runtime'] = {'sha256': RUNTIME_SHA, 'commit': RUNTIME_COMMIT, 'url': RUNTIME_URL}
+        info['appimage_runtime'] = {'sha256': RUNTIME_SHA, 'commit': RUNTIME_COMMIT, 'url': RUNTIME_URL,
+                                   'bootstrap_unmarked_sha256': sha256(bootstrap), 'bootstrap_bytes': bootstrap.stat().st_size,
+                                   'launch_mode': 'automatic extract-and-run',
+                                   'legacy_appimagelauncher_compatible': True, 'fuse_required': False}
         info['minimum_linux'] = 'Ubuntu 24.04, glibc 2.39, X11/XWayland'
         info['binaries'] = {name: sha256(app / 'usr/bin' / name) for name in BINARIES}
         (docs / 'BUILD-INFO.json').write_text(json.dumps(info, indent=2) + '\n')
@@ -153,7 +204,7 @@ def build(clean):
         squash = Path(temporary) / 'app.squashfs'
         checked('mksquashfs', str(app), str(squash), '-root-owned', '-noappend', '-comp', 'gzip', '-processors', '2', '-no-progress', stdout=subprocess.DEVNULL)
         with image.open('wb') as output:
-            for path in [runtime, squash]:
+            for path in [bootstrap, squash]:
                 with path.open('rb') as source:
                     shutil.copyfileobj(source, output)
             output.seek(8)
@@ -170,12 +221,17 @@ def verify(image, clean):
     if image.with_name(image.name + '.sha256').read_text().split() != [sha256(image), image.name]:
         raise ValueError('AppImage checksum mismatch')
     info = json.loads(image.with_suffix('.build.json').read_text())
+    with image.open('rb') as source:
+        prefix = bytearray(source.read(info['appimage_runtime']['bootstrap_bytes']))
+    prefix[8:11] = b'\0\0\0'
+    if hashlib.sha256(prefix).hexdigest() != info['appimage_runtime']['bootstrap_unmarked_sha256']:
+        raise ValueError('AppImage bootstrap checksum mismatch')
     if clean and info['source']['dirty']:
         raise ValueError('Release must come from a clean commit')
     with tempfile.TemporaryDirectory(prefix='atomic relocation with spaces ') as temporary:
-        # Old AppImageLauncher binfmt integration executes a detached runtime.
-        # The pinned runtime supports explicitly selecting its original image.
-        runtime_environment = dict(os.environ, TARGET_APPIMAGE=str(image), APPIMAGELAUNCHER_DISABLE='1')
+        runtime_environment = dict(os.environ)
+        for variable in ['TARGET_APPIMAGE', 'APPIMAGE_EXTRACT_AND_RUN', 'APPIMAGELAUNCHER_DISABLE', 'NO_CLEANUP']:
+            runtime_environment.pop(variable, None)
         subprocess.run([str(image), '--appimage-extract'], cwd=temporary, env=runtime_environment, check=True, stdout=subprocess.DEVNULL)
         app = Path(temporary) / 'squashfs-root'
         docs = app / 'usr/share/doc/atomic-bomberman'
@@ -195,8 +251,16 @@ def verify(image, clean):
         text = subprocess.check_output([str(app / 'AppRun'), '--help'], cwd=temporary, text=True)
         if '--import-source' not in text or '--repair' not in text:
             raise ValueError('Relocated launcher help failed')
-        subprocess.run([str(image), '--help'], cwd=temporary, env=dict(runtime_environment, APPIMAGE_EXTRACT_AND_RUN='1'), check=True, stdout=subprocess.DEVNULL)
-    print(f'Verified {image.name}: checksum, hashes, relocation, dependencies, asset exclusion, operation without FUSE')
+        runtime_environment['TMPDIR'] = temporary
+        # Ordinary invocation must work without any environment workaround.
+        subprocess.run([str(image), '--help'], cwd=temporary, env=runtime_environment, check=True, stdout=subprocess.DEVNULL, timeout=30)
+        subprocess.run([str(image), '--help'], cwd=temporary, env=dict(runtime_environment, APPIMAGE_EXTRACT_AND_RUN='1'), check=True, stdout=subprocess.DEVNULL, timeout=30)
+        if list(Path(temporary).glob('atomic-appimage-*')):
+            raise ValueError('AppImage launch left temporary extraction directories behind')
+        for path in [app / '.DirIcon', app / 'atomic-bomberman.png']:
+            if path.read_bytes()[:8] != b'\x89PNG\r\n\x1a\n':
+                raise ValueError('Missing PNG application icon')
+    print(f'Verified {image.name}: checksum, hashes, relocation, dependencies, asset exclusion, plain launch without FUSE, cleanup')
 
 
 def main():

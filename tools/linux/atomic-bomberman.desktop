@@ -6,3 +6,4 @@ Exec=atomic-bomberman-launcher
 Icon=atomic-bomberman
 Terminal=false
 Categories=Game;ActionGame;
+X-AppImage-Integrate=false

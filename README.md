@@ -215,13 +215,12 @@ native first-launch importer, archive helper, desktop libraries and diagnostics:
 sha256sum -c atomic-bomberman-0.2.0-linux-x86_64.AppImage.sha256
 chmod +x atomic-bomberman-0.2.0-linux-x86_64.AppImage
 ./atomic-bomberman-0.2.0-linux-x86_64.AppImage
-# Without FUSE:
-APPIMAGE_EXTRACT_AND_RUN=1 ./atomic-bomberman-0.2.0-linux-x86_64.AppImage
+# The ordinary command automatically extracts and runs without FUSE.
 ```
 
 Choose an original `.7z`, `.img`, `.iso` or extracted folder on first launch. See
 [Linux installation](docs/INSTALL-linux.md) for XDG paths, repair and logs.
-Build on Ubuntu 24.04 with `libgtk-3-dev libarchive-tools squashfs-tools` in
+Build on Ubuntu 24.04 with `libgtk-3-dev libarchive-tools librsvg2-common squashfs-tools` in
 addition to the desktop libraries above, then run `tools/package_linux.sh`.
 
 **Create Online Game**, **Join Game**, and **LAN games** are in the main menu.

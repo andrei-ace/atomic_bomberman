@@ -9,7 +9,7 @@ are excluded. Keep `dist/`, `build/` and private server state out of source comm
 ## Check and build
 
 Run `tools/check.sh`. Linux additionally needs `libarchive-tools libgtk-3-dev
-squashfs-tools` alongside the desktop build libraries in README. Run
+librsvg2-common squashfs-tools` alongside the desktop build libraries in README. Run
 `python3 tools/test_linux_launcher.py` on Linux and `tools/test_macos_launcher.sh`
 on a Mac. `bomberman-net` tests deterministic replay, transitions, ownership,
 readiness, disconnects, roulette and rematches; relay tests use real loopback TLS.
@@ -37,7 +37,12 @@ checksum in `tools/linux_release.py` when upgrading it. It bundles required
 desktop libraries, libarchive, launcher, icon, instructions, diagnostics and
 licenses. glibc and GPU drivers use the host. Verification checks relocation,
 dependency closure, original-data/credential exclusion, executable hashes and
-both extraction and extract-and-run without FUSE.
+ordinary invocation without FUSE, explicit extraction, concurrent launches,
+exit-code propagation and cleanup. A glibc bootstrap embeds the pinned static
+runtime and supports the detached ELF prefix used by old AppImageLauncher.
+Run `python3 tools/test_appimage_bootstrap.py dist/github/*.AppImage` after
+packaging to exercise that compatibility path. PNG icons avoid legacy SVG
+integration rendering errors.
 
 Every distribution includes a SHA-256 sidecar and `.build.json` identifying the
 source commit, dirty state, source digest, compiler, target and executable hashes.

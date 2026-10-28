@@ -33,10 +33,14 @@
       "dependency closure",
       "relocation with spaces",
       "extract-and-run without FUSE",
-      "original data and credential exclusion"
+      "original data and credential exclusion",
+      "ordinary launch without runtime environment overrides",
+      "legacy detached runtime regression",
+      "concurrent starts and cleanup",
+      "PNG desktop icon"
     ],
-    "test_environment_workaround": "Legacy AppImageLauncher requires TARGET_APPIMAGE and APPIMAGELAUNCHER_DISABLE=1 on this host; documented in INSTALL-linux.md.",
-    "final_source_digest": "5d633eb5d2b4ffc9c2f356ebfbcf28aba9c1a494739616aeafa2e3ae390c2d37"
+    "test_environment_workaround": "None needed by the fixed AppImage: automatic extraction via a glibc bootstrap supports old AppImageLauncher and systems without FUSE.",
+    "final_source_digest": "84d494f367af70fdd57f4c1087e7eb0f2b7b1d1b787fe773e8d264eea0f138c0"
   },
   "arm64": {
     "binary": "built with cargo-zigbuild 0.20.1 / Zig 0.14.1 for glibc 2.39",
@@ -50,7 +54,8 @@
     "relay-loopback-arm64-emulated.json",
     "relay-latency-x86_64.json",
     "network-replay-digest.txt",
-    "network-ui-linux-latency.json"
+    "network-ui-linux-latency.json",
+    "appimage-startup-linux.json"
   ],
   "pending_external_checks": [
     "Native macOS build, launcher tests and Cmd-V on Mac hardware",
