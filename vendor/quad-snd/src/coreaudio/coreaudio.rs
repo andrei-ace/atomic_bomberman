@@ -124,7 +124,7 @@ fn bindgen_test_layout___mbstate_t() {
         concat!("Alignment of ", stringify!(__mbstate_t))
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<__mbstate_t>())).__mbstate8 as *const _ as usize },
+        ::std::mem::offset_of!(__mbstate_t, __mbstate8),
         0usize,
         concat!(
             "Offset of field: ",
@@ -134,7 +134,7 @@ fn bindgen_test_layout___mbstate_t() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<__mbstate_t>()))._mbstateL as *const _ as usize },
+        ::std::mem::offset_of!(__mbstate_t, _mbstateL),
         0usize,
         concat!(
             "Offset of field: ",
@@ -195,9 +195,7 @@ fn bindgen_test_layout___darwin_pthread_handler_rec() {
         concat!("Alignment of ", stringify!(__darwin_pthread_handler_rec))
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<__darwin_pthread_handler_rec>())).__routine as *const _ as usize
-        },
+        ::std::mem::offset_of!(__darwin_pthread_handler_rec, __routine),
         0usize,
         concat!(
             "Offset of field: ",
@@ -207,9 +205,7 @@ fn bindgen_test_layout___darwin_pthread_handler_rec() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<__darwin_pthread_handler_rec>())).__arg as *const _ as usize
-        },
+        ::std::mem::offset_of!(__darwin_pthread_handler_rec, __arg),
         8usize,
         concat!(
             "Offset of field: ",
@@ -219,9 +215,7 @@ fn bindgen_test_layout___darwin_pthread_handler_rec() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<__darwin_pthread_handler_rec>())).__next as *const _ as usize
-        },
+        ::std::mem::offset_of!(__darwin_pthread_handler_rec, __next),
         16usize,
         concat!(
             "Offset of field: ",
@@ -250,7 +244,7 @@ fn bindgen_test_layout__opaque_pthread_attr_t() {
         concat!("Alignment of ", stringify!(_opaque_pthread_attr_t))
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_opaque_pthread_attr_t>())).__sig as *const _ as usize },
+        ::std::mem::offset_of!(_opaque_pthread_attr_t, __sig),
         0usize,
         concat!(
             "Offset of field: ",
@@ -260,7 +254,7 @@ fn bindgen_test_layout__opaque_pthread_attr_t() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_opaque_pthread_attr_t>())).__opaque as *const _ as usize },
+        ::std::mem::offset_of!(_opaque_pthread_attr_t, __opaque),
         8usize,
         concat!(
             "Offset of field: ",
@@ -289,7 +283,7 @@ fn bindgen_test_layout__opaque_pthread_cond_t() {
         concat!("Alignment of ", stringify!(_opaque_pthread_cond_t))
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_opaque_pthread_cond_t>())).__sig as *const _ as usize },
+        ::std::mem::offset_of!(_opaque_pthread_cond_t, __sig),
         0usize,
         concat!(
             "Offset of field: ",
@@ -299,7 +293,7 @@ fn bindgen_test_layout__opaque_pthread_cond_t() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_opaque_pthread_cond_t>())).__opaque as *const _ as usize },
+        ::std::mem::offset_of!(_opaque_pthread_cond_t, __opaque),
         8usize,
         concat!(
             "Offset of field: ",
@@ -328,9 +322,7 @@ fn bindgen_test_layout__opaque_pthread_condattr_t() {
         concat!("Alignment of ", stringify!(_opaque_pthread_condattr_t))
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_opaque_pthread_condattr_t>())).__sig as *const _ as usize
-        },
+        ::std::mem::offset_of!(_opaque_pthread_condattr_t, __sig),
         0usize,
         concat!(
             "Offset of field: ",
@@ -340,9 +332,7 @@ fn bindgen_test_layout__opaque_pthread_condattr_t() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_opaque_pthread_condattr_t>())).__opaque as *const _ as usize
-        },
+        ::std::mem::offset_of!(_opaque_pthread_condattr_t, __opaque),
         8usize,
         concat!(
             "Offset of field: ",
@@ -371,7 +361,7 @@ fn bindgen_test_layout__opaque_pthread_mutex_t() {
         concat!("Alignment of ", stringify!(_opaque_pthread_mutex_t))
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_opaque_pthread_mutex_t>())).__sig as *const _ as usize },
+        ::std::mem::offset_of!(_opaque_pthread_mutex_t, __sig),
         0usize,
         concat!(
             "Offset of field: ",
@@ -381,9 +371,7 @@ fn bindgen_test_layout__opaque_pthread_mutex_t() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_opaque_pthread_mutex_t>())).__opaque as *const _ as usize
-        },
+        ::std::mem::offset_of!(_opaque_pthread_mutex_t, __opaque),
         8usize,
         concat!(
             "Offset of field: ",
@@ -412,9 +400,7 @@ fn bindgen_test_layout__opaque_pthread_mutexattr_t() {
         concat!("Alignment of ", stringify!(_opaque_pthread_mutexattr_t))
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_opaque_pthread_mutexattr_t>())).__sig as *const _ as usize
-        },
+        ::std::mem::offset_of!(_opaque_pthread_mutexattr_t, __sig),
         0usize,
         concat!(
             "Offset of field: ",
@@ -424,9 +410,7 @@ fn bindgen_test_layout__opaque_pthread_mutexattr_t() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_opaque_pthread_mutexattr_t>())).__opaque as *const _ as usize
-        },
+        ::std::mem::offset_of!(_opaque_pthread_mutexattr_t, __opaque),
         8usize,
         concat!(
             "Offset of field: ",
@@ -455,7 +439,7 @@ fn bindgen_test_layout__opaque_pthread_once_t() {
         concat!("Alignment of ", stringify!(_opaque_pthread_once_t))
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_opaque_pthread_once_t>())).__sig as *const _ as usize },
+        ::std::mem::offset_of!(_opaque_pthread_once_t, __sig),
         0usize,
         concat!(
             "Offset of field: ",
@@ -465,7 +449,7 @@ fn bindgen_test_layout__opaque_pthread_once_t() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_opaque_pthread_once_t>())).__opaque as *const _ as usize },
+        ::std::mem::offset_of!(_opaque_pthread_once_t, __opaque),
         8usize,
         concat!(
             "Offset of field: ",
@@ -494,7 +478,7 @@ fn bindgen_test_layout__opaque_pthread_rwlock_t() {
         concat!("Alignment of ", stringify!(_opaque_pthread_rwlock_t))
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_opaque_pthread_rwlock_t>())).__sig as *const _ as usize },
+        ::std::mem::offset_of!(_opaque_pthread_rwlock_t, __sig),
         0usize,
         concat!(
             "Offset of field: ",
@@ -504,9 +488,7 @@ fn bindgen_test_layout__opaque_pthread_rwlock_t() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_opaque_pthread_rwlock_t>())).__opaque as *const _ as usize
-        },
+        ::std::mem::offset_of!(_opaque_pthread_rwlock_t, __opaque),
         8usize,
         concat!(
             "Offset of field: ",
@@ -535,9 +517,7 @@ fn bindgen_test_layout__opaque_pthread_rwlockattr_t() {
         concat!("Alignment of ", stringify!(_opaque_pthread_rwlockattr_t))
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_opaque_pthread_rwlockattr_t>())).__sig as *const _ as usize
-        },
+        ::std::mem::offset_of!(_opaque_pthread_rwlockattr_t, __sig),
         0usize,
         concat!(
             "Offset of field: ",
@@ -547,9 +527,7 @@ fn bindgen_test_layout__opaque_pthread_rwlockattr_t() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_opaque_pthread_rwlockattr_t>())).__opaque as *const _ as usize
-        },
+        ::std::mem::offset_of!(_opaque_pthread_rwlockattr_t, __opaque),
         8usize,
         concat!(
             "Offset of field: ",
@@ -579,7 +557,7 @@ fn bindgen_test_layout__opaque_pthread_t() {
         concat!("Alignment of ", stringify!(_opaque_pthread_t))
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_opaque_pthread_t>())).__sig as *const _ as usize },
+        ::std::mem::offset_of!(_opaque_pthread_t, __sig),
         0usize,
         concat!(
             "Offset of field: ",
@@ -589,9 +567,7 @@ fn bindgen_test_layout__opaque_pthread_t() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_opaque_pthread_t>())).__cleanup_stack as *const _ as usize
-        },
+        ::std::mem::offset_of!(_opaque_pthread_t, __cleanup_stack),
         8usize,
         concat!(
             "Offset of field: ",
@@ -601,7 +577,7 @@ fn bindgen_test_layout__opaque_pthread_t() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_opaque_pthread_t>())).__opaque as *const _ as usize },
+        ::std::mem::offset_of!(_opaque_pthread_t, __opaque),
         16usize,
         concat!(
             "Offset of field: ",
@@ -674,10 +650,7 @@ fn bindgen_test_layout__saudio_AudioStreamBasicDescription() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioStreamBasicDescription>())).mSampleRate as *const _
-                as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioStreamBasicDescription, mSampleRate),
         0usize,
         concat!(
             "Offset of field: ",
@@ -687,10 +660,7 @@ fn bindgen_test_layout__saudio_AudioStreamBasicDescription() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioStreamBasicDescription>())).mFormatID as *const _
-                as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioStreamBasicDescription, mFormatID),
         8usize,
         concat!(
             "Offset of field: ",
@@ -700,10 +670,7 @@ fn bindgen_test_layout__saudio_AudioStreamBasicDescription() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioStreamBasicDescription>())).mFormatFlags as *const _
-                as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioStreamBasicDescription, mFormatFlags),
         12usize,
         concat!(
             "Offset of field: ",
@@ -713,10 +680,7 @@ fn bindgen_test_layout__saudio_AudioStreamBasicDescription() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioStreamBasicDescription>())).mBytesPerPacket
-                as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioStreamBasicDescription, mBytesPerPacket),
         16usize,
         concat!(
             "Offset of field: ",
@@ -726,10 +690,7 @@ fn bindgen_test_layout__saudio_AudioStreamBasicDescription() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioStreamBasicDescription>())).mFramesPerPacket
-                as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioStreamBasicDescription, mFramesPerPacket),
         20usize,
         concat!(
             "Offset of field: ",
@@ -739,10 +700,7 @@ fn bindgen_test_layout__saudio_AudioStreamBasicDescription() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioStreamBasicDescription>())).mBytesPerFrame
-                as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioStreamBasicDescription, mBytesPerFrame),
         24usize,
         concat!(
             "Offset of field: ",
@@ -752,10 +710,7 @@ fn bindgen_test_layout__saudio_AudioStreamBasicDescription() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioStreamBasicDescription>())).mChannelsPerFrame
-                as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioStreamBasicDescription, mChannelsPerFrame),
         28usize,
         concat!(
             "Offset of field: ",
@@ -765,10 +720,7 @@ fn bindgen_test_layout__saudio_AudioStreamBasicDescription() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioStreamBasicDescription>())).mBitsPerChannel
-                as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioStreamBasicDescription, mBitsPerChannel),
         32usize,
         concat!(
             "Offset of field: ",
@@ -778,10 +730,7 @@ fn bindgen_test_layout__saudio_AudioStreamBasicDescription() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioStreamBasicDescription>())).mReserved as *const _
-                as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioStreamBasicDescription, mReserved),
         36usize,
         concat!(
             "Offset of field: ",
@@ -817,10 +766,7 @@ fn bindgen_test_layout__saudio_AudioStreamPacketDescription() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioStreamPacketDescription>())).mStartOffset
-                as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioStreamPacketDescription, mStartOffset),
         0usize,
         concat!(
             "Offset of field: ",
@@ -830,10 +776,10 @@ fn bindgen_test_layout__saudio_AudioStreamPacketDescription() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioStreamPacketDescription>())).mVariableFramesInPacket
-                as *const _ as usize
-        },
+        ::std::mem::offset_of!(
+            _saudio_AudioStreamPacketDescription,
+            mVariableFramesInPacket
+        ),
         8usize,
         concat!(
             "Offset of field: ",
@@ -843,10 +789,7 @@ fn bindgen_test_layout__saudio_AudioStreamPacketDescription() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioStreamPacketDescription>())).mDataByteSize
-                as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioStreamPacketDescription, mDataByteSize),
         12usize,
         concat!(
             "Offset of field: ",
@@ -882,7 +825,7 @@ fn bindgen_test_layout__saudio_SMPTETime() {
         concat!("Alignment of ", stringify!(_saudio_SMPTETime))
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_saudio_SMPTETime>())).mSubframes as *const _ as usize },
+        ::std::mem::offset_of!(_saudio_SMPTETime, mSubframes),
         0usize,
         concat!(
             "Offset of field: ",
@@ -892,9 +835,7 @@ fn bindgen_test_layout__saudio_SMPTETime() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_SMPTETime>())).mSubframeDivisor as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_SMPTETime, mSubframeDivisor),
         2usize,
         concat!(
             "Offset of field: ",
@@ -904,7 +845,7 @@ fn bindgen_test_layout__saudio_SMPTETime() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_saudio_SMPTETime>())).mCounter as *const _ as usize },
+        ::std::mem::offset_of!(_saudio_SMPTETime, mCounter),
         4usize,
         concat!(
             "Offset of field: ",
@@ -914,7 +855,7 @@ fn bindgen_test_layout__saudio_SMPTETime() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_saudio_SMPTETime>())).mType as *const _ as usize },
+        ::std::mem::offset_of!(_saudio_SMPTETime, mType),
         8usize,
         concat!(
             "Offset of field: ",
@@ -924,7 +865,7 @@ fn bindgen_test_layout__saudio_SMPTETime() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_saudio_SMPTETime>())).mFlags as *const _ as usize },
+        ::std::mem::offset_of!(_saudio_SMPTETime, mFlags),
         12usize,
         concat!(
             "Offset of field: ",
@@ -934,7 +875,7 @@ fn bindgen_test_layout__saudio_SMPTETime() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_saudio_SMPTETime>())).mHours as *const _ as usize },
+        ::std::mem::offset_of!(_saudio_SMPTETime, mHours),
         16usize,
         concat!(
             "Offset of field: ",
@@ -944,7 +885,7 @@ fn bindgen_test_layout__saudio_SMPTETime() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_saudio_SMPTETime>())).mMinutes as *const _ as usize },
+        ::std::mem::offset_of!(_saudio_SMPTETime, mMinutes),
         18usize,
         concat!(
             "Offset of field: ",
@@ -954,7 +895,7 @@ fn bindgen_test_layout__saudio_SMPTETime() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_saudio_SMPTETime>())).mSeconds as *const _ as usize },
+        ::std::mem::offset_of!(_saudio_SMPTETime, mSeconds),
         20usize,
         concat!(
             "Offset of field: ",
@@ -964,7 +905,7 @@ fn bindgen_test_layout__saudio_SMPTETime() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_saudio_SMPTETime>())).mFrames as *const _ as usize },
+        ::std::mem::offset_of!(_saudio_SMPTETime, mFrames),
         22usize,
         concat!(
             "Offset of field: ",
@@ -998,9 +939,7 @@ fn bindgen_test_layout__saudio_AudioTimeStamp() {
         concat!("Alignment of ", stringify!(_saudio_AudioTimeStamp))
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioTimeStamp>())).mSampleTime as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioTimeStamp, mSampleTime),
         0usize,
         concat!(
             "Offset of field: ",
@@ -1010,9 +949,7 @@ fn bindgen_test_layout__saudio_AudioTimeStamp() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioTimeStamp>())).mHostTime as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioTimeStamp, mHostTime),
         8usize,
         concat!(
             "Offset of field: ",
@@ -1022,9 +959,7 @@ fn bindgen_test_layout__saudio_AudioTimeStamp() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioTimeStamp>())).mRateScalar as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioTimeStamp, mRateScalar),
         16usize,
         concat!(
             "Offset of field: ",
@@ -1034,9 +969,7 @@ fn bindgen_test_layout__saudio_AudioTimeStamp() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioTimeStamp>())).mWordClockTime as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioTimeStamp, mWordClockTime),
         24usize,
         concat!(
             "Offset of field: ",
@@ -1046,9 +979,7 @@ fn bindgen_test_layout__saudio_AudioTimeStamp() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioTimeStamp>())).mSMPTETime as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioTimeStamp, mSMPTETime),
         32usize,
         concat!(
             "Offset of field: ",
@@ -1058,7 +989,7 @@ fn bindgen_test_layout__saudio_AudioTimeStamp() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<_saudio_AudioTimeStamp>())).mFlags as *const _ as usize },
+        ::std::mem::offset_of!(_saudio_AudioTimeStamp, mFlags),
         56usize,
         concat!(
             "Offset of field: ",
@@ -1068,9 +999,7 @@ fn bindgen_test_layout__saudio_AudioTimeStamp() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioTimeStamp>())).mReserved as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioTimeStamp, mReserved),
         60usize,
         concat!(
             "Offset of field: ",
@@ -1104,10 +1033,7 @@ fn bindgen_test_layout__saudio_AudioQueueBuffer() {
         concat!("Alignment of ", stringify!(_saudio_AudioQueueBuffer))
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioQueueBuffer>())).mAudioDataBytesCapacity as *const _
-                as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioQueueBuffer, mAudioDataBytesCapacity),
         0usize,
         concat!(
             "Offset of field: ",
@@ -1117,9 +1043,7 @@ fn bindgen_test_layout__saudio_AudioQueueBuffer() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioQueueBuffer>())).mAudioData as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioQueueBuffer, mAudioData),
         8usize,
         concat!(
             "Offset of field: ",
@@ -1129,10 +1053,7 @@ fn bindgen_test_layout__saudio_AudioQueueBuffer() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioQueueBuffer>())).mAudioDataByteSize as *const _
-                as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioQueueBuffer, mAudioDataByteSize),
         16usize,
         concat!(
             "Offset of field: ",
@@ -1142,9 +1063,7 @@ fn bindgen_test_layout__saudio_AudioQueueBuffer() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioQueueBuffer>())).mUserData as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioQueueBuffer, mUserData),
         24usize,
         concat!(
             "Offset of field: ",
@@ -1154,10 +1073,7 @@ fn bindgen_test_layout__saudio_AudioQueueBuffer() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioQueueBuffer>())).mPacketDescriptionCapacity
-                as *const _ as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioQueueBuffer, mPacketDescriptionCapacity),
         32usize,
         concat!(
             "Offset of field: ",
@@ -1167,10 +1083,7 @@ fn bindgen_test_layout__saudio_AudioQueueBuffer() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioQueueBuffer>())).mPacketDescriptions as *const _
-                as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioQueueBuffer, mPacketDescriptions),
         40usize,
         concat!(
             "Offset of field: ",
@@ -1180,10 +1093,7 @@ fn bindgen_test_layout__saudio_AudioQueueBuffer() {
         )
     );
     assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<_saudio_AudioQueueBuffer>())).mPacketDescriptionCount as *const _
-                as usize
-        },
+        ::std::mem::offset_of!(_saudio_AudioQueueBuffer, mPacketDescriptionCount),
         48usize,
         concat!(
             "Offset of field: ",
@@ -1261,7 +1171,7 @@ fn bindgen_test_layout___va_list_tag() {
         concat!("Alignment of ", stringify!(__va_list_tag))
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<__va_list_tag>())).gp_offset as *const _ as usize },
+        ::std::mem::offset_of!(__va_list_tag, gp_offset),
         0usize,
         concat!(
             "Offset of field: ",
@@ -1271,7 +1181,7 @@ fn bindgen_test_layout___va_list_tag() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<__va_list_tag>())).fp_offset as *const _ as usize },
+        ::std::mem::offset_of!(__va_list_tag, fp_offset),
         4usize,
         concat!(
             "Offset of field: ",
@@ -1281,7 +1191,7 @@ fn bindgen_test_layout___va_list_tag() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<__va_list_tag>())).overflow_arg_area as *const _ as usize },
+        ::std::mem::offset_of!(__va_list_tag, overflow_arg_area),
         8usize,
         concat!(
             "Offset of field: ",
@@ -1291,7 +1201,7 @@ fn bindgen_test_layout___va_list_tag() {
         )
     );
     assert_eq!(
-        unsafe { &(*(::std::ptr::null::<__va_list_tag>())).reg_save_area as *const _ as usize },
+        ::std::mem::offset_of!(__va_list_tag, reg_save_area),
         16usize,
         concat!(
             "Offset of field: ",

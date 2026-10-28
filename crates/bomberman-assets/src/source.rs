@@ -350,11 +350,13 @@ mod tests {
     struct Temp(PathBuf);
     impl Temp {
         fn new() -> Self {
-            let p = std::env::temp_dir().join(format!(
-                "bomberman-iso-test-{}-{}",
-                std::process::id(),
-                COUNTER.fetch_add(1, Ordering::Relaxed)
-            ));
+            let p = fs::canonicalize(std::env::temp_dir())
+                .unwrap()
+                .join(format!(
+                    "bomberman-iso-test-{}-{}",
+                    std::process::id(),
+                    COUNTER.fetch_add(1, Ordering::Relaxed)
+                ));
             fs::create_dir(&p).unwrap();
             Self(p)
         }
@@ -481,8 +483,12 @@ mod tests {
         let mut source = Source::open(&t.0).unwrap();
         assert_eq!(source.read("COLOR.PAL").unwrap(), b"palette");
         fs::write(t.0.join("COLOR.PAL"), b"ambiguous").unwrap();
-        assert!(Source::open(&t.0).is_err());
-        fs::remove_file(t.0.join("COLOR.PAL")).unwrap();
+        // APFS is commonly case-insensitive: the second write then replaces
+        // the first file rather than creating an ambiguous source directory.
+        if fs::read_dir(&t.0).unwrap().count() == 2 {
+            assert!(Source::open(&t.0).is_err());
+            fs::remove_file(t.0.join("COLOR.PAL")).unwrap();
+        }
         #[cfg(unix)]
         {
             std::os::unix::fs::symlink("color.pal", t.0.join("link")).unwrap();

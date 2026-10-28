@@ -1,4 +1,6 @@
 //! Interactive physical-device acceptance check using the game's input path.
+#[path = "../src/audio_output.rs"]
+mod audio_output;
 #[allow(dead_code)]
 #[path = "../src/controls.rs"]
 mod controls;
@@ -35,12 +37,16 @@ fn main() {
         save(&output, &json!({"backend":"Gilrs0.11.2 using production Controllers", "initialized":controllers.status.is_empty(), "status":controllers.status,"devices":controllers.devices()})).expect("write inventory");
         return;
     }
+    if let Err(error) = audio_output::prepare(false) {
+        eprintln!("Audio preparation: {error:#}");
+    }
     macroquad::Window::from_config(
         Conf {
             window_title: "Atomic Bomberman hardware check".into(),
             window_width: 960,
             window_height: 720,
             window_resizable: true,
+            high_dpi: true,
             ..Default::default()
         },
         async move {
@@ -91,8 +97,21 @@ async fn interactive(output: PathBuf) -> Result<()> {
     };
     settings.participants[0].device = settings::Device::Controller(0);
     settings.participants[1].device = settings::Device::Bot;
-    let left = load_sound_from_bytes(&stereo_tone(0)).await.ok();
-    let right = load_sound_from_bytes(&stereo_tone(1)).await.ok();
+    let (muted, warning) = audio_output::after_initialization(false);
+    if let Some(warning) = warning {
+        eprintln!("{warning}");
+    }
+    eprintln!("Audio: {}", audio_output::BACKEND);
+    let left = if muted {
+        None
+    } else {
+        load_sound_from_bytes(&stereo_tone(0)).await.ok()
+    };
+    let right = if muted {
+        None
+    } else {
+        load_sound_from_bytes(&stereo_tone(1)).await.ok()
+    };
     let started = get_time();
     let initial_size = [screen_width() as u32, screen_height() as u32];
     let mut directions = 0;
@@ -131,7 +150,7 @@ async fn interactive(output: PathBuf) -> Result<()> {
         if [screen_width() as u32, screen_height() as u32] != initial_size && !fullscreen {
             resized = true;
         }
-        if is_key_pressed(KeyCode::F11) {
+        if controls::fullscreen_shortcut() {
             fullscreen = !fullscreen;
             toggles += 1;
             set_fullscreen(fullscreen);
@@ -186,7 +205,7 @@ async fn interactive(output: PathBuf) -> Result<()> {
             format!("Unplugged: {unplugged} / reconnected: {reconnected}; new inputs {after_reconnect_directions:04b}, {after_reconnect_bomb}, {after_reconnect_action}"),
             "L / R: play left / right speaker tone; Y heard correctly, N did not.".to_owned(),
             format!("Speaker confirmation: left {} / right {}",heard[0],heard[1]),
-            "Resize this window. F11 enters fullscreen; V confirms it fills the monitor.".to_owned(),
+            "Resize this window. F11 (Mac: Cmd-Ctrl-F) enters fullscreen; V confirms it.".to_owned(),
             "Press F11 again to return to the window.".to_owned(),
             format!("Resized: {resized}   fullscreen visually confirmed: {fullscreen_confirmed}"),
             format!("Controller: {controller_passed}   speakers: {audio_passed}   display: {display_passed}"),

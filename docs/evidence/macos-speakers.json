@@ -1,0 +1,37 @@
+{
+  "backend": "production quad_snd CoreAudio Audio Queue mixer",
+  "channels": [
+    {
+      "attempts": 1,
+      "channel": "left",
+      "mixer_drained": true,
+      "mixer_elapsed_ms": 566,
+      "pending_after_play": 1
+    },
+    {
+      "attempts": 1,
+      "channel": "right",
+      "mixer_drained": true,
+      "mixer_elapsed_ms": 480,
+      "pending_after_play": 1
+    }
+  ],
+  "graphics_context_created": false,
+  "heard_correct_channel_user_confirmed": true,
+  "limitations": [
+    "Successful mixer consumption does not establish that the user heard both physical speakers; hearing confirmation is recorded separately."
+  ],
+  "status": "passed",
+  "tone": {
+    "amplitude": 0.15,
+    "channels": 2,
+    "duration_ms": 500,
+    "format": "PCM signed16 little endian",
+    "frequency_hz": 440,
+    "sample_rate_hz": 44100
+  },
+  "verified_at_utc": "2026-10-28T08:58:20.798810+00:00",
+  "user_confirmation": "Both tones in the correct speakers",
+  "attempts": 2,
+  "binary_sha256": "150aeae3d74a25ce996feb287b8d14055c2baf2a30bdf179119ce7632ae28f62"
+}

@@ -1,4 +1,6 @@
 //! Original-disc asset import and validated native cache.
+#[cfg(target_os = "macos")]
+mod archive;
 mod formats;
 mod manifest;
 mod source;
@@ -14,7 +16,8 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-/// Import a CD image or extracted game directory. The source is opened read-only.
+/// Import a CD image or extracted game directory (also .7z on macOS).
+/// The source is opened read-only.
 /// Output must be new or empty, preventing accidental replacement of user files.
 /// A manifest is published only after every source asset has decoded successfully.
 pub fn import(source_path: &Path, output: &Path) -> Result<Manifest> {
@@ -53,8 +56,27 @@ pub fn import(source_path: &Path, output: &Path) -> Result<Manifest> {
         }
     }
     let stage = Staging(stage_path);
-    let mut source = source::Source::open(&source_path)?;
+    #[cfg(target_os = "macos")]
+    let archive = if source_path.is_file()
+        && source_path
+            .extension()
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("7z"))
+    {
+        Some(archive::ArchiveImage::extract(&source_path, &stage.0)?)
+    } else {
+        None
+    };
+    #[cfg(target_os = "macos")]
+    let source_path = archive
+        .as_ref()
+        .map_or(source_path.as_path(), |image| &image.path);
+    #[cfg(not(target_os = "macos"))]
+    let source_path = source_path.as_path();
+    let mut source = source::Source::open(source_path)?;
     let manifest = import_inner(&mut source, &stage.0)?;
+    drop(source);
+    #[cfg(target_os = "macos")]
+    drop(archive);
     fs::write(
         stage.0.join("manifest.json"),
         serde_json::to_vec_pretty(&manifest)?,
@@ -810,11 +832,13 @@ mod tests {
     struct Temp(PathBuf);
     impl Temp {
         fn new() -> Self {
-            let p = std::env::temp_dir().join(format!(
-                "bomberman-import-test-{}-{}",
-                std::process::id(),
-                COUNTER.fetch_add(1, Ordering::Relaxed)
-            ));
+            let p = fs::canonicalize(std::env::temp_dir())
+                .unwrap()
+                .join(format!(
+                    "bomberman-import-test-{}-{}",
+                    std::process::id(),
+                    COUNTER.fetch_add(1, Ordering::Relaxed)
+                ));
             fs::create_dir(&p).unwrap();
             Self(p)
         }

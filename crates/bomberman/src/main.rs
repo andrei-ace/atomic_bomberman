@@ -78,6 +78,20 @@ fn launch() -> Result<()> {
     };
     macroquad::Window::from_config(conf, async move {
         graphics_startup::ready();
+        let (mute, warning) = audio_output::after_initialization(cli.mute);
+        cli.mute = mute;
+        if let Some(warning) = warning {
+            eprintln!("Atomic Bomberman: {warning}");
+            settings_warning = Some(settings_warning.map_or_else(
+                || warning.clone(),
+                |existing| format!("{existing}; {warning}"),
+            ));
+        }
+        eprintln!(
+            "Atomic Bomberman audio: {} (muted: {})",
+            audio_output::BACKEND,
+            cli.mute
+        );
         match app::App::load(cli, manifest, settings, settings_warning).await {
             Ok(mut app) => {
                 if let Err(error) = app.run().await {

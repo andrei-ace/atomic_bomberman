@@ -1,0 +1,38 @@
+{
+  "backend": "Cocoa NSEvents delivered to the production game view in its own process",
+  "window_style_mask": 15,
+  "passed": true,
+  "error": null,
+  "checks": [
+    "resizable native window",
+    "letterboxed mouse coordinates open Controls",
+    "keyboard remapping persists",
+    "Escape returns to menu",
+    "F11 enters fullscreen and saves preference",
+    "F11 returns to window",
+    "Command-Control-F enters fullscreen",
+    "Command-Control-F returns to window",
+    "two-human battle starts",
+    "simultaneous two-player movement",
+    "simultaneous bombs from both keyboard layouts",
+    "pause key pauses battle",
+    "pause freezes simulation state",
+    "help opens during battle",
+    "help preserves paused battle",
+    "pause key resumes battle"
+  ],
+  "window_collection_behavior": 0,
+  "window_frame": "{{2080, 492}, {1280, 752}}",
+  "physical_controller_verified": false,
+  "limitations": [
+    "Synthetic Cocoa events verify software input and window behavior; physical devices are recorded separately."
+  ],
+  "screen_frame": "{{0, 0}, {5120, 1440}}",
+  "window_visible": true,
+  "application_active": true,
+  "backing_scale_factor": 1,
+  "physical_keyboard_verified": false,
+  "verified_at_utc": "2026-10-28T08:58:20.798810+00:00",
+  "retina_runtime_verified": false,
+  "binary_sha256": "a324e0990c572bc4649ce1ac3a5757123fb8dc93e5718f98c056d724643a4a23"
+}

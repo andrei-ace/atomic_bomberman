@@ -13,6 +13,14 @@ The program runs entirely in Rust. REA, Ghidra, Unicorn, Windows, and the origin
 executable are development dependencies only. Original assets are imported
 separately and are not included in the executable archive.
 
+The macOS Apple Silicon continuation uses the same simulation. Its native app
+adds first-launch archive/disc import, Application Support storage, Mac keyboard
+defaults, and CoreAudio lifecycle/silent fallback handling. Mac evidence is
+separate: [release acceptance](evidence/macos-release.json),
+[deterministic Linux matches](evidence/macos-deterministic-matches.json),
+[native window/input checks](evidence/macos-ui.json), and
+[user-confirmed stereo output](evidence/macos-speakers.json).
+
 ## Implemented behavior
 
 | Area | Recovery and implementation | Validation |
@@ -110,4 +118,5 @@ confirmed hearing the actual game sounds. A physical gamepad was unavailable;
 the user authorized leaving its exercise untested. Real GNOME checks returned from 5120×1440 fullscreen to a 960×720 window using Mesa software rendering. The [packaged hardware checker](hardware-check.md) records these separately and refuses to count virtual devices as physical verification; [current availability report](evidence/linux-hardware.json). The packaged program uses normal Gilrs,
 ALSA/PipeWire, and X11 interfaces, with paced silent audio when no output is available.
 
-Networking, an editor, and macOS/Windows packaging are outside this release.
+Networking, an editor, and Windows packaging are outside this release.
+The separate macOS Apple Silicon app is described in [the Mac guide](macos-handoff.md).

@@ -63,6 +63,13 @@ fn main() -> Result<()> {
         );
     }
     let context = AudioContext::new();
+    let (muted, warning) = audio_output::after_initialization(false);
+    if muted {
+        bail!(
+            "{}",
+            warning.unwrap_or_else(|| "Audio is using silent output".into())
+        );
+    }
     let sounds = [
         Sound::load(&context, &stereo_tone(0)),
         Sound::load(&context, &stereo_tone(1)),
@@ -103,7 +110,7 @@ fn main() -> Result<()> {
     }
     let report = json!({
         "status":"played_awaiting_user_confirmation",
-        "backend":"production audio_output::prepare and quad_snd ALSA/PipeWire mixer",
+        "backend":audio_output::BACKEND,
         "graphics_context_created":false,
         "tone":{"frequency_hz":440,"duration_ms":500,"amplitude":0.15,
             "sample_rate_hz":44100,"channels":2,"format":"PCM signed16 little endian"},

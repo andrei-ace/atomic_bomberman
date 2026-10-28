@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "verified_at_utc": "2026-10-28T08:38:55.116642+00:00",
+  "source_archive": "Atomic_Bomberman_Win_ROM_EN.7z",
+  "source_sha256": "e1399f1a93bc2a361312a8f6c76506abfefd9c77196a7922bf763dfe1a980512",
+  "archive_unchanged": true,
+  "managed_cache": "~/Library/Application Support/Atomic Bomberman/assets",
+  "reused_existing_cache": false,
+  "elapsed_seconds": 24.552,
+  "counts": {
+    "arenas": 11,
+    "schemes": 68,
+    "animations": 93,
+    "sounds": 2027,
+    "sources": 2285,
+    "generated": 2649
+  },
+  "source_data_in_release_archive": false
+}

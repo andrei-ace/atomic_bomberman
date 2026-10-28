@@ -3,6 +3,14 @@ use bomberman_core::{Direction, PlayerInput};
 use gilrs::{Axis, Button, EventType, GamepadId, Gilrs};
 use macroquad::prelude::*;
 
+pub fn fullscreen_shortcut() -> bool {
+    is_key_pressed(KeyCode::F11)
+        || (cfg!(target_os = "macos")
+            && is_key_pressed(KeyCode::F)
+            && (is_key_down(KeyCode::LeftSuper) || is_key_down(KeyCode::RightSuper))
+            && (is_key_down(KeyCode::LeftControl) || is_key_down(KeyCode::RightControl)))
+}
+
 macro_rules! key_names {
     ($($key:ident),* $(,)?) => {
         pub fn key_named(name: &str) -> Option<KeyCode> {

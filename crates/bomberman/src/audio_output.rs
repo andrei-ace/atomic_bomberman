@@ -1,6 +1,5 @@
-//! Quad-snd opens its ALSA device in a background thread and treats missing audio
-//! as a panic. Check the output before its context exists, and use the patched
-//! paced silent mixer when output is unavailable or silence was requested.
+//! Select silent output before Macroquad unconditionally creates its mixer.
+//! Linux preflights ALSA; the Apple backend reports its actual queue result.
 
 #[cfg(target_os = "linux")]
 pub fn prepare(requested_mute: bool) -> anyhow::Result<(bool, Option<String>)> {
@@ -46,5 +45,34 @@ pub fn prepare(requested_mute: bool) -> anyhow::Result<(bool, Option<String>)> {
 
 #[cfg(not(target_os = "linux"))]
 pub fn prepare(requested_mute: bool) -> anyhow::Result<(bool, Option<String>)> {
+    #[cfg(target_os = "macos")]
+    if requested_mute {
+        std::env::set_var("ATOMIC_BOMBERMAN_SILENT_AUDIO", "1");
+    }
     Ok((requested_mute, None))
 }
+
+/// Call after creating the audio context. A failed queue still has a live,
+/// sample-paced mixer, but must never count as physical speaker verification.
+pub fn after_initialization(requested_mute: bool) -> (bool, Option<String>) {
+    #[cfg(target_os = "macos")]
+    match quad_snd::output_status() {
+        Some(quad_snd::OutputStatus::Unavailable(reason)) => {
+            return (
+                true,
+                Some(format!(
+                    "Audio output unavailable ({reason}); playing silently."
+                )),
+            );
+        }
+        Some(quad_snd::OutputStatus::SilentRequested) => return (true, None),
+        _ => (),
+    }
+    (requested_mute, None)
+}
+
+pub const BACKEND: &str = if cfg!(target_os = "macos") {
+    "production quad_snd CoreAudio Audio Queue mixer"
+} else {
+    "production audio_output::prepare and quad_snd native mixer"
+};

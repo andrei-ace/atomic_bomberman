@@ -669,7 +669,10 @@ pub(crate) fn scheme(id: &str, data: &[u8]) -> Result<Scheme> {
 }
 
 pub(crate) fn wav(data: &[u8]) -> Result<Vec<u8>> {
-    ensure!(data.len() % 2 == 0, "RSS audio ends inside a 16-bit sample");
+    ensure!(
+        data.len().is_multiple_of(2),
+        "RSS audio ends inside a 16-bit sample"
+    );
     ensure!(
         data.len() <= u32::MAX as usize - 36,
         "RSS audio too large for RIFF"

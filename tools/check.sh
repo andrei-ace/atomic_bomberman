@@ -5,4 +5,4 @@ cd -- "$project_dir"
 cargo fmt --all -- --check
 cargo clippy --locked --workspace --all-targets -- -D warnings
 cargo test --locked --workspace
-cargo test --locked -p quad-snd --lib native_voice_meter_tests
+cargo test --locked -p quad-snd --lib

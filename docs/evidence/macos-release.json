@@ -1,0 +1,96 @@
+{
+  "passed": true,
+  "verified_at_utc": "2026-10-28T09:01:37.573031+00:00",
+  "platform": {
+    "os": "macOS",
+    "version": "26.6.2",
+    "architecture": "arm64"
+  },
+  "source_sha256": "111456dbc08512c5a5c2f36fe83d1c0de3587120b80dfa871685c1dbe2952d32",
+  "source_files": 127,
+  "source_digest_definition": "Sorted git-visible non-evidence relative paths and file contents, each followed by NUL; ignored caches, build artifacts, and docs/evidence excluded.",
+  "rust_toolchain": "rustc 1.93.1 (01f6ddf75 2026-02-11)",
+  "workspace_checks": {
+    "1.93.1": {
+      "format": true,
+      "clippy_all_targets_deny_warnings": true,
+      "tests_passed": 205,
+      "ignored_development_helpers": 3
+    },
+    "1.89.0": {
+      "format": true,
+      "clippy_all_targets_deny_warnings": true,
+      "tests_passed": 205,
+      "ignored_development_helpers": 3
+    }
+  },
+  "launcher_transaction_tests": {
+    "passed": true,
+    "cases": [
+      "first import",
+      "atomic cache replacement",
+      "failure preserves cache",
+      "cancel stops import and preserves cache",
+      "corrupt cache repair",
+      "symlink target preservation",
+      "argument forwarding"
+    ]
+  },
+  "asset_import": "macos-asset-import.json",
+  "native_ui": "macos-ui.json",
+  "first_launch_dialog": "macos-first-launch.json",
+  "deterministic_matches": "macos-deterministic-matches.json",
+  "physical_stereo_audio": "macos-speakers.json",
+  "packaged_startup": {
+    "passed": true,
+    "finder_launch_with_default_managed_cache": true,
+    "frames_rendered": 240,
+    "canvas": [
+      640,
+      480
+    ],
+    "screenshot_sha256": "fee0db34b31663a26f02276dc58b13a0a198083e9c2142fc6334bbc7088131d5",
+    "windowed": [
+      960,
+      720
+    ]
+  },
+  "package": {
+    "path": "dist/atomic-bomberman-macos-arm64.zip",
+    "bytes": 3110021,
+    "sha256": "f71951da23054fbd3ab6e9cadc6ec9c1c53ca28503786d45c0cec267a1a28712",
+    "signature": "ad-hoc",
+    "signature_verified": true,
+    "notarized": false,
+    "architectures": [
+      "arm64"
+    ],
+    "original_game_data_included": false,
+    "extracted_path_with_spaces_verified": true,
+    "unrelated_working_directory_verified": true,
+    "binary_sha256": {
+      "AtomicBomberman": "d4390f16a5c123a97f10ffb034aa0a082ccedc08ff2a9471a12437480e33f07a",
+      "audio-probe": "150aeae3d74a25ce996feb287b8d14055c2baf2a30bdf179119ce7632ae28f62",
+      "bomberman": "50f63bef7489238c1a33e1c221e0be2e9038d7418e980ee53fc62f535e5eae9f",
+      "bomberman-assets": "7167864ac77da05f36616f257525a5b968f802be662c91bd923b9b6f98680918",
+      "hardware-check": "9c2ab357a9822bb838c6e9efda07ac24461e1937c44efc85f76315045994fea2"
+    }
+  },
+  "controller": {
+    "status": "unavailable",
+    "backend_initialized": true,
+    "devices": [],
+    "physical_verified": false
+  },
+  "retina": {
+    "status": "not_exercised",
+    "backing_scale_factor": 1
+  },
+  "limitations": [
+    "macOS 11.0 is the deployment target; runtime verification covers macOS 26.6.2.",
+    "Native software input tests use events confined to the game process; they do not establish physical keyboard or controller acceptance.",
+    "No physical gamepad was connected. The available display used a 1x backing scale, so Retina runtime behavior is unverified.",
+    "Ad-hoc signing is for local use; Developer ID signing and notarization were not requested."
+  ],
+  "verification_scope": "Local macOS port acceptance snapshot before versioned GitHub distribution packaging; tagged release provenance is recorded in the release BUILD-INFO.json."
+}

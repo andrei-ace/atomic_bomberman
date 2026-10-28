@@ -2,6 +2,12 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
+pub const DEFAULT_ACTION: &str = if cfg!(target_os = "macos") {
+    "RightShift"
+} else {
+    "RightControl"
+};
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Device {
     Bot,
@@ -88,7 +94,7 @@ impl Default for Settings {
             volume: 0.65,
             keyboard: [
                 KeyLayout {
-                    keys: ["Up", "Right", "Down", "Left", "Space", "RightControl"]
+                    keys: ["Up", "Right", "Down", "Left", "Space", DEFAULT_ACTION]
                         .map(String::from),
                 },
                 KeyLayout {
@@ -175,7 +181,12 @@ pub fn default_path() -> PathBuf {
     if let Some(base) = std::env::var_os("XDG_CONFIG_HOME") {
         PathBuf::from(base).join("atomic-bomberman/settings.json")
     } else if let Some(base) = std::env::var_os("HOME") {
-        PathBuf::from(base).join(".config/atomic-bomberman/settings.json")
+        let relative = if cfg!(target_os = "macos") {
+            "Library/Application Support/Atomic Bomberman/settings.json"
+        } else {
+            ".config/atomic-bomberman/settings.json"
+        };
+        PathBuf::from(base).join(relative)
     } else {
         PathBuf::from("bomberman-settings.json")
     }

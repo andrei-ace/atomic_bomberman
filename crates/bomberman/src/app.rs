@@ -1,7 +1,7 @@
 use crate::{
     catalog::{game_config, COLOR_NAMES},
     cli::Cli,
-    controls::{key_named, Controllers, ACTIONS, PAD_BUTTONS},
+    controls::{fullscreen_shortcut, key_named, Controllers, ACTIONS, PAD_BUTTONS},
     media::Media,
     presentation::player_sprite,
     settings::{Device, Settings},
@@ -174,6 +174,18 @@ impl App {
                 frame_started = std::time::Instant::now();
             }
             self.controllers.poll();
+            #[cfg(target_os = "macos")]
+            if !self.cli.mute {
+                let (muted, warning) = crate::audio_output::after_initialization(false);
+                if muted {
+                    self.cli.mute = true;
+                    self.media.mute = true;
+                    if let Some(warning) = warning {
+                        eprintln!("Atomic Bomberman: {warning}");
+                        self.notify(warning);
+                    }
+                }
+            }
             self.map_mouse();
             let elapsed_ms = if self.cli.smoke_frames.is_some() {
                 16
@@ -184,7 +196,7 @@ impl App {
                 elapsed
             };
             self.ui_elapsed_ms += elapsed_ms as u64;
-            if is_key_pressed(KeyCode::F11) && self.capture.is_none() {
+            if fullscreen_shortcut() && self.capture.is_none() {
                 self.settings.fullscreen = !self.settings.fullscreen;
                 set_fullscreen(self.settings.fullscreen);
                 self.save();
@@ -1106,7 +1118,11 @@ impl App {
             self.media.text(body, 38., y + 20., 11., LIGHT);
         }
         self.media.center_text(
-            "Escape / P: pause    F1: help    F11: fullscreen",
+            if cfg!(target_os = "macos") {
+                "Escape / P: pause   F1: help   Cmd-Ctrl-F / F11: fullscreen"
+            } else {
+                "Escape / P: pause    F1: help    F11: fullscreen"
+            },
             426.,
             12.,
             GOLD,

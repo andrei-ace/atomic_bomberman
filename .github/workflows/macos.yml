@@ -1,23 +1,44 @@
-name: macOS port check
+name: macOS
 
-# Optional until the native Mac port is exercised on real hardware.
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: macos-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         runner: [macos-15, macos-15-intel]
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.89.0
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66
+        with:
+          toolchain: 1.89.0
           components: rustfmt, clippy
       - run: tools/check.sh
+      - run: tools/test_macos_launcher.sh
       - run: cargo build --locked --release --workspace
+      - name: Package Apple Silicon app
+        if: matrix.runner == 'macos-15'
+        run: tools/package_macos.sh --release
+      - name: Upload Apple Silicon app
+        if: matrix.runner == 'macos-15'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: atomic-bomberman-macos-arm64
+          path: dist/github/*
+          if-no-files-found: error

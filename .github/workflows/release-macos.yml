@@ -1,0 +1,108 @@
+name: macOS release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing annotated version tag, for example v0.1.0
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: ${{ inputs.tag }}
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Validate release tag
+        shell: bash
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'Expected an existing vMAJOR.MINOR.PATCH tag.' >&2
+            exit 1
+          fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66
+        with:
+          toolchain: 1.89.0
+          components: rustfmt, clippy
+      - name: Check tag matches package version
+        run: |
+          macos_version=$(python3 tools/macos_release.py version)
+          test "$RELEASE_TAG" = "v$macos_version"
+          test "$(git cat-file -t "refs/tags/$RELEASE_TAG")" = tag
+          test "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")" = "$(git rev-parse HEAD)"
+      - run: tools/check.sh
+      - run: tools/test_macos_launcher.sh
+      - run: tools/package_macos.sh --release
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: macos-release
+          path: dist/github/*
+          if-no-files-found: error
+          retention-days: 14
+
+  draft:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: macos-release
+          path: release
+      - name: Verify source, checksums, and create draft preview
+        working-directory: release
+        shell: bash
+        run: |
+          macos_version="${RELEASE_TAG#v}"
+          package_name="atomic-bomberman-$macos_version-macos-arm64"
+          sha256sum -c "$package_name.zip.sha256"
+          tag_commit=$(gh api "repos/$GH_REPO/commits/$RELEASE_TAG" --jq .sha)
+          export MACOS_TAG_COMMIT="$tag_commit"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          version = os.environ['RELEASE_TAG'][1:]
+          info = json.loads(Path(f'atomic-bomberman-{version}-macos-arm64.build.json').read_text())
+          assert info['version'] == version
+          assert info['target'] == 'aarch64-apple-darwin'
+          assert info['source']['dirty'] is False
+          assert info['source']['commit'] == os.environ['MACOS_TAG_COMMIT'], 'release tag moved after build'
+          Path('release-notes.md').write_text(
+              f"Native Apple Silicon preview built from `{info['source']['commit']}`.\n\n"
+              "Download the Mac ZIP and its checksum, verify the checksum, extract it, "
+              "and move Atomic Bomberman.app to Applications. The ZIP includes installation instructions.\n\n"
+              "On first launch choose your original .7z, .img/.iso, or extracted game folder. "
+              "Original game data is imported locally and is excluded from this release.\n\n"
+              "This preview is ad-hoc signed and is not notarized. "
+              "See docs/INSTALL-macos.md in the tagged source for installation and macOS approval steps.\n\n"
+              "Build provenance and executable hashes are included in the .build.json asset.\n")
+          PY
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo 'A release already exists for this tag; refusing to overwrite assets.' >&2
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" \
+            "$package_name.zip" "$package_name.zip.sha256" "$package_name.build.json" \
+            --verify-tag --draft --prerelease \
+            --title "Atomic Bomberman $macos_version — macOS preview" \
+            --notes-file release-notes.md

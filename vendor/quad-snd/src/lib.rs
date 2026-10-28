@@ -31,6 +31,9 @@ mod mixer;
 
 pub use snd::{AudioContext, Playback, Sound};
 
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+pub use snd::{output_status, OutputStatus};
+
 /// Pending and currently mixing non-looped voices in this thread's context.
 /// Looping background music is separate from the game's native effect limit.
 #[cfg(not(target_arch = "wasm32"))]

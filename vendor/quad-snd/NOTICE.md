@@ -19,3 +19,11 @@ separately. Exact-buffer-length completions release the meter in that buffer.
 Macroquad remains pinned to 0.4.16.
 
 The Apple build script also uses the canonical `AudioToolbox` framework name.
+
+The Apple backend owns and synchronously disposes its Audio Queue and callback
+state on a named worker thread. Requested silence and initialization/callback
+failures use the same mixer with a paced silent output; dropping the context
+joins its worker. Per-context output status distinguishes hardware from silent
+fallback in diagnostics. Queue setup failure injection and shutdown tests cover
+partial initialization. Generated ABI tests use `offset_of!` rather than
+dereferencing null pointers. The decoder and PCM mixing remain unchanged.

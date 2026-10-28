@@ -1,4 +1,12 @@
-# Physical Linux acceptance check
+# Physical hardware acceptance checks
+
+For macOS Apple Silicon, run the bundled `hardware-check --interactive <report.json>`
+directly from `Atomic Bomberman.app/Contents/MacOS/`; the Python runner below is
+Linux-specific. The Mac checker supports Command-Control-F as well as F11 and
+distinguishes silent fallback from real speaker output. Use `audio-probe <report.json>`
+for a separate left/right CoreAudio test. Mac results live in `docs/evidence/macos-*.json`.
+
+## Linux
 
 `tools/hardware-check.py` records the actual device and desktop prerequisites.
 An inventory never counts as a successful controller, speaker, or fullscreen

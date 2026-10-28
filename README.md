@@ -1,10 +1,10 @@
 # Atomic Bomberman in Rust
 
-For the Mac continuation, start with [the macOS handoff](docs/macos-handoff.md).
-It covers native builds, the separate portable asset archive, verification,
-and the remaining platform work. Linux is validated; macOS remains unverified.
+For macOS Apple Silicon, see [the Mac build and app guide](docs/macos-handoff.md).
+The portable app imports your `.7z` archive, disc image, or extracted game folder
+on first launch. Original game data stays separate from the release archive.
 
-A native Linux local battle reconstruction that imports graphics, animations,
+A native Linux and macOS local battle reconstruction that imports graphics, animations,
 bitmap fonts, palettes, schemes, and audio from the supplied Atomic Bomberman CD.
 The game runs in Rust; Ghidra, REA, Windows, and an emulator are not runtime
 dependencies. Macroquad is pinned to **0.4.16**, Gilrs to **0.11.2**.
@@ -22,7 +22,59 @@ x86 routines. See the [behavior and validation ledger](docs/behavior-ledger.md)
 for the tested boundaries; component comparisons do not establish whole-program
 binary equivalence.
 
-## Build and play
+## Install on macOS
+
+Download the Apple Silicon ZIP and its matching `.zip.sha256` from
+[GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases).
+Choose the built Mac ZIP asset; GitHub's **Source code** downloads require compilation.
+
+1. Verify the downloaded ZIP in Terminal:
+
+   ```bash
+   cd ~/Downloads
+   shasum -a 256 -c atomic-bomberman-0.1.0-macos-arm64.zip.sha256
+   ```
+
+2. Extract the ZIP and move **Atomic Bomberman.app** into **Applications**.
+3. Open it, click **Choose Game Data…**, and select your original `.7z`, `.img`,
+   `.iso`, or extracted game folder. After import, the game starts directly.
+
+The download includes an installation `README.txt`. See
+[the full installation guide](docs/INSTALL-macos.md) for macOS approval of this
+ad-hoc-signed preview, controls, updates, and how to reset first-launch setup.
+No Rust, Homebrew, Python, or Windows installation is needed to play.
+
+## Build from source
+
+On an Apple Silicon Mac with Xcode Command Line Tools, Rust 1.89+, and Python 3.9+:
+
+```bash
+tools/check.sh
+tools/test_macos_launcher.sh
+tools/package_macos.sh
+open "dist/Atomic Bomberman.app"
+```
+
+Versioned release files are generated in `dist/github/`: the ZIP, its SHA-256
+sidecar, and build metadata identifying the source commit and executable hashes.
+`dist/` and original game media remain ignored by Git. For a clean, committed
+release build, use `tools/package_macos.sh --release`; see
+[the release procedure](docs/releases.md).
+
+Choose your original game archive or image when the app asks for game data.
+The package is ad-hoc signed; it does not require Rust or Homebrew to play.
+The default Mac action key is **Right Shift**, and **Command-Control-F** also
+toggles fullscreen. Mac settings and imported data live under
+`~/Library/Application Support/Atomic Bomberman/`; `--settings` and
+`XDG_CONFIG_HOME` retain their explicit overrides.
+
+For a terminal import on this checkout:
+
+```bash
+cargo run --locked --release -p bomberman-assets -- import \
+  --source ../Atomic_Bomberman_Win_ROM_EN.7z --output local-assets
+cargo run --locked --release -p bomberman -- --assets local-assets --windowed
+```
 
 Linux x86-64, Ubuntu 24.04 baseline, X11 or XWayland; Rust 1.89 or newer.
 
@@ -59,11 +111,11 @@ battle animations and every generated asset are validated.
 | --- | --- | --- | --- |
 | Move | Arrow keys | W A S D | D-pad / left stick |
 | Bomb / grab | Space | Left Shift | South |
-| Action / trigger / punch | Right Ctrl | E | East |
+| Action / trigger / punch | Right Ctrl / Right Shift (Mac) | E | East |
 | Menus | Arrows, Enter, Escape | | D-pad, South, East |
 | Pause | Escape / P | | Start |
 | Help | F1 | | |
-| Fullscreen | F11 | | |
+| Fullscreen | F11 / Command-Control-F (Mac) | | |
 
 Select participants and devices in Battle Setup; choose arena and scheme before
 starting. For two people on one keyboard, set two participants to Human and
@@ -73,7 +125,7 @@ Reconnected controllers retain their slot. Configurations requiring two teams
 are checked before starting a match. A missing sound output falls back to
 silent play.
 
-Settings are saved to `$XDG_CONFIG_HOME/atomic-bomberman/settings.json`, or
+On Linux, settings are saved to `$XDG_CONFIG_HOME/atomic-bomberman/settings.json`, or
 `~/.config/atomic-bomberman/settings.json`. Use `--settings <file>` to select a
 different location, `--mute` for silent play, and `--seed <number>` to reproduce
 simulation randomness. The game starts in a resizable window by default.
@@ -167,15 +219,17 @@ cd atomic-bomberman-linux-x86_64
 The archive includes the game, importer, hardware checker, audio probe, and documentation.
 Run `./hardware-check --interactive /tmp/atomic-hardware.json` on a desktop with
 a controller and speakers; see [hardware verification](docs/hardware-check.md). Original game data
-is imported separately. Networking, campaign, an editor, and macOS/Windows
-packaging remain outside this Linux release.
+is imported separately. Networking, campaign, an editor, and Windows packaging
+remain outside this release. macOS has a separate Apple Silicon app package.
 
 The workspace contains `bomberman-core` (deterministic simulation and native AI),
 `bomberman-assets` (original format readers/cache), and `bomberman` (presentation,
 audio, input, settings, and headless CLI).
 
 The vendored `quad-snd` patch keeps silent audio paced when no playback
-device exists and tracks real effect completion for the native six-voice limit. Its source and attribution are under `vendor/quad-snd/`; it does
+device exists and tracks real effect completion for the native six-voice limit.
+The CoreAudio backend also owns queue shutdown and supports safe silent fallback.
+Its source and attribution are under `vendor/quad-snd/`; it does
 not alter original asset decoding or normal ALSA sample timing.
 
 

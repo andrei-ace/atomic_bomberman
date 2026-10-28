@@ -1,0 +1,25 @@
+{
+  "backend": "Native AppKit first-launch window and NSOpenPanel",
+  "window_style_mask": 3,
+  "passed": true,
+  "error": null,
+  "checks": [
+    "first-launch import window appears",
+    "native source chooser accepts images, archives, and game directories",
+    "source chooser cancellation returns to import window"
+  ],
+  "window_collection_behavior": 0,
+  "window_frame": "{{2280, 830}, {560, 302}}",
+  "physical_controller_verified": false,
+  "limitations": [
+    "Synthetic Cocoa events verify software input and window behavior; physical devices are recorded separately."
+  ],
+  "screen_frame": "{{0, 0}, {5120, 1440}}",
+  "window_visible": true,
+  "application_active": true,
+  "backing_scale_factor": 1,
+  "physical_keyboard_verified": false,
+  "managed_cache_created": false,
+  "verified_at_utc": "2026-10-28T08:58:20.798810+00:00",
+  "launcher_sha256": "d4390f16a5c123a97f10ffb034aa0a082ccedc08ff2a9471a12437480e33f07a"
+}

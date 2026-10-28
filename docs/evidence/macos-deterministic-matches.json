@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "verified_at_utc": "2026-10-28T08:56:01.593620+00:00",
+  "platform": "macOS 26.6.2 arm64",
+  "runs": 2,
+  "matches_per_run": 32,
+  "first_seed": 1997,
+  "rounds_per_run": 460,
+  "identical_output": true,
+  "matches_recorded_linux_results": true,
+  "reference": "deterministic-matches.json",
+  "first_match_checksum": "c28ea45b2d37fe9a",
+  "binary_sha256": "50f63bef7489238c1a33e1c221e0be2e9038d7418e980ee53fc62f535e5eae9f",
+  "extracted_package_with_spaces": true,
+  "unrelated_working_directory": true
+}

@@ -19,7 +19,7 @@ pub struct Cli {
 
 pub const HELP: &str = "Atomic Bomberman — native Rust local battle\n\n\
 Usage: bomberman --assets <cache-directory> [options]\n\n\
-  --settings <file>       Settings JSON (default: XDG configuration directory)\n\
+  --settings <file>       Settings JSON (default: platform configuration directory)\n\
   --seed <number>         Deterministic match seed (default: current time)\n\
   --headless             Run complete computer matches without graphics/audio\n\
   --matches <number>      Number of headless matches (default: 1)\n\
@@ -34,7 +34,7 @@ Usage: bomberman --assets <cache-directory> [options]\n\n\
 Import assets first:\n\
   cargo run -p bomberman-assets -- import --source <disc.img> --output <cache>\n\n\
 Menu: arrows / Enter / Escape; controller D-pad / south / east.\n\
-Battle: keyboard 1 arrows / Space / right Ctrl; keyboard 2 WASD / left Shift / E.\n\
+Battle: keyboard 1 arrows / Space / action; keyboard 2 WASD / left Shift / E.\n\
 F1 help, Escape pause, F11 fullscreen. Controls are remappable in Settings.\n";
 
 impl Cli {
@@ -93,6 +93,12 @@ impl Cli {
                 "--fullscreen" => fullscreen = Some(true),
                 "--help" | "-h" => {
                     print!("{HELP}");
+                    println!(
+                        "Keyboard 1 default action: {}.",
+                        crate::settings::DEFAULT_ACTION
+                    );
+                    #[cfg(target_os = "macos")]
+                    println!("macOS: Command-Control-F also toggles fullscreen. Settings default to ~/Library/Application Support/Atomic Bomberman/settings.json (XDG_CONFIG_HOME overrides this).");
                     return Ok(None);
                 }
                 _ => bail!("unknown option {arg:?}; use --help"),
