@@ -36,8 +36,9 @@ Playing requires no Rust, Homebrew, Python, Windows, or emulator.
    extracted game folder, and click **Import**. A `.7z` must contain exactly one
    `.img` or `.iso`. Wait for import to finish; the game then starts.
 
-The repository is private; access to its releases requires an authorized GitHub
-account. The downloaded app works offline. Original game data is imported locally
+Access to restricted GitHub repositories requires an authorized account; public
+release downloads are available without repository access. The app works offline.
+Original game data is imported locally
 and is never part of the release download.
 
 ## Play
