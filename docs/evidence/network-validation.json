@@ -19,7 +19,8 @@
     "native_network_routine_comparison_cases": 512,
     "original_rules": "REA/Ghidra static analysis of the supplied BM95.EXE; documented in docs/multiplayer-original-rules.md",
     "lobby_ui": "Two game windows verified at loopback and 80 ms injected latency: menus, host start/settings/teams, colors, two local keyboards, saved profiles, short-code reuse, shared pause and matching simulations",
-    "room_load": "Two concurrent rooms, each one host plus nine clients, over twenty real outbound TLS connections; x86-64 and emulated ARM64 passed"
+    "room_load": "Two concurrent rooms, each one host plus nine clients, over twenty real outbound TLS connections; x86-64 and emulated ARM64 passed",
+    "asynchronous_start": "Coordinator test waits for Start delivery before advancing frames; removes a timing assumption observed on macOS Intel CI"
   },
   "linux_launcher": {
     "synthetic_recovery_tests_passed": 3,
@@ -44,7 +45,7 @@
       "PNG desktop icon"
     ],
     "test_environment_workaround": "None needed by the fixed AppImage: automatic extraction via a glibc bootstrap supports old AppImageLauncher and systems without FUSE.",
-    "final_source_digest": "e57870e890c3b65a234635ed71cd0c893be68749ac8ac36438c5100392a6faf4"
+    "final_source_digest": "9cbde93314b87f5ada1d96241da4033ae522896c2b4fe88da26501a0e9c2e0a8"
   },
   "arm64": {
     "binary": "built with cargo-zigbuild 0.20.1 / Zig 0.14.1 for glibc 2.39",

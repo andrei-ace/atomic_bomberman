@@ -520,6 +520,19 @@ mod tests {
         assert_eq!(host.choose_color(0, 4), Err(NetError::ColorTaken));
         assert!(host.lobby.as_ref().unwrap().can_start());
         host.start(1997, now).unwrap();
+        // Receiving Start is asynchronous, especially on a loaded CI runner.
+        // Wait for that state transition without advancing the host simulation;
+        // the frame/hash assertions below then begin from the same tick.
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while client.replay.is_none() && std::time::Instant::now() < deadline {
+            now += 20;
+            host.pump(0, now, vec![PlayerInput::default(); 2]).unwrap();
+            client
+                .pump(0, now, vec![PlayerInput::default(); 2])
+                .unwrap();
+            thread::sleep(Duration::from_millis(10));
+        }
+        assert!(client.replay.is_some(), "client did not receive Start");
         let mut hashes = BTreeMap::new();
         for step in 0..120 {
             now += 20;
