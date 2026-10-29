@@ -1,9 +1,9 @@
 # Desktop and relay releases
 
-Version **0.3.0**, Rust **1.89.0**, one annotated Git tag for all three packages:
+Version **0.3.1**, Rust **1.89.0**, one annotated Git tag for all three packages:
 Linux x86-64 AppImage (Ubuntu 24.04 baseline, X11/XWayland), Apple Silicon Mac ZIP,
 and native Linux ARM64 relay (Ubuntu 26 deployment; glibc 2.39 minimum).
-The multiplayer protocol is **3**. Rebuild and upgrade the relay and all clients
+The multiplayer protocol is **4**. Rebuild and upgrade the relay and all clients
 from the same commit; the application version alone does not identify a
 compatible protocol build.
 Original game assets, imported caches, media, private relay state and invitations
@@ -47,10 +47,10 @@ Review and commit the intended source, then build from that clean commit:
 ```sh
 # Ubuntu 24.04 x86-64:
 tools/package_linux.sh --release
-python3 tools/linux_release.py verify dist/github/atomic-bomberman-0.3.0-linux-x86_64.AppImage --release
+python3 tools/linux_release.py verify dist/github/atomic-bomberman-0.3.1-linux-x86_64.AppImage --release
 # Apple Silicon Mac:
 tools/package_macos.sh --release
-python3 tools/macos_release.py verify dist/github/atomic-bomberman-0.3.0-macos-arm64.zip --release
+python3 tools/macos_release.py verify dist/github/atomic-bomberman-0.3.1-macos-arm64.zip --release
 # Native ARM64 Linux:
 cargo build --locked --release -p bomberman-relay
 python3 tools/package_relay.py --release
@@ -78,7 +78,7 @@ ad-hoc signed, with no Developer ID signing/notarization setup.
 
 ## One draft release
 
-Create and push an annotated `v0.3.0` tag only after reviewing the commit and
+Create and push an annotated `v0.3.1` tag only after reviewing the commit and
 platform checks. Its push starts **Desktop and relay release**; the same workflow
 can also be dispatched manually for an existing annotated version tag. The
 workflow uses separate native Linux x86-64, Mac ARM64 and Linux ARM64 runners.
@@ -107,9 +107,15 @@ the native AppImage entrypoint. Native Linux release builds retain the ordinary
 strict verification path.
 
 
-The 0.3.0 clients use one saved private server URL and an automatically refreshed
+The 0.3.1 clients use one saved private server URL and an automatically refreshed
 friends' game list. LAN discovery retries per interface and has a separate
 Join by IP fallback. macOS bundles declare Local Network access and retain their
 application icon after the launcher hands off to the game. Rendering fixes cover
 upright loading screens, the vertical anchor for cropped flame sprites, and empty
 floor underneath exploding bricks. Original player-colored flames are retained.
+
+The 0.3.1 clients preload battle media in the lobby and automatically acknowledge
+match preparation before the host begins the shared countdown. Protocol 4 adds
+generation-specific preparation acknowledgements and a host-only begin message;
+upgrade the relay and every client together. Existing private server links and
+TLS identities remain valid.

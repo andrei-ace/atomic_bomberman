@@ -7,6 +7,11 @@ use macroquad::{
 };
 use std::{collections::HashMap, path::PathBuf};
 
+pub const MUSIC: [&str; 11] = [
+    "GRNACRES", "GENERIC", "HOCKEY", "PYRAMID", "MINESHFT", "BATTLE", "GIEGER", "HAUNTED", "OCEAN",
+    "SWAMP", "SEWER",
+];
+
 pub struct Media {
     pub manifest: Manifest,
     cache: PathBuf,
@@ -20,6 +25,8 @@ pub struct Media {
     pub mute: bool,
     pub volume: f32,
     effect_limit: i32,
+    prepared_battle: Option<usize>,
+    prepared_music: Option<String>,
 }
 
 fn basename(id: &str) -> &str {
@@ -64,6 +71,8 @@ impl Media {
             mute,
             volume,
             effect_limit,
+            prepared_battle: None,
+            prepared_music: None,
         };
         let files: Vec<_> = this
             .font
@@ -261,6 +270,42 @@ impl Media {
             self.ensure_remaps(&animation).await?;
         }
         Ok(())
+    }
+
+    /// Do first-use texture uploads and synchronous audio decoding while peers
+    /// are still in the lobby. Loading clips neither starts them nor consumes
+    /// effect voices; the menu music and original effect-admission rule remain.
+    pub async fn prepare_battle(&mut self, index: usize) -> Result<()> {
+        if self.battle_prepared(index) {
+            return Ok(());
+        }
+        self.ensure_arena(index).await?;
+        let music = self.sound(MUSIC[index % MUSIC.len()]).await;
+        // Browsing arenas must not retain every decoded music track. Keep the
+        // playing track and the current selection; an unused preload can go.
+        if let Some(previous) = self.prepared_music.take() {
+            if music.as_ref() != Some(&previous) && self.music.as_ref() != Some(&previous) {
+                self.sounds.remove(&previous);
+            }
+        }
+        self.prepared_music = music;
+        // Spawn, bomb placement, and kick variants used at the start of play.
+        let effects: Vec<_> = self
+            .manifest
+            .sound_mappings
+            .iter()
+            .filter(|mapping| matches!(mapping.number, 40..=41 | 100..=101 | 120..=123))
+            .map(|mapping| mapping.sound.clone())
+            .collect();
+        for sound in effects {
+            self.sound(&sound).await;
+        }
+        self.prepared_battle = Some(index);
+        Ok(())
+    }
+
+    pub fn battle_prepared(&self, index: usize) -> bool {
+        self.prepared_battle == Some(index)
     }
 
     pub fn texture(&self, id: &str) -> Option<&Texture2D> {

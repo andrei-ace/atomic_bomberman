@@ -8,7 +8,14 @@ use bomberman_net::{
     *,
 };
 use sha2::{Digest, Sha256};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
+
+struct Preparation {
+    generation: u64,
+    peers: BTreeSet<PeerId>,
+    ready: BTreeSet<PeerId>,
+    local_ready: bool,
+}
 
 pub fn compatibility(manifest: &bomberman_assets::Manifest) -> Compatibility {
     let mut sources: Vec<_> = manifest
@@ -41,6 +48,9 @@ pub struct Network {
     sent_ms: u64,
     accumulator: u32,
     expected_hashes: BTreeMap<u64, [u8; 32]>,
+    start_generation: u64,
+    preparation: Option<Preparation>,
+    skip_elapsed: bool,
 }
 impl Network {
     pub fn new(
@@ -75,6 +85,9 @@ impl Network {
             sent_ms: 0,
             accumulator: 0,
             expected_hashes: BTreeMap::new(),
+            start_generation: 0,
+            preparation: None,
+            skip_elapsed: false,
         })
     }
     fn broadcast_lobby(&self) -> Result<(), NetError> {
@@ -118,16 +131,24 @@ impl Network {
         if !self.host {
             return Err(NetError::Ownership);
         }
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
         let lobby = self.lobby.as_ref().ok_or(NetError::Protocol)?;
         if !lobby.can_start() {
             return Err(NetError::WaitingForPlayers);
         }
         let simulation =
             Simulation::new(lobby.config.clone(), seed).map_err(|_| NetError::Protocol)?;
+        let generation = self
+            .start_generation
+            .checked_add(1)
+            .ok_or(NetError::Protocol)?;
         self.connection.send(Request::Playing(true))?;
         self.connection.message(
             None,
             GameMessage::Start {
+                generation,
                 simulation: Box::new(simulation.clone()),
                 owners: lobby.owners.clone(),
                 colors: lobby.colors,
@@ -137,10 +158,69 @@ impl Network {
         self.replay = Some(Replay::new(simulation));
         self.accumulator = 0;
         self.last_input.clear();
+        self.start_generation = generation;
+        self.preparation = Some(Preparation {
+            generation,
+            peers: lobby.peers.clone(),
+            ready: BTreeSet::new(),
+            local_ready: false,
+        });
+        Ok(())
+    }
+    pub fn is_starting(&self) -> bool {
+        self.preparation.is_some()
+    }
+    /// A renderer acknowledges only after the announced arena, player artwork,
+    /// music, and opening effects have finished loading. There is no UI toggle.
+    pub fn prepared(&mut self, now_ms: u64) -> Result<(), NetError> {
+        let Some(preparation) = &mut self.preparation else {
+            return Ok(());
+        };
+        if preparation.local_ready {
+            return Ok(());
+        }
+        preparation.local_ready = true;
+        if self.host {
+            preparation.ready.insert(HOST);
+            self.begin_if_prepared(now_ms)
+        } else {
+            self.connection.message(
+                Some(HOST),
+                GameMessage::Prepared {
+                    generation: preparation.generation,
+                },
+            )
+        }
+    }
+    fn begin_if_prepared(&mut self, now_ms: u64) -> Result<(), NetError> {
+        let Some(preparation) = &self.preparation else {
+            return Ok(());
+        };
+        if preparation.ready != preparation.peers {
+            return Ok(());
+        }
+        self.connection.message(
+            None,
+            GameMessage::Begin {
+                generation: preparation.generation,
+            },
+        )?;
+        self.buffer = Some(InputBuffer::new(
+            self.lobby
+                .as_ref()
+                .ok_or(NetError::Protocol)?
+                .owners
+                .clone(),
+            now_ms,
+        ));
+        self.preparation = None;
+        // The last render interval can include seconds of loading/waiting.
+        // Start the shared countdown at tick zero instead of catching it up.
+        self.skip_elapsed = true;
         Ok(())
     }
     pub fn action(&mut self, action: Action) -> Result<(), NetError> {
-        if self.replay.is_none() {
+        if self.replay.is_none() || self.is_starting() {
             return Err(NetError::Protocol);
         }
         if self.actions.len() >= 16 {
@@ -187,6 +267,8 @@ impl Network {
         self.actions.clear();
         self.last_input.clear();
         self.expected_hashes.clear();
+        self.preparation = None;
+        self.skip_elapsed = false;
         self.connection.send(Request::Playing(false))?;
         self.broadcast_lobby()
     }
@@ -217,11 +299,30 @@ impl Network {
                     }
                 }
                 Event::PeerJoined(peer) if self.host => {
+                    if self.replay.is_some() && !self.is_starting() {
+                        self.connection
+                            .message(Some(peer), GameMessage::Error(NetError::InProgress))?;
+                        self.connection.send(Request::Kick(peer))?;
+                        continue;
+                    }
                     self.lobby.as_mut().ok_or(NetError::Protocol)?.add(peer);
-                    self.broadcast_lobby()?;
+                    if self.is_starting() {
+                        self.return_to_lobby()?;
+                        self.warning = Some("A friend joined while the match was preparing. Start again when everyone is here.".into());
+                    } else {
+                        self.broadcast_lobby()?;
+                    }
                 }
                 Event::PeerLeft(peer) if self.host => {
                     self.lobby.as_mut().ok_or(NetError::Protocol)?.remove(peer);
+                    if self.is_starting() {
+                        self.return_to_lobby()?;
+                        self.warning = Some(
+                            "A friend left while loading. Start again when everyone has joined."
+                                .into(),
+                        );
+                        continue;
+                    }
                     if let Some(buffer) = &mut self.buffer {
                         buffer.disconnect(peer, now_ms);
                     }
@@ -250,9 +351,11 @@ impl Network {
                                 lobby.validate()?;
                                 self.lobby = Some(*lobby);
                                 self.replay = None;
+                                self.preparation = None;
                                 self.last_input.clear();
                             }
                             GameMessage::Start {
+                                generation,
                                 simulation,
                                 owners,
                                 colors,
@@ -261,7 +364,8 @@ impl Network {
                                     .config
                                     .validate()
                                     .map_err(|_| NetError::Protocol)?;
-                                if !valid_colors(&colors)
+                                if generation <= self.start_generation
+                                    || !valid_colors(&colors)
                                     || owners.len() != simulation.players.len()
                                     || owners.len() > MAX_PLAYERS
                                     || !simulation.config.network_play
@@ -272,10 +376,30 @@ impl Network {
                                 let lobby = self.lobby.as_mut().ok_or(NetError::Protocol)?;
                                 lobby.owners = owners;
                                 lobby.colors = colors;
+                                self.start_generation = generation;
+                                self.preparation = Some(Preparation {
+                                    generation,
+                                    peers: lobby.peers.clone(),
+                                    ready: BTreeSet::new(),
+                                    local_ready: false,
+                                });
                                 self.replay = Some(Replay::new(*simulation));
                                 self.last_input.clear();
                             }
+                            GameMessage::Begin { generation } => {
+                                let preparation =
+                                    self.preparation.as_ref().ok_or(NetError::Protocol)?;
+                                if preparation.generation != generation || !preparation.local_ready
+                                {
+                                    return Err(NetError::Protocol);
+                                }
+                                self.preparation = None;
+                                self.last_input.clear();
+                            }
                             GameMessage::Frame(frame) => {
+                                if self.is_starting() {
+                                    return Err(NetError::Protocol);
+                                }
                                 let replay = self.replay.as_mut().ok_or(NetError::Protocol)?;
                                 events.extend(replay.apply(&frame)?);
                                 if let Some(hash) = frame.hash {
@@ -307,6 +431,9 @@ impl Network {
                 Event::Pong => {}
                 _ => return Err(NetError::Protocol),
             }
+        }
+        if self.is_starting() {
+            return Ok(events);
         }
         if let Some(replay) = &mut self.replay {
             if inputs != self.last_input || now_ms.saturating_sub(self.sent_ms) >= 50 {
@@ -344,6 +471,11 @@ impl Network {
                 self.sent_ms = now_ms;
             }
             if self.host {
+                let elapsed_ms = if std::mem::take(&mut self.skip_elapsed) {
+                    0
+                } else {
+                    elapsed_ms
+                };
                 self.accumulator = self.accumulator.saturating_add(elapsed_ms.min(250));
                 while self.accumulator >= STEP_MS {
                     self.accumulator -= STEP_MS;
@@ -375,6 +507,17 @@ impl Network {
             return Err(NetError::Ownership);
         }
         match message {
+            GameMessage::Prepared { generation } => {
+                if generation > self.start_generation {
+                    return Err(NetError::Protocol);
+                }
+                if let Some(preparation) = &mut self.preparation {
+                    if preparation.generation == generation {
+                        preparation.ready.insert(peer);
+                        self.begin_if_prepared(now_ms)?;
+                    }
+                }
+            }
             GameMessage::Seats(count) if self.replay.is_none() => {
                 self.lobby.as_mut().unwrap().assign(peer, count)?;
                 self.broadcast_lobby()?;
@@ -526,6 +669,48 @@ mod tests {
             thread::sleep(Duration::from_millis(10));
         }
         assert!(client.replay.is_some(), "client did not receive Start");
+        let initial_hash = host.replay.as_ref().unwrap().hash();
+        host.prepared(now).unwrap();
+        // Simulate a client taking several seconds to load. The host must not
+        // advance its countdown or consume inputs while that client is busy.
+        for _ in 0..12 {
+            now += 250;
+            host.pump(250, now, vec![PlayerInput::default(); 2])
+                .unwrap();
+            client
+                .pump(250, now, vec![PlayerInput::default(); 2])
+                .unwrap();
+            assert!(host.is_starting() && client.is_starting());
+            assert_eq!(host.replay.as_ref().unwrap().tick, 0);
+            assert_eq!(host.replay.as_ref().unwrap().hash(), initial_hash);
+            assert_eq!(client.replay.as_ref().unwrap().hash(), initial_hash);
+        }
+        client.prepared(now).unwrap();
+        client.prepared(now).unwrap(); // Repeated acknowledgements are harmless.
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while (host.is_starting() || client.is_starting()) && std::time::Instant::now() < deadline {
+            now += 20;
+            // Even a long render interval containing loading is discarded.
+            host.pump(250, now, vec![PlayerInput::default(); 2])
+                .unwrap();
+            client
+                .pump(250, now, vec![PlayerInput::default(); 2])
+                .unwrap();
+            if !host.is_starting() {
+                break;
+            }
+            thread::sleep(Duration::from_millis(10));
+        }
+        // Drain Begin without advancing the authoritative clock.
+        while client.is_starting() && std::time::Instant::now() < deadline {
+            client
+                .pump(0, now, vec![PlayerInput::default(); 2])
+                .unwrap();
+            thread::sleep(Duration::from_millis(10));
+        }
+        assert!(!host.is_starting() && !client.is_starting());
+        assert_eq!(host.replay.as_ref().unwrap().tick, 0);
+        assert_eq!(client.replay.as_ref().unwrap().tick, 0);
         let mut hashes = BTreeMap::new();
         for step in 0..120 {
             now += 20;
@@ -566,5 +751,107 @@ mod tests {
             simulation.players[3].config.control,
             bomberman_core::ControlKind::Bot
         );
+
+        host.return_to_lobby().unwrap();
+        let mut loading_client = Network::new(
+            Destination::Lan {
+                address,
+                host: false,
+            },
+            Compatibility::new("a".repeat(64)),
+            None,
+            vec![Device::Keyboard1],
+        )
+        .unwrap();
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while !host.lobby.as_ref().unwrap().can_start() && std::time::Instant::now() < deadline {
+            now += 20;
+            host.pump(0, now, vec![PlayerInput::default(); 2]).unwrap();
+            loading_client
+                .pump(0, now, vec![PlayerInput::default()])
+                .unwrap();
+            thread::sleep(Duration::from_millis(10));
+        }
+        host.start(2000, now).unwrap();
+        while loading_client.replay.is_none() && std::time::Instant::now() < deadline {
+            host.pump(0, now, vec![PlayerInput::default(); 2]).unwrap();
+            loading_client
+                .pump(0, now, vec![PlayerInput::default()])
+                .unwrap();
+            thread::sleep(Duration::from_millis(10));
+        }
+        assert!(loading_client.is_starting());
+        loading_client.prepared(now).unwrap();
+        // The host's own renderer must finish too.
+        for _ in 0..10 {
+            now += 250;
+            host.pump(250, now, vec![PlayerInput::default(); 2])
+                .unwrap();
+            assert!(host.is_starting());
+            assert_eq!(host.replay.as_ref().unwrap().tick, 0);
+            thread::sleep(Duration::from_millis(10));
+        }
+        drop(loading_client);
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while host.replay.is_some() && std::time::Instant::now() < deadline {
+            host.pump(0, now, vec![PlayerInput::default(); 2]).unwrap();
+            thread::sleep(Duration::from_millis(10));
+        }
+        assert!(
+            !host.is_starting() && host.replay.is_none(),
+            "a departing loader left the host waiting forever"
+        );
+
+        let mut next_client = Network::new(
+            Destination::Lan {
+                address,
+                host: false,
+            },
+            Compatibility::new("a".repeat(64)),
+            None,
+            vec![Device::Keyboard1],
+        )
+        .unwrap();
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while !host.lobby.as_ref().unwrap().can_start() && std::time::Instant::now() < deadline {
+            host.pump(0, now, vec![PlayerInput::default(); 2]).unwrap();
+            next_client
+                .pump(0, now, vec![PlayerInput::default()])
+                .unwrap();
+            thread::sleep(Duration::from_millis(10));
+        }
+        host.start(2001, now).unwrap();
+        host.prepared(now).unwrap();
+        while next_client.replay.is_none() && std::time::Instant::now() < deadline {
+            host.pump(0, now, vec![PlayerInput::default(); 2]).unwrap();
+            next_client
+                .pump(0, now, vec![PlayerInput::default()])
+                .unwrap();
+            thread::sleep(Duration::from_millis(10));
+        }
+        // An acknowledgement from a cancelled start cannot release this one.
+        next_client
+            .connection
+            .message(Some(HOST), GameMessage::Prepared { generation: 2 })
+            .unwrap();
+        for _ in 0..10 {
+            host.pump(250, now, vec![PlayerInput::default(); 2])
+                .unwrap();
+            thread::sleep(Duration::from_millis(10));
+        }
+        assert!(host.is_starting());
+        assert_eq!(host.replay.as_ref().unwrap().tick, 0);
+        next_client.prepared(now).unwrap();
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while (host.is_starting() || next_client.is_starting())
+            && std::time::Instant::now() < deadline
+        {
+            host.pump(0, now, vec![PlayerInput::default(); 2]).unwrap();
+            next_client
+                .pump(0, now, vec![PlayerInput::default()])
+                .unwrap();
+            thread::sleep(Duration::from_millis(10));
+        }
+        assert!(!host.is_starting() && !next_client.is_starting());
     }
 }

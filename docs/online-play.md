@@ -1,6 +1,6 @@
 # Private online and LAN games
 
-Use version **0.3.0**, protocol **3**, on every Linux or Mac computer. Rebuild and
+Use version **0.3.1**, protocol **4**, on every Linux or Mac computer. Rebuild and
 upgrade the relay and all game clients from the same commit. Import the same
 edition of Atomic Bomberman: protocol, application version and original
 source-file hashes must match. The relay has no original game data and never
@@ -19,6 +19,14 @@ runs the simulation.
 4. Choose local keyboards/controllers and personal colors. The host chooses
    **Arena and battle rules**, then **Start game** once friends have joined and
    selected controls.
+
+The lobby prepares the selected arena, music, and opening effects in advance.
+After **Start game**, every computer finishes its remaining media loading
+automatically. The host holds the simulation at tick zero until all computers
+acknowledge that they are loaded, then starts one authoritative countdown for
+everyone. No extra Ready button is required. If someone joins or leaves during
+preparation, the remaining players return to the lobby before starting again.
+Normal network transit time still applies to the host's frame stream.
 
 The browser refreshes every three seconds and shows player-computer counts,
 playing/full status, and incompatible assets. Browsing creates no room and takes

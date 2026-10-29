@@ -1,0 +1,184 @@
+{
+  "passed": true,
+  "version": "0.3.1",
+  "protocol": 4,
+  "build_source": {
+    "commit": "fc1c2bf03b344ff06cac01e4d306b0ed0e694fc2",
+    "dirty": true,
+    "sha256": "f3fd2ef7c0dff8164ebf5f6c16de7bcfb3ed6ca91aef07282d67dd695d368d11"
+  },
+  "changes": [
+    "Prepare the selected arena, battle music, and opening effects in the lobby.",
+    "Hold the authoritative simulation at tick zero until every renderer acknowledges preparation.",
+    "Discard loading time before the first shared countdown tick.",
+    "Use standard X11 window-manager fullscreen ADD/REMOVE requests without unmapping the game."
+  ],
+  "fullscreen_on_shoebox": {
+    "passed": true,
+    "platform": "Linux X11, existing desktop and native driver",
+    "checks": [
+      "F11 enters fullscreen, cycle 1",
+      "F11 restores the window, cycle 1",
+      "F11 enters fullscreen, cycle 2",
+      "F11 restores the window, cycle 2",
+      "F11 enters fullscreen, cycle 3",
+      "F11 restores the window, cycle 3",
+      "Settings enters fullscreen",
+      "F11 exits fullscreen entered through Settings",
+      "--fullscreen startup fills the display",
+      "F11 exits fullscreen requested at startup"
+    ],
+    "windowed_dimensions": [
+      960,
+      720
+    ],
+    "fullscreen_dimensions": [
+      5120,
+      1440
+    ]
+  },
+  "linux_startup_ui": {
+    "passed": true,
+    "platform": "Ubuntu 24.04 x86-64, isolated Xvfb, Mesa software rendering",
+    "injected_round_trip_tcp_delay_ms": 0,
+    "relay_environment": "disposable local TLS relay",
+    "checks": [
+      "Multiplayer directly below Start local battle",
+      "simple LAN browser and back navigation",
+      "Paste server link button reads the OS clipboard",
+      "Ctrl-V reads the OS clipboard",
+      "Copy server link updates the OS clipboard",
+      "Backspace and Delete clear the whole private link",
+      "Invalid and empty pastes clear stale input",
+      "Typing cannot silently change a hidden private link",
+      "A link copied by one game authenticates another game",
+      "create room",
+      "private profile mode 0600",
+      "LAN and game lobbies have no Copy Invite",
+      "friend joins through automatic discovery",
+      "multiple local keyboards/controllers in lobby",
+      "host-only Start and shared arena/rules/team editing",
+      "start after controls without added Ready toggle",
+      "personal colors for both local players and host",
+      "ten unique colors synchronized to both computers",
+      "session settings preserve saved local settings",
+      "original network flags disable Gold roulette",
+      "actual two-window battle",
+      "announced arena media prepared in both lobbies",
+      "slow client holds host countdown at tick zero",
+      "all renderers enter the shared countdown automatically",
+      "shared pause and identical serialized simulation",
+      "host departure ends session",
+      "saved server reuse",
+      "former client hosts without new invitation",
+      "credentials absent from logs"
+    ],
+    "limitations": [
+      "No physical controller tested.",
+      "macOS Cmd-V and Linux/macOS WAN play require Mac hardware."
+    ]
+  },
+  "macos_installed_ui": {
+    "original_clipboard_restored": true,
+    "passed": true,
+    "limitations": [
+      "Synthetic events stay in the game view; physical keyboard hardware is separate."
+    ],
+    "checks": [
+      "Paste server link button reads macOS clipboard and authenticates",
+      "Copy server link updates the macOS clipboard",
+      "Backspace discards the private link before Connect",
+      "Delete discards the private link before Connect",
+      "Invalid clipboard text cannot reuse the previous link",
+      "Empty clipboard does not reuse stale invitation text",
+      "Cmd-V authenticates a game-copied link after clearing and accidental typing"
+    ],
+    "error": null,
+    "platform": "macOS AppKit, actual packaged game UI"
+  },
+  "media_preparation_macos": {
+    "audio": "production decoder and sample-paced silent mixer",
+    "checks": [
+      "fresh client cache for a different host arena",
+      "music and opening effects decoded before play",
+      "preparation preserves menu music",
+      "no media loads at prepared match startup",
+      "unused music preloads are released"
+    ],
+    "cold": {
+      "arena_ms": 0.8416250000000001,
+      "effects_ms": 0.40175,
+      "music_ms": 39.041958,
+      "players_ms": 0.013333,
+      "total_ms": 40.298666000000004
+    },
+    "passed": true,
+    "platform": "macos",
+    "preparation_ms": 39.082959,
+    "prepared_start": {
+      "arena_ms": 0.011333,
+      "effects_ms": 0.030750000000000003,
+      "music_ms": 0.010334,
+      "players_ms": 0.019208,
+      "total_ms": 0.071625
+    },
+    "warm": {
+      "arena_ms": 0.010208,
+      "effects_ms": 0.00925,
+      "music_ms": 0.010332999999999998,
+      "players_ms": 0.0125,
+      "total_ms": 0.042291
+    }
+  },
+  "relay_live": {
+    "passed": true,
+    "version": "0.3.1",
+    "protocol": 4,
+    "environment": "External TCP/TLS/WebSocket connection to deployed relay",
+    "port": 443,
+    "frames": 10,
+    "input_and_frame_round_trip_ms": {
+      "median": 70.91779203619808,
+      "p95": 149.66849994380027
+    },
+    "checks": [
+      "TLS certificate pin",
+      "invalid pin rejected",
+      "invalid credentials rejected",
+      "authenticated directory",
+      "new hosts appear without invites",
+      "joining discovered room",
+      "client inputs reach host",
+      "ordered host frames reach client",
+      "two isolated rooms",
+      "playing status and late-join rejection",
+      "host departure",
+      "temporary rooms removed"
+    ],
+    "limitations": [
+      "Protocol smoke test; graphical Mac/Linux gameplay is verified separately."
+    ]
+  },
+  "relay_deployment": {
+    "version": "0.3.1",
+    "protocol": 4,
+    "source": {
+      "commit": "fc1c2bf03b344ff06cac01e4d306b0ed0e694fc2",
+      "dirty": true,
+      "sha256": "f3fd2ef7c0dff8164ebf5f6c16de7bcfb3ed6ca91aef07282d67dd695d368d11"
+    },
+    "binary_sha256": "bb6fd08c12183d9492d69c146de00af7e892478e3672bf1f12241ccd7641b0de",
+    "pid": 405806,
+    "service_active": true,
+    "existing_link_unchanged": true,
+    "rustc": "rustc 1.93.1 (01f6ddf75 2026-02-11) (built from a source tarball)"
+  },
+  "installed_mac_binary_sha256": "222433794bbe6409f463d4603ff21e51dbf50faed0a6153ef47369c6bbbc0c4f",
+  "linux_native_appimage_verified": true,
+  "artifacts": {
+    "atomic-bomberman-0.3.1-macos-arm64.zip": "46723c1670a81179eb2e9d87d50723741dae129be1ee0f19786bfba39cd8b17f",
+    "atomic-bomberman-0.3.1-linux-x86_64.AppImage": "f2c698ba776427dff05e901ccbeb17c2d5af7010b1152f9603e2bcc3708ae303",
+    "atomic-bomberman-0.3.1-linux-x86_64.tar.gz": "e89944204094f82b12ce2f46e66ca2714fc03f48cf7d6248a46c1cd75bd66735"
+  },
+  "provenance_note": "After packaging, only the fullscreen verifier was corrected to accept GNOME-selected first windowed dimensions. Packaged game source is unchanged."
+}

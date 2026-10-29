@@ -2,7 +2,7 @@ use crate::{
     catalog::{game_config, COLOR_NAMES},
     cli::Cli,
     controls::{fullscreen_shortcut, key_named, Controllers, ACTIONS, PAD_BUTTONS},
-    media::Media,
+    media::{Media, MUSIC},
     presentation::player_sprite,
     settings::{Device, Settings},
 };
@@ -21,10 +21,6 @@ const LIGHT: Color = Color::new(0.91, 0.94, 1., 1.);
 const MUTED: Color = Color::new(0.62, 0.69, 0.78, 1.);
 const BOARD_X: f32 = 20.;
 const BOARD_Y: f32 = 60.; // Native DAT_004648a8, first cell's top edge.
-const MUSIC: [&str; 11] = [
-    "GRNACRES", "GENERIC", "HOCKEY", "PYRAMID", "MINESHFT", "BATTLE", "GIEGER", "HAUNTED", "OCEAN",
-    "SWAMP", "SEWER",
-];
 const PLAYER_COLORS: [Color; 10] = [
     WHITE,
     Color::new(0.4, 0.4, 0.4, 1.),
@@ -53,6 +49,7 @@ enum Screen {
     Online,
     Lan,
     NetworkLobby,
+    NetworkStarting,
     NetworkDevices,
     NetworkColors,
     NetworkRules,
@@ -287,6 +284,8 @@ impl App {
                     "lan": self.network_ui.lan_probe(),
                     "network": self.network.as_ref().map(|n| serde_json::json!({
                         "id": n.id, "host": n.host, "room": n.room,
+                        "battle_media_ready": n.lobby.as_ref().is_some_and(|lobby| self.media.battle_prepared(lobby.config.arena.index())),
+                        "starting": n.is_starting(),
                         "lobby": n.lobby, "actions": network_ui::lobby_actions(n.host).iter().map(|action| format!("{action:?}")).collect::<Vec<_>>(), "tick": n.replay.as_ref().map(|r| r.tick),
                     })),
                 });
@@ -400,6 +399,7 @@ impl App {
             Screen::Online => self.update_online(),
             Screen::Lan => self.update_lan(),
             Screen::NetworkLobby => self.update_network_lobby(),
+            Screen::NetworkStarting => self.update_network_starting(),
             Screen::NetworkDevices => self.update_network_devices(),
             Screen::NetworkColors => self.update_network_colors(),
             Screen::NetworkRules => self.update_network_rules(),
@@ -812,6 +812,7 @@ impl App {
             Screen::Online => self.draw_online(),
             Screen::Lan => self.draw_lan(),
             Screen::NetworkLobby => self.draw_network_lobby(),
+            Screen::NetworkStarting => self.draw_network_starting(),
             Screen::NetworkDevices => self.draw_network_devices(),
             Screen::NetworkColors => self.draw_network_colors(),
             Screen::NetworkRules => self.draw_network_rules(),

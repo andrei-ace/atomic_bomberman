@@ -14,14 +14,14 @@ Playing requires no Rust, Homebrew, Python, Windows, or emulator.
 ## Download and install
 
 1. Open [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases)
-   and download `atomic-bomberman-0.3.0-macos-arm64.zip` and the matching
+   and download `atomic-bomberman-0.3.1-macos-arm64.zip` and the matching
    `.zip.sha256` file. Use the Mac ZIP asset; GitHub's automatic **Source code**
    archives contain source, rather than a built application.
 2. In Terminal, change to the download directory and verify the ZIP:
 
    ```bash
    cd ~/Downloads
-   shasum -a 256 -c atomic-bomberman-0.3.0-macos-arm64.zip.sha256
+   shasum -a 256 -c atomic-bomberman-0.3.1-macos-arm64.zip.sha256
    ```
 
    The result should be `OK`. Download the files again if the checksum fails.

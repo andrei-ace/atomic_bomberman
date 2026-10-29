@@ -32,7 +32,7 @@ Choose the built Mac ZIP asset; GitHub's **Source code** downloads require compi
 
    ```bash
    cd ~/Downloads
-   shasum -a 256 -c atomic-bomberman-0.3.0-macos-arm64.zip.sha256
+   shasum -a 256 -c atomic-bomberman-0.3.1-macos-arm64.zip.sha256
    ```
 
 2. Extract the ZIP and move **Atomic Bomberman.app** into **Applications**.
@@ -212,9 +212,9 @@ Download the versioned Linux x86-64 AppImage and matching checksum. It bundles a
 native first-launch importer, archive helper, desktop libraries and diagnostics:
 
 ```sh
-sha256sum -c atomic-bomberman-0.3.0-linux-x86_64.AppImage.sha256
-chmod +x atomic-bomberman-0.3.0-linux-x86_64.AppImage
-./atomic-bomberman-0.3.0-linux-x86_64.AppImage
+sha256sum -c atomic-bomberman-0.3.1-linux-x86_64.AppImage.sha256
+chmod +x atomic-bomberman-0.3.1-linux-x86_64.AppImage
+./atomic-bomberman-0.3.1-linux-x86_64.AppImage
 # The ordinary command automatically extracts and runs without FUSE.
 ```
 

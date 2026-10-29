@@ -196,6 +196,7 @@ def build(clean, emulated_runtime=False):
         shutil.copytree('/usr/share/common-licenses', docs / 'licenses/common', symlinks=False)
         info['libraries'] = bundle_libraries(app)
         info['dependencies'] = dependency_notices(app, info['target'], docs / 'licenses/THIRD-PARTY-NOTICES.txt')
+        copy(ROOT / 'vendor/miniquad/NOTICE.md', docs / 'licenses/miniquad-NOTICE.md')
         info['appimage_runtime'] = {'sha256': RUNTIME_SHA, 'commit': RUNTIME_COMMIT, 'url': RUNTIME_URL,
                                    'bootstrap_unmarked_sha256': sha256(bootstrap), 'bootstrap_bytes': bootstrap.stat().st_size,
                                    'launch_mode': 'automatic extract-and-run',

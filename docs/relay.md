@@ -1,4 +1,4 @@
-# Native private relay — 0.3.0
+# Native private relay — 0.3.1
 
 The native ARM64 package targets Ubuntu 26 on the existing CAX11 and works with
 glibc 2.39 or newer. No Docker, domain, certificate authority, database or original
@@ -15,7 +15,7 @@ Copy the ARM64 package and its checksum to the server. Check the checksum before
 extracting. Run the following from its extracted directory:
 
 ```sh
-sha256sum -c atomic-bomberman-0.3.0-relay-linux-arm64.tar.gz.sha256
+sha256sum -c atomic-bomberman-0.3.1-relay-linux-arm64.tar.gz.sha256
 sudo useradd --system --home-dir /var/lib/bomberman-relay \
   --shell /usr/sbin/nologin bomberman-relay
 sudo install -d -m755 /usr/local/lib/bomberman-relay

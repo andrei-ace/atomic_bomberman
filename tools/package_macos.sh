@@ -43,6 +43,7 @@ install -m644 build/AtomicBomberman.icns LICENSE "$app/Contents/Resources/"
 install -m644 docs/INSTALL-macos.md docs/macos-handoff.md docs/asset-formats.md docs/behavior-ledger.md docs/online-play.md docs/relay.md "$app/Contents/Resources/docs/"
 install -m644 docs/INSTALL-macos.md "$stage/payload/README.txt"
 install -m644 vendor/quad-snd/NOTICE.md vendor/quad-snd/LICENSE-APACHE "$app/Contents/Resources/licenses/"
+install -m644 vendor/miniquad/NOTICE.md "$app/Contents/Resources/licenses/miniquad-NOTICE.md"
 cat > "$app/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

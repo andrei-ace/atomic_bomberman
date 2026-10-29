@@ -190,7 +190,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "bomberman-assets",
@@ -208,7 +208,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-assets"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "png",
@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-core"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -227,7 +227,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-net"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "base64",
@@ -247,7 +247,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-relay"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "axum",
@@ -1019,8 +1019,6 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 [[package]]
 name = "miniquad"
 version = "0.4.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcbaea978d741f3b60ced666b06a2a1e4a2bc81cb8b9dd29f4a40965e1f59e65"
 dependencies = [
  "libc",
  "ndk-sys",

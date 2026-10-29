@@ -1019,6 +1019,29 @@ impl App {
             self.refresh_lan();
         }
     }
+    pub(super) fn update_network_starting(&mut self) {
+        if self.back() {
+            self.leave_network();
+        }
+    }
+    pub(super) fn draw_network_starting(&self) {
+        self.draw_battle();
+        draw_rectangle(90., 175., 460., 125., Color::new(0.02, 0.04, 0.1, 0.96));
+        self.media.center_text("GET READY", 194., 24., GOLD);
+        self.media.center_text(
+            "Waiting for everyone to finish loading...",
+            237.,
+            13.,
+            LIGHT,
+        );
+        self.media.center_text(
+            "The countdown starts together automatically.",
+            266.,
+            12.,
+            MUTED,
+        );
+        self.footer("Escape: leave game");
+    }
     pub(super) async fn update_network_session(&mut self, elapsed_ms: u32) -> Result<()> {
         let network = self.network.as_mut().expect("active network");
         // Help suspends local input while the authoritative session continues.
@@ -1049,7 +1072,15 @@ impl App {
             network.saved = true;
         }
         let warning = network.warning.take();
+        if let Some(lobby) = &network.lobby {
+            // The host's arena can differ from this computer's saved arena.
+            // Prepare it and its audio on lobby updates, before Start arrives.
+            self.media
+                .prepare_battle(lobby.config.arena.index())
+                .await?;
+        }
         let target = if let Some(replay) = &network.replay {
+            let stage = replay.stage;
             self.simulation = Some(replay.simulation.clone());
             self.paused = replay.simulation.paused;
             let arena = replay.simulation.config.arena.index();
@@ -1061,9 +1092,19 @@ impl App {
             self.media
                 .ensure_players_with_colors(&replay.simulation.players, &colors)
                 .await?;
-            match replay.stage {
-                Stage::Battle => Screen::Battle,
-                Stage::Results => Screen::Results,
+            if let Err(error) = network.prepared((get_time() * 1000.) as u64) {
+                self.leave_network();
+                self.notify(error.to_string());
+                self.media.music("MENU").await;
+                return Ok(());
+            }
+            if network.is_starting() {
+                Screen::NetworkStarting
+            } else {
+                match stage {
+                    Stage::Battle => Screen::Battle,
+                    Stage::Results => Screen::Results,
+                }
             }
         } else {
             Screen::NetworkLobby

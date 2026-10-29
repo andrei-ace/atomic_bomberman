@@ -99,6 +99,8 @@ fn run() -> Result<()> {
             started.elapsed().as_millis() as u64,
             vec![PlayerInput::default()],
         )?;
+        // This fixture has no renderer or media to prepare.
+        session.prepared(started.elapsed().as_millis() as u64)?;
         if host && session.id != 0 && !ready {
             if let Some(parent) = report.parent() {
                 std::fs::create_dir_all(parent)?;

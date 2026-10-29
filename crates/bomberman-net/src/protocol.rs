@@ -4,7 +4,7 @@ use std::{collections::BTreeSet, fmt};
 
 pub type PeerId = u32;
 pub const HOST: PeerId = 1;
-pub const PROTOCOL_VERSION: u32 = 3;
+pub const PROTOCOL_VERSION: u32 = 4;
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const PORT: u16 = 1997;
 pub const STEP_MS: u32 = 20;
@@ -188,9 +188,16 @@ pub enum GameMessage {
     },
     Lobby(Box<Lobby>),
     Start {
+        generation: u64,
         simulation: Box<Simulation>,
         owners: Vec<Option<PeerId>>,
         colors: [u8; MAX_PLAYERS],
+    },
+    Prepared {
+        generation: u64,
+    },
+    Begin {
+        generation: u64,
     },
     Input {
         sequence: u64,
@@ -208,7 +215,11 @@ impl GameMessage {
     pub fn host_only(&self) -> bool {
         matches!(
             self,
-            Self::Lobby(_) | Self::Start { .. } | Self::Frame(_) | Self::Error(_)
+            Self::Lobby(_)
+                | Self::Start { .. }
+                | Self::Begin { .. }
+                | Self::Frame(_)
+                | Self::Error(_)
         )
     }
 }

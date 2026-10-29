@@ -4,6 +4,7 @@ import argparse
 import ctypes as C
 import json
 import os
+import signal
 from pathlib import Path
 import socket
 import subprocess
@@ -69,6 +70,7 @@ def main():
     x.XGetWindowAttributes.argtypes = [pointer,window_type,C.POINTER(WindowAttributes)]
 
     probes = {}
+    player_processes = {}
     active_probe = [None]
     def focus(window):
         active_probe[0] = probes.get(window)
@@ -153,7 +155,7 @@ def main():
             while time.monotonic()<deadline:
                 candidates=windows()-before
                 if candidates:
-                    window=candidates.pop(); probes[window]=probe; focus(window); time.sleep(2); return window,directory,probe
+                    window=candidates.pop(); probes[window]=probe; player_processes[window]=process; focus(window); time.sleep(2); return window,directory,probe
                 assert process.poll() is None
                 time.sleep(.1)
             raise AssertionError('game window unavailable: '+(directory/'game.log').read_text()[-2000:])
@@ -276,8 +278,30 @@ def main():
             assert lobby['config']['players'][0]['team'] == 1
             assert lobby['config']['network_play'] and not lobby['config']['gold_bomberman']
             assert (settings_file.read_bytes() if settings_file.exists() else None) == saved_settings
-            lobby_action(host, 'Start'); time.sleep(2)
-            snapshot(friend,'Battle'); snapshot(host,'Battle')
+            assert snapshot(host,'NetworkLobby')['network']['battle_media_ready']
+            assert snapshot(friend,'NetworkLobby')['network']['battle_media_ready']
+            # Suspend the actual client renderer, as if cold loading takes time.
+            # The graphics supervisor is the parent; pause its game child only.
+            parent_pid=player_processes[friend[0]].pid
+            child_ids=Path(f'/proc/{parent_pid}/task/{parent_pid}/children').read_text().split()
+            assert len(child_ids)==1, 'expected one graphics child'
+            client_pid=int(child_ids[0]); os.kill(client_pid,signal.SIGSTOP)
+            try:
+                lobby_action(host,'Start'); time.sleep(1)
+                waiting=snapshot(host,'NetworkStarting')
+                assert waiting['network']['starting'] and waiting['network']['tick']==0
+                held=waiting['simulation']
+                time.sleep(1)
+                waiting=snapshot(host,'NetworkStarting')
+                assert waiting['network']['tick']==0 and waiting['simulation']==held
+            finally:
+                os.kill(client_pid,signal.SIGCONT)
+            deadline=time.monotonic()+30
+            while time.monotonic()<deadline:
+                started_host=snapshot(host); started_friend=snapshot(friend)
+                if started_host['screen']==started_friend['screen']=='Battle': break
+                time.sleep(.2)
+            assert started_host['screen']==started_friend['screen']=='Battle', 'shared start did not release both renderers'
             press('p'); time.sleep(.4)
             paused_host=snapshot(host,'Battle'); paused_friend=snapshot(friend,'Battle')
             assert paused_host['paused'] and paused_friend['paused']
@@ -310,6 +334,7 @@ def main():
                               'start after controls without added Ready toggle','personal colors for both local players and host',
                               'ten unique colors synchronized to both computers','session settings preserve saved local settings',
                               'original network flags disable Gold roulette','actual two-window battle',
+                              'announced arena media prepared in both lobbies','slow client holds host countdown at tick zero','all renderers enter the shared countdown automatically',
                               'shared pause and identical serialized simulation','host departure ends session',
                               'saved server reuse','former client hosts without new invitation','credentials absent from logs'],
                     'limitations':['No physical controller tested.','macOS Cmd-V and Linux/macOS WAN play require Mac hardware.']}
