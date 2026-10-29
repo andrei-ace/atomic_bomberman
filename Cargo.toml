@@ -44,3 +44,5 @@ strip = "debuginfo"
 # Retain test assertions and overflow checks while optimizing replay work.
 [profile.test]
 opt-level = 1
+debug-assertions = true
+overflow-checks = true
