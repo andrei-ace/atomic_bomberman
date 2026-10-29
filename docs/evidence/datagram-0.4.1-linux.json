@@ -1,0 +1,776 @@
+{
+  "passed": true,
+  "environment": "Linux x86_64",
+  "responsiveness_target_met": true,
+  "cases": [
+    {
+      "passed": true,
+      "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+      "host_platform": "linux",
+      "client_platform": "linux",
+      "canonical_state_hash": "17e787d863bc4ab95f4a1abd8ed07de712fa01899f09dce88b431043d520c43e",
+      "host_tick": 300,
+      "client_tick": 300,
+      "observed_gameplay_rtt_ms": [
+        2,
+        5,
+        2
+      ],
+      "sample_to_visible_ms": {
+        "median": 16.780526000000002,
+        "p95": 33.524835,
+        "max": 33.524835
+      },
+      "responsiveness_target_ms": 40,
+      "responsiveness_target_met": true,
+      "visible_before_confirmation_samples": 9,
+      "movement_continuity": {
+        "max_backward_step_pixels": 0.9,
+        "total_backward_correction_pixels": 19.58,
+        "max_last_movement_after_release_ms": 144.107802,
+        "settled_samples": 10,
+        "observation_window_ms": 400,
+        "backward_step_limit_pixels": 8
+      },
+      "samples": [
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 10,
+          "direction": "Right",
+          "last_movement_after_release_ms": 10.243801999999995,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 33.508224000000006,
+          "sample_to_visible_ms": 16.785621,
+          "settled_after_release_ms": 10.243801999999995,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 1.98,
+          "canonical_tick": 31,
+          "direction": "Left",
+          "last_movement_after_release_ms": 144.107802,
+          "max_backward_step_pixels": 0.46,
+          "sample_to_confirmation_ms": 33.523593,
+          "sample_to_visible_ms": 16.791332,
+          "settled_after_release_ms": 144.107802,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 1.96,
+          "canonical_tick": 52,
+          "direction": "Right",
+          "last_movement_after_release_ms": 127.334843,
+          "max_backward_step_pixels": 0.46,
+          "sample_to_confirmation_ms": 33.498536,
+          "sample_to_visible_ms": 16.7743,
+          "settled_after_release_ms": 127.334843,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 3.65,
+          "canonical_tick": 73,
+          "direction": "Left",
+          "last_movement_after_release_ms": 127.35089300000001,
+          "max_backward_step_pixels": 0.85,
+          "sample_to_confirmation_ms": 50.252686999999995,
+          "sample_to_visible_ms": 16.775431,
+          "settled_after_release_ms": 127.35089300000001,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 3.0,
+          "canonical_tick": 94,
+          "direction": "Right",
+          "last_movement_after_release_ms": 127.383916,
+          "max_backward_step_pixels": 0.75,
+          "sample_to_confirmation_ms": 50.260873,
+          "sample_to_visible_ms": 16.792193,
+          "settled_after_release_ms": 127.383916,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 1.8699999999999999,
+          "canonical_tick": 115,
+          "direction": "Left",
+          "last_movement_after_release_ms": 127.378603,
+          "max_backward_step_pixels": 0.44,
+          "sample_to_confirmation_ms": 50.240895,
+          "sample_to_visible_ms": 33.524835,
+          "settled_after_release_ms": 127.378603,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 136,
+          "direction": "Right",
+          "last_movement_after_release_ms": 77.18703099999999,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 33.519134,
+          "sample_to_visible_ms": 16.785962,
+          "settled_after_release_ms": 77.18703099999999,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 3.9,
+          "canonical_tick": 157,
+          "direction": "Left",
+          "last_movement_after_release_ms": 127.284897,
+          "max_backward_step_pixels": 0.9,
+          "sample_to_confirmation_ms": 16.756025,
+          "sample_to_visible_ms": 16.756025,
+          "settled_after_release_ms": 127.284897,
+          "visible_before_confirmation": false
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 177,
+          "direction": "Right",
+          "last_movement_after_release_ms": 77.125534,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 33.480841999999996,
+          "sample_to_visible_ms": 16.759712,
+          "settled_after_release_ms": 77.125534,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 3.2199999999999998,
+          "canonical_tick": 198,
+          "direction": "Left",
+          "last_movement_after_release_ms": 127.411172,
+          "max_backward_step_pixels": 0.74,
+          "sample_to_confirmation_ms": 33.491361999999995,
+          "sample_to_visible_ms": 16.768459,
+          "settled_after_release_ms": 127.411172,
+          "visible_before_confirmation": true
+        }
+      ],
+      "environment": "Disposable TLS/QUIC relay, native loopback through opaque packet proxy",
+      "injected_gameplay_rtt_ms": 0,
+      "jitter_ms": 0,
+      "udp_loss_percent": 0,
+      "udp_packets_received": 1797,
+      "udp_packets_forwarded": 1797,
+      "udp_packets_dropped": 0
+    },
+    {
+      "passed": true,
+      "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+      "host_platform": "linux",
+      "client_platform": "linux",
+      "canonical_state_hash": "17e787d863bc4ab95f4a1abd8ed07de712fa01899f09dce88b431043d520c43e",
+      "host_tick": 300,
+      "client_tick": 300,
+      "observed_gameplay_rtt_ms": [
+        45,
+        43,
+        47,
+        44
+      ],
+      "sample_to_visible_ms": {
+        "median": 16.788475,
+        "p95": 33.520485,
+        "max": 33.520485
+      },
+      "responsiveness_target_ms": 40,
+      "responsiveness_target_met": true,
+      "visible_before_confirmation_samples": 10,
+      "movement_continuity": {
+        "max_backward_step_pixels": 0.9,
+        "total_backward_correction_pixels": 10.85,
+        "max_last_movement_after_release_ms": 160.87254800000002,
+        "settled_samples": 10,
+        "observation_window_ms": 400,
+        "backward_step_limit_pixels": 8
+      },
+      "samples": [
+        {
+          "backward_correction_pixels": 1.85,
+          "canonical_tick": 10,
+          "direction": "Right",
+          "last_movement_after_release_ms": 144.114833,
+          "max_backward_step_pixels": 0.9,
+          "sample_to_confirmation_ms": 83.73522799999999,
+          "sample_to_visible_ms": 33.520485,
+          "settled_after_release_ms": 144.114833,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 2.5,
+          "canonical_tick": 30,
+          "direction": "Left",
+          "last_movement_after_release_ms": 160.845077,
+          "max_backward_step_pixels": 0.9,
+          "sample_to_confirmation_ms": 66.97863199999999,
+          "sample_to_visible_ms": 16.777725,
+          "settled_after_release_ms": 160.845077,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 2.5,
+          "canonical_tick": 51,
+          "direction": "Right",
+          "last_movement_after_release_ms": 160.793932,
+          "max_backward_step_pixels": 0.9,
+          "sample_to_confirmation_ms": 83.69314999999999,
+          "sample_to_visible_ms": 16.777345,
+          "settled_after_release_ms": 160.793932,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 72,
+          "direction": "Left",
+          "last_movement_after_release_ms": 10.23395,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 50.23395,
+          "sample_to_visible_ms": 16.770612,
+          "settled_after_release_ms": 10.23395,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 93,
+          "direction": "Right",
+          "last_movement_after_release_ms": 10.236404,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 50.236404,
+          "sample_to_visible_ms": 16.785209,
+          "settled_after_release_ms": 10.236404,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 114,
+          "direction": "Left",
+          "last_movement_after_release_ms": 160.87254800000002,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 66.998369,
+          "sample_to_visible_ms": 16.801109,
+          "settled_after_release_ms": 160.87254800000002,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 135,
+          "direction": "Right",
+          "last_movement_after_release_ms": 10.263744000000003,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 67.00010200000001,
+          "sample_to_visible_ms": 16.791741,
+          "settled_after_release_ms": 10.263744000000003,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 4.0,
+          "canonical_tick": 156,
+          "direction": "Left",
+          "last_movement_after_release_ms": 110.649058,
+          "max_backward_step_pixels": 0.85,
+          "sample_to_confirmation_ms": 83.71587099999999,
+          "sample_to_visible_ms": 16.795689,
+          "settled_after_release_ms": 110.649058,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 177,
+          "direction": "Right",
+          "last_movement_after_release_ms": null,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 66.980225,
+          "sample_to_visible_ms": 16.791741,
+          "settled_after_release_ms": 0.0,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 198,
+          "direction": "Left",
+          "last_movement_after_release_ms": null,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 66.982939,
+          "sample_to_visible_ms": 16.76976,
+          "settled_after_release_ms": 0.0,
+          "visible_before_confirmation": true
+        }
+      ],
+      "environment": "Disposable TLS/QUIC relay, native loopback through opaque packet proxy",
+      "injected_gameplay_rtt_ms": 40,
+      "jitter_ms": 0,
+      "udp_loss_percent": 0,
+      "udp_packets_received": 1624,
+      "udp_packets_forwarded": 1624,
+      "udp_packets_dropped": 0
+    },
+    {
+      "passed": true,
+      "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+      "host_platform": "linux",
+      "client_platform": "linux",
+      "canonical_state_hash": "f8c502379acdf2326952c293574039593c31fda70433ee317836a01affccd64f",
+      "host_tick": 300,
+      "client_tick": 300,
+      "observed_gameplay_rtt_ms": [
+        87,
+        85,
+        83,
+        84,
+        86
+      ],
+      "sample_to_visible_ms": {
+        "median": 16.787962999999998,
+        "p95": 33.524469,
+        "max": 33.524469
+      },
+      "responsiveness_target_ms": 40,
+      "responsiveness_target_met": true,
+      "visible_before_confirmation_samples": 10,
+      "movement_continuity": {
+        "max_backward_step_pixels": 1.46,
+        "total_backward_correction_pixels": 11.4,
+        "max_last_movement_after_release_ms": 194.293562,
+        "settled_samples": 10,
+        "observation_window_ms": 400,
+        "backward_step_limit_pixels": 8
+      },
+      "samples": [
+        {
+          "backward_correction_pixels": 4.52,
+          "canonical_tick": 10,
+          "direction": "Right",
+          "last_movement_after_release_ms": 177.47189699999998,
+          "max_backward_step_pixels": 1.46,
+          "sample_to_confirmation_ms": 133.86842,
+          "sample_to_visible_ms": 16.766312,
+          "settled_after_release_ms": 177.47189699999998,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 2.8800000000000003,
+          "canonical_tick": 31,
+          "direction": "Left",
+          "last_movement_after_release_ms": 143.970831,
+          "max_backward_step_pixels": 0.68,
+          "sample_to_confirmation_ms": 133.792949,
+          "sample_to_visible_ms": 33.470358999999995,
+          "settled_after_release_ms": 143.970831,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 4.0,
+          "canonical_tick": 52,
+          "direction": "Right",
+          "last_movement_after_release_ms": 194.293562,
+          "max_backward_step_pixels": 0.85,
+          "sample_to_confirmation_ms": 133.87398000000002,
+          "sample_to_visible_ms": 33.488051999999996,
+          "settled_after_release_ms": 194.293562,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 73,
+          "direction": "Left",
+          "last_movement_after_release_ms": 10.288146999999995,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 133.920737,
+          "sample_to_visible_ms": 33.524469,
+          "settled_after_release_ms": 10.288146999999995,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 93,
+          "direction": "Right",
+          "last_movement_after_release_ms": 10.243282999999998,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 117.16161799999999,
+          "sample_to_visible_ms": 16.789576,
+          "settled_after_release_ms": 10.243282999999998,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 114,
+          "direction": "Left",
+          "last_movement_after_release_ms": 10.250416999999999,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 117.217713,
+          "sample_to_visible_ms": 16.770921,
+          "settled_after_release_ms": 10.250416999999999,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 135,
+          "direction": "Right",
+          "last_movement_after_release_ms": 10.248843,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 117.188037,
+          "sample_to_visible_ms": 16.78635,
+          "settled_after_release_ms": 10.248843,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 156,
+          "direction": "Left",
+          "last_movement_after_release_ms": 10.258571000000003,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 117.197444,
+          "sample_to_visible_ms": 16.790146999999997,
+          "settled_after_release_ms": 10.258571000000003,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 177,
+          "direction": "Right",
+          "last_movement_after_release_ms": 10.152031999999998,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 117.035961,
+          "sample_to_visible_ms": 16.746164,
+          "settled_after_release_ms": 10.152031999999998,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 198,
+          "direction": "Left",
+          "last_movement_after_release_ms": 10.257830000000006,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 117.19832600000001,
+          "sample_to_visible_ms": 16.767805,
+          "settled_after_release_ms": 10.257830000000006,
+          "visible_before_confirmation": true
+        }
+      ],
+      "environment": "Disposable TLS/QUIC relay, native loopback through opaque packet proxy",
+      "injected_gameplay_rtt_ms": 80,
+      "jitter_ms": 0,
+      "udp_loss_percent": 0,
+      "udp_packets_received": 1631,
+      "udp_packets_forwarded": 1629,
+      "udp_packets_dropped": 0
+    },
+    {
+      "passed": true,
+      "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+      "host_platform": "linux",
+      "client_platform": "linux",
+      "canonical_state_hash": "a4a691887fe52384f3aa8ad7af26e802add4f36306901bfdf78739c3d54b746f",
+      "host_tick": 300,
+      "client_tick": 300,
+      "observed_gameplay_rtt_ms": [
+        167,
+        163,
+        166,
+        164,
+        163
+      ],
+      "sample_to_visible_ms": {
+        "median": 16.782912500000002,
+        "p95": 33.517875000000004,
+        "max": 33.517875000000004
+      },
+      "responsiveness_target_ms": 40,
+      "responsiveness_target_met": true,
+      "visible_before_confirmation_samples": 10,
+      "movement_continuity": {
+        "max_backward_step_pixels": 1.58,
+        "total_backward_correction_pixels": 15.080000000000002,
+        "max_last_movement_after_release_ms": 277.97553,
+        "settled_samples": 10,
+        "observation_window_ms": 400,
+        "backward_step_limit_pixels": 8
+      },
+      "samples": [
+        {
+          "backward_correction_pixels": 7.750000000000001,
+          "canonical_tick": 10,
+          "direction": "Right",
+          "last_movement_after_release_ms": 261.110817,
+          "max_backward_step_pixels": 1.58,
+          "sample_to_confirmation_ms": 200.738681,
+          "sample_to_visible_ms": 16.782712,
+          "settled_after_release_ms": 261.110817,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 2.5300000000000002,
+          "canonical_tick": 31,
+          "direction": "Left",
+          "last_movement_after_release_ms": 277.968973,
+          "max_backward_step_pixels": 1.04,
+          "sample_to_confirmation_ms": 184.137891,
+          "sample_to_visible_ms": 16.757485,
+          "settled_after_release_ms": 277.968973,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 52,
+          "direction": "Right",
+          "last_movement_after_release_ms": 10.235636,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 184.097144,
+          "sample_to_visible_ms": 16.783113,
+          "settled_after_release_ms": 10.235636,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 73,
+          "direction": "Left",
+          "last_movement_after_release_ms": 277.93449400000003,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 184.093485,
+          "sample_to_visible_ms": 33.47783,
+          "settled_after_release_ms": 277.93449400000003,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 1.7000000000000002,
+          "canonical_tick": 93,
+          "direction": "Right",
+          "last_movement_after_release_ms": 277.954893,
+          "max_backward_step_pixels": 0.9,
+          "sample_to_confirmation_ms": 217.538836,
+          "sample_to_visible_ms": 33.490734,
+          "settled_after_release_ms": 277.954893,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 114,
+          "direction": "Left",
+          "last_movement_after_release_ms": 277.97553,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 200.840421,
+          "sample_to_visible_ms": 33.517875000000004,
+          "settled_after_release_ms": 277.97553,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 3.1,
+          "canonical_tick": 135,
+          "direction": "Right",
+          "last_movement_after_release_ms": 277.937659,
+          "max_backward_step_pixels": 1.05,
+          "sample_to_confirmation_ms": 200.796208,
+          "sample_to_visible_ms": 16.767093,
+          "settled_after_release_ms": 277.937659,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 156,
+          "direction": "Left",
+          "last_movement_after_release_ms": 10.252828999999998,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 184.124533,
+          "sample_to_visible_ms": 16.784926,
+          "settled_after_release_ms": 10.252828999999998,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 177,
+          "direction": "Right",
+          "last_movement_after_release_ms": 10.220596,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 184.033021,
+          "sample_to_visible_ms": 16.768545,
+          "settled_after_release_ms": 10.220596,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 198,
+          "direction": "Left",
+          "last_movement_after_release_ms": 277.87003000000004,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 184.022571,
+          "sample_to_visible_ms": 16.770749000000002,
+          "settled_after_release_ms": 277.87003000000004,
+          "visible_before_confirmation": true
+        }
+      ],
+      "environment": "Disposable TLS/QUIC relay, native loopback through opaque packet proxy",
+      "injected_gameplay_rtt_ms": 160,
+      "jitter_ms": 0,
+      "udp_loss_percent": 0,
+      "udp_packets_received": 1633,
+      "udp_packets_forwarded": 1629,
+      "udp_packets_dropped": 0
+    },
+    {
+      "passed": true,
+      "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+      "host_platform": "linux",
+      "client_platform": "linux",
+      "canonical_state_hash": "24db9934d14f0792c39c649b7815b28911b69a8636f1a6ae60171c58c15a38bc",
+      "host_tick": 300,
+      "client_tick": 300,
+      "observed_gameplay_rtt_ms": [
+        84,
+        74,
+        87,
+        91
+      ],
+      "sample_to_visible_ms": {
+        "median": 16.763329,
+        "p95": 33.522510999999994,
+        "max": 33.522510999999994
+      },
+      "responsiveness_target_ms": 40,
+      "responsiveness_target_met": true,
+      "visible_before_confirmation_samples": 10,
+      "movement_continuity": {
+        "max_backward_step_pixels": 1.8,
+        "total_backward_correction_pixels": 23.07,
+        "max_last_movement_after_release_ms": 244.30852699999997,
+        "settled_samples": 10,
+        "observation_window_ms": 400,
+        "backward_step_limit_pixels": 8
+      },
+      "samples": [
+        {
+          "backward_correction_pixels": 7.07,
+          "canonical_tick": 10,
+          "direction": "Right",
+          "last_movement_after_release_ms": 160.82163599999998,
+          "max_backward_step_pixels": 1.8,
+          "sample_to_confirmation_ms": 133.886177,
+          "sample_to_visible_ms": 16.732858,
+          "settled_after_release_ms": 160.82163599999998,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 8.0,
+          "canonical_tick": 30,
+          "direction": "Left",
+          "last_movement_after_release_ms": 160.834348,
+          "max_backward_step_pixels": 1.57,
+          "sample_to_confirmation_ms": null,
+          "sample_to_visible_ms": 33.518455,
+          "settled_after_release_ms": 160.834348,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 51,
+          "direction": "Right",
+          "last_movement_after_release_ms": 10.256832000000003,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 133.900142,
+          "sample_to_visible_ms": 33.522510999999994,
+          "settled_after_release_ms": 10.256832000000003,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 3.9999999999999996,
+          "canonical_tick": 72,
+          "direction": "Left",
+          "last_movement_after_release_ms": 194.310633,
+          "max_backward_step_pixels": 0.85,
+          "sample_to_confirmation_ms": 150.64391999999998,
+          "sample_to_visible_ms": 33.521189,
+          "settled_after_release_ms": 194.310633,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 93,
+          "direction": "Right",
+          "last_movement_after_release_ms": 10.193953999999998,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 100.401364,
+          "sample_to_visible_ms": 16.751603,
+          "settled_after_release_ms": 10.193953999999998,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 114,
+          "direction": "Left",
+          "last_movement_after_release_ms": 10.260528999999998,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 100.430187,
+          "sample_to_visible_ms": 16.788051,
+          "settled_after_release_ms": 10.260528999999998,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 135,
+          "direction": "Right",
+          "last_movement_after_release_ms": 244.30852699999997,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 100.36295100000001,
+          "sample_to_visible_ms": 16.756091,
+          "settled_after_release_ms": 244.30852699999997,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 155,
+          "direction": "Left",
+          "last_movement_after_release_ms": 10.236512999999995,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 133.912623,
+          "sample_to_visible_ms": 16.768724,
+          "settled_after_release_ms": 10.236512999999995,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 4.0,
+          "canonical_tick": 177,
+          "direction": "Right",
+          "last_movement_after_release_ms": 177.44269799999998,
+          "max_backward_step_pixels": 0.85,
+          "sample_to_confirmation_ms": 117.11634699999999,
+          "sample_to_visible_ms": 16.757934,
+          "settled_after_release_ms": 177.44269799999998,
+          "visible_before_confirmation": true
+        },
+        {
+          "backward_correction_pixels": 0.0,
+          "canonical_tick": 198,
+          "direction": "Left",
+          "last_movement_after_release_ms": 60.381204,
+          "max_backward_step_pixels": 0.0,
+          "sample_to_confirmation_ms": 100.381204,
+          "sample_to_visible_ms": 16.751963,
+          "settled_after_release_ms": 60.381204,
+          "visible_before_confirmation": true
+        }
+      ],
+      "environment": "Disposable TLS/QUIC relay, native loopback through opaque packet proxy",
+      "injected_gameplay_rtt_ms": 80,
+      "jitter_ms": 20,
+      "udp_loss_percent": 5,
+      "udp_packets_received": 1774,
+      "udp_packets_forwarded": 1673,
+      "udp_packets_dropped": 99
+    }
+  ],
+  "limitations": [
+    "Measures production predicted render_position sampled at60Hz, without an actual graphics window or physical input device.",
+    "Injected RTT is the configured four-leg gameplay path delay; observed application probe RTT includes endpoint scheduling.",
+    "Loopback impairment does not establish physical LAN or Linux/macOS hardware interoperability."
+  ],
+  "version": "0.4.1",
+  "protocol": 5,
+  "application_compatibility": "0.4.0",
+  "source_base_commit": "5f9702d85b8520ab9ca84cbfdb5115e6d54cbcf9",
+  "source_has_uncommitted_fixes": true,
+  "relay_sha256": "6eb5eb5c0dd3b7ae9d4f46d863514adb5f55e6669e6fedfa6353e08c4f104438",
+  "validation": {
+    "workspace_checks": "239 tests passed; cargo fmt and clippy passed",
+    "portable_replay_digest": "unchanged",
+    "coalesced_ack_regression": "8 predicted movement steps remain 8 after one host step acknowledges sample 8",
+    "correction_decay_ms": 80,
+    "limitations": "Headless presentation samples, not physical input/display latency; no WAN or cross-platform hardware measurement"
+  }
+}

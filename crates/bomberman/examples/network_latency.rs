@@ -25,7 +25,7 @@ use std::{
 
 const POLL: Duration = Duration::from_nanos(1_000_000_000 / 60);
 const SAMPLE_COUNT: usize = 10;
-const SAMPLE_PERIOD: Duration = Duration::from_millis(240);
+const SAMPLE_PERIOD: Duration = Duration::from_millis(400);
 const PULSE: Duration = Duration::from_millis(40);
 
 #[derive(Serialize)]
@@ -35,17 +35,38 @@ struct Sample {
     sample_to_visible_ms: Option<f64>,
     sample_to_confirmation_ms: Option<f64>,
     visible_before_confirmation: bool,
+    backward_correction_pixels: f64,
+    max_backward_step_pixels: f64,
+    last_movement_after_release_ms: Option<f64>,
+    settled_after_release_ms: Option<f64>,
 }
 
 struct Trial {
     started: Instant,
     display: Position,
     canonical: Position,
+    previous_display: Position,
     result: Sample,
 }
 impl Trial {
     fn observe(&mut self, display: Position, canonical: Position) {
         let elapsed = self.started.elapsed().as_secs_f64() * 1000.;
+        let signed_step = match self.result.direction {
+            Direction::Right => display.x - self.previous_display.x,
+            Direction::Left => self.previous_display.x - display.x,
+            _ => unreachable!(),
+        };
+        if signed_step < 0 {
+            let backward = f64::from(-signed_step) / 100.;
+            self.result.backward_correction_pixels += backward;
+            self.result.max_backward_step_pixels =
+                self.result.max_backward_step_pixels.max(backward);
+        }
+        if display != self.previous_display && self.started.elapsed() >= PULSE {
+            self.result.last_movement_after_release_ms =
+                Some(elapsed - PULSE.as_secs_f64() * 1000.);
+        }
+        self.previous_display = display;
         let changed = |position: Position, before: Position| match self.result.direction {
             Direction::Right => position.x > before.x,
             Direction::Left => position.x < before.x,
@@ -165,6 +186,7 @@ fn run() -> Result<()> {
                         started: iteration,
                         display: display.players[seat].presentation.render_position,
                         canonical: replay.simulation.players[seat].presentation.render_position,
+                        previous_display: display.players[seat].presentation.render_position,
                         result: Sample {
                             direction: if samples.len() % 2 == 0 {
                                 Direction::Right
@@ -175,6 +197,10 @@ fn run() -> Result<()> {
                             sample_to_visible_ms: None,
                             sample_to_confirmation_ms: None,
                             visible_before_confirmation: false,
+                            backward_correction_pixels: 0.,
+                            max_backward_step_pixels: 0.,
+                            last_movement_after_release_ms: None,
+                            settled_after_release_ms: None,
                         },
                     });
                 }
@@ -221,7 +247,7 @@ fn run() -> Result<()> {
             && session
                 .replay
                 .as_ref()
-                .is_some_and(|replay| replay.tick >= 150)
+                .is_some_and(|replay| replay.tick >= 250)
             && !paused
         {
             session.action(Action::Pause(true))?;
@@ -240,10 +266,20 @@ fn run() -> Result<()> {
                         current.result.sample_to_visible_ms.is_some(),
                         "Local movement did not become visible"
                     );
+                    let last_movement = current.result.last_movement_after_release_ms.unwrap_or(0.);
+                    // A full correction interval of quiet artwork distinguishes
+                    // settling from simply reaching the observation limit.
+                    if current.started.elapsed().as_secs_f64() * 1000.
+                        - PULSE.as_secs_f64() * 1000.
+                        - last_movement
+                        >= 80.
+                    {
+                        current.result.settled_after_release_ms = Some(last_movement);
+                    }
                     samples.push(trial.take().unwrap().result);
                 }
             }
-            if replay.tick >= 200 {
+            if replay.tick >= 300 {
                 ensure!(replay.simulation.paused, "Pause did not synchronize");
                 ensure!(
                     host || samples.len() == SAMPLE_COUNT,

@@ -1,10 +1,10 @@
-# Native private relay — 0.4.0
+# Native private relay — 0.4.1
 
 The native ARM64 package targets Ubuntu 26 on the existing CAX11 and works with
 glibc 2.39 or newer. No Docker, domain, certificate authority, database or original
 game assets are required. The service forwards bounded traffic between outbound
-clients; the player's computer hosts simulation. Version 0.4.0 uses protocol 5;
-upgrade the relay and all clients together.
+clients; the player's computer hosts simulation. Version 0.4.1 keeps protocol 5 and the 0.4.0 handshake identifier;
+existing 0.4.0 clients and relays remain compatible.
 
 The relay listens on the same port number for two transports: secure WebSockets
 over **TCP 443** for authentication, browsing, lobby, setup, and requested
@@ -21,7 +21,7 @@ Copy the ARM64 package and its checksum to the server. Check the checksum before
 extracting. Run the following from its extracted directory:
 
 ```sh
-sha256sum -c atomic-bomberman-0.4.0-relay-linux-arm64.tar.gz.sha256
+sha256sum -c atomic-bomberman-0.4.1-relay-linux-arm64.tar.gz.sha256
 sudo useradd --system --home-dir /var/lib/bomberman-relay \
   --shell /usr/sbin/nologin bomberman-relay
 sudo install -d -m755 /usr/local/lib/bomberman-relay
@@ -90,7 +90,7 @@ Verify each new package's checksum and provenance. Install a new binary to a
 separate temporary filename, atomically rename it over the installed executable,
 and restart the service. Keep the previous binary for rollback. Keep the private
 state directory. Existing saved client profiles continue to work with the same
-certificate and token. Protocol 5 requires matching 0.4.0 clients; old clients
+certificate and token. Protocol 5 accepts 0.4.0 and 0.4.1 clients; clients from older protocols
 receive a version error. Preserve `/var/lib/bomberman-relay/private` and do not
 run `init` again during an update.
 

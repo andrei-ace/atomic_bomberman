@@ -6,6 +6,9 @@ pub type PeerId = u32;
 pub const HOST: PeerId = 1;
 pub const PROTOCOL_VERSION: u32 = 5;
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
+/// Protocol 5's deterministic gameplay/handshake family. Presentation-only
+/// patch releases keep this identifier so existing clients and relays work.
+pub const COMPATIBLE_APP_VERSION: &str = "0.4.0";
 pub const PORT: u16 = 1997;
 pub const STEP_MS: u32 = 20;
 pub const MAX_PLAYERS: usize = 10;
@@ -31,7 +34,7 @@ impl Compatibility {
     pub fn new(assets: String) -> Self {
         Self {
             protocol: PROTOCOL_VERSION,
-            application: APP_VERSION.into(),
+            application: COMPATIBLE_APP_VERSION.into(),
             assets,
         }
     }

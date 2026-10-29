@@ -25,6 +25,7 @@ from urllib.parse import parse_qs, urlsplit, urlunsplit
 
 
 ROOT = Path(__file__).resolve().parents[1]
+MAX_BACKWARD_STEP_PIXELS = 8
 
 
 class ImpairmentProxy:
@@ -250,8 +251,9 @@ def run_pair(example, directory, link):
         assert len(samples) == 10 and all(s["sample_to_visible_ms"] is not None for s in samples)
         latency = sorted(s["sample_to_visible_ms"] for s in samples)
         p95 = latency[math.ceil(.95 * len(latency)) - 1]
+        max_backward_step = max(s["max_backward_step_pixels"] for s in samples)
         return {
-            "passed": True,
+            "passed": max_backward_step <= MAX_BACKWARD_STEP_PIXELS,
             "presentation": client_data["presentation"],
             "host_platform": host_data["platform"],
             "client_platform": client_data["platform"],
@@ -265,6 +267,16 @@ def run_pair(example, directory, link):
             "responsiveness_target_ms": 40,
             "responsiveness_target_met": p95 <= 40,
             "visible_before_confirmation_samples": sum(s["visible_before_confirmation"] for s in samples),
+            "movement_continuity": {
+                "max_backward_step_pixels": max_backward_step,
+                "backward_step_limit_pixels": MAX_BACKWARD_STEP_PIXELS,
+                "total_backward_correction_pixels": sum(s["backward_correction_pixels"] for s in samples),
+                "max_last_movement_after_release_ms": max(
+                    (s["last_movement_after_release_ms"] or 0) for s in samples
+                ),
+                "settled_samples": sum(s["settled_after_release_ms"] is not None for s in samples),
+                "observation_window_ms": 400,
+            },
             "samples": samples,
         }
     finally:

@@ -5,21 +5,55 @@ use crate::{
     session::{button_bits, Replay},
     *,
 };
-use bomberman_core::{ControlSoundKind, GameEvent, PlayerInput};
+use bomberman_core::{ControlSoundKind, GameEvent, Player, PlayerInput, Position, Simulation};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 const MAX_PREDICT_TICKS: usize = 500 / STEP_MS as usize;
 const MAX_INPUT_HISTORY: usize = 256;
+const CORRECTION_MS: u64 = 80;
+const MAX_PREDICTION_MS: u64 = MAX_PREDICT_TICKS as u64 * STEP_MS as u64;
 
 #[derive(Clone)]
 struct LocalSample {
     sequence: u64,
+    captured_ms: u64,
     inputs: Vec<PlayerInput>,
 }
 #[derive(Clone, Copy)]
 struct LocalEdge {
     edge: ButtonEdge,
     sequence: u64,
+}
+
+#[derive(Clone, Copy, Default)]
+struct Correction {
+    offset: Position,
+    started_ms: u64,
+}
+impl Correction {
+    fn remaining(self, now_ms: u64) -> Position {
+        let remaining = CORRECTION_MS.saturating_sub(now_ms.saturating_sub(self.started_ms));
+        Position {
+            x: (i64::from(self.offset.x) * remaining as i64 / CORRECTION_MS as i64) as i32,
+            y: (i64::from(self.offset.y) * remaining as i64 / CORRECTION_MS as i64) as i32,
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct MotionBoundary {
+    alive: bool,
+    anchor: Position,
+    transit: bool,
+}
+impl MotionBoundary {
+    fn of(player: &Player) -> Self {
+        Self {
+            alive: player.alive,
+            anchor: player.original_anchor,
+            transit: player.airborne_ms != 0 || matches!(player.presentation.special, 5..=7),
+        }
+    }
 }
 
 pub struct ClientPrediction {
@@ -35,6 +69,16 @@ pub struct ClientPrediction {
     dirty: bool,
     baseline_tick: u64,
     baseline_paused: bool,
+    baseline_round: u32,
+    boundaries: Vec<MotionBoundary>,
+    corrections: Vec<Correction>,
+    now_ms: u64,
+    clock_ms: u64,
+    progress_tick: u64,
+    progress_ms: u64,
+    lead_eighths: Option<u64>,
+    pending_capture_ms: Option<u64>,
+    phase_error_ms: i64,
     // Kind is part of identity: an action rejected by one simulation must not
     // shift the ordinal of another control's sound on the same button edge.
     heard: BTreeSet<(usize, u64, u8, usize)>,
@@ -42,6 +86,9 @@ pub struct ClientPrediction {
 }
 impl ClientPrediction {
     pub fn new(owned_seats: Vec<usize>, canonical: &Replay) -> Self {
+        Self::new_at(owned_seats, canonical, 0)
+    }
+    pub fn new_at(owned_seats: Vec<usize>, canonical: &Replay, now_ms: u64) -> Self {
         let n = owned_seats.len();
         Self {
             owned: owned_seats,
@@ -56,6 +103,21 @@ impl ClientPrediction {
             dirty: true,
             baseline_tick: canonical.tick,
             baseline_paused: canonical.simulation.paused,
+            baseline_round: canonical.simulation.round,
+            boundaries: canonical
+                .simulation
+                .players
+                .iter()
+                .map(MotionBoundary::of)
+                .collect(),
+            corrections: vec![Correction::default(); n],
+            now_ms,
+            clock_ms: canonical.tick.saturating_mul(u64::from(STEP_MS)),
+            progress_tick: canonical.tick,
+            progress_ms: now_ms,
+            lead_eighths: None,
+            pending_capture_ms: None,
+            phase_error_ms: 0,
             heard: BTreeSet::new(),
             feedback: vec![],
         }
@@ -68,6 +130,39 @@ impl ClientPrediction {
     }
     pub fn replay(&self) -> &Replay {
         &self.predicted
+    }
+    /// Only artwork receives correction offsets. Physics, decisions and hashes
+    /// always read the unmodified canonical or speculative replay.
+    pub fn display(&self, now_ms: u64) -> Simulation {
+        let mut display = self.predicted.simulation.clone();
+        for (local, seat) in self.owned.iter().enumerate() {
+            let offset = self.corrections[local].remaining(now_ms);
+            if offset == Position::default() {
+                continue;
+            }
+            let target = display.players[*seat].presentation.render_position;
+            let from = Position {
+                x: target.x + offset.x,
+                y: target.y + offset.y,
+            };
+            if blend_path(&display, *seat, from, target) {
+                display.players[*seat].presentation.render_position = from;
+            }
+        }
+        display
+    }
+    pub fn is_fresh(&self, now_ms: u64) -> bool {
+        now_ms.saturating_sub(self.progress_ms) < MAX_PREDICTION_MS
+    }
+    /// Existing gameplay probes can seed the clock before the first input ACK.
+    pub fn seed_rtt(&mut self, rtt_ms: u64) {
+        if self.lead_eighths.is_none() {
+            let lead = rtt_ms.clamp(u64::from(STEP_MS), MAX_PREDICTION_MS);
+            self.lead_eighths = Some(lead * 8);
+            if self.sequence == 0 {
+                self.clock_ms = self.clock_ms.saturating_add(lead);
+            }
+        }
     }
     pub fn take_feedback(&mut self) -> Vec<GameEvent> {
         std::mem::take(&mut self.feedback)
@@ -138,14 +233,31 @@ impl ClientPrediction {
         }
         Ok(())
     }
-    /// One logical local command per20ms. Background retransmission does not
-    /// mint fresh sample IDs when the renderer/input source has stalled.
+    /// Logical-time adapter for deterministic fixtures. Production supplies a
+    /// monotonic capture timestamp and gates new samples with is_fresh.
     pub fn capture(&mut self, inputs: &[PlayerInput]) -> Result<(), NetError> {
+        self.capture_at(inputs, self.now_ms.saturating_add(u64::from(STEP_MS)))
+    }
+    pub fn capture_at(&mut self, inputs: &[PlayerInput], now_ms: u64) -> Result<(), NetError> {
         self.observe(inputs)?;
+        self.now_ms = self.now_ms.max(now_ms);
         self.sequence = self.sequence.checked_add(1).ok_or(NetError::Protocol)?;
+        // ACK sample numbers identify the latest selected state, not elapsed
+        // simulation time. Never collapse this clock when an ACK skips IDs.
+        let slew = self.phase_error_ms.clamp(-2, 2);
+        self.phase_error_ms -= slew;
+        self.clock_ms = self
+            .clock_ms
+            .saturating_add((i64::from(STEP_MS) + slew) as u64)
+            .min(
+                self.progress_tick
+                    .saturating_mul(u64::from(STEP_MS))
+                    .saturating_add(MAX_PREDICTION_MS),
+            );
         self.dirty = true;
         self.samples.push_back(LocalSample {
             sequence: self.sequence,
+            captured_ms: now_ms,
             inputs: self.observed.clone(),
         });
         if self.samples.len() > MAX_INPUT_HISTORY {
@@ -174,8 +286,37 @@ impl ClientPrediction {
         }
     }
     pub fn acknowledge(&mut self, canonical: &Replay, frame: &InputFrame) -> Result<(), NetError> {
-        self.confirmed_inputs = frame.inputs.clone();
-        self.reset_confirmed(canonical, &frame.acknowledgments)
+        self.record_acknowledgment(canonical, frame, self.now_ms)?;
+        self.refresh(canonical)
+    }
+    /// Record each contiguous frame for event identity, then refresh once after
+    /// draining the receive batch, before capturing more local movement.
+    pub fn record_acknowledgment(
+        &mut self,
+        canonical: &Replay,
+        frame: &InputFrame,
+        now_ms: u64,
+    ) -> Result<(), NetError> {
+        self.validate_acknowledgments(canonical, &frame.acknowledgments)?;
+        if frame.tick != canonical.tick || frame.inputs.len() != canonical.inputs.len() {
+            return Err(NetError::Protocol);
+        }
+        let sample = self
+            .owned
+            .iter()
+            .filter_map(|seat| {
+                let ack = frame.acknowledgments[*seat];
+                (ack.sample > self.acknowledgments[*seat].sample).then_some(ack.sample)
+            })
+            .min();
+        if let Some(sample) = sample.and_then(|id| self.samples.iter().find(|s| s.sequence == id)) {
+            self.pending_capture_ms = Some(sample.captured_ms);
+        }
+        self.commit_acknowledgments(&frame.acknowledgments);
+        self.confirmed_inputs.clone_from(&frame.inputs);
+        self.note_progress(canonical, now_ms);
+        self.dirty = true;
+        Ok(())
     }
     /// Checkpoint recovery keeps local edge numbering and any commands not yet
     /// consumed by the authoritative state.
@@ -184,9 +325,37 @@ impl ClientPrediction {
         canonical: &Replay,
         acknowledgments: &[InputAck],
     ) -> Result<(), NetError> {
-        self.confirmed_inputs = canonical.inputs.clone();
+        self.reset_confirmed_at(canonical, acknowledgments, self.now_ms)
+    }
+    pub fn reset_confirmed_at(
+        &mut self,
+        canonical: &Replay,
+        acknowledgments: &[InputAck],
+        now_ms: u64,
+    ) -> Result<(), NetError> {
+        self.validate_acknowledgments(canonical, acknowledgments)?;
+        self.commit_acknowledgments(acknowledgments);
+        self.confirmed_inputs.clone_from(&canonical.inputs);
+        self.clock_ms = canonical.tick.saturating_mul(u64::from(STEP_MS));
+        self.phase_error_ms = 0;
+        self.pending_capture_ms = None;
+        self.corrections.fill(Correction::default());
+        self.predicted = canonical.clone();
+        self.note_progress(canonical, now_ms);
         self.dirty = true;
+        self.refresh_at(canonical, now_ms)
+    }
+    fn validate_acknowledgments(
+        &self,
+        canonical: &Replay,
+        acknowledgments: &[InputAck],
+    ) -> Result<(), NetError> {
         if acknowledgments.len() != self.acknowledgments.len() {
+            return Err(NetError::Protocol);
+        }
+        if canonical.inputs.len() != acknowledgments.len()
+            || canonical.simulation.players.len() != acknowledgments.len()
+        {
             return Err(NetError::Protocol);
         }
         for (i, seat) in self.owned.iter().enumerate() {
@@ -199,6 +368,12 @@ impl ClientPrediction {
             {
                 return Err(NetError::Protocol);
             }
+        }
+        Ok(())
+    }
+    fn commit_acknowledgments(&mut self, acknowledgments: &[InputAck]) {
+        for (i, seat) in self.owned.iter().enumerate() {
+            let ack = acknowledgments[*seat];
             while self.edges[i]
                 .front()
                 .is_some_and(|edge| edge.edge.id <= ack.edge)
@@ -209,23 +384,38 @@ impl ClientPrediction {
         self.acknowledgments.clone_from_slice(acknowledgments);
         self.heard
             .retain(|(seat, edge, _, _)| *edge >= acknowledgments[*seat].edge.saturating_sub(256));
-        self.samples.retain(|sample| {
-            self.owned
-                .iter()
-                .any(|seat| sample.sequence > self.acknowledgments[*seat].sample)
-        });
-        self.refresh(canonical)
+        // Keep bounded movement history even after ACK: the independent clock
+        // may still need it after coalescing or repeated held-state frames.
+    }
+    fn note_progress(&mut self, canonical: &Replay, now_ms: u64) {
+        self.now_ms = self.now_ms.max(now_ms);
+        if canonical.tick > self.progress_tick {
+            self.progress_tick = canonical.tick;
+            self.progress_ms = now_ms;
+        }
     }
     pub fn refresh(&mut self, canonical: &Replay) -> Result<(), NetError> {
+        self.refresh_at(canonical, self.now_ms)
+    }
+    pub fn refresh_at(&mut self, canonical: &Replay, now_ms: u64) -> Result<(), NetError> {
+        self.note_progress(canonical, now_ms);
         if !self.dirty
             && self.baseline_tick == canonical.tick
             && self.baseline_paused == canonical.simulation.paused
         {
             return Ok(());
         }
-        self.predicted = canonical.clone();
+        let previous = std::mem::replace(&mut self.predicted, canonical.clone());
+        let reconciling = self.baseline_tick != canonical.tick;
+        let continuous = !self.baseline_paused
+            && self.baseline_round == canonical.simulation.round
+            && matches!(
+                previous.simulation.phase,
+                bomberman_core::RoundPhase::Playing
+            );
         self.baseline_tick = canonical.tick;
         self.baseline_paused = canonical.simulation.paused;
+        self.baseline_round = canonical.simulation.round;
         self.dirty = false;
         if canonical.simulation.paused
             || canonical.stage == Stage::Results
@@ -234,30 +424,58 @@ impl ClientPrediction {
                 bomberman_core::RoundPhase::Playing
             )
         {
+            self.clock_ms = canonical.tick.saturating_mul(u64::from(STEP_MS));
+            self.phase_error_ms = 0;
+            self.pending_capture_ms = None;
+            self.corrections.fill(Correction::default());
+            self.boundaries = canonical
+                .simulation
+                .players
+                .iter()
+                .map(MotionBoundary::of)
+                .collect();
             return Ok(());
+        }
+        if let Some(captured_ms) = self.pending_capture_ms.take() {
+            let measurement = now_ms
+                .saturating_sub(captured_ms)
+                .clamp(u64::from(STEP_MS), MAX_PREDICTION_MS);
+            self.lead_eighths = Some(
+                self.lead_eighths
+                    .map_or(measurement * 8, |old| (old * 7 + measurement * 8) / 8),
+            );
+        }
+        let canonical_ms = canonical.tick.saturating_mul(u64::from(STEP_MS));
+        self.clock_ms = self
+            .clock_ms
+            .clamp(canonical_ms, canonical_ms.saturating_add(MAX_PREDICTION_MS));
+        if reconciling {
+            let desired = canonical_ms
+                .saturating_add(self.lead_eighths.unwrap_or(u64::from(STEP_MS) * 8) / 8);
+            self.phase_error_ms =
+                (i128::from(desired) - i128::from(self.clock_ms)).clamp(-500, 500) as i64;
         }
         let mut held = self.confirmed_inputs.clone();
         if held.len() != canonical.simulation.players.len() {
             return Err(NetError::Protocol);
         }
-        // Count button work separately: a movement ACK must not erase a delayed
-        // press/release pair which has not yet been consumed.
-        let edge_count = self.edges.iter().map(VecDeque::len).max().unwrap_or(0);
-        let count = self.samples.len().max(edge_count).min(MAX_PREDICT_TICKS);
+        let count = (self.clock_ms / u64::from(STEP_MS))
+            .saturating_sub(canonical.tick)
+            .min(MAX_PREDICT_TICKS as u64) as usize;
         let mut edge_offsets = vec![0; self.owned.len()];
         for step in 0..count {
-            let sample = self.samples.get(step);
+            let sample = (self.samples.len() + step)
+                .checked_sub(count)
+                .and_then(|index| self.samples.get(index));
             let mut applied_edges = vec![None; self.owned.len()];
             for (i, seat) in self.owned.iter().enumerate() {
                 let target = held.get_mut(*seat).ok_or(NetError::Ownership)?;
                 if let Some(sample) = sample {
-                    if sample.sequence > self.acknowledgments[*seat].sample {
-                        target.direction = sample.inputs[i].direction;
-                        target.direction_mask = sample.inputs[i].direction_mask;
-                    }
+                    target.direction = sample.inputs[i].direction;
+                    target.direction_mask = sample.inputs[i].direction_mask;
                 }
                 if let Some(edge) = self.edges[i].get(edge_offsets[i]) {
-                    if sample.is_none_or(|sample| edge.sequence <= sample.sequence) {
+                    if sample.is_some_and(|sample| edge.sequence <= sample.sequence) {
                         target.bomb = edge.edge.buttons & 1 != 0;
                         target.action = edge.edge.buttons & 2 != 0;
                         applied_edges[i] = Some(edge.edge.id);
@@ -285,8 +503,74 @@ impl ClientPrediction {
                 }
             }
         }
+        for (local, seat) in self.owned.iter().copied().enumerate() {
+            let boundary = MotionBoundary::of(&canonical.simulation.players[seat]);
+            let target = &self.predicted.simulation.players[seat];
+            if !continuous
+                || self.boundaries[seat] != boundary
+                || boundary.transit
+                || MotionBoundary::of(&previous.simulation.players[seat])
+                    != MotionBoundary::of(target)
+            {
+                self.corrections[local] = Correction::default();
+            } else if reconciling {
+                let old_offset = self.corrections[local].remaining(now_ms);
+                let before = previous.simulation.players[seat]
+                    .presentation
+                    .render_position;
+                let after = target.presentation.render_position;
+                let from = Position {
+                    x: before.x + old_offset.x,
+                    y: before.y + old_offset.y,
+                };
+                if previous.tick == self.predicted.tick
+                    && blend_path(&self.predicted.simulation, seat, from, after)
+                {
+                    if before != after {
+                        self.corrections[local] = Correction {
+                            offset: Position {
+                                x: from.x - after.x,
+                                y: from.y - after.y,
+                            },
+                            started_ms: now_ms,
+                        };
+                    }
+                } else {
+                    self.corrections[local] = Correction::default();
+                }
+            }
+        }
+        self.boundaries = canonical
+            .simulation
+            .players
+            .iter()
+            .map(MotionBoundary::of)
+            .collect();
         Ok(())
     }
+}
+fn blend_path(simulation: &Simulation, seat: usize, from: Position, to: Position) -> bool {
+    let dx = i64::from(from.x) - i64::from(to.x);
+    let dy = i64::from(from.y) - i64::from(to.y);
+    if dx.abs() >= i64::from(bomberman_core::TILE_WIDTH * 100)
+        || dy.abs() >= i64::from(bomberman_core::TILE_HEIGHT * 100)
+    {
+        return false;
+    }
+    let steps = ((dx.abs().max(dy.abs()) + 99) / 100).max(1);
+    (0..=steps).all(|step| {
+        let position = Position {
+            x: (i64::from(to.x) + dx * step / steps) as i32,
+            y: (i64::from(to.y) + dy * step / steps) as i32,
+        };
+        simulation.board.is_floor(position.tile())
+            && !simulation.bombs.iter().any(|bomb| {
+                bomb.airborne_ms == 0
+                    && bomb.carried_by.is_none()
+                    && bomb.tile() == position.tile()
+                    && !bomb.pass_through.contains(&seat)
+            })
+    })
 }
 fn sound_kind(kind: ControlSoundKind) -> u8 {
     match kind {

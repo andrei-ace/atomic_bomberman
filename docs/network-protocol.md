@@ -1,10 +1,36 @@
 # Multiplayer responsiveness
 
-Version 0.4.0 uses protocol 5. The host remains authoritative, while each
+Version 0.4.1 keeps protocol 5, the `ABG5` datagram format, the QUIC ALPN,
+and the `0.4.0` application compatibility identifier. Existing 0.4.0 peers
+and relays remain compatible. The host remains authoritative, while each
 client immediately predicts its own movement, bomb/action visuals, and control
 sounds. Confirmed input acknowledgments rebuild prediction without changing
 the canonical replay hash. Predicted sounds are identified by local seat and
 button transition, so confirmation or resimulation does not play them twice.
+
+### Prediction timing and corrections in 0.4.1
+
+Movement ACKs identify the newest state selected by the host. They do not count
+how many 20 ms movement steps the host simulated: several samples can coalesce
+into one host step, and one held sample can drive several host steps. Previously,
+ACKing sample 8 could collapse eight predicted steps to one confirmed step. An
+empty-arena reproduction showed 30 pixels of movement falling back to 4 pixels.
+
+Prediction now advances an independent 20 ms clock and retains a bounded history
+of 256 local samples, including acknowledged samples. It rebuilds the recent
+input window up to that clock instead of using the unacknowledged queue length
+as elapsed time. Sample capture times estimate the prediction lead, with a 1/8
+EWMA and clock alignment limited to 2 ms per local step. Existing RTT probes can
+seed the lead during loading. Receive batches reconcile once; host catch-up
+consumes one local sample per simulated step. Pending button edges retain their
+separate acknowledgment and sound identities without adding movement time.
+
+Local artwork blends small reconciliation offsets linearly over 80 ms. Normal
+input movement does not pass through that blend. Physics and canonical hashes
+never contain the offsets. Obstructed paths, corrections of a tile or more,
+transit, death, pause, round changes and checkpoint recovery apply immediately.
+Prediction and new sample generation stop after 500 ms without canonical tick
+progress; duplicate traffic does not extend that deadline.
 
 The previous implementation displayed only host frames. A client control
 therefore crossed the client-to-host-to-client route before becoming visible.
@@ -34,6 +60,38 @@ The new encrypted transport, host authority, sequence validation, prediction
 reconciliation, and frame checkpoints are modern design choices. They do not
 claim wire compatibility with the original IPX/modem/serial protocol.
 
+### Focused Ghidra follow-up for 0.4.1
+
+The same executable and Ghidra version were inspected again without executing
+the original game. Sender `0x40ef4e` builds exactly 12 bytes for token 4: a seat
+index and five signed 16-bit values. The caller at `0x420cfe–0x420d40` supplies
+active state, x/y, direction and animation state. Initialization at
+`0x40e515–0x40e51f` registers receiver `0x40d519`; instruction inspection through
+`0x40d5ed` shows validation and direct replacement of five cache arrays. That
+handler contains no movement-duration field, command-history integration, or
+sample-ACK comparison. Remote actor code at `0x41e8ad–0x41e8ef` copies the cached
+coordinates, direction and animation directly. Input kind 4 is excluded from
+resending movement at `0x420cf5–0x420cfc`.
+
+Retained REA evidence: registration
+`ev_a87504d24559b519fc43c3fc81ea3750b9eb65748a2ad1f4892f8854c6c339a4`,
+receiver bytes
+`ev_6431f0210e22687d33181f79f7ff19eec31b42368a3b511398ff89c47c4e1b5b`,
+cache write
+`ev_82df6a4bf6f791b86b2cf188155e4344574eb25eb2a91e376a0be608d427a968`,
+remote actor path
+`ev_166c5b58396daffc120fcc5a5e44e4adcae26d63fce9f3d876e35ebc7babe0a7`,
+and critical retry/composition batch
+`ev_43f063814550e0f97f8058d42369f77f749cbcc13ee9a7dba081ca2224f5ad59`.
+The receiver callback lacks a Ghidra function definition, so its exact decoded
+instructions were examined instead of assuming decompiler function coverage.
+
+These static findings support keeping state supersession separate from critical
+event identity. The independent clock and 80 ms blend are modern design choices.
+This pass does not measure original runtime latency or establish the complete
+packet envelope's ordering, authority or security policy; modern sequence
+rejection remains necessary.
+
 ## Transport and recovery
 
 Internet play uses pinned QUIC datagrams on UDP 443 and existing TLS WebSocket
@@ -45,7 +103,7 @@ Gameplay datagrams fit within 1,000 application bytes. Each authoritative
 packet includes its newest frame and up to two earlier complete frames. A
 256-frame reorder/history window and requested reliable gap repair preserve
 deterministic replay. Older gaps recover through a verified full checkpoint.
-Prediction stops after 500 ms without fresh frames; a failed UDP path ends
+Prediction stops after 500 ms without canonical tick progress; a failed UDP path ends
 the affected connection instead of silently switching gameplay to TCP.
 
 Movement always uses the newest sample. Bomb/action transitions retain ordered

@@ -86,7 +86,9 @@ impl Broker {
                 return Err(NetError::Unauthorized);
             }
         }
-        if compatibility.protocol != PROTOCOL_VERSION || compatibility.application != APP_VERSION {
+        if compatibility.protocol != PROTOCOL_VERSION
+            || compatibility.application != COMPATIBLE_APP_VERSION
+        {
             return Err(NetError::Version);
         }
         if compatibility.assets.len() != 64

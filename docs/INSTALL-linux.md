@@ -1,13 +1,13 @@
-# Linux AppImage — 0.4.0
+# Linux AppImage — 0.4.1
 
 Requires Linux x86-64, Ubuntu 24.04 or newer, X11 or XWayland, and an OpenGL-capable
 driver (Mesa software rendering is supported). Download the versioned AppImage
 and matching `.AppImage.sha256` from the release assets, then run:
 
 ```sh
-sha256sum -c atomic-bomberman-0.4.0-linux-x86_64.AppImage.sha256
-chmod +x atomic-bomberman-0.4.0-linux-x86_64.AppImage
-./atomic-bomberman-0.4.0-linux-x86_64.AppImage
+sha256sum -c atomic-bomberman-0.4.1-linux-x86_64.AppImage.sha256
+chmod +x atomic-bomberman-0.4.1-linux-x86_64.AppImage
+./atomic-bomberman-0.4.1-linux-x86_64.AppImage
 ```
 
 On first launch choose your original `.7z` archive, `.img`/`.iso` image, or
@@ -31,7 +31,7 @@ image stays at the path where you placed it. Its desktop icon is bundled as PNG.
 To extract once into any writable location, including paths with spaces:
 
 ```sh
-./atomic-bomberman-0.4.0-linux-x86_64.AppImage --appimage-extract
+./atomic-bomberman-0.4.1-linux-x86_64.AppImage --appimage-extract
 ./squashfs-root/AppRun
 ```
 
@@ -59,7 +59,7 @@ recover space. The active `assets` directory remains intact.
 Terminal import and validation, without a display:
 
 ```sh
-./atomic-bomberman-0.4.0-linux-x86_64.AppImage \
+./atomic-bomberman-0.4.1-linux-x86_64.AppImage \
   --import-source /path/to/original.7z --import-only
 ```
 
@@ -80,7 +80,7 @@ certificate fingerprint together. It is saved privately, so later visits open
 
 The client needs outbound TCP 443 and UDP 443; the relay needs both ports inbound.
 UDP is required for gameplay. Keep TCP 443 for login, the browser, and control.
-Use version 0.4.0/protocol 5 on every client and the relay. Existing links and
+Version 0.4.1 keeps protocol 5 and works with 0.4.0 clients and relays. Existing links and
 saved profiles survive the upgrade.
 
 For LAN, open **Multiplayer → LAN** and host or join a nearby game. Permit TCP

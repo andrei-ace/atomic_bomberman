@@ -12,7 +12,7 @@ are imported locally from your copy of the game.
 
 ## Install a client and import game data
 
-Download the **0.4.0** application and matching checksum from
+Download the **0.4.1** application and matching checksum from
 [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases).
 Choose the built AppImage or Mac ZIP asset. GitHub's **Source code** archives
 require compilation.
@@ -22,9 +22,9 @@ require compilation.
 Requires Ubuntu 24.04 or newer with X11/XWayland. In the download directory:
 
 ```sh
-sha256sum -c atomic-bomberman-0.4.0-linux-x86_64.AppImage.sha256
-chmod +x atomic-bomberman-0.4.0-linux-x86_64.AppImage
-./atomic-bomberman-0.4.0-linux-x86_64.AppImage
+sha256sum -c atomic-bomberman-0.4.1-linux-x86_64.AppImage.sha256
+chmod +x atomic-bomberman-0.4.1-linux-x86_64.AppImage
+./atomic-bomberman-0.4.1-linux-x86_64.AppImage
 ```
 
 The AppImage runs without FUSE and bundles the importer and desktop libraries.
@@ -36,7 +36,7 @@ Requires an Apple Silicon Mac (M1 or later). Verify the download in Terminal:
 
 ```sh
 cd ~/Downloads
-shasum -a 256 -c atomic-bomberman-0.4.0-macos-arm64.zip.sha256
+shasum -a 256 -c atomic-bomberman-0.4.1-macos-arm64.zip.sha256
 ```
 
 Extract the ZIP, move **Atomic Bomberman.app** into **Applications**, and open it.
@@ -52,8 +52,9 @@ image. The importer reads the source without changing it, validates the imported
 data, and starts the game. Allow about 0.6 GB for the saved assets plus temporary
 import space. Later launches reuse the saved data.
 
-Each multiplayer computer imports the same game edition and runs the same
-release. Update the relay and all clients together: **0.4.0 uses protocol 5**.
+Each multiplayer computer imports the same game edition and uses protocol 5.
+**0.4.1 keeps protocol 5** and works with 0.4.0 clients and relays.
+Update clients to receive the movement prediction and correction fixes.
 Existing private server links and saved connection profiles remain valid.
 
 ## Play locally

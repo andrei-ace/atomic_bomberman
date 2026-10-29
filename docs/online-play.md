@@ -1,9 +1,9 @@
 # Private online and LAN games
 
-Use version **0.4.0**, protocol **5**, on every Linux or Mac computer. Rebuild and
-upgrade the relay and all game clients from the same commit. Import the same
-edition of Atomic Bomberman: protocol, application version and original
-source-file hashes must match. The relay has no original game data and never
+Use version **0.4.1**, protocol **5**, for improved client movement on Linux
+and Mac. The 0.4.0 clients and relay remain compatible: the handshake keeps the
+0.4.0 compatibility identifier and original source-file hashes must match.
+Import the same edition of Atomic Bomberman. The relay has no original game data and never
 runs the simulation.
 
 ## Online

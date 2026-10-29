@@ -11,6 +11,26 @@ use tokio::sync::mpsc;
 fn compatibility() -> Compatibility {
     Compatibility::new("a".repeat(64))
 }
+
+#[test]
+fn protocol_five_patch_release_keeps_the_existing_handshake() {
+    let old: Compatibility = serde_json::from_str(&format!(
+        "{{\"protocol\":5,\"application\":\"0.4.0\",\"assets\":\"{}\"}}",
+        "a".repeat(64)
+    ))
+    .unwrap();
+    let current = compatibility();
+    assert_eq!(current, old);
+    assert_eq!(old.check(&current), Ok(()));
+    assert_eq!(Broker::new(None).authenticate("", &old), Ok(()));
+    let mut unknown = old;
+    unknown.application = "0.5.0".into();
+    assert_eq!(current.check(&unknown), Err(NetError::Version));
+    assert_eq!(
+        Broker::new(None).authenticate("", &unknown),
+        Err(NetError::Version)
+    );
+}
 fn profile() -> ServerProfile {
     ServerProfile {
         endpoint: "wss://127.0.0.1:443/v1/ws".into(),

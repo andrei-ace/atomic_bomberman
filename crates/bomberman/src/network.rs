@@ -510,9 +510,10 @@ impl Session {
                                 {
                                     let replay = Replay::from_checkpoint(&checkpoint)?;
                                     if let Some(prediction) = &mut self.prediction {
-                                        prediction.reset_confirmed(
+                                        prediction.reset_confirmed_at(
                                             &replay,
                                             &checkpoint.acknowledgments,
+                                            now_ms,
                                         )?;
                                     }
                                     self.window = Some(FrameWindow::new(
@@ -543,6 +544,22 @@ impl Session {
             }
         }
         self.poll_gameplay(now_ms)?;
+        // Use the existing echo packets during loading too, so prediction can
+        // start with a measured lead rather than waiting for the first ACK.
+        if !self.host
+            && self.replay.is_some()
+            && self.connection.gameplay_ready()
+            && now_ms.saturating_sub(self.probe_ms) >= 1000
+        {
+            self.connection.send_gameplay(
+                Some(HOST),
+                &GameplayPacket::Probe {
+                    generation: self.start_generation,
+                    nonce: now_ms,
+                },
+            )?;
+            self.probe_ms = now_ms;
+        }
         if self.is_starting() {
             if self.host {
                 let preparation = self.preparation.as_mut().unwrap();
@@ -570,19 +587,6 @@ impl Session {
         }
         if self.replay.is_none() {
             return Ok(events);
-        }
-        if !self.host
-            && self.connection.gameplay_ready()
-            && now_ms.saturating_sub(self.probe_ms) >= 1000
-        {
-            self.connection.send_gameplay(
-                Some(HOST),
-                &GameplayPacket::Probe {
-                    generation: self.start_generation,
-                    nonce: now_ms,
-                },
-            )?;
-            self.probe_ms = now_ms;
         }
         if !self.host {
             self.apply_frames(now_ms, &mut events)?;
@@ -616,27 +620,19 @@ impl Session {
         } else {
             elapsed_ms.min(250)
         };
-        self.input_accumulator = self.input_accumulator.saturating_add(elapsed_ms);
+        if !self.host {
+            self.input_accumulator = self.input_accumulator.saturating_add(elapsed_ms);
+        }
         while self.input_accumulator >= STEP_MS {
             self.input_accumulator -= STEP_MS;
             let prediction = self.prediction.as_mut().ok_or(NetError::Protocol)?;
-            if self.host || now_ms.saturating_sub(self.last_gameplay_ms) < 500 {
-                prediction.capture(&inputs)?;
+            if prediction.is_fresh(now_ms) {
+                prediction.capture_at(
+                    &inputs,
+                    now_ms.saturating_sub(u64::from(self.input_accumulator)),
+                )?;
                 let packet = prediction.packet(self.start_generation);
-                if self.host {
-                    let GameplayPacket::Input {
-                        sequence, seats, ..
-                    } = packet
-                    else {
-                        unreachable!()
-                    };
-                    self.buffer
-                        .as_mut()
-                        .ok_or(NetError::Protocol)?
-                        .push_gameplay(HOST, sequence, &seats, now_ms)?;
-                } else {
-                    self.connection.send_gameplay(Some(HOST), &packet)?;
-                }
+                self.connection.send_gameplay(Some(HOST), &packet)?;
             } else {
                 // Keep retransmitting existing identities while frozen, so a
                 // restored UDP path recovers without fabricating fresh input.
@@ -659,6 +655,19 @@ impl Session {
             self.accumulator = self.accumulator.saturating_add(elapsed_ms);
             while self.accumulator >= STEP_MS {
                 self.accumulator -= STEP_MS;
+                let prediction = self.prediction.as_mut().ok_or(NetError::Protocol)?;
+                prediction
+                    .capture_at(&inputs, now_ms.saturating_sub(u64::from(self.accumulator)))?;
+                let GameplayPacket::Input {
+                    sequence, seats, ..
+                } = prediction.packet(self.start_generation)
+                else {
+                    unreachable!()
+                };
+                self.buffer
+                    .as_mut()
+                    .ok_or(NetError::Protocol)?
+                    .push_gameplay(HOST, sequence, &seats, now_ms)?;
                 let buffer = self.buffer.as_mut().ok_or(NetError::Protocol)?;
                 let (inputs, bots) = buffer.next(now_ms);
                 let mut actions = std::mem::take(&mut self.actions);
@@ -671,7 +680,7 @@ impl Session {
                 self.prediction
                     .as_mut()
                     .unwrap()
-                    .acknowledge(replay, &frame)?;
+                    .record_acknowledgment(replay, &frame, now_ms)?;
                 self.prediction.as_mut().unwrap().take_feedback();
                 if let Some(hash) = frame.hash {
                     self.expected_hashes.insert(frame.tick, hash);
@@ -689,8 +698,8 @@ impl Session {
                 events.extend(frame_events);
             }
         } else if let Some(prediction) = &mut self.prediction {
-            prediction.refresh(self.replay.as_ref().unwrap())?;
-            self.predicted = Some(prediction.replay().simulation.clone());
+            prediction.refresh_at(self.replay.as_ref().unwrap(), now_ms)?;
+            self.predicted = Some(prediction.display(now_ms));
             events.extend(prediction.take_feedback());
         }
         Ok(events)
@@ -701,10 +710,17 @@ impl Session {
             .as_ref()
             .ok_or(NetError::Protocol)?
             .owned_seats(self.id);
-        self.prediction = Some(ClientPrediction::new(
+        let mut prediction = ClientPrediction::new_at(
             owned,
             self.replay.as_ref().ok_or(NetError::Protocol)?,
-        ));
+            self.clock_ms,
+        );
+        if !self.host {
+            if let Some(rtt_ms) = self.gameplay_rtt_ms {
+                prediction.seed_rtt(rtt_ms);
+            }
+        }
+        self.prediction = Some(prediction);
         self.predicted = None;
         self.input_accumulator = 0;
         Ok(())
@@ -757,6 +773,9 @@ impl Session {
                 GameplayPacket::ProbeReply { nonce, .. } if !self.host && from == HOST => {
                     if nonce == self.probe_ms && nonce <= now_ms {
                         self.gameplay_rtt_ms = Some(now_ms - nonce);
+                        if let Some(prediction) = &mut self.prediction {
+                            prediction.seed_rtt(now_ms - nonce);
+                        }
                     }
                 }
                 GameplayPacket::Input {
@@ -800,7 +819,7 @@ impl Session {
             let mut frame_events = replay.apply(&frame)?;
             if let Some(prediction) = &mut self.prediction {
                 prediction.filter_confirmed_events(replay, &frame, &mut frame_events);
-                prediction.acknowledge(replay, &frame)?;
+                prediction.record_acknowledgment(replay, &frame, now_ms)?;
             }
             events.extend(frame_events);
             if let Some(hash) = frame.hash {
@@ -813,6 +832,9 @@ impl Session {
                     },
                 )?;
             }
+        }
+        if let (Some(prediction), Some(replay)) = (&mut self.prediction, &self.replay) {
+            prediction.refresh_at(replay, now_ms)?;
         }
         Ok(())
     }
@@ -1084,7 +1106,29 @@ mod tests {
         assert!(!host.is_starting() && !client.is_starting());
         assert_eq!(host.replay.as_ref().unwrap().tick, 0);
         assert_eq!(client.replay.as_ref().unwrap().tick, 0);
+        // A stalled host must consume one local sample on each catch-up step,
+        // rather than ACKing the final sample on the first simulated frame.
+        now += 100;
+        host.pump(100, now, vec![PlayerInput::default(); 2])
+            .unwrap();
+        let catch_up = host.history.range(1, 5).unwrap();
+        assert_eq!(
+            catch_up
+                .iter()
+                .map(|frame| frame.acknowledgments[0].sample)
+                .collect::<Vec<_>>(),
+            vec![1, 2, 3, 4, 5]
+        );
         let mut hashes = BTreeMap::new();
+        for frame in catch_up {
+            // Client may drain these initial frames in the next pump. Retain
+            // their canonical hashes for the ordinary convergence assertions.
+            let mut replay = client.replay.as_ref().unwrap().clone();
+            for prior in host.history.range(1, frame.tick).unwrap() {
+                replay.apply(&prior).unwrap();
+            }
+            hashes.insert(frame.tick, replay.hash());
+        }
         for step in 0..200 {
             now += 20;
             let input = PlayerInput {
