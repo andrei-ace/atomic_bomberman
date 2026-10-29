@@ -10,7 +10,8 @@ import socket
 import subprocess
 import tempfile
 import time
-from verify_relay import LatencyProxy, parse_invitation
+from verify_relay import parse_invitation
+from verify_datagram import ImpairmentProxy
 import base64
 import sys
 
@@ -136,10 +137,10 @@ def main():
             relay = str(args.relay.resolve())
             subprocess.run([relay,'init','--state',str(state),'--advertise',f'127.0.0.1:{port}','--listen',f'127.0.0.1:{port}'],check=True,capture_output=True)
             invitation = subprocess.check_output([relay,'export-invite','--state',str(state)],text=True).strip()
-            proxy = LatencyProxy(port, args.latency_ms) if args.latency_ms else None
+            proxy = ImpairmentProxy(port, args.latency_ms, 0, 0) if args.latency_ms else None
             if proxy:
                 decoded = parse_invitation(invitation)
-                decoded['server']['endpoint'] = f'wss://127.0.0.1:{proxy.port}/v1/ws'
+                decoded['server']['endpoint'] = f'wss://127.0.0.2:{proxy.port}/v1/ws'
                 invitation = 'AB1.'+base64.urlsafe_b64encode(json.dumps(decoded).encode()).decode().rstrip('=')
             log=(base/'relay.log').open('w'); logs.append(log)
             processes.append(subprocess.Popen([relay,'serve','--state',str(state)],stdout=log,stderr=log))
@@ -302,6 +303,39 @@ def main():
                 if started_host['screen']==started_friend['screen']=='Battle': break
                 time.sleep(.2)
             assert started_host['screen']==started_friend['screen']=='Battle', 'shared start did not release both renderers'
+            # Exercise the real renderer's local input path before the host
+            # can echo it through the delayed datagram route.
+            deadline=time.monotonic()+15
+            while time.monotonic()<deadline:
+                before=snapshot(friend,'Battle')
+                if before['network']['confirmed_simulation']['phase']=='Playing': break
+                time.sleep(.1)
+            assert before['network']['confirmed_simulation']['phase']=='Playing'
+            network=before['network']; seat=network['lobby']['owners'].index(network['id'])
+            initial=network['confirmed_simulation']['players'][seat]['presentation']['render_position']
+            direction='Left' if initial['x']>30000 else 'Right'
+            probe=friend[2]; response_ms=None; before_confirmation=False
+            started=time.monotonic(); key(direction)
+            try:
+                deadline=started+1
+                while time.monotonic()<deadline:
+                    probe.unlink(missing_ok=True); key('F12')
+                    sampled=time.monotonic()+.3
+                    while not probe.exists() and time.monotonic()<sampled: time.sleep(.001)
+                    key('F12',False)
+                    if probe.exists():
+                        value=json.loads(probe.read_text())
+                        rendered=value['simulation']['players'][seat]['presentation']['render_position']
+                        confirmed=value['network']['confirmed_simulation']['players'][seat]['presentation']['render_position']
+                        if rendered!=initial:
+                            response_ms=(time.monotonic()-started)*1000
+                            before_confirmation=confirmed==initial
+                            break
+                    time.sleep(.02)
+            finally: key(direction,False); key('F12',False)
+            assert response_ms is not None, 'Real client renderer did not respond to movement'
+            if args.latency_ms>=80:
+                assert before_confirmation, 'Movement waited for the authoritative echo'
             press('p'); time.sleep(.4)
             paused_host=snapshot(host,'Battle'); paused_friend=snapshot(friend,'Battle')
             assert paused_host['paused'] and paused_friend['paused']
@@ -325,7 +359,7 @@ def main():
                 text=file.read_text()
                 assert invitation not in text
             report={'passed':True,'platform':'Ubuntu 24.04 x86-64, isolated Xvfb, Mesa software rendering',
-                    'injected_round_trip_tcp_delay_ms':args.latency_ms,'relay_environment':'deployed server, external TCP 443' if args.live_invite_stdin else 'disposable local TLS relay',
+                    'injected_gameplay_round_trip_ms':args.latency_ms,'movement_response_ms':response_ms,'movement_visible_before_confirmation':before_confirmation,'relay_environment':'deployed server, external TCP and UDP 443' if args.live_invite_stdin else 'disposable local TLS relay',
                     'checks':['Multiplayer directly below Start local battle','simple LAN browser and back navigation','Paste server link button reads the OS clipboard','Ctrl-V reads the OS clipboard','Copy server link updates the OS clipboard',
                               'Backspace and Delete clear the whole private link','Invalid and empty pastes clear stale input','Typing cannot silently change a hidden private link','A link copied by one game authenticates another game',
                               'create room','private profile mode 0600',
@@ -335,9 +369,9 @@ def main():
                               'ten unique colors synchronized to both computers','session settings preserve saved local settings',
                               'original network flags disable Gold roulette','actual two-window battle',
                               'announced arena media prepared in both lobbies','slow client holds host countdown at tick zero','all renderers enter the shared countdown automatically',
-                              'shared pause and identical serialized simulation','host departure ends session',
+                              'actual rendered movement responds before the delayed authoritative echo','shared pause and identical serialized simulation','host departure ends session',
                               'saved server reuse','former client hosts without new invitation','credentials absent from logs'],
-                    'limitations':['No physical controller tested.','macOS Cmd-V and Linux/macOS WAN play require Mac hardware.']}
+                    'limitations':['Movement timing uses the window render-state probe, including polling and file I/O; it does not measure display scan-out.','No physical controller tested.','macOS Cmd-V and Linux/macOS WAN play require Mac hardware.']}
             args.report.parent.mkdir(parents=True,exist_ok=True); args.report.write_text(json.dumps(report,indent=2)+'\n')
             print(json.dumps(report,indent=2))
         finally:

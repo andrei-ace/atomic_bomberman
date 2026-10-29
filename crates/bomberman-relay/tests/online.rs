@@ -10,10 +10,12 @@ struct TestRelay {
     invitation: Invitation,
     handle: axum_server::Handle,
     relay: bomberman_relay::Relay,
+    gameplay: bomberman_net::quic::GameplayServer,
 }
 impl Drop for TestRelay {
     fn drop(&mut self) {
         self.handle.shutdown();
+        self.gameplay.close();
     }
 }
 async fn server() -> TestRelay {
@@ -32,6 +34,13 @@ async fn server() -> TestRelay {
     // Use a known test token while keeping it out of all diagnostic output.
     let token = random_token();
     let relay = bomberman_relay::Relay::new(token.clone(), 32, 16);
+    let gameplay = relay
+        .bind_gameplay(
+            address,
+            cert.cert.der().to_vec(),
+            cert.signing_key.serialize_der(),
+        )
+        .unwrap();
     let app = relay
         .clone()
         .router()
@@ -56,6 +65,7 @@ async fn server() -> TestRelay {
         },
         handle,
         relay,
+        gameplay,
     }
 }
 async fn connect(invite: &Invitation) -> Result<Socket, tokio_tungstenite::tungstenite::Error> {
@@ -80,7 +90,10 @@ async fn receive(socket: &mut Socket) -> Event {
     tokio::time::timeout(Duration::from_secs(5), async {
         loop {
             match socket.next().await.unwrap().unwrap() {
-                Message::Binary(bytes) => return decode(&bytes).unwrap(),
+                Message::Binary(bytes) => match decode(&bytes).unwrap() {
+                    Event::GameplayOffer(_) => continue,
+                    event => return event,
+                },
                 Message::Ping(_) => {
                     socket.flush().await.unwrap();
                 }
@@ -331,10 +344,109 @@ async fn clients_cannot_impersonate_host_or_cross_rooms() {
         &mut client,
         Request::Send {
             to: Some(42),
-            message: GameMessage::Pause,
+            message: GameMessage::Pause { generation: 1 },
         },
     )
     .await;
     assert!(matches!(receive(&mut host).await, Event::PeerLeft(2)));
     assert_eq!(server.relay.counts(), (1, 1));
+}
+
+#[tokio::test]
+async fn real_control_connections_negotiate_pinned_bidirectional_udp_gameplay() {
+    use bomberman_net::transport::{Connection, Destination};
+    async fn control(connection: &Connection) -> Event {
+        tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                match connection.poll().unwrap() {
+                    Some(Event::GameplayOffer(_)) | None => {
+                        tokio::time::sleep(Duration::from_millis(2)).await
+                    }
+                    Some(event) => return event,
+                }
+            }
+        })
+        .await
+        .unwrap()
+    }
+    async fn datagram(connection: &Connection) -> (PeerId, GameplayPacket) {
+        tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                if let Some(packet) = connection.poll_gameplay().unwrap() {
+                    return packet;
+                }
+                tokio::time::sleep(Duration::from_millis(2)).await;
+            }
+        })
+        .await
+        .unwrap()
+    }
+    let server = server().await;
+    let host = Connection::connect(
+        Destination::Online(server.invitation.clone()),
+        compatibility(),
+    );
+    let room = match control(&host).await {
+        Event::Welcome {
+            room, host: true, ..
+        } => room,
+        _ => panic!("missing host"),
+    };
+    let friend = Connection::connect(
+        Destination::Online(Invitation {
+            room: Some(room),
+            ..server.invitation.clone()
+        }),
+        compatibility(),
+    );
+    let peer = match control(&friend).await {
+        Event::Welcome {
+            id, host: false, ..
+        } => id,
+        _ => panic!("missing friend"),
+    };
+    assert!(matches!(control(&host).await, Event::PeerJoined(id) if id == peer));
+    tokio::time::timeout(Duration::from_secs(5), async {
+        while !host.gameplay_ready() || !friend.gameplay_ready() {
+            tokio::time::sleep(Duration::from_millis(2)).await;
+        }
+    })
+    .await
+    .unwrap();
+    host.send_gameplay(
+        Some(peer),
+        &GameplayPacket::Probe {
+            generation: 1,
+            nonce: 1997,
+        },
+    )
+    .unwrap();
+    assert!(matches!(
+        datagram(&friend).await,
+        (
+            HOST,
+            GameplayPacket::Probe {
+                generation: 1,
+                nonce: 1997
+            }
+        )
+    ));
+    friend
+        .send_gameplay(
+            Some(HOST),
+            &GameplayPacket::ProbeReply {
+                generation: 1,
+                nonce: 1997,
+            },
+        )
+        .unwrap();
+    assert!(
+        matches!(datagram(&host).await, (id, GameplayPacket::ProbeReply { nonce: 1997, .. }) if id == peer)
+    );
+    friend
+        .message(Some(HOST), GameMessage::Pause { generation: 1 })
+        .unwrap();
+    assert!(
+        matches!(control(&host).await, Event::Message { from, message: GameMessage::Pause { generation: 1 } } if from == peer)
+    );
 }

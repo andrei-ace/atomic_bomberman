@@ -43,6 +43,7 @@ pub struct Broker {
     pub ttl: Duration,
     lan: bool,
     budget: Arc<Semaphore>,
+    gameplay: Option<crate::quic::GameplayServer>,
 }
 impl Broker {
     pub fn new(token: Option<String>) -> Self {
@@ -55,6 +56,7 @@ impl Broker {
             ttl: Duration::from_secs(12 * 3600),
             lan,
             budget: Arc::new(Semaphore::new(QUEUED_BYTES)),
+            gameplay: None,
         }
     }
     pub fn connections(&self) -> usize {
@@ -62,6 +64,9 @@ impl Broker {
     }
     pub fn rooms(&self) -> usize {
         self.rooms.len()
+    }
+    pub fn set_gameplay(&mut self, gameplay: crate::quic::GameplayServer) {
+        self.gameplay = Some(gameplay);
     }
     pub fn open(&mut self, open: Open, out: Outbox) -> Result<(String, PeerId), NetError> {
         self.expire();
@@ -172,7 +177,57 @@ impl Broker {
                 return Err(NetError::HostLeft);
             }
         }
+        if let Some(gameplay) = &self.gameplay {
+            let offer = gameplay.offer(&code, id);
+            if let Err(error) = deliver(
+                &self.budget,
+                &self.rooms[&code].peers[&id],
+                Event::GameplayOffer(offer),
+            ) {
+                self.close(&code, id);
+                return Err(error);
+            }
+        }
         Ok((code, id))
+    }
+    pub(crate) fn gameplay_targets(
+        &self,
+        code: &str,
+        peer: PeerId,
+        to: Option<PeerId>,
+        host_only: bool,
+    ) -> Result<Vec<PeerId>, NetError> {
+        let room = self.rooms.get(code).ok_or(NetError::RoomExpired)?;
+        if !room.peers.contains_key(&peer) {
+            return Err(NetError::Disconnected);
+        }
+        if peer != HOST && (host_only || to.is_some_and(|target| target != HOST)) {
+            return Err(NetError::Ownership);
+        }
+        if to.is_some_and(|target| !room.peers.contains_key(&target)) {
+            // A valid host response can outlive the target's control socket.
+            // Dropping that datagram must not disconnect the entire room.
+            return Ok(vec![]);
+        }
+        Ok(room
+            .peers
+            .keys()
+            .copied()
+            .filter(|target| {
+                *target != peer
+                    && if peer == HOST {
+                        to.is_none_or(|id| id == *target)
+                    } else {
+                        *target == HOST
+                    }
+            })
+            .collect())
+    }
+    pub(crate) fn gameplay_failed(&mut self, code: &str, peer: PeerId) {
+        if let Some(out) = self.rooms.get(code).and_then(|room| room.peers.get(&peer)) {
+            let _ = deliver(&self.budget, out, Event::Error(NetError::UdpUnavailable));
+            self.close(code, peer);
+        }
     }
     pub fn route(&mut self, code: &str, peer: PeerId, request: Request) -> Result<(), NetError> {
         let room = self.rooms.get_mut(code).ok_or(NetError::RoomExpired)?;
@@ -186,6 +241,9 @@ impl Broker {
             Request::Playing(playing) if peer == HOST => room.playing = playing,
             Request::Kick(target) if peer == HOST && target != HOST => self.close(code, target),
             Request::Send { to, message } => {
+                if matches!(message, GameMessage::Input { .. } | GameMessage::Frame(_)) {
+                    return Err(NetError::Protocol);
+                }
                 if peer != HOST && (message.host_only() || to.is_some_and(|p| p != HOST)) {
                     return Err(NetError::Ownership);
                 }
@@ -227,6 +285,17 @@ impl Broker {
         Ok(())
     }
     pub fn close(&mut self, code: &str, peer: PeerId) {
+        if let Some(gameplay) = &self.gameplay {
+            if peer == HOST {
+                if let Some(room) = self.rooms.get(code) {
+                    for peer in room.peers.keys() {
+                        gameplay.revoke(code, *peer);
+                    }
+                }
+            } else {
+                gameplay.revoke(code, peer);
+            }
+        }
         if peer == HOST {
             if let Some(room) = self.rooms.remove(code) {
                 for out in room.peers.into_values() {
@@ -252,6 +321,11 @@ impl Broker {
             .collect();
         for code in expired {
             if let Some(room) = self.rooms.remove(&code) {
+                if let Some(gameplay) = &self.gameplay {
+                    for peer in room.peers.keys() {
+                        gameplay.revoke(&code, *peer);
+                    }
+                }
                 for out in room.peers.into_values() {
                     let _ = deliver(&self.budget, &out, Event::Error(NetError::RoomExpired));
                 }
@@ -299,6 +373,7 @@ mod tests {
                 inputs: vec![bomberman_core::PlayerInput::default(); 4000],
                 actions: vec![],
                 hash: None,
+                acknowledgments: vec![],
             }),
         };
         let mut sent = 0;

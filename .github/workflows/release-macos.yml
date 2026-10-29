@@ -81,7 +81,7 @@ jobs:
           path: dist/github/*
           if-no-files-found: error
           retention-days: 14
-  draft:
+  publish:
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -96,7 +96,7 @@ jobs:
           pattern: release-*
           path: release
           merge-multiple: true
-      - name: Verify all artifacts and create draft
+      - name: Verify all artifacts and publish release
         working-directory: release
         shell: bash
         run: |
@@ -124,12 +124,18 @@ jobs:
               "relay endpoints are excluded. The Mac app is ad-hoc signed and not notarized.\n\n"
               "The ARM64 relay archive includes the native service, systemd unit, setup "
               "instructions, licenses and provenance. Configure its address privately during setup.\n\n"
-              "All three artifacts come from the same tagged commit and include build metadata.\n")
+              "Multiplayer uses protocol 5: immediate client prediction and encrypted QUIC datagrams. "
+              "Upgrade all clients and the relay together. Internet play requires both TCP 443 "
+              "(authentication/lobby/recovery) and UDP 443 (gameplay), with no TCP gameplay fallback. "
+              "LAN hosts require TCP/UDP 1997 plus UDP 1998. Existing private access links remain valid.\n\n"
+              "See the README for client installation, original game data import, and creating/importing "
+              "the private server access key. All three artifacts come from the same tagged commit "
+              "and include build metadata.\n")
           PY
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             echo 'Release already exists; refusing to overwrite assets.' >&2
             exit 1
           fi
           gh release create "$RELEASE_TAG" ./*.AppImage ./*.zip ./*.tar.gz ./*.sha256 ./*.build.json \
-            --verify-tag --draft --prerelease --title "Atomic Bomberman ${RELEASE_TAG#v}" \
+            --verify-tag --latest --title "Atomic Bomberman ${RELEASE_TAG#v}" \
             --notes-file release-notes.md

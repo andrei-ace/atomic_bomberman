@@ -1,9 +1,9 @@
 # Desktop and relay releases
 
-Version **0.3.1**, Rust **1.89.0**, one annotated Git tag for all three packages:
+Version **0.4.0**, Rust **1.89.0**, one annotated Git tag for all three packages:
 Linux x86-64 AppImage (Ubuntu 24.04 baseline, X11/XWayland), Apple Silicon Mac ZIP,
 and native Linux ARM64 relay (Ubuntu 26 deployment; glibc 2.39 minimum).
-The multiplayer protocol is **4**. Rebuild and upgrade the relay and all clients
+The multiplayer protocol is **5**. Rebuild and upgrade the relay and all clients
 from the same commit; the application version alone does not identify a
 compatible protocol build.
 Original game assets, imported caches, media, private relay state and invitations
@@ -17,8 +17,8 @@ librsvg2-common squashfs-tools` alongside the desktop build libraries in README.
 on a Mac. `bomberman-net` tests deterministic replay, transitions, ownership,
 host start authority, personal colors, disconnects and rematches; relay tests
 use real loopback TLS. Local gameplay retains its roulette checks. The
-`tools/verify_relay.py` benchmark defaults to two isolated rooms with twenty
-outbound game connections: one host and nine clients per room.
+`tools/verify_datagram.py` exercises production client prediction over encrypted
+UDP at 0/40/80/160 ms gameplay RTT, plus jitter and packet loss.
 CI is configured to compare the network replay fixture with the same committed
 digest on Linux x86-64, macOS ARM64/Intel and native ARM64 runners.
 
@@ -47,10 +47,10 @@ Review and commit the intended source, then build from that clean commit:
 ```sh
 # Ubuntu 24.04 x86-64:
 tools/package_linux.sh --release
-python3 tools/linux_release.py verify dist/github/atomic-bomberman-0.3.1-linux-x86_64.AppImage --release
+python3 tools/linux_release.py verify dist/github/atomic-bomberman-0.4.0-linux-x86_64.AppImage --release
 # Apple Silicon Mac:
 tools/package_macos.sh --release
-python3 tools/macos_release.py verify dist/github/atomic-bomberman-0.3.1-macos-arm64.zip --release
+python3 tools/macos_release.py verify dist/github/atomic-bomberman-0.4.0-macos-arm64.zip --release
 # Native ARM64 Linux:
 cargo build --locked --release -p bomberman-relay
 python3 tools/package_relay.py --release
@@ -76,24 +76,23 @@ A development build intentionally records `dirty: true`; it is not a tagged
 release. Local source digests exclude `docs/evidence/`. Mac packaging remains
 ad-hoc signed, with no Developer ID signing/notarization setup.
 
-## One draft release
+## Coordinated release
 
-Create and push an annotated `v0.3.1` tag only after reviewing the commit and
+Create and push an annotated `v0.4.0` tag only after reviewing the commit and
 platform checks. Its push starts **Desktop and relay release**; the same workflow
 can also be dispatched manually for an existing annotated version tag. The
 workflow uses separate native Linux x86-64, Mac ARM64 and Linux ARM64 runners.
 Each validates the annotated tag/version, tests the source, compares the shared
 replay digest, builds from a clean checkout and verifies its package.
 
-Only the final draft job has release-write permission. It downloads all three
+Only the final publish job has release-write permission. It downloads all three
 packages, verifies checksums and provenance, checks that the remote tag still
 identifies their common source commit, refuses to overwrite an existing release,
-and creates a **draft** prerelease. Actions are pinned to commits. Inspect the
-draft and test downloaded packages before publishing. Keep repository visibility
+and publishes the release after all build jobs succeed. Actions are pinned to commits.
+Test downloaded packages and retain the previous relay binary for rollback. Keep repository visibility
 unchanged and never attach separate asset-transfer archives.
 
-The workflow is configured here; it does not claim that a draft has been run or
-published. Native Mac GUI/clipboard and real Linux-to-Mac play need those machines.
+Native Mac GUI/clipboard and real Linux-to-Mac play need those machines.
 Private Hetzner deployment and WAN acceptance need the server's locally entered
 address and access. Record environment-specific measurements separately from unit
 and loopback tests; see `docs/evidence/network-validation.json`.
@@ -107,15 +106,22 @@ the native AppImage entrypoint. Native Linux release builds retain the ordinary
 strict verification path.
 
 
-The 0.3.1 clients use one saved private server URL and an automatically refreshed
+The clients use one saved private server URL and an automatically refreshed
 friends' game list. LAN discovery retries per interface and has a separate
 Join by IP fallback. macOS bundles declare Local Network access and retain their
 application icon after the launcher hands off to the game. Rendering fixes cover
 upright loading screens, the vertical anchor for cropped flame sprites, and empty
 floor underneath exploding bricks. Original player-colored flames are retained.
 
-The 0.3.1 clients preload battle media in the lobby and automatically acknowledge
-match preparation before the host begins the shared countdown. Protocol 4 adds
-generation-specific preparation acknowledgements and a host-only begin message;
-upgrade the relay and every client together. Existing private server links and
-TLS identities remain valid.
+Clients preload battle media in the lobby and acknowledge match preparation
+before the shared countdown. Protocol 5 also requires successful bidirectional
+QUIC gameplay probes. Internet play needs both TCP 443 and UDP 443; LAN hosts
+need TCP/UDP 1997 and UDP 1998. Existing private server links and TLS identities
+remain valid. Upgrade every client and the relay together.
+
+Run `python3 tools/verify_datagram.py --report /tmp/datagram-check.json` against
+the built relay and `network_latency` example. It exercises production session
+prediction and encrypted UDP at several injected RTTs. Live mode accepts the
+private access link on stdin and creates temporary rooms without restarting
+the relay. Its presentation-position measurements do not certify physical
+display or audio-device latency. See [protocol findings](network-protocol.md).

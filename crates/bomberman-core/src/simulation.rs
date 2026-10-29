@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod clock_boundary_tests;
+#[cfg(test)]
+mod control_sound_tests;
 mod gold;
 mod hazards;
 mod items;
@@ -28,6 +30,8 @@ pub struct Simulation {
     pub elapsed_ms: u64,
     pub remaining_ms: Option<u32>,
     pub events: Vec<GameEvent>,
+    #[serde(skip)]
+    pub control_sounds: Vec<ControlSound>,
     pub rng: DeterministicRng,
     pub round: u32,
     pub gold_reward: Option<GoldReward>,
@@ -126,6 +130,7 @@ impl Simulation {
             phase: RoundPhase::Playing,
             elapsed_ms: 0,
             events: vec![],
+            control_sounds: vec![],
             rng: DeterministicRng::new(seed),
             round: 0,
             gold_reward: None,
@@ -169,6 +174,7 @@ impl Simulation {
     /// wall-clock hazards retain the full elapsed time, including a disk stall.
     pub fn step(&mut self, elapsed_ms: u32, inputs: &[PlayerInput]) -> Vec<GameEvent> {
         self.events.clear();
+        self.control_sounds.clear();
         if self.paused {
             return vec![];
         }
@@ -208,6 +214,18 @@ impl Simulation {
 
     pub fn wall_elapsed_ms(&self) -> u64 {
         self.clock.wall_elapsed_ms
+    }
+
+    fn record_control_sounds(&mut self, start: usize, seat: usize, control: ControlSoundKind) {
+        for event_index in start..self.events.len() {
+            if matches!(self.events[event_index], GameEvent::Sound { .. }) {
+                self.control_sounds.push(ControlSound {
+                    seat,
+                    control,
+                    event_index,
+                });
+            }
+        }
     }
 
     pub(crate) fn cached_ai_danger(&self) -> Option<&[i32]> {
@@ -328,6 +346,7 @@ impl Simulation {
 
     pub fn next_round(&mut self) -> Result<(), ConfigError> {
         self.config.validate()?;
+        self.control_sounds.clear();
         self.round += 1;
         let new_match = self.round == 1;
         self.board = Board::default();
@@ -478,6 +497,7 @@ impl Simulation {
     /// returned only on the call that settles the wheel.
     pub fn advance_roulette(&mut self, elapsed_ms: u32) -> Option<Powerup> {
         self.events.clear();
+        self.control_sounds.clear();
         if self.roulette_complete {
             return None;
         }
@@ -544,6 +564,7 @@ impl Simulation {
         self.round = 0;
         self.start_positions.clear();
         self.events.clear();
+        self.control_sounds.clear();
         self.paused = false;
         self.gold_wheel = None;
         self.roulette_accumulator_ms = 0;
@@ -752,16 +773,34 @@ impl Simulation {
                     || self.players[i].has_disease(Disease::Diarrhea)
                     || self.players[i].has_disease(Disease::Hyperactive))
             {
+                let start = self.events.len();
                 self.throw_carried(i);
+                if self.players[i].config.control == ControlKind::Human
+                    && !controls_locked
+                    && !input.bomb
+                    && self.previous_inputs[i].bomb
+                {
+                    self.record_control_sounds(start, i, ControlSoundKind::BombRelease);
+                }
             }
             if self.pending_action[i] {
+                let start = self.events.len();
                 self.action(i);
+                if self.players[i].config.control == ControlKind::Human {
+                    self.record_control_sounds(start, i, ControlSoundKind::Action);
+                }
             }
             if self.pending_bomb[i]
                 || self.players[i].has_disease(Disease::Diarrhea)
                 || self.players[i].has_disease(Disease::Hyperactive)
             {
+                let explicit =
+                    self.players[i].config.control == ControlKind::Human && self.pending_bomb[i];
+                let start = self.events.len();
                 self.bomb_button(i);
+                if explicit {
+                    self.record_control_sounds(start, i, ControlSoundKind::Bomb);
+                }
             }
             self.gold_player_update(i);
         }

@@ -1081,7 +1081,13 @@ impl App {
         }
         let target = if let Some(replay) = &network.replay {
             let stage = replay.stage;
-            self.simulation = Some(replay.simulation.clone());
+            self.simulation = Some(
+                network
+                    .predicted
+                    .as_ref()
+                    .unwrap_or(&replay.simulation)
+                    .clone(),
+            );
             self.paused = replay.simulation.paused;
             let arena = replay.simulation.config.arena.index();
             self.media.ensure_arena(arena).await?;

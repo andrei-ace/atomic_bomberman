@@ -1,0 +1,517 @@
+{
+  "passed": true,
+  "environment": "Linux x86_64",
+  "responsiveness_target_met": true,
+  "cases": [
+    {
+      "passed": true,
+      "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+      "host_platform": "linux",
+      "client_platform": "linux",
+      "canonical_state_hash": "fe7344ff8f48d74d6ebda4a6ed3cbb2715d8cb34c0193b23178d32e9860bfeec",
+      "host_tick": 200,
+      "client_tick": 200,
+      "observed_gameplay_rtt_ms": [
+        2
+      ],
+      "sample_to_visible_ms": {
+        "median": 16.768709,
+        "p95": 33.519735000000004,
+        "max": 33.519735000000004
+      },
+      "responsiveness_target_ms": 40,
+      "responsiveness_target_met": true,
+      "visible_before_confirmation_samples": 3,
+      "samples": [
+        {
+          "canonical_tick": 10,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 50.226213,
+          "sample_to_visible_ms": 33.519735000000004,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 23,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 16.794111,
+          "sample_to_visible_ms": 16.794111,
+          "visible_before_confirmation": false
+        },
+        {
+          "canonical_tick": 36,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 16.745390999999998,
+          "sample_to_visible_ms": 16.745390999999998,
+          "visible_before_confirmation": false
+        },
+        {
+          "canonical_tick": 49,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 33.462759,
+          "sample_to_visible_ms": 16.759186,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 63,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 16.767442,
+          "sample_to_visible_ms": 16.767442,
+          "visible_before_confirmation": false
+        },
+        {
+          "canonical_tick": 77,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 16.757973999999997,
+          "sample_to_visible_ms": 16.757973999999997,
+          "visible_before_confirmation": false
+        },
+        {
+          "canonical_tick": 90,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 16.768663999999998,
+          "sample_to_visible_ms": 16.768663999999998,
+          "visible_before_confirmation": false
+        },
+        {
+          "canonical_tick": 103,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 16.789122,
+          "sample_to_visible_ms": 16.789122,
+          "visible_before_confirmation": false
+        },
+        {
+          "canonical_tick": 117,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 33.51849300000001,
+          "sample_to_visible_ms": 16.785876000000002,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 130,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 16.768754,
+          "sample_to_visible_ms": 16.768754,
+          "visible_before_confirmation": false
+        }
+      ],
+      "environment": "Disposable TLS/QUIC relay, native loopback through opaque packet proxy",
+      "injected_gameplay_rtt_ms": 0,
+      "jitter_ms": 0,
+      "udp_loss_percent": 0,
+      "udp_packets_received": 1084,
+      "udp_packets_forwarded": 1084,
+      "udp_packets_dropped": 0
+    },
+    {
+      "passed": true,
+      "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+      "host_platform": "linux",
+      "client_platform": "linux",
+      "canonical_state_hash": "5b5cec75053f1964870899e17145a10b8f4922a9d1ce886fcca3fa692e468f99",
+      "host_tick": 200,
+      "client_tick": 200,
+      "observed_gameplay_rtt_ms": [
+        45,
+        42,
+        45,
+        46
+      ],
+      "sample_to_visible_ms": {
+        "median": 16.8028725,
+        "p95": 33.538811,
+        "max": 33.538811
+      },
+      "responsiveness_target_ms": 40,
+      "responsiveness_target_met": true,
+      "visible_before_confirmation_samples": 10,
+      "samples": [
+        {
+          "canonical_tick": 10,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 67.00782199999999,
+          "sample_to_visible_ms": 33.538811,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 23,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 83.722955,
+          "sample_to_visible_ms": 16.796696,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 36,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 83.74519699999999,
+          "sample_to_visible_ms": 16.809048999999998,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 49,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 67.008162,
+          "sample_to_visible_ms": 16.811733999999998,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 63,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 83.719269,
+          "sample_to_visible_ms": 16.811745,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 76,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 100.36334,
+          "sample_to_visible_ms": 33.461376,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 90,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 83.72078099999999,
+          "sample_to_visible_ms": 16.790805,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 103,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 50.223939,
+          "sample_to_visible_ms": 16.786527999999997,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 117,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 66.992703,
+          "sample_to_visible_ms": 16.786668000000002,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 130,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 66.98564,
+          "sample_to_visible_ms": 16.793701000000002,
+          "visible_before_confirmation": true
+        }
+      ],
+      "environment": "Disposable TLS/QUIC relay, native loopback through opaque packet proxy",
+      "injected_gameplay_rtt_ms": 40,
+      "jitter_ms": 0,
+      "udp_loss_percent": 0,
+      "udp_packets_received": 1150,
+      "udp_packets_forwarded": 1150,
+      "udp_packets_dropped": 0
+    },
+    {
+      "passed": true,
+      "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+      "host_platform": "linux",
+      "client_platform": "linux",
+      "canonical_state_hash": "efa37741be9dcb8c27b3257752e19bbc271eaa860c378d372cf2848cb6e296c2",
+      "host_tick": 200,
+      "client_tick": 201,
+      "observed_gameplay_rtt_ms": [
+        85,
+        87,
+        85
+      ],
+      "sample_to_visible_ms": {
+        "median": 16.7961,
+        "p95": 33.555582,
+        "max": 33.555582
+      },
+      "responsiveness_target_ms": 40,
+      "responsiveness_target_met": true,
+      "visible_before_confirmation_samples": 10,
+      "samples": [
+        {
+          "canonical_tick": 10,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 100.48635999999999,
+          "sample_to_visible_ms": 16.821733,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 23,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 100.44833799999999,
+          "sample_to_visible_ms": 16.786657,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 37,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 133.967833,
+          "sample_to_visible_ms": 16.819979,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 50,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 100.468476,
+          "sample_to_visible_ms": 16.822324,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 63,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 133.88825500000002,
+          "sample_to_visible_ms": 33.555582,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 77,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 117.103941,
+          "sample_to_visible_ms": 16.787087999999997,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 90,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 117.166889,
+          "sample_to_visible_ms": 16.784101999999997,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 104,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 117.177609,
+          "sample_to_visible_ms": 16.805112,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 117,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 100.450343,
+          "sample_to_visible_ms": 16.785906,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 130,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 100.442537,
+          "sample_to_visible_ms": 16.785525,
+          "visible_before_confirmation": true
+        }
+      ],
+      "environment": "Disposable TLS/QUIC relay, native loopback through opaque packet proxy",
+      "injected_gameplay_rtt_ms": 80,
+      "jitter_ms": 0,
+      "udp_loss_percent": 0,
+      "udp_packets_received": 1129,
+      "udp_packets_forwarded": 1127,
+      "udp_packets_dropped": 0
+    },
+    {
+      "passed": true,
+      "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+      "host_platform": "linux",
+      "client_platform": "linux",
+      "canonical_state_hash": "8b63e8f5b48d0064204ffe5eaed34ea9714367de74b054fe4614831b28a5c62b",
+      "host_tick": 200,
+      "client_tick": 200,
+      "observed_gameplay_rtt_ms": [
+        166,
+        163,
+        165
+      ],
+      "sample_to_visible_ms": {
+        "median": 16.7804005,
+        "p95": 33.509085,
+        "max": 33.509085
+      },
+      "responsiveness_target_ms": 40,
+      "responsiveness_target_met": true,
+      "visible_before_confirmation_samples": 10,
+      "samples": [
+        {
+          "canonical_tick": 10,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 184.15338,
+          "sample_to_visible_ms": 16.82558,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 23,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 200.786802,
+          "sample_to_visible_ms": 16.787368999999998,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 37,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 200.80778099999998,
+          "sample_to_visible_ms": 16.755670000000002,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 50,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 200.820284,
+          "sample_to_visible_ms": 16.779052999999998,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 63,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 200.82322,
+          "sample_to_visible_ms": 16.780346,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 77,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 217.439129,
+          "sample_to_visible_ms": 33.509085,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 90,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 200.802121,
+          "sample_to_visible_ms": 16.785695999999998,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 103,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 200.842815,
+          "sample_to_visible_ms": 16.780455,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 117,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 200.831806,
+          "sample_to_visible_ms": 16.764056,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 130,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 184.066238,
+          "sample_to_visible_ms": 16.779114,
+          "visible_before_confirmation": true
+        }
+      ],
+      "environment": "Disposable TLS/QUIC relay, native loopback through opaque packet proxy",
+      "injected_gameplay_rtt_ms": 160,
+      "jitter_ms": 0,
+      "udp_loss_percent": 0,
+      "udp_packets_received": 1212,
+      "udp_packets_forwarded": 1208,
+      "udp_packets_dropped": 0
+    },
+    {
+      "passed": true,
+      "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+      "host_platform": "linux",
+      "client_platform": "linux",
+      "canonical_state_hash": "b38006a1cf2dd4efd2e8c1d5cb4dbfd6b25a460810e80138dc15f8790801b341",
+      "host_tick": 200,
+      "client_tick": 200,
+      "observed_gameplay_rtt_ms": [
+        81,
+        72
+      ],
+      "sample_to_visible_ms": {
+        "median": 16.783907499999998,
+        "p95": 33.512622,
+        "max": 33.512622
+      },
+      "responsiveness_target_ms": 40,
+      "responsiveness_target_met": true,
+      "visible_before_confirmation_samples": 10,
+      "samples": [
+        {
+          "canonical_tick": 10,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 117.164344,
+          "sample_to_visible_ms": 16.790996,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 24,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 150.546973,
+          "sample_to_visible_ms": 16.757393,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 37,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 100.396,
+          "sample_to_visible_ms": 16.782058999999997,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 50,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 117.11415,
+          "sample_to_visible_ms": 16.743106,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 64,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 133.88608,
+          "sample_to_visible_ms": 16.79866,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 77,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 100.41933399999999,
+          "sample_to_visible_ms": 16.785756,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 91,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 133.92606500000002,
+          "sample_to_visible_ms": 33.512622,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 104,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 117.17419199999999,
+          "sample_to_visible_ms": 16.791627,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 116,
+          "direction": "Right",
+          "sample_to_confirmation_ms": 100.4224,
+          "sample_to_visible_ms": 16.782058999999997,
+          "visible_before_confirmation": true
+        },
+        {
+          "canonical_tick": 129,
+          "direction": "Left",
+          "sample_to_confirmation_ms": 133.88046,
+          "sample_to_visible_ms": 16.764066,
+          "visible_before_confirmation": true
+        }
+      ],
+      "environment": "Disposable TLS/QUIC relay, native loopback through opaque packet proxy",
+      "injected_gameplay_rtt_ms": 80,
+      "jitter_ms": 20,
+      "udp_loss_percent": 5,
+      "udp_packets_received": 1270,
+      "udp_packets_forwarded": 1189,
+      "udp_packets_dropped": 79
+    }
+  ],
+  "limitations": [
+    "Presentation positions are sampled at 60 Hz by the production coordinator without a graphics window.",
+    "The local proxy changes encrypted UDP delivery; these measurements do not establish physical display or audio-device latency.",
+    "Native macOS hardware and cross-platform WAN measurements are separate from this Linux run."
+  ],
+  "application_version": "0.4.0",
+  "protocol_version": 5
+}

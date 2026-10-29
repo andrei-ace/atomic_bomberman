@@ -42,6 +42,21 @@ impl Relay {
     pub fn router(self) -> Router {
         Router::new().route("/v1/ws", get(upgrade)).with_state(self)
     }
+    pub fn bind_gameplay(
+        &self,
+        address: SocketAddr,
+        certificate: Vec<u8>,
+        private_key: Vec<u8>,
+    ) -> Result<bomberman_net::quic::GameplayServer, NetError> {
+        let server = bomberman_net::quic::GameplayServer::bind(
+            address,
+            certificate,
+            private_key,
+            &self.broker,
+        )?;
+        self.broker.lock().unwrap().set_gameplay(server.clone());
+        Ok(server)
+    }
     pub fn counts(&self) -> (usize, usize) {
         let broker = self.broker.lock().unwrap();
         (broker.rooms(), broker.connections())

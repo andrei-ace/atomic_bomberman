@@ -1,261 +1,184 @@
 # Atomic Bomberman in Rust
 
-For macOS Apple Silicon, see [the Mac build and app guide](docs/macos-handoff.md).
-The portable app imports your `.7z` archive, disc image, or extracted game folder
-on first launch. Original game data stays separate from the release archive.
+A native Linux and macOS reconstruction of Atomic Bomberman, with local, LAN,
+and private Internet battles for 2–10 players and bots. It includes all 11 arenas,
+68 supplied schemes, teams, powerups, diseases, arena hazards, and rematches.
+The Rust game runs directly on Linux and macOS. REA and Ghidra are used during
+development.
 
-A native Linux and macOS battle reconstruction with private online and LAN multiplayer that imports graphics, animations,
-bitmap fonts, palettes, schemes, and audio from the supplied Atomic Bomberman CD.
-The game runs in Rust; Ghidra, REA, Windows, and an emulator are not runtime
-dependencies. Macroquad is pinned to **0.4.16**, Gilrs to **0.11.2**.
+**You need your original Atomic Bomberman game data.** Release downloads contain
+the application and importer; original graphics, sounds, and other game assets
+are imported locally from your copy of the game.
 
-Battle supports 2–10 humans/computer opponents, all 11 arenas and 68 supplied
-schemes, teams, wins or kill scoring, powerups and diseases, arena hazards,
-closing walls, Gold Bomberman roulette, pause, help, and rematches. The default
-is one keyboard player and nine bots. Two keyboard layouts and controller
-buttons can be changed in Controls. Settings persist between sessions.
+## Install a client and import game data
 
-The original AI dispatcher and eight callbacks run natively in Rust. Movement,
-bomb physics, pickups/diseases, item metadata, arena hazards, setup, roulette, clocks, sound selection, and Gold
-particles were reconstructed from the executable and checked against original
-x86 routines. See the [behavior and validation ledger](docs/behavior-ledger.md)
-for the tested boundaries; component comparisons do not establish whole-program
-binary equivalence.
-
-## Install on macOS
-
-Download the Apple Silicon ZIP and its matching `.zip.sha256` from
+Download the **0.4.0** application and matching checksum from
 [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases).
-Choose the built Mac ZIP asset; GitHub's **Source code** downloads require compilation.
+Choose the built AppImage or Mac ZIP asset. GitHub's **Source code** archives
+require compilation.
 
-1. Verify the downloaded ZIP in Terminal:
+### Linux x86-64
 
-   ```bash
-   cd ~/Downloads
-   shasum -a 256 -c atomic-bomberman-0.3.1-macos-arm64.zip.sha256
-   ```
+Requires Ubuntu 24.04 or newer with X11/XWayland. In the download directory:
 
-2. Extract the ZIP and move **Atomic Bomberman.app** into **Applications**.
-3. Open it, click **Choose Game Data…**, and select your original `.7z`, `.img`,
-   `.iso`, or extracted game folder. After import, the game starts directly.
-
-The download includes an installation `README.txt`. See
-[the full installation guide](docs/INSTALL-macos.md) for macOS approval of this
-ad-hoc-signed preview, controls, updates, and how to reset first-launch setup.
-No Rust, Homebrew, Python, or Windows installation is needed to play.
-
-## Build from source
-
-On an Apple Silicon Mac with Xcode Command Line Tools, Rust 1.89+, and Python 3.9+:
-
-```bash
-tools/check.sh
-tools/test_macos_launcher.sh
-tools/package_macos.sh
-open "dist/Atomic Bomberman.app"
+```sh
+sha256sum -c atomic-bomberman-0.4.0-linux-x86_64.AppImage.sha256
+chmod +x atomic-bomberman-0.4.0-linux-x86_64.AppImage
+./atomic-bomberman-0.4.0-linux-x86_64.AppImage
 ```
 
-Versioned release files are generated in `dist/github/`: the ZIP, its SHA-256
-sidecar, and build metadata identifying the source commit and executable hashes.
-`dist/` and original game media remain ignored by Git. For a clean, committed
-release build, use `tools/package_macos.sh --release`; see
-[the release procedure](docs/releases.md).
+The AppImage runs without FUSE and bundles the importer and desktop libraries.
+See [Linux installation](docs/INSTALL-linux.md) for repair, data paths, and logs.
 
-Choose your original game archive or image when the app asks for game data.
-The package is ad-hoc signed; it does not require Rust or Homebrew to play.
-The default Mac action key is **Right Shift**, and **Command-Control-F** also
-toggles fullscreen. Mac settings and imported data live under
-`~/Library/Application Support/Atomic Bomberman/`; `--settings` and
-`XDG_CONFIG_HOME` retain their explicit overrides.
+### macOS Apple Silicon
 
-For a terminal import on this checkout:
+Requires an Apple Silicon Mac (M1 or later). Verify the download in Terminal:
 
-```bash
-cargo run --locked --release -p bomberman-assets -- import \
-  --source ../Atomic_Bomberman_Win_ROM_EN.7z --output local-assets
-cargo run --locked --release -p bomberman -- --assets local-assets --windowed
+```sh
+cd ~/Downloads
+shasum -a 256 -c atomic-bomberman-0.4.0-macos-arm64.zip.sha256
 ```
 
-Linux x86-64, Ubuntu 24.04 baseline, X11 or XWayland; Rust 1.89 or newer.
+Extract the ZIP, move **Atomic Bomberman.app** into **Applications**, and open it.
+The app is ad-hoc signed; [Mac installation](docs/INSTALL-macos.md) explains
+macOS approval and troubleshooting. No Rust, Homebrew, Python, or Windows
+installation is needed for either release package.
 
-```bash
-sudo apt-get install build-essential pkg-config libudev-dev libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libarchive-tools
-cargo build --locked --release
+### First launch
 
-cargo run -p bomberman-assets -- import \
-  --source "Atomic_Bomberman_Win_ROM_EN/Game Files/Atomic Bomberman.img" \
-  --output local-assets
+Select your original `.7z` archive, `.img`/`.iso` disc image, or extracted game
+folder containing `COLOR.PAL` and `DATA`. A `.7z` must contain exactly one disc
+image. The importer reads the source without changing it, validates the imported
+data, and starts the game. Allow about 0.6 GB for the saved assets plus temporary
+import space. Later launches reuse the saved data.
 
-cargo run -p bomberman --release -- --assets local-assets --windowed
-```
+Each multiplayer computer imports the same game edition and runs the same
+release. Update the relay and all clients together: **0.4.0 uses protocol 5**.
+Existing private server links and saved connection profiles remain valid.
 
-The importer also accepts an extracted game directory (containing `COLOR.PAL`
-and `DATA`) or a 2048-byte ISO9660 image. It opens sources read-only and writes
-to a new or empty output directory. Import is staged and published only after
-validation. `local-assets/`, build outputs, disc files, and analysis artifacts
-are excluded from tracked source. Allow about 0.6 GB for the asset cache.
+## Play locally
 
-```bash
-cargo run -p bomberman-assets -- validate --assets local-assets
-```
-
-The original disc contains two unused broken animations, three unavailable
-sound table entries, and 25 audio clips ending with an incomplete stereo frame.
-The importer reports these precisely, retains their source hashes, preserves
-the unused files, and pads only the missing right-channel sample. Required
-battle animations and every generated asset are validated.
-
-## Controls
+Choose **Start local battle**. The default is one keyboard player against nine
+bots. In **Players and arena**, choose participants, devices, arena, and rules.
+For two people on one keyboard, assign Keyboard 1 and Keyboard 2 to two humans.
+Controls can be remapped in the game.
 
 | Action | Keyboard 1 | Keyboard 2 | Controller |
 | --- | --- | --- | --- |
 | Move | Arrow keys | W A S D | D-pad / left stick |
 | Bomb / grab | Space | Left Shift | South |
-| Action / trigger / punch | Right Ctrl / Right Shift (Mac) | E | East |
-| Menus | Arrows, Enter, Escape | | D-pad, South, East |
+| Action / trigger / punch | Right Ctrl; Right Shift on Mac | E | East |
 | Pause | Escape / P | | Start |
 | Help | F1 | | |
-| Fullscreen | F11 / Command-Control-F (Mac) | | |
+| Fullscreen | F11; Command-Control-F on Mac | | |
 
-Select participants and devices in Battle Setup; choose arena and scheme before
-starting. For two people on one keyboard, set two participants to Human and
-assign Keyboard 1 and Keyboard 2. Both can move and drop bombs simultaneously.
-A keyboard layout/controller can belong to one participant at a time.
-Reconnected controllers retain their slot. Configurations requiring two teams
-are checked before starting a match. A missing sound output falls back to
-silent play.
+Settings and imported data stay outside the application, so replacing the
+AppImage or Mac app preserves them. A missing audio output permits silent play.
 
-On Linux, settings are saved to `$XDG_CONFIG_HOME/atomic-bomberman/settings.json`, or
-`~/.config/atomic-bomberman/settings.json`. Use `--settings <file>` to select a
-different location, `--mute` for silent play, and `--seed <number>` to reproduce
-simulation randomness. The game starts in a resizable window by default.
-`--windowed` overrides a saved fullscreen setting; `--fullscreen` starts
-fullscreen. F11 switches modes while playing and saves the choice. Run `--help`
-for all command-line options.
+## Internet play: create and import an access key
 
-On Linux, a driver context failure before the game loads automatically retries
-once with Mesa software rendering. Use `--software-rendering` to select it
-explicitly. Headless mode and `--help` do not initialize graphics.
+The **private server link is the group's access key**. It contains the relay
+address, access secret, and certificate fingerprint. Everyone in the group uses
+the same full link once, then finds friends' hosted games automatically.
 
-## Verify
+### Create a key on a new relay
 
-```bash
-tools/check.sh
-
-cargo run -p bomberman --release -- --assets local-assets \
-  --headless --matches 32 --seed 1997 --settings /tmp/bomberman-check.json
-
-cargo run -p bomberman --release -- --assets local-assets \
-  --smoke-test 600 --screenshot /tmp/bomberman.png \
-  --settings /tmp/bomberman-smoke.json --mute
-```
-
-CI uses the validated Rust 1.89.0 toolchain so changes to the latest stable
-Clippy do not unexpectedly turn existing code into a failed build.
-
-Headless mode opens no window or sound device and runs all participants as bots.
-It prints match winners, round counts, elapsed simulation time, and deterministic
-checksums. GUI smoke mode runs a fixed number of frames, saves a 640×480 canvas,
-and exits. `--smoke-menu` exercises the main menu instead of starting a battle.
-
-The development-only x86 comparisons require the supplied executable and Unicorn:
-
-```bash
-python3 -m pip install --target .dev/python unicorn==2.1.4
-cargo build --locked -p bomberman-core --example ai_fixture
-python3 tools/compare_ai.py --exe /path/to/BM95.EXE \
-  --per-callback 500 --report docs/evidence/ai-parity.json
-
-cargo build --locked -p bomberman-core --example roulette_fixture
-python3 tools/compare_roulette.py --exe /path/to/BM95.EXE \
-  --report docs/evidence/roulette-parity.json
-
-cargo build --locked -p bomberman-core --examples
-python3 tools/compare_behavior.py --exe /path/to/BM95.EXE
-python3 tools/compare_ai_context.py --exe /path/to/BM95.EXE
-python3 tools/compare_physics.py --exe /path/to/BM95.EXE
-python3 tools/compare_hazards.py --exe /path/to/BM95.EXE
-python3 tools/compare_setup.py --exe /path/to/BM95.EXE
-
-cargo build --locked -p bomberman-core --features native-comparison --example match_ai_fixture
-python3 tools/compare_match_ai.py --exe /path/to/BM95.EXE --assets local-assets
-
-cargo build --locked --release -p bomberman-core --features native-comparison --example whole_match_fixture
-python3 tools/compare_whole_match.py --exe /path/to/BM95.EXE --assets local-assets --rounds 0
-python3 tools/compare_items.py --exe /path/to/BM95.EXE
-python3 tools/compare_powerups.py --exe /path/to/BM95.EXE
-python3 tools/compare_player_presentation.py --exe /path/to/BM95.EXE
-
-cargo run --locked -p bomberman-core --example battle_validation -- \
-  local-assets docs/evidence/battle-validation.json
-
-# On a desktop/virtual X11 display, capture actual mixed original audio:
-python3 tools/capture_audio.py --assets local-assets --display :99 \
-  --report docs/evidence/linux-audio.json
-
-# Requires Pillow, libX11 and libXtst on a dedicated X11 display:
-python3 tools/verify_linux.py --assets local-assets --display :99 \
-  --output /tmp/bomberman-ui-check
-```
-
-Extract `BM95.EXE` from your supplied disc for this comparison; do not run the
-original application. The harness maps its PE sections into Unicorn, executes
-the selected routines, and compares player state, persistent AI state, random
-seeds, and callback results. The original RNG arithmetic and search helpers
-execute unchanged. The dispatcher return value is void and is not compared.
-See [asset formats](docs/asset-formats.md) and the [behavior ledger](docs/behavior-ledger.md)
-for exact boundaries and reproduction details.
-
-## Linux AppImage and private multiplayer
-
-Download the versioned Linux x86-64 AppImage and matching checksum. It bundles a
-native first-launch importer, archive helper, desktop libraries and diagnostics:
+An administrator installs the native ARM64 relay using [relay setup](docs/relay.md).
+Initialize its private state once:
 
 ```sh
-sha256sum -c atomic-bomberman-0.3.1-linux-x86_64.AppImage.sha256
-chmod +x atomic-bomberman-0.3.1-linux-x86_64.AppImage
-./atomic-bomberman-0.3.1-linux-x86_64.AppImage
-# The ordinary command automatically extracts and runs without FUSE.
+sudo -u bomberman-relay /usr/local/lib/bomberman-relay/bomberman-relay init \
+  --state /var/lib/bomberman-relay/private
 ```
 
-Choose an original `.7z`, `.img`, `.iso` or extracted folder on first launch. See
-[Linux installation](docs/INSTALL-linux.md) for XDG paths, repair and logs.
-Build on Ubuntu 24.04 with `libgtk-3-dev libarchive-tools librsvg2-common squashfs-tools` in
-addition to the desktop libraries above, then run `tools/package_linux.sh`.
+This generates the relay's TLS identity, access secret, and server link. For an
+existing relay, retrieve its current link from your own computer over SSH:
 
-**Multiplayer** appears directly below **Start local battle**. Inside it, choose
-**LAN** or **Internet**. LAN shows nearby games automatically, with **Join by IP**
-as a fallback. Online friends paste the same private server URL once; their saved
-server then lists everyone's hosted games automatically, without new invitations.
-Anyone in the group can select **Host game**. One host and up to nine clients share ten player slots;
-each computer chooses its local keyboards/controllers and personal colors. The
-host chooses **Arena and battle rules** in the lobby and starts once at least
-one client has joined and every computer has selected controls. Clients wait
-for the host. Free-for-all and White/Red team battles follow the confirmed
-original network gameplay restrictions.
-All online connections are outbound TLS WebSockets on TCP 443. Use protocol 3
-and rebuild/upgrade the relay and every client from the same commit. No server
-endpoint is shipped. See [multiplayer](docs/online-play.md),
-[original-rule evidence](docs/multiplayer-original-rules.md), and
-[native ARM64 relay deployment](docs/relay.md).
-
-The workspace contains `bomberman-core` (deterministic simulation and native AI),
-`bomberman-assets` (original format readers/cache), `bomberman-net` (protocol,
-private invitations, LAN transport, lobby and synchronization), `bomberman-relay`
-(private TLS relay), and `bomberman` (presentation, audio, input and settings).
-Original Windows interoperability, public matchmaking, accounts, host migration,
-spectators, campaign and an editor remain follow-ups.
-
-The vendored `quad-snd` patch keeps silent audio paced when no playback
-device exists and tracks real effect completion for the native six-voice limit.
-The CoreAudio backend also owns queue shutdown and supports safe silent fallback.
-Its source and attribution are under `vendor/quad-snd/`; it does
-not alter original asset decoding or normal ALSA sample timing.
-
-
-In an environment without GPU device access, Mesa software rendering can be
-selected explicitly (this was used for desktop verification):
-
-```bash
-LIBGL_ALWAYS_SOFTWARE=1 __GLX_VENDOR_LIBRARY_NAME=mesa ./run.sh --assets /path/to/cache --windowed
+```sh
+ssh root@your-server 'sudo -u bomberman-relay /usr/local/lib/bomberman-relay/bomberman-relay export-invite --state /var/lib/bomberman-relay/private'
 ```
+
+Share that output privately with the players. The TLS private key stays on the
+relay. Preserve the private state directory when upgrading; use `rotate-token`
+as described in [relay setup](docs/relay.md) to revoke an old access key.
+
+The relay firewall must allow **both inbound TCP 443 and UDP 443**:
+
+| Connection | Purpose |
+| --- | --- |
+| TCP 443 | Authentication, game browser, lobby, setup, and requested recovery |
+| UDP 443 | Encrypted QUIC gameplay |
+
+Players connect outbound on both ports. Internet battles require UDP; there is
+no TCP gameplay fallback. If the browser works but the game cannot start, check
+UDP 443 on the relay's cloud firewall and the players' networks. Keep TCP 443
+open as well.
+
+### Import the key on each client
+
+1. Copy the full private server link from the administrator or a friend.
+2. Open **Multiplayer → Internet → Paste server link**. Use **Ctrl-V** on Linux
+   or **Command-V** on Mac, then select **Connect**.
+3. In **Friends' games**, select **Host game** or join a listed game. Each
+   computer chooses its local keyboards/controllers and player colors.
+4. The host chooses **Arena and battle rules**, then **Start game**. Everyone
+   loads automatically before the shared countdown begins.
+
+The client saves the connection privately. On later visits, **Internet** opens
+the game browser directly. **Copy server link** shares the same group access;
+**Change server** imports another group's key. The full link imports the
+certificate fingerprint automatically. See [multiplayer](docs/online-play.md)
+for saved-profile locations, lobby details, and network troubleshooting.
+
+## LAN play
+
+Open **Multiplayer → LAN**. One computer selects **Host game**; the others join
+it from the list. **Join by IP** accepts the address shown in the host's lobby
+when discovery is unavailable. LAN games need no server link or Internet relay.
+
+Allow these inbound ports on the LAN host:
+
+| Protocol and port | Purpose |
+| --- | --- |
+| TCP 1997 | Lobby and control |
+| UDP 1997 | Automatic discovery |
+| UDP 1998 | Encrypted QUIC gameplay |
+
+On Mac, also allow Atomic Bomberman under **System Settings → Privacy & Security
+→ Local Network**. Manual IP joining bypasses discovery, but gameplay still
+requires UDP 1998. See [multiplayer](docs/online-play.md).
+
+## Build and verify from source
+
+Use Rust 1.89+ and Python 3.9+. Linux desktop builds also need:
+
+```sh
+sudo apt-get install build-essential pkg-config libudev-dev libasound2-dev \
+  libx11-dev libxi-dev libgl1-mesa-dev libarchive-tools
+```
+
+On Mac, install Xcode Command Line Tools. From the checkout:
+
+```sh
+tools/check.sh
+cargo build --locked --release
+cargo run --locked --release -p bomberman-assets -- import \
+  --source /path/to/original.img --output local-assets
+cargo run --locked --release -p bomberman -- --assets local-assets --windowed
+```
+
+Linux packaging additionally needs `libgtk-3-dev librsvg2-common squashfs-tools`.
+Use `tools/package_linux.sh` or `tools/package_macos.sh` for desktop packages;
+the [release procedure](docs/releases.md) covers coordinated desktop/relay builds.
+The importer accepts archives, images, and extracted folders. Original media,
+imported caches, private keys, invitations, and build outputs stay out of Git and
+release assets.
+
+The workspace separates deterministic simulation (`bomberman-core`), asset
+import (`bomberman-assets`), networking (`bomberman-net`), the private relay
+(`bomberman-relay`), and the desktop game (`bomberman`). Development evidence and
+reproduction commands live in the [behavior ledger](docs/behavior-ledger.md),
+[asset formats](docs/asset-formats.md), and
+[original multiplayer rules](docs/multiplayer-original-rules.md). The
+[networking audit](docs/network-protocol.md) records the REA/Ghidra findings
+behind immediate client controls and the UDP protocol.

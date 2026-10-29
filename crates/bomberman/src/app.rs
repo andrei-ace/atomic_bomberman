@@ -286,6 +286,8 @@ impl App {
                         "id": n.id, "host": n.host, "room": n.room,
                         "battle_media_ready": n.lobby.as_ref().is_some_and(|lobby| self.media.battle_prepared(lobby.config.arena.index())),
                         "starting": n.is_starting(),
+                        "gameplay_rtt_ms": n.gameplay_rtt_ms,
+                        "confirmed_simulation": n.replay.as_ref().map(|r| &r.simulation),
                         "lobby": n.lobby, "actions": network_ui::lobby_actions(n.host).iter().map(|action| format!("{action:?}")).collect::<Vec<_>>(), "tick": n.replay.as_ref().map(|r| r.tick),
                     })),
                 });

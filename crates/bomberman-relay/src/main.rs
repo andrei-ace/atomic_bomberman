@@ -90,6 +90,16 @@ async fn run() -> Result<()> {
                 config.max_connections,
                 config.max_rooms,
             );
+            let datagram_key =
+                rcgen::KeyPair::from_pem(&fs::read_to_string(state.join("private-key.pem"))?)
+                    .context("load persistent datagram TLS identity")?;
+            let gameplay = relay
+                .bind_gameplay(
+                    config.listen,
+                    fs::read(state.join("certificate.der"))?,
+                    datagram_key.serialize_der(),
+                )
+                .context("bind UDP gameplay socket")?;
             let maintenance = relay.clone();
             tokio::spawn(async move {
                 let mut interval = tokio::time::interval(Duration::from_secs(60));
@@ -131,6 +141,7 @@ async fn run() -> Result<()> {
                         .into_make_service_with_connect_info::<SocketAddr>(),
                 )
                 .await?;
+            gameplay.close();
         }
         _ => bail!("unknown command; use --help"),
     }

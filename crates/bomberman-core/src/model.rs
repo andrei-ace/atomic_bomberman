@@ -729,6 +729,22 @@ pub struct GoldReward {
     pub powerup: Powerup,
 }
 
+/// Transient provenance for sounds produced by an explicit human control edge.
+/// This metadata never participates in the serialized simulation or replay hash.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ControlSound {
+    pub seat: usize,
+    pub control: ControlSoundKind,
+    pub event_index: usize,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ControlSoundKind {
+    Bomb,
+    Action,
+    BombRelease,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GameEvent {
     Sound {

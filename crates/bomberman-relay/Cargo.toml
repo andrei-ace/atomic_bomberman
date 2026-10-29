@@ -16,7 +16,7 @@ rustls.workspace = true
 futures-util.workspace = true
 axum = { version = "=0.8.4", features = ["ws"] }
 axum-server = { version = "=0.7.3", default-features = false, features = ["tls-rustls-no-provider"] }
-rcgen = { version = "=0.14.3", default-features = false, features = ["ring", "pem", "crypto"] }
+rcgen.workspace = true
 time = "=0.3.44"
 
 [dev-dependencies]

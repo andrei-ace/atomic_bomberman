@@ -1,5 +1,6 @@
 use crate::{
     broker::{Broker, RateLimit},
+    quic::{GameplayIo, GameplayServer, LAN_GAMEPLAY_PORT},
     *,
 };
 use futures_util::{SinkExt, StreamExt};
@@ -23,7 +24,7 @@ use tokio::{
 };
 use tokio_tungstenite::{
     tungstenite::{self, Message},
-    Connector,
+    Connector, MaybeTlsStream,
 };
 
 #[derive(Debug)]
@@ -33,9 +34,18 @@ pub struct PinnedCertificate {
 }
 impl PinnedCertificate {
     pub fn config(fingerprint: [u8; 32]) -> rustls::ClientConfig {
+        Self::with_versions(fingerprint, rustls::DEFAULT_VERSIONS)
+    }
+    pub(crate) fn quic_config(fingerprint: [u8; 32]) -> rustls::ClientConfig {
+        Self::with_versions(fingerprint, &[&rustls::version::TLS13])
+    }
+    fn with_versions(
+        fingerprint: [u8; 32],
+        versions: &[&'static rustls::SupportedProtocolVersion],
+    ) -> rustls::ClientConfig {
         let provider = Arc::new(rustls::crypto::ring::default_provider());
         rustls::ClientConfig::builder_with_provider(provider.clone())
-            .with_safe_default_protocol_versions()
+            .with_protocol_versions(versions)
             .expect("TLS versions")
             .dangerous()
             .with_custom_certificate_verifier(Arc::new(Self {
@@ -106,12 +116,15 @@ pub struct Connection {
     outgoing: mpsc::Sender<Request>,
     incoming: sync::Receiver<Event>,
     stop: Option<oneshot::Sender<()>>,
+    gameplay: Arc<GameplayIo>,
 }
 impl Connection {
     pub fn connect(destination: Destination, compatibility: Compatibility) -> Self {
         let (outgoing, rx) = mpsc::channel(QUEUE);
         let (tx, incoming) = sync::sync_channel(QUEUE * 4);
         let (stop, stopped) = oneshot::channel();
+        let gameplay = Arc::new(GameplayIo::default());
+        let gameplay_worker = gameplay.clone();
         std::thread::spawn(move || {
             let runtime = tokio::runtime::Builder::new_multi_thread()
                 .worker_threads(2)
@@ -120,7 +133,7 @@ impl Connection {
             if let Ok(runtime) = runtime {
                 runtime.block_on(async {
                     let result = tokio::select! {
-                        result = connect(destination, compatibility, rx, &tx) => result,
+                        result = connect(destination, compatibility, rx, &tx, gameplay_worker) => result,
                         _ = stopped => Ok(()),
                     };
                     if let Err(error) = result {
@@ -135,6 +148,7 @@ impl Connection {
             outgoing,
             incoming,
             stop: Some(stop),
+            gameplay,
         }
     }
     pub fn send(&self, request: Request) -> Result<(), NetError> {
@@ -152,6 +166,19 @@ impl Connection {
             Err(_) => Err(NetError::Disconnected),
         }
     }
+    pub fn send_gameplay(
+        &self,
+        to: Option<PeerId>,
+        packet: &GameplayPacket,
+    ) -> Result<(), NetError> {
+        self.gameplay.send(to, packet)
+    }
+    pub fn poll_gameplay(&self) -> Result<Option<(PeerId, GameplayPacket)>, NetError> {
+        Ok(self.gameplay.poll())
+    }
+    pub fn gameplay_ready(&self) -> bool {
+        self.gameplay.ready()
+    }
 }
 impl Drop for Connection {
     fn drop(&mut self) {
@@ -166,6 +193,7 @@ async fn connect(
     compatibility: Compatibility,
     mut rx: mpsc::Receiver<Request>,
     tx: &sync::SyncSender<Event>,
+    gameplay: Arc<GameplayIo>,
 ) -> Result<(), NetError> {
     let (destination, browsing) = match destination {
         Destination::Directory(server) => {
@@ -204,6 +232,12 @@ async fn connect(
                 }
                 _ => NetError::Unavailable,
             })?;
+            let remote = match socket.get_ref() {
+                MaybeTlsStream::Plain(stream) => stream.peer_addr(),
+                MaybeTlsStream::Rustls(stream) => stream.get_ref().0.peer_addr(),
+                _ => return Err(NetError::Unavailable),
+            }
+            .map_err(|_| NetError::Unavailable)?;
             socket
                 .send(Message::Binary(
                     encode(&if browsing {
@@ -228,6 +262,7 @@ async fn connect(
                 Duration::from_secs(3),
             );
             let mut last_received = tokio::time::Instant::now();
+            let mut gameplay_started = false;
             loop {
                 tokio::select! {
                     _ = refresh.tick(), if browsing => {
@@ -242,7 +277,11 @@ async fn connect(
                     message = socket.next() => {
                         last_received = tokio::time::Instant::now();
                         match message {
-                            Some(Ok(Message::Binary(bytes))) => { tx.try_send(decode(&bytes)?).map_err(|_| NetError::TooLarge)?; }
+                            Some(Ok(Message::Binary(bytes))) => {
+                                let event = decode(&bytes)?;
+                                start_gameplay(&event, remote, &gameplay, tx, &mut gameplay_started)?;
+                                tx.try_send(event).map_err(|_| NetError::TooLarge)?;
+                            }
                             Some(Ok(Message::Ping(_))) => { socket.flush().await.map_err(|_| NetError::Disconnected)?; }
                             Some(Ok(Message::Pong(_))) => {},
                             _ => return Err(NetError::Disconnected),
@@ -261,6 +300,11 @@ async fn connect(
                     .await
                     .map_err(|_| NetError::Unavailable)?;
                 let broker = Arc::new(Mutex::new(Broker::new(None)));
+                let datagrams = GameplayServer::ephemeral(
+                    SocketAddr::from((Ipv4Addr::UNSPECIFIED, LAN_GAMEPLAY_PORT)),
+                    &broker,
+                )?;
+                broker.lock().unwrap().set_gameplay(datagrams);
                 let discovery = crate::discovery::bind()
                     .await
                     .map_err(|_| NetError::Discovery)?;
@@ -311,11 +355,13 @@ async fn connect(
             .await?;
             let (mut read, mut write) = socket.into_split();
             let reader = async {
+                let mut gameplay_started = false;
                 loop {
                     let event: Event =
                         tokio::time::timeout(Duration::from_secs(30), read_packet(&mut read))
                             .await
                             .map_err(|_| NetError::Disconnected)??;
+                    start_gameplay(&event, address, &gameplay, tx, &mut gameplay_started)?;
                     tx.try_send(event).map_err(|_| NetError::TooLarge)?;
                 }
                 #[allow(unreachable_code)]
@@ -336,6 +382,30 @@ async fn connect(
         }
         Destination::Directory(_) => unreachable!("directory normalized above"),
     }
+}
+
+fn start_gameplay(
+    event: &Event,
+    address: SocketAddr,
+    gameplay: &Arc<GameplayIo>,
+    tx: &sync::SyncSender<Event>,
+    started: &mut bool,
+) -> Result<(), NetError> {
+    if let Event::GameplayOffer(offer) = event {
+        if *started {
+            return Err(NetError::Protocol);
+        }
+        *started = true;
+        let offer = offer.clone();
+        let gameplay = gameplay.clone();
+        let tx = tx.clone();
+        tokio::spawn(async move {
+            if let Err(error) = crate::quic::client(address, offer, gameplay).await {
+                let _ = tx.try_send(Event::Warning(error));
+            }
+        });
+    }
+    Ok(())
 }
 
 pub async fn read_packet<R: AsyncRead + Unpin, T: serde::de::DeserializeOwned>(

@@ -14,14 +14,14 @@ Playing requires no Rust, Homebrew, Python, Windows, or emulator.
 ## Download and install
 
 1. Open [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases)
-   and download `atomic-bomberman-0.3.1-macos-arm64.zip` and the matching
+   and download `atomic-bomberman-0.4.0-macos-arm64.zip` and the matching
    `.zip.sha256` file. Use the Mac ZIP asset; GitHub's automatic **Source code**
    archives contain source, rather than a built application.
 2. In Terminal, change to the download directory and verify the ZIP:
 
    ```bash
    cd ~/Downloads
-   shasum -a 256 -c atomic-bomberman-0.3.1-macos-arm64.zip.sha256
+   shasum -a 256 -c atomic-bomberman-0.4.0-macos-arm64.zip.sha256
    ```
 
    The result should be `OK`. Download the files again if the checksum fails.
@@ -58,6 +58,7 @@ Imported assets and settings are stored outside the application:
 ```text
 ~/Library/Application Support/Atomic Bomberman/assets/
 ~/Library/Application Support/Atomic Bomberman/settings.json
+~/Library/Application Support/Atomic Bomberman/connections.json
 ~/Library/Application Support/Atomic Bomberman/game.log
 ```
 
@@ -93,9 +94,21 @@ documented in [the Mac development guide](https://github.com/andrei-ace/atomic_b
 
 ## Private online and LAN games
 
-Open **Multiplayer**, directly below **Start local battle**, then choose **LAN**
-or **Internet**. Internet saves your group's private server link once, then lists games hosted by
-any friend automatically. Select **Host game** or choose a listed room.
-LAN discovers nearby games automatically and offers **Join by IP** as a fallback.
-Allow Local Network access when macOS asks; it can also be enabled in System
-Settings → Privacy & Security → Local Network. See [multiplayer](online-play.md).
+Get the group's full private server link from the administrator or a friend.
+Open **Multiplayer → Internet → Paste server link**, press **Command-V**, and
+select **Connect**. The link imports the access secret and certificate fingerprint
+together; no manual certificate installation is needed. The client saves it
+privately and opens **Friends' games** automatically on later visits. Select
+**Host game** or join a listed game.
+
+The client needs outbound TCP 443 and UDP 443, and the relay needs both ports
+inbound. UDP gameplay is required; TCP 443 remains necessary for login, browsing,
+and control. Use version 0.4.0/protocol 5 on all clients and the relay. Existing
+private links and saved profiles remain valid after upgrading.
+
+**Multiplayer → LAN** discovers nearby games automatically and offers **Join by
+IP** when discovery is unavailable. Permit TCP 1997, UDP 1997 for discovery, and
+UDP 1998 for gameplay on the host. Allow Local Network access when macOS asks;
+it can also be enabled under **System Settings → Privacy & Security → Local
+Network**. Manual IP joining still requires UDP 1998. See
+[multiplayer](online-play.md) for lobby options and troubleshooting.

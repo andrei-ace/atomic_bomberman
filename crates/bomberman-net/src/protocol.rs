@@ -4,7 +4,7 @@ use std::{collections::BTreeSet, fmt};
 
 pub type PeerId = u32;
 pub const HOST: PeerId = 1;
-pub const PROTOCOL_VERSION: u32 = 4;
+pub const PROTOCOL_VERSION: u32 = 5;
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const PORT: u16 = 1997;
 pub const STEP_MS: u32 = 20;
@@ -68,6 +68,7 @@ pub enum NetError {
     Desync,
     PrivateFile,
     Discovery,
+    UdpUnavailable,
 }
 impl fmt::Display for NetError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -104,6 +105,7 @@ impl fmt::Display for NetError {
                 "Cannot read or save the private server profile. Check its permissions."
             }
             Self::Discovery => "LAN discovery unavailable. Allow Local Network access and UDP 1997, or use Join by IP.",
+            Self::UdpUnavailable => "Gameplay connection unavailable. Allow UDP 443 to the Internet relay, or UDP 1998 to the LAN host. TCP alone cannot start a match.",
         })
     }
 }
@@ -156,6 +158,7 @@ pub enum Request {
 }
 #[derive(Clone, Serialize, Deserialize)]
 pub enum Event {
+    GameplayOffer(crate::quic::GameplayOffer),
     Rooms(Vec<RoomSummary>),
     Warning(NetError),
     Welcome {
@@ -204,8 +207,21 @@ pub enum GameMessage {
         seats: Vec<SeatInput>,
     },
     Frame(InputFrame),
-    Pause,
+    FrameRange {
+        generation: u64,
+        first: u64,
+        last: u64,
+    },
+    Repair {
+        generation: u64,
+        frames: Vec<InputFrame>,
+    },
+    Checkpoint(Box<Checkpoint>),
+    Pause {
+        generation: u64,
+    },
     Hash {
+        generation: u64,
         tick: u64,
         hash: [u8; 32],
     },
@@ -219,6 +235,8 @@ impl GameMessage {
                 | Self::Start { .. }
                 | Self::Begin { .. }
                 | Self::Frame(_)
+                | Self::Repair { .. }
+                | Self::Checkpoint(_)
                 | Self::Error(_)
         )
     }
@@ -234,6 +252,25 @@ pub struct InputFrame {
     pub inputs: Vec<PlayerInput>,
     pub actions: Vec<Action>,
     pub hash: Option<[u8; 32]>,
+    #[serde(default)]
+    pub acknowledgments: Vec<InputAck>,
+}
+/// Acknowledges controls actually selected for a simulation step, rather than
+/// packets merely received. Movement and button transitions progress separately.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct InputAck {
+    pub sample: u64,
+    pub edge: u64,
+}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Checkpoint {
+    pub generation: u64,
+    pub tick: u64,
+    pub stage: Stage,
+    pub simulation: Box<Simulation>,
+    pub hash: [u8; 32],
+    pub acknowledgments: Vec<InputAck>,
+    pub inputs: Vec<PlayerInput>,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Action {

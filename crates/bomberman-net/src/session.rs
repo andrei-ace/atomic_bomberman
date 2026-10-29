@@ -1,7 +1,7 @@
 use crate::*;
 use bomberman_core::{ControlKind, GameEvent, PlayerInput, RoundPhase, Simulation};
 use sha2::{Digest, Sha256};
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::BTreeMap;
 
 impl Lobby {
     pub fn new(mut config: bomberman_core::GameConfig, host_seats: u8) -> Result<Self, NetError> {
@@ -181,18 +181,27 @@ impl Lobby {
     }
 }
 
+#[derive(Clone)]
 struct Controls {
     sequence: Option<u64>,
     updated_ms: u64,
     disconnected_ms: Option<u64>,
 }
-/// Each received transition is consumed on a separate simulation tick. A quick
-/// press and release in a single render/packet interval cannot erase the press.
+/// Direction state is supersedable. Button transitions retain their own ordered
+/// identities so a tap survives loss/coalescing without queuing old movement.
+#[derive(Clone)]
+struct SeatControls {
+    latest: PlayerInput,
+    sequence: u64,
+    held: PlayerInput,
+    edges: BTreeMap<u64, ButtonEdge>,
+    ack: InputAck,
+}
+#[derive(Clone)]
 pub struct InputBuffer {
     pub owners: Vec<Option<PeerId>>,
     peers: BTreeMap<PeerId, Controls>,
-    queues: Vec<VecDeque<PlayerInput>>,
-    held: Vec<PlayerInput>,
+    seats: Vec<SeatControls>,
 }
 impl InputBuffer {
     pub fn new(owners: Vec<Option<PeerId>>, now_ms: u64) -> Self {
@@ -210,14 +219,24 @@ impl InputBuffer {
                 )
             })
             .collect();
-        let n = owners.len();
+        let seats = vec![
+            SeatControls {
+                latest: PlayerInput::default(),
+                sequence: 0,
+                held: PlayerInput::default(),
+                edges: BTreeMap::new(),
+                ack: InputAck::default()
+            };
+            owners.len()
+        ];
         Self {
             owners,
             peers,
-            queues: vec![VecDeque::new(); n],
-            held: vec![PlayerInput::default(); n],
+            seats,
         }
     }
+    /// Compatibility adapter for isolated replay fixtures. Live gameplay uses
+    /// explicit edge IDs through push_gameplay, including on the host.
     pub fn push(
         &mut self,
         peer: PeerId,
@@ -226,41 +245,104 @@ impl InputBuffer {
         now_ms: u64,
     ) -> Result<(), NetError> {
         let control = self.peers.get(&peer).ok_or(NetError::Ownership)?;
-        if control.disconnected_ms.is_some() || control.sequence.is_some_and(|s| sequence <= s) {
+        if control.sequence.is_some_and(|last| sequence <= last) {
             return Err(NetError::Protocol);
         }
-        let owned: Vec<_> = self
+        let mut expanded = Vec::with_capacity(seats.len());
+        for seat in seats {
+            let state = self.seats.get(seat.seat).ok_or(NetError::Ownership)?;
+            let buttons = button_bits(seat.input);
+            let edges = if buttons != button_bits(state.latest) {
+                vec![ButtonEdge {
+                    id: state
+                        .edges
+                        .last_key_value()
+                        .map_or(state.ack.edge, |(id, _)| *id)
+                        + 1,
+                    buttons,
+                }]
+            } else {
+                vec![]
+            };
+            expanded.push(GameplaySeatInput {
+                seat: seat.seat,
+                input: seat.input,
+                edges,
+            });
+        }
+        self.push_gameplay(peer, sequence, &expanded, now_ms)
+    }
+    pub fn push_gameplay(
+        &mut self,
+        peer: PeerId,
+        sequence: u64,
+        inputs: &[GameplaySeatInput],
+        now_ms: u64,
+    ) -> Result<(), NetError> {
+        let control = self.peers.get(&peer).ok_or(NetError::Ownership)?;
+        if control.disconnected_ms.is_some() {
+            return Err(NetError::Protocol);
+        }
+        let owned = self
             .owners
             .iter()
             .enumerate()
-            .filter_map(|(i, o)| (*o == Some(peer)).then_some(i))
-            .collect();
-        if seats.len() != owned.len()
-            || seats
-                .iter()
-                .any(|s| !owned.contains(&s.seat) || s.input.direction_mask > 15)
-            || seats
+            .filter_map(|(seat, owner)| (*owner == Some(peer)).then_some(seat))
+            .collect::<Vec<_>>();
+        if inputs.len() != owned.len()
+            || inputs.iter().any(|s| {
+                !owned.contains(&s.seat)
+                    || s.input.direction_mask > 15
+                    || s.edges.len() > EDGES_PER_PACKET
+            })
+            || inputs
                 .iter()
                 .enumerate()
-                .any(|(i, s)| seats[..i].iter().any(|p| p.seat == s.seat))
+                .any(|(i, s)| inputs[..i].iter().any(|other| other.seat == s.seat))
         {
             return Err(NetError::Ownership);
         }
-        if seats.iter().any(|s| self.queues[s.seat].len() >= QUEUE) {
-            return Err(NetError::TooLarge);
-        }
-        for seat in seats {
-            let previous = self.queues[seat.seat]
-                .back()
-                .unwrap_or(&self.held[seat.seat]);
-            if *previous != seat.input {
-                self.queues[seat.seat].push_back(seat.input);
+        // Validate every owned seat before committing any update.
+        let mut next = self.seats.clone();
+        for input in inputs {
+            let seat = &mut next[input.seat];
+            if sequence > seat.sequence {
+                seat.latest = input.input;
+                seat.sequence = sequence;
+            }
+            for edge in &input.edges {
+                if edge.id == 0 || edge.buttons > 3 {
+                    return Err(NetError::Protocol);
+                }
+                if edge.id <= seat.ack.edge {
+                    continue;
+                }
+                if edge.id.saturating_sub(seat.ack.edge) > MAX_BUTTON_EDGES as u64 {
+                    return Err(NetError::RateLimit);
+                }
+                if seat
+                    .edges
+                    .get(&edge.id)
+                    .is_some_and(|previous| previous != edge)
+                {
+                    return Err(NetError::Protocol);
+                }
+                seat.edges.insert(edge.id, *edge);
+            }
+            if seat.edges.len() > MAX_BUTTON_EDGES {
+                return Err(NetError::RateLimit);
             }
         }
+        self.seats = next;
         let control = self.peers.get_mut(&peer).unwrap();
-        control.sequence = Some(sequence);
-        control.updated_ms = now_ms;
+        if control.sequence.is_none_or(|last| sequence > last) {
+            control.sequence = Some(sequence);
+            control.updated_ms = now_ms;
+        }
         Ok(())
+    }
+    pub fn acknowledgments(&self) -> Vec<InputAck> {
+        self.seats.iter().map(|seat| seat.ack).collect()
     }
     pub fn disconnect(&mut self, peer: PeerId, now_ms: u64) {
         if let Some(control) = self.peers.get_mut(&peer) {
@@ -269,26 +351,43 @@ impl InputBuffer {
     }
     pub fn next(&mut self, now_ms: u64) -> (Vec<PlayerInput>, Vec<usize>) {
         let mut bots = Vec::new();
-        for (seat, owner) in self.owners.iter_mut().enumerate() {
-            let Some(control) = owner.and_then(|p| self.peers.get(&p)) else {
+        for (index, owner) in self.owners.iter_mut().enumerate() {
+            let Some(control) = owner.and_then(|id| self.peers.get(&id)) else {
                 continue;
             };
+            let seat = &mut self.seats[index];
             if control
                 .disconnected_ms
                 .is_some_and(|time| now_ms.saturating_sub(time) >= 5000)
             {
                 *owner = None;
-                bots.push(seat);
+                bots.push(index);
             }
+            seat.ack.sample = seat.sequence;
             if owner.is_none() || now_ms.saturating_sub(control.updated_ms) >= 250 {
-                self.queues[seat].clear();
-                self.held[seat] = PlayerInput::default();
-            } else if let Some(input) = self.queues[seat].pop_front() {
-                self.held[seat] = input;
+                // Cancel expired transitions as well as releasing held buttons;
+                // later redundant packets must not resurrect an old press.
+                if let Some((last, _)) = seat.edges.last_key_value() {
+                    seat.ack.edge = *last;
+                }
+                seat.edges.clear();
+                seat.held = PlayerInput::default();
+            } else {
+                seat.held.direction = seat.latest.direction;
+                seat.held.direction_mask = seat.latest.direction_mask;
+                if let Some(edge) = seat.edges.remove(&seat.ack.edge.saturating_add(1)) {
+                    seat.held.bomb = edge.buttons & 1 != 0;
+                    seat.held.action = edge.buttons & 2 != 0;
+                    seat.ack.edge = edge.id;
+                }
             }
         }
-        (self.held.clone(), bots)
+        (self.seats.iter().map(|seat| seat.held).collect(), bots)
     }
+}
+
+pub fn button_bits(input: PlayerInput) -> u8 {
+    u8::from(input.bomb) | (u8::from(input.action) << 1)
 }
 
 #[derive(Clone, Debug)]
@@ -296,13 +395,16 @@ pub struct Replay {
     pub simulation: Simulation,
     pub tick: u64,
     pub stage: Stage,
+    pub inputs: Vec<PlayerInput>,
 }
 impl Replay {
     pub fn new(simulation: Simulation) -> Self {
+        let inputs = vec![PlayerInput::default(); simulation.players.len()];
         Self {
             simulation,
             tick: 0,
             stage: Stage::Battle,
+            inputs,
         }
     }
     pub fn hash(&self) -> [u8; 32] {
@@ -313,6 +415,39 @@ impl Replay {
                 .expect("serializable simulation"),
         )
         .into()
+    }
+    pub fn checkpoint(&self, generation: u64, acknowledgments: Vec<InputAck>) -> Checkpoint {
+        Checkpoint {
+            generation,
+            tick: self.tick,
+            stage: self.stage,
+            simulation: Box::new(self.simulation.clone()),
+            hash: self.hash(),
+            acknowledgments,
+            inputs: self.inputs.clone(),
+        }
+    }
+    pub fn from_checkpoint(checkpoint: &Checkpoint) -> Result<Self, NetError> {
+        checkpoint
+            .simulation
+            .config
+            .validate()
+            .map_err(|_| NetError::Protocol)?;
+        if checkpoint.acknowledgments.len() != checkpoint.simulation.players.len()
+            || checkpoint.inputs.len() != checkpoint.simulation.players.len()
+        {
+            return Err(NetError::Protocol);
+        }
+        let replay = Self {
+            tick: checkpoint.tick,
+            stage: checkpoint.stage,
+            simulation: (*checkpoint.simulation).clone(),
+            inputs: checkpoint.inputs.clone(),
+        };
+        if replay.hash() != checkpoint.hash {
+            return Err(NetError::Desync);
+        }
+        Ok(replay)
     }
     pub fn apply(&mut self, frame: &InputFrame) -> Result<Vec<GameEvent>, NetError> {
         if frame.tick != self.tick + 1
@@ -352,6 +487,7 @@ impl Replay {
             Stage::Results => vec![],
         };
         self.tick = frame.tick;
+        self.inputs = frame.inputs.clone();
         if frame.hash.is_some_and(|h| h != self.hash()) {
             return Err(NetError::Desync);
         }
@@ -367,6 +503,7 @@ impl Replay {
             inputs,
             actions,
             hash: None,
+            acknowledgments: vec![],
         };
         let events = self.apply(&frame)?;
         if self.tick.is_multiple_of(50) {
