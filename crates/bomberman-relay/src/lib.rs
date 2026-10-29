@@ -80,6 +80,10 @@ async fn session(mut socket: WebSocket, relay: Relay) {
     let open = match first {
         Ok(Some(Ok(Message::Binary(bytes)))) => match decode::<Request>(&bytes) {
             Ok(Request::Open(open)) => open,
+            Ok(Request::Browse(browse)) => {
+                directory(socket, relay, browse).await;
+                return;
+            }
             _ => {
                 send_error(&mut socket, NetError::Protocol).await;
                 return;
@@ -154,6 +158,71 @@ async fn session(mut socket: WebSocket, relay: Relay) {
     };
     tokio::select! { _ = reader => {}, _ = writer => {} }
     relay.broker.lock().unwrap().close(&code, peer);
+}
+async fn directory(mut socket: WebSocket, relay: Relay, browse: Browse) {
+    let authenticated = relay
+        .broker
+        .lock()
+        .unwrap()
+        .authenticate(&browse.token, &browse.compatibility);
+    if let Err(error) = authenticated {
+        send_error(&mut socket, error).await;
+        return;
+    }
+    if !send_rooms(&mut socket, &relay).await {
+        return;
+    }
+    let mut budget = RateLimit::default();
+    loop {
+        let incoming = tokio::time::timeout(Duration::from_secs(30), socket.recv()).await;
+        match incoming {
+            Ok(Some(Ok(Message::Binary(bytes)))) if budget.accept(bytes.len()) => {
+                match decode::<Request>(&bytes) {
+                    Ok(Request::ListRooms) => {
+                        if !send_rooms(&mut socket, &relay).await {
+                            break;
+                        }
+                    }
+                    Ok(Request::Ping) => {
+                        if !send_event(&mut socket, Event::Pong).await {
+                            break;
+                        }
+                    }
+                    Ok(Request::Leave) => break,
+                    _ => {
+                        send_error(&mut socket, NetError::Protocol).await;
+                        break;
+                    }
+                }
+            }
+            Ok(Some(Ok(Message::Ping(_) | Message::Pong(_)))) if budget.accept(0) => {
+                if !matches!(
+                    tokio::time::timeout(Duration::from_secs(5), socket.flush()).await,
+                    Ok(Ok(()))
+                ) {
+                    break;
+                }
+            }
+            _ => break,
+        }
+    }
+}
+async fn send_rooms(socket: &mut WebSocket, relay: &Relay) -> bool {
+    let rooms = relay.broker.lock().unwrap().list_rooms();
+    send_event(socket, Event::Rooms(rooms)).await
+}
+async fn send_event(socket: &mut WebSocket, event: Event) -> bool {
+    let Ok(bytes) = encode(&event) else {
+        return false;
+    };
+    matches!(
+        tokio::time::timeout(
+            Duration::from_secs(5),
+            socket.send(Message::Binary(bytes.into()))
+        )
+        .await,
+        Ok(Ok(()))
+    )
 }
 async fn send_error(socket: &mut WebSocket, error: NetError) {
     if let Ok(bytes) = encode(&Event::Error(error)) {

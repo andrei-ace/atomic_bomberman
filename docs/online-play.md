@@ -1,6 +1,6 @@
 # Private online and LAN games
 
-Use version **0.2.0**, protocol **2**, on every Linux or Mac computer. Rebuild and
+Use version **0.3.0**, protocol **3**, on every Linux or Mac computer. Rebuild and
 upgrade the relay and all game clients from the same commit. Import the same
 edition of Atomic Bomberman: protocol, application version and original
 source-file hashes must match. The relay has no original game data and never
@@ -8,25 +8,30 @@ runs the simulation.
 
 ## Online
 
-1. The server administrator initializes the relay once and exports a **private
-   server invitation** (see [relay setup](relay.md)). The game has no default server.
-2. Open **Multiplayer → Internet → Create Online Game**, click **Paste** (or Ctrl-V / Cmd-V), and select
-   **Create game**. After a successful connection, the server profile is saved
-   privately. Future hosts can create games without pasting the server again.
-3. In the lobby, choose **Copy Invite**. Share that single opaque string privately.
-4. Friends open **Multiplayer → Internet → Join Game**, paste the invitation, and select **Join**. Each
-   computer can select both keyboards and controllers in **Local keyboards and
-   controllers**.
-5. The host chooses **Arena and battle rules**, then selects **Start game** after
-   at least one client has joined and every connected computer has selected
-   controls. Clients choose their controls and colors, then wait for the host.
+1. The administrator initializes the relay once. It detects its public IP and
+   generates a private server URL containing the address, access secret, and
+   pinned TLS certificate fingerprint (see [relay setup](relay.md)).
+2. Open **Multiplayer → Internet**, paste that server link, and select **Connect**.
+   Each friend does this once. The profile is saved privately after authentication.
+3. The **Friends' games** browser opens automatically on later visits. Anyone can
+   select **Host game**; everyone else on the saved server sees it in the list.
+   Select a listed game to join. No new room invitation or code is needed.
+4. Choose local keyboards/controllers and personal colors. The host chooses
+   **Arena and battle rules**, then **Start game** once friends have joined and
+   selected controls.
 
-Returning friends can type the eight-character room code with their saved server.
-A fresh computer needs the full invitation. A server-only invitation pasted in
-Join Game creates a new hosted room. Invitations contain the address, TLS
-certificate fingerprint, access token and (for a game) room code. Treat them as
-credentials. Never post them publicly or attach them to bug reports. A new full
-invitation replaces the saved server only after connection succeeds.
+The browser refreshes every three seconds and shows player-computer counts,
+playing/full status, and incompatible assets. Browsing creates no room and takes
+no player seat. **Copy server link** shares access to this friends' group;
+**Change server** imports another group's link. Share links only privately.
+The input hides credentials and validates each pasted link immediately. Paste
+replaces the whole link; **Backspace** or **Delete** clears it. Ordinary typing
+cannot change the hidden link. Existing `AB1` invitations,
+room invitations, room codes with a saved profile, and saved profiles remain
+accepted; a server-only invitation opens the browser rather than creating a game.
+All games on one relay share its access secret. There are no accounts or
+per-room invitations to manage. Revoking the secret requires distributing a new
+server link. The server endpoint is configured only during installation.
 
 The private profile is separate from settings: Linux uses
 `$XDG_CONFIG_HOME/atomic-bomberman/connections.json` (default
@@ -38,16 +43,20 @@ shipped in source, default settings, documentation or release binaries.
 
 Both host and friends connect **outbound over secure WebSockets/TCP 443**.
 Players need no inbound ports, certificate installation, IP entry or password.
-Invited clients necessarily receive the destination address and can inspect it.
+Connected friends necessarily receive the destination address and can inspect it.
 The access token permits creating/joining rooms on this private relay; it is not
 an account or a per-room password. Share only with trusted friends.
 
 ## LAN
 
-Open **Multiplayer → LAN**, select the host's discovered game, or type the host IP and
-select **Join address**. The host selects **Host LAN game**. TCP 1997 carries play;
+Open **Multiplayer → LAN**. One computer selects **Host game**; friends select
+its address from the automatically refreshed list. LAN has no invitations.
+If the game does not appear, select **Join by IP** and type or paste the address
+shown in the host's lobby. TCP 1997 carries play;
 UDP 1997 supplies automatic IPv4 discovery. Permit those ports on the host's LAN
-firewall. Discovery stays on the local network; different subnets can use manual
+firewall. On macOS, allow Atomic Bomberman under **System Settings → Privacy &
+Security → Local Network**. This permission is separate from the firewall.
+Discovery retries across active Wi-Fi/Ethernet subnets and reports socket errors. Discovery stays on the local network; different subnets can use manual
 address joining. A manually entered IPv6 address is also supported. LAN traffic
 is direct and unencrypted; use it on a trusted local network.
 

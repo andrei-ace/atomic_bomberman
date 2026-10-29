@@ -4,7 +4,7 @@ use std::{collections::BTreeSet, fmt};
 
 pub type PeerId = u32;
 pub const HOST: PeerId = 1;
-pub const PROTOCOL_VERSION: u32 = 2;
+pub const PROTOCOL_VERSION: u32 = 3;
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const PORT: u16 = 1997;
 pub const STEP_MS: u32 = 20;
@@ -67,21 +67,22 @@ pub enum NetError {
     Disconnected,
     Desync,
     PrivateFile,
+    Discovery,
 }
 impl fmt::Display for NetError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
             Self::InvalidInvite => {
-                "Invalid invitation. Paste the full invitation or a saved server's room code."
+                "Invalid server link. Paste the full private link from your friend."
             }
             Self::Unavailable => "Server unavailable. Check your connection and try again.",
             Self::Certificate => {
-                "Server certificate does not match the invitation. Request a new invitation."
+                "Server certificate does not match the saved link. Request a new server link."
             }
             Self::Unauthorized => {
-                "Invitation access has expired or was revoked. Request a new invitation."
+                "Server access has expired or was revoked. Request a new server link."
             }
-            Self::RoomExpired => "Room expired or not found. Request a new room invitation.",
+            Self::RoomExpired => "This game has closed. Choose another game from the list.",
             Self::Full => "This game is full (ten players maximum).",
             Self::ColorTaken => "That color is already assigned. Choose an available color.",
             Self::Version => {
@@ -102,6 +103,7 @@ impl fmt::Display for NetError {
             Self::PrivateFile => {
                 "Cannot read or save the private server profile. Check its permissions."
             }
+            Self::Discovery => "LAN discovery unavailable. Allow Local Network access and UDP 1997, or use Join by IP.",
         })
     }
 }
@@ -115,8 +117,34 @@ pub struct Open {
     pub compatibility: Compatibility,
 }
 #[derive(Clone, Serialize, Deserialize)]
+pub struct Browse {
+    pub token: String,
+    pub compatibility: Compatibility,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RoomSummary {
+    pub code: String,
+    pub compatibility: Compatibility,
+    pub computers: usize,
+    pub playing: bool,
+}
+impl RoomSummary {
+    pub fn joinable(&self, compatibility: &Compatibility) -> Result<(), NetError> {
+        compatibility.check(&self.compatibility)?;
+        if self.playing {
+            return Err(NetError::InProgress);
+        }
+        if self.computers >= MAX_PLAYERS {
+            return Err(NetError::Full);
+        }
+        Ok(())
+    }
+}
+#[derive(Clone, Serialize, Deserialize)]
 pub enum Request {
     Open(Open),
+    Browse(Browse),
+    ListRooms,
     Send {
         to: Option<PeerId>,
         message: GameMessage,
@@ -128,6 +156,8 @@ pub enum Request {
 }
 #[derive(Clone, Serialize, Deserialize)]
 pub enum Event {
+    Rooms(Vec<RoomSummary>),
+    Warning(NetError),
     Welcome {
         id: PeerId,
         room: String,

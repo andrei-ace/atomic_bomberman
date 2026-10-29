@@ -1,0 +1,72 @@
+{
+  "passed": true,
+  "version": "0.3.0",
+  "source": {
+    "commit": "b6285b0f1263ba3cb8265b24ffb3feba6cabe8ef",
+    "dirty": true,
+    "sha256": "98238a5e4237ea90991ff45b39ad0b4d4ebb983386c21e619e7399c274948aa9"
+  },
+  "cause": "Miniquad 0.4.11 macOS public clipboard reader returned None and its writer was a no-op.",
+  "macos": {
+    "original_clipboard_restored": true,
+    "passed": true,
+    "limitations": [
+      "Synthetic events stay in the game view; physical keyboard hardware is separate."
+    ],
+    "checks": [
+      "Paste server link button reads macOS clipboard and authenticates",
+      "Copy server link updates the macOS clipboard",
+      "Empty clipboard does not reuse stale invitation text",
+      "Cmd-V reads macOS clipboard and authenticates"
+    ],
+    "error": null,
+    "platform": "macOS AppKit, actual packaged game UI"
+  },
+  "linux": {
+    "passed": true,
+    "platform": "Ubuntu 24.04 x86-64, isolated Xvfb, Mesa software rendering",
+    "injected_round_trip_tcp_delay_ms": 0,
+    "relay_environment": "deployed server, external TCP 443",
+    "checks": [
+      "Multiplayer directly below Start local battle",
+      "simple LAN browser and back navigation",
+      "Paste server link button reads the OS clipboard",
+      "Ctrl-V reads the OS clipboard",
+      "Copy server link updates the OS clipboard",
+      "create room",
+      "private profile mode 0600",
+      "LAN and game lobbies have no Copy Invite",
+      "friend joins through automatic discovery",
+      "multiple local keyboards/controllers in lobby",
+      "host-only Start and shared arena/rules/team editing",
+      "start after controls without added Ready toggle",
+      "personal colors for both local players and host",
+      "ten unique colors synchronized to both computers",
+      "session settings preserve saved local settings",
+      "original network flags disable Gold roulette",
+      "actual two-window battle",
+      "shared pause and identical serialized simulation",
+      "host departure ends session",
+      "saved server reuse",
+      "former client hosts without new invitation",
+      "credentials absent from logs"
+    ],
+    "limitations": [
+      "No physical controller tested.",
+      "macOS Cmd-V and Linux/macOS WAN play require Mac hardware."
+    ]
+  },
+  "installed_mac_binary_sha256": "b2b0c2d3c03ea5bce3e52e56dd23a97a6304d716fb81bed249bddf83d0657bb6",
+  "macos_install_signature_verified": true,
+  "existing_server_link_verified": true,
+  "artifacts": {
+    "atomic-bomberman-0.3.0-macos-arm64.zip": "6d66ed9780af6071a63c6c917bea6856639cd237ac88f371e5b21ba1086c6e64",
+    "atomic-bomberman-0.3.0-linux-x86_64.AppImage": "f074965d6a99f2056fadf327d6a72ec23d68fba29816406ec15959767b0f0ea1",
+    "atomic-bomberman-0.3.0-linux-x86_64.tar.gz": "0e30c6a0b163fd5092c6db5a15ac65938e401ba4ba3f60699bbd3047469a838a"
+  },
+  "limitations": [
+    "Linux tests used the supported X11 backend in Xvfb.",
+    "Native AppImage entrypoint remains unverified under the x86 emulator; portable Linux launch passed."
+  ],
+  "client_artifacts_superseded_by": "private-link-0.3.0-verification.json"
+}

@@ -110,14 +110,22 @@ impl Media {
     }
 
     async fn loading_progress(&self, progress: f32) {
-        set_camera(&Camera2D::from_display_rect(Rect::new(0., 0., 640., 480.)));
+        self.draw_loading(progress);
+        next_frame().await;
+    }
+
+    pub(crate) fn draw_loading(&self, progress: f32) {
+        let mut camera = Camera2D::from_display_rect(Rect::new(0., 0., 640., 480.));
+        // This draws directly to the window. Unlike the battle's render
+        // target, its camera must use a top-left origin before presentation.
+        camera.zoom.y = -camera.zoom.y;
+        set_camera(&camera);
         clear_background(Color::new(0.015, 0.025, 0.06, 1.));
         self.center_text("ATOMIC BOMBERMAN", 192., 24., GOLD);
         self.center_text("Loading original artwork...", 238., 15., WHITE);
         draw_rectangle(120., 279., 400., 5., Color::new(0.12, 0.2, 0.32, 1.));
         draw_rectangle(120., 279., 400. * progress, 5., GOLD);
         set_default_camera();
-        next_frame().await;
     }
 
     async fn ensure_texture(&mut self, file: &str) -> Result<()> {
@@ -508,7 +516,7 @@ impl Media {
     }
 
     /// Original 0x41db41 exposes the two metadata words of the first FRAM.
-    /// Flame placement explicitly uses the second word for horizontal alignment.
+    /// Flame placement uses the second word for vertical alignment of cropped sprites.
     pub fn state_metadata(&self, name: &str, frame: usize) -> [i32; 2] {
         self.sequence(name).map_or([0, 0], |(_, sequence)| {
             crate::presentation::native_metadata(sequence, frame)

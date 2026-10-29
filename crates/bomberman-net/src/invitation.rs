@@ -44,14 +44,86 @@ pub fn valid_room(room: &str) -> bool {
 impl Invitation {
     pub fn encode(&self) -> Result<String, NetError> {
         self.validate()?;
+        let endpoint = Url::parse(&self.server.endpoint).map_err(|_| NetError::InvalidInvite)?;
+        let host = endpoint.host().ok_or(NetError::InvalidInvite)?;
+        let pin: String = self
+            .server
+            .fingerprint
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect();
+        let mut fragment = url::form_urlencoded::Serializer::new(String::new());
+        fragment
+            .append_pair("v", "1")
+            .append_pair("token", &self.server.token)
+            .append_pair("pin", &pin);
+        if let Some(room) = &self.room {
+            fragment.append_pair("room", room);
+        }
         Ok(format!(
-            "AB1.{}",
-            URL_SAFE_NO_PAD.encode(serde_json::to_vec(self).map_err(|_| NetError::InvalidInvite)?)
+            "atomic-bomberman://{host}:{}/#{}",
+            endpoint
+                .port_or_known_default()
+                .ok_or(NetError::InvalidInvite)?,
+            fragment.finish()
         ))
     }
     pub fn parse(text: &str, saved: Option<&ServerProfile>) -> Result<Self, NetError> {
         let text = text.trim();
-        let result = if let Some(encoded) = text.strip_prefix("AB1.") {
+        let result = if text.starts_with("atomic-bomberman:") {
+            let url = Url::parse(text).map_err(|_| NetError::InvalidInvite)?;
+            if text.len() > 4096
+                || url.scheme() != "atomic-bomberman"
+                || !url.username().is_empty()
+                || url.password().is_some()
+                || url.query().is_some()
+                || url.path() != "/"
+            {
+                return Err(NetError::InvalidInvite);
+            }
+            let mut version = None;
+            let mut token = None;
+            let mut pin = None;
+            let mut room = None;
+            for (key, value) in url::form_urlencoded::parse(
+                url.fragment().ok_or(NetError::InvalidInvite)?.as_bytes(),
+            ) {
+                let field = match key.as_ref() {
+                    "v" => &mut version,
+                    "token" => &mut token,
+                    "pin" => &mut pin,
+                    "room" => &mut room,
+                    _ => return Err(NetError::InvalidInvite),
+                };
+                if field.replace(value.into_owned()).is_some() {
+                    return Err(NetError::InvalidInvite);
+                }
+            }
+            if version.as_deref() != Some("1") {
+                return Err(NetError::InvalidInvite);
+            }
+            let pin = pin.ok_or(NetError::InvalidInvite)?;
+            if pin.len() != 64 || !pin.is_ascii() {
+                return Err(NetError::InvalidInvite);
+            }
+            let mut fingerprint = [0; 32];
+            for (i, byte) in fingerprint.iter_mut().enumerate() {
+                *byte = u8::from_str_radix(&pin[i * 2..i * 2 + 2], 16)
+                    .map_err(|_| NetError::InvalidInvite)?;
+            }
+            Self {
+                server: ServerProfile {
+                    endpoint: format!(
+                        "wss://{}:{}/v1/ws",
+                        url.host().ok_or(NetError::InvalidInvite)?,
+                        url.port().unwrap_or(443)
+                    ),
+                    fingerprint,
+                    token: token.ok_or(NetError::InvalidInvite)?,
+                },
+                room,
+            }
+        } else if let Some(encoded) = text.strip_prefix("AB1.") {
             if encoded.len() > 4096 {
                 return Err(NetError::InvalidInvite);
             }

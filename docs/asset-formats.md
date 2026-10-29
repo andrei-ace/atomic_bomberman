@@ -40,3 +40,10 @@ directory, and renames only after validation. Output cannot be nested inside an
 extracted source directory. A failed import does not publish a partial manifest.
 Tests cover extracted directories and synthetic ISO9660/MODE1 images as well as
 malformed media and cache tampering.
+
+
+Floor-flame frames have different cropped heights. Their second FRAM metadata
+word restores their vertical anchor; CIMG origins already center the horizontal
+position. Applying that metadata on X displaces horizontal rays from the center.
+The connected-cross GPU fixture covers this call-site geometry as well as all
+colors and terminal destruction/cleanup frames.

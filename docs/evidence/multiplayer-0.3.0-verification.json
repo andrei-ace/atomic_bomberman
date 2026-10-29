@@ -1,0 +1,217 @@
+{
+  "passed": true,
+  "version": "0.3.0",
+  "protocol": 3,
+  "source": {
+    "commit": "b6285b0f1263ba3cb8265b24ffb3feba6cabe8ef",
+    "dirty": true,
+    "sha256": "166c65a467c844bcc4d2de8f5f1d84d46f8fec8c45c55d685f6588cb0d320f12"
+  },
+  "repository_checks": {
+    "macos": {
+      "workspace_passed": 199,
+      "audio_passed": 24,
+      "ignored": 3,
+      "fmt": true,
+      "clippy": true
+    },
+    "linux_rust_1_89": {
+      "workspace_passed": 202,
+      "ignored": 3
+    }
+  },
+  "deployment": {
+    "port": 443,
+    "service": "bomberman-relay",
+    "enabled": true,
+    "running_binary_sha256": "1baf3d4aaaad40e2aba465f274db78163390febfadf50623359053947418b4f4",
+    "saved_link_survives_restart": true
+  },
+  "cross_platform_sessions": [
+    {
+      "host": "macos",
+      "client": "linux",
+      "transport": "relay",
+      "tick": 200,
+      "identical_state_hash": "737af2765bed23d18243749da2e5ffb425998de6925ac75a5d50137729add0e3"
+    },
+    {
+      "host": "linux",
+      "client": "macos",
+      "transport": "relay",
+      "tick": 200,
+      "identical_state_hash": "737af2765bed23d18243749da2e5ffb425998de6925ac75a5d50137729add0e3"
+    },
+    {
+      "host": "macos",
+      "client": "linux",
+      "transport": "LAN",
+      "tick": 200,
+      "identical_state_hash": "737af2765bed23d18243749da2e5ffb425998de6925ac75a5d50137729add0e3"
+    }
+  ],
+  "reports": {
+    "relay_public_after_restart": {
+      "passed": true,
+      "version": "0.3.0",
+      "protocol": 3,
+      "environment": "External TCP/TLS/WebSocket connection to deployed relay",
+      "port": 443,
+      "frames": 100,
+      "input_and_frame_round_trip_ms": {
+        "median": 68.87516600545496,
+        "p95": 78.48133298102766
+      },
+      "checks": [
+        "TLS certificate pin",
+        "invalid pin rejected",
+        "invalid credentials rejected",
+        "authenticated directory",
+        "new hosts appear without invites",
+        "joining discovered room",
+        "client inputs reach host",
+        "ordered host frames reach client",
+        "two isolated rooms",
+        "playing status and late-join rejection",
+        "host departure",
+        "temporary rooms removed"
+      ],
+      "limitations": [
+        "Protocol smoke test; graphical Mac/Linux gameplay is verified separately."
+      ]
+    },
+    "linux_game_ui_public_relay": {
+      "passed": true,
+      "platform": "Ubuntu 24.04 x86-64, isolated Xvfb, Mesa software rendering",
+      "injected_round_trip_tcp_delay_ms": 0,
+      "relay_environment": "deployed server, external TCP 443",
+      "checks": [
+        "Multiplayer directly below Start local battle",
+        "simple LAN browser and back navigation",
+        "shared server URL pasted once with Ctrl-V",
+        "create room",
+        "private profile mode 0600",
+        "LAN and game lobbies have no Copy Invite",
+        "friend joins through automatic discovery",
+        "multiple local keyboards/controllers in lobby",
+        "host-only Start and shared arena/rules/team editing",
+        "start after controls without added Ready toggle",
+        "personal colors for both local players and host",
+        "ten unique colors synchronized to both computers",
+        "session settings preserve saved local settings",
+        "original network flags disable Gold roulette",
+        "actual two-window battle",
+        "shared pause and identical serialized simulation",
+        "host departure ends session",
+        "saved server reuse",
+        "former client hosts without new invitation",
+        "credentials absent from logs"
+      ],
+      "limitations": [
+        "No physical controller tested.",
+        "macOS Cmd-V and Linux/macOS WAN play require Mac hardware."
+      ]
+    },
+    "macos_explosions": {
+      "arenas": 11,
+      "cases": 1260,
+      "checks": [
+        "GPU pixels match independent palette compositor",
+        "floor beneath transparent brick destruction",
+        "all original destruction states",
+        "all floor-flame shapes and frame wrapping",
+        "connected cross geometry with vertically anchored cropped sprites",
+        "terminal destruction frame",
+        "no leftover pixels after cleanup"
+      ],
+      "colors": 10,
+      "floor_flame_shapes": 9,
+      "limitations": [
+        "Deterministic renderer fixtures; physical monitor inspection is separate."
+      ],
+      "passed": true,
+      "platform": "macos"
+    },
+    "linux_explosions": {
+      "arenas": 11,
+      "cases": 1260,
+      "checks": [
+        "GPU pixels match independent palette compositor",
+        "floor beneath transparent brick destruction",
+        "all original destruction states",
+        "all floor-flame shapes and frame wrapping",
+        "connected cross geometry with vertically anchored cropped sprites",
+        "terminal destruction frame",
+        "no leftover pixels after cleanup"
+      ],
+      "colors": 10,
+      "floor_flame_shapes": 9,
+      "limitations": [
+        "Deterministic renderer fixtures; physical monitor inspection is separate."
+      ],
+      "passed": true,
+      "platform": "linux"
+    },
+    "macos_loading": {
+      "checks": [
+        "production loading screen top-left coordinates",
+        "progress bar occupies intended row",
+        "reflected position is empty"
+      ],
+      "passed": true,
+      "platform": "macos"
+    },
+    "linux_loading": {
+      "checks": [
+        "production loading screen top-left coordinates",
+        "progress bar occupies intended row",
+        "reflected position is empty"
+      ],
+      "passed": true,
+      "platform": "linux"
+    },
+    "linux_portable": {
+      "passed": true,
+      "platform": "Ubuntu 24.04 x86-64 under Docker emulation",
+      "checks": [
+        "relocated packaged launcher --help",
+        "packaged game launched in Xvfb",
+        "120 menu frames rendered",
+        "checksummed portable archive",
+        "original game assets excluded"
+      ],
+      "archive": "atomic-bomberman-0.3.0-linux-x86_64.tar.gz",
+      "sha256": "df20be914f33c88552b06acd09e8f99e9651858f9d490e94e6df8f748302db27",
+      "native_appimage_entrypoint_verified": false
+    },
+    "macos_running_icon": {
+      "check": "Packaged bomb icon displayed; red framework icon absent",
+      "passed": true,
+      "bundle_found": 1
+    }
+  },
+  "artifacts": {
+    "atomic-bomberman-0.3.0-linux-x86_64.AppImage": {
+      "sha256": "7622e1186fee35d77876ecc963814cdd60219e93573a60a4dc9550609bb9acd8",
+      "bytes": 34170000
+    },
+    "atomic-bomberman-0.3.0-linux-x86_64.tar.gz": {
+      "sha256": "df20be914f33c88552b06acd09e8f99e9651858f9d490e94e6df8f748302db27",
+      "bytes": 32883750
+    },
+    "atomic-bomberman-0.3.0-macos-arm64.zip": {
+      "sha256": "2c1bbd63c5ffc35515a0ba9798f9c2b77c041a8e1ba06e16fa9aa446fcb8f472",
+      "bytes": 4611016
+    },
+    "atomic-bomberman-0.3.0-relay-linux-arm64.tar.gz": {
+      "sha256": "6d63a3369b95ace796d2eb028a95fd41f06bfbaa08f5b074947108a5fbb6c865",
+      "bytes": 2316130
+    }
+  },
+  "limitations": [
+    "LAN UDP replies and gameplay were tested between macOS and a Docker Linux peer; broadcast discovery across two physical Wi-Fi machines was unavailable.",
+    "Native AppImage entrypoint cannot run under this x86 emulator; embedded-runtime checks and direct portable Linux package launch passed.",
+    "Physical controller hardware was not tested."
+  ],
+  "client_artifacts_superseded_by": "clipboard-0.3.0-verification.json"
+}

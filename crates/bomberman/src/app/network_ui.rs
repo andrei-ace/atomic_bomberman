@@ -1,7 +1,7 @@
 use super::*;
 use bomberman_net::{
-    discovery::FoundGame, invitation::profile_path, transport::Destination, Action, Invitation,
-    NetError, ServerProfile, Stage, PORT,
+    discovery::FoundGame, invitation::profile_path, transport::Connection, transport::Destination,
+    Action, Event, Invitation, NetError, RoomSummary, ServerProfile, Stage, PORT,
 };
 use std::{
     net::{Ipv4Addr, SocketAddr},
@@ -10,7 +10,6 @@ use std::{
 
 #[derive(Debug, Clone, Copy)]
 pub(super) enum LobbyAction {
-    CopyInvite,
     Start,
     Rules,
     Colors,
@@ -20,23 +19,48 @@ pub(super) enum LobbyAction {
 pub(super) fn lobby_actions(host: bool) -> &'static [LobbyAction] {
     use LobbyAction::*;
     if host {
-        &[CopyInvite, Start, Rules, Colors, Devices, Leave]
+        &[Start, Rules, Colors, Devices, Leave]
     } else {
-        &[CopyInvite, Colors, Devices, Leave]
+        &[Colors, Devices, Leave]
     }
 }
 
 pub(super) struct NetworkUi {
-    pub create: bool,
     pub text: String,
     devices: Vec<Device>,
     saved: Option<ServerProfile>,
+    directory: Option<Connection>,
+    directory_profile: Option<ServerProfile>,
+    directory_ready: bool,
+    directory_error: Option<NetError>,
+    retry_at: f64,
+    retry_delay: f64,
+    rooms: Vec<RoomSummary>,
+    pending_room: Option<String>,
+    next_scan: f64,
+    lan_error: bool,
+    lan_manual: bool,
+    lan_addresses: Vec<SocketAddr>,
     scan: Option<mpsc::Receiver<std::io::Result<Vec<FoundGame>>>>,
     games: Vec<FoundGame>,
     devices_return: Screen,
     lobby_settings: Settings,
 }
 impl NetworkUi {
+    #[cfg(debug_assertions)]
+    pub(super) fn browser_probe(&self) -> serde_json::Value {
+        serde_json::json!({"ready":self.directory_ready,"rooms":self.rooms,
+            "text_present":!self.text.trim().is_empty(), "text_bytes":self.text.trim().len()})
+    }
+    #[cfg(debug_assertions)]
+    pub(super) fn lan_probe(&self) -> serde_json::Value {
+        serde_json::json!({"games":self.games.iter().map(|g| g.address.to_string()).collect::<Vec<_>>(),
+            "actions":["Host game","Join by IP","Local keyboards and controllers","Back"]})
+    }
+    pub(super) fn stop_directory(&mut self) {
+        self.directory = None;
+        self.directory_ready = false;
+    }
     pub fn new(settings: &Settings) -> Self {
         let mut devices: Vec<_> = settings
             .participants
@@ -49,10 +73,21 @@ impl NetworkUi {
             devices.push(Device::Keyboard1);
         }
         Self {
-            create: false,
             text: String::new(),
             devices,
             saved: ServerProfile::load(&profile_path()).ok().flatten(),
+            directory: None,
+            directory_profile: None,
+            directory_ready: false,
+            directory_error: None,
+            retry_at: 0.,
+            retry_delay: 1.,
+            rooms: vec![],
+            pending_room: None,
+            next_scan: 0.,
+            lan_error: false,
+            lan_manual: false,
+            lan_addresses: vec![],
             scan: None,
             games: vec![],
             devices_return: Screen::Online,
@@ -61,37 +96,248 @@ impl NetworkUi {
     }
 }
 impl App {
-    pub(super) fn update_multiplayer_menu(&mut self, internet: bool) {
+    pub(super) fn update_multiplayer_menu(&mut self, _internet: bool) {
         self.navigation(3);
         let clicked = self.hover_rows(30., 180., 580., 42., 3);
         if self.back() || ((self.confirm() || clicked) && self.selection == 2) {
-            self.change_screen(if internet {
-                Screen::Multiplayer
-            } else {
-                Screen::Main
-            });
+            self.change_screen(Screen::Main);
             self.selection = 1;
         } else if self.confirm() || clicked {
             self.network_ui.text.clear();
-            if internet {
-                self.network_ui.create = self.selection == 0;
-                self.change_screen(Screen::Online);
-            } else if self.selection == 0 {
+            if self.selection == 0 {
+                self.network_ui.lan_manual = false;
                 self.refresh_lan();
                 self.change_screen(Screen::Lan);
             } else {
-                self.change_screen(Screen::Internet);
+                self.open_internet();
             }
         }
     }
-
+    fn open_internet(&mut self) {
+        self.network_ui.text.clear();
+        self.network_ui.pending_room = None;
+        if let Some(profile) = self.network_ui.saved.clone() {
+            self.connect_directory(profile);
+            self.change_screen(Screen::Internet);
+        } else {
+            self.change_screen(Screen::Online);
+        }
+    }
     fn back_from_online(&mut self) {
         self.network_ui.text.clear();
-        self.change_screen(Screen::Internet);
-        self.selection = usize::from(!self.network_ui.create);
+        self.network_ui.directory = None;
+        self.network_ui.directory_profile = None;
+        self.open_internet();
+        if self.network_ui.saved.is_none() {
+            self.change_screen(Screen::Multiplayer);
+        }
+    }
+    fn connect_directory(&mut self, profile: ServerProfile) {
+        self.network_ui.directory = Some(Connection::connect(
+            Destination::Directory(profile.clone()),
+            crate::network::compatibility(&self.media.manifest),
+        ));
+        self.network_ui.directory_profile = Some(profile);
+        self.network_ui.directory_ready = false;
+        self.network_ui.directory_error = None;
+        self.network_ui.rooms.clear();
+        self.network_ui.retry_at = 0.;
+    }
+    fn directory_failed(&mut self, error: NetError) {
+        self.network_ui.directory = None;
+        self.network_ui.directory_ready = false;
+        self.network_ui.rooms.clear();
+        if self.network_ui.directory_error != Some(error) {
+            self.notify(error.to_string());
+        }
+        self.network_ui.directory_error = Some(error);
+        self.network_ui.retry_at = if matches!(
+            error,
+            NetError::Unavailable | NetError::Disconnected | NetError::RateLimit
+        ) {
+            let time = get_time() + self.network_ui.retry_delay;
+            self.network_ui.retry_delay = (self.network_ui.retry_delay * 2.).min(15.);
+            time
+        } else {
+            f64::INFINITY
+        };
+    }
+    fn update_directory(&mut self) {
+        if self.network_ui.directory.is_none() && get_time() >= self.network_ui.retry_at {
+            if let Some(profile) = self
+                .network_ui
+                .directory_profile
+                .clone()
+                .or_else(|| self.network_ui.saved.clone())
+            {
+                self.connect_directory(profile);
+            }
+        }
+        for _ in 0..64 {
+            let event = match self.network_ui.directory.as_ref().map(Connection::poll) {
+                Some(Ok(Some(event))) => event,
+                Some(Err(error)) => {
+                    self.directory_failed(error);
+                    break;
+                }
+                _ => break,
+            };
+            match event {
+                Event::Rooms(rooms) => {
+                    let selected = self
+                        .selection
+                        .checked_sub(5)
+                        .and_then(|i| self.network_ui.rooms.get(i))
+                        .map(|r| r.code.clone());
+                    self.network_ui.rooms = rooms;
+                    if let Some(code) = selected {
+                        self.selection = self
+                            .network_ui
+                            .rooms
+                            .iter()
+                            .position(|r| r.code == code)
+                            .map_or(0, |i| i + 5);
+                    }
+                    if !self.network_ui.directory_ready {
+                        if let Some(profile) = self.network_ui.directory_profile.clone() {
+                            match profile.save(&profile_path()) {
+                                Ok(()) => self.network_ui.saved = Some(profile),
+                                Err(error) => self.notify(error.to_string()),
+                            }
+                        }
+                    }
+                    self.network_ui.directory_ready = true;
+                    self.network_ui.directory_error = None;
+                    self.network_ui.retry_delay = 1.;
+                }
+                Event::Error(error) => {
+                    self.directory_failed(error);
+                    break;
+                }
+                Event::Pong => {}
+                _ => {
+                    self.directory_failed(NetError::Protocol);
+                    break;
+                }
+            }
+        }
+    }
+    pub(super) fn update_internet(&mut self) {
+        self.update_directory();
+        if self.network_ui.directory_ready {
+            if let Some(room) = self.network_ui.pending_room.take() {
+                if let Some(server) = self.network_ui.directory_profile.clone() {
+                    if let Err(error) = self.begin_network(
+                        Destination::Online(Invitation {
+                            server,
+                            room: Some(room),
+                        }),
+                        false,
+                    ) {
+                        self.notify(error.to_string());
+                    }
+                    return;
+                }
+            }
+        }
+        self.navigation(5 + self.network_ui.rooms.len());
+        let clicked = self.hover_rows(30., 104., 580., 26., 5)
+            || self.click_game_list(5, self.network_ui.rooms.len());
+        if self.confirm() || clicked {
+            let result = match self.selection {
+                0 if self.network_ui.directory_ready => {
+                    let server = self
+                        .network_ui
+                        .directory_profile
+                        .clone()
+                        .expect("authenticated directory");
+                    self.begin_network(Destination::Online(Invitation { server, room: None }), true)
+                }
+                0 => Err(NetError::Unavailable),
+                1 => {
+                    self.network_ui.directory = None;
+                    self.network_ui.directory_profile = None;
+                    self.network_ui.text.clear();
+                    self.change_screen(Screen::Online);
+                    Ok(())
+                }
+                2 => {
+                    if let Some(server) = self
+                        .network_ui
+                        .directory_profile
+                        .as_ref()
+                        .or(self.network_ui.saved.as_ref())
+                    {
+                        match (Invitation {
+                            server: server.clone(),
+                            room: None,
+                        })
+                        .encode()
+                        {
+                            Ok(link) => {
+                                if crate::clipboard::set_text(&link) {
+                                    self.notify("Server link copied. Friends paste it once to find your games.");
+                                } else {
+                                    self.notify("Could not copy the server link. Try again.");
+                                }
+                                Ok(())
+                            }
+                            Err(error) => Err(error),
+                        }
+                    } else {
+                        Err(NetError::InvalidInvite)
+                    }
+                }
+                3 => {
+                    self.open_devices();
+                    Ok(())
+                }
+                4 => {
+                    self.network_ui.directory = None;
+                    self.change_screen(Screen::Multiplayer);
+                    Ok(())
+                }
+                i => {
+                    let room = self.network_ui.rooms[i - 5].clone();
+                    room.joinable(&crate::network::compatibility(&self.media.manifest))
+                        .and_then(|()| {
+                            let server = self
+                                .network_ui
+                                .directory_profile
+                                .clone()
+                                .ok_or(NetError::Unavailable)?;
+                            self.begin_network(
+                                Destination::Online(Invitation {
+                                    server,
+                                    room: Some(room.code),
+                                }),
+                                false,
+                            )
+                        })
+                }
+            };
+            if let Err(error) = result {
+                self.notify(error.to_string());
+            }
+        }
+        if self.back() {
+            self.network_ui.directory = None;
+            self.change_screen(Screen::Multiplayer);
+        }
+    }
+    fn click_game_list(&mut self, base: usize, len: usize) -> bool {
+        let offset = list_offset(self.selection, base, len);
+        if self.clicked && Rect::new(30., 248., 580., 26. * len.min(7) as f32).contains(self.mouse)
+        {
+            self.selection = base + offset + ((self.mouse.y - 248.) / 26.) as usize;
+            true
+        } else {
+            false
+        }
     }
 
     fn input_invitation(&mut self) {
+        let private_link = self.screen == Screen::Online;
         let paste = (is_key_down(KeyCode::LeftControl)
             || is_key_down(KeyCode::RightControl)
             || is_key_down(KeyCode::LeftSuper)
@@ -100,24 +346,60 @@ impl App {
         if paste {
             self.paste_invitation();
         }
-        if is_key_pressed(KeyCode::Backspace) {
-            self.network_ui.text.pop();
+        if is_key_pressed(KeyCode::Backspace) || (private_link && is_key_pressed(KeyCode::Delete)) {
+            if private_link {
+                self.clear_private_link();
+                self.notify("Private link cleared.");
+            } else {
+                self.network_ui.text.pop();
+            }
         }
         while let Some(character) = get_char_pressed() {
-            if !paste && !character.is_control() && self.network_ui.text.len() < 4200 {
+            // A hidden credential is replaced as a whole. Navigation, shortcuts,
+            // and stray typing must not silently append to a pasted server link.
+            // The visible LAN address field still supports ordinary editing.
+            if !private_link
+                && !paste
+                && !character.is_control()
+                && self.network_ui.text.len() < 4200
+            {
                 self.network_ui.text.push(character);
             }
         }
     }
+    fn clear_private_link(&mut self) {
+        self.network_ui.text.clear();
+        self.network_ui.directory = None;
+        self.network_ui.directory_profile = None;
+        self.network_ui.directory_ready = false;
+        self.network_ui.directory_error = None;
+        self.network_ui.pending_room = None;
+    }
     fn paste_invitation(&mut self) {
-        if let Some(text) = macroquad::miniquad::window::clipboard_get() {
+        if self.screen == Screen::Online {
+            self.clear_private_link();
+        }
+        if let Some(text) = crate::clipboard::get_text() {
             if text.len() <= 4200 {
-                self.network_ui.text = text.trim().to_owned();
+                if self.screen == Screen::Online {
+                    match Invitation::parse(&text, self.network_ui.saved.as_ref())
+                        .and_then(|invitation| invitation.encode())
+                    {
+                        Ok(link) => self.network_ui.text = link,
+                        Err(error) => self.notify(error.to_string()),
+                    }
+                } else {
+                    self.network_ui.text = text.trim().to_owned();
+                }
             } else {
                 self.notify(NetError::InvalidInvite.to_string());
             }
         } else {
-            self.notify("Clipboard is empty. Paste an invitation or type a room code.");
+            self.notify(if self.screen == Screen::Lan {
+                "No clipboard text is available. Copy the host's local IP address first."
+            } else {
+                "No clipboard text is available. Copy the private server link first."
+            });
         }
     }
     fn open_devices(&mut self) {
@@ -129,6 +411,14 @@ impl App {
         destination: Destination,
         host: bool,
     ) -> std::result::Result<(), NetError> {
+        self.network_ui.directory = None;
+        self.network_ui.directory_ready = false;
+        self.network_ui.lan_addresses =
+            if matches!(destination, Destination::Lan { host: true, .. }) {
+                bomberman_net::discovery::host_addresses().unwrap_or_default()
+            } else {
+                vec![]
+            };
         self.network_ui.lobby_settings = self.settings.clone();
         let config = if host {
             Some(
@@ -151,36 +441,27 @@ impl App {
     }
     pub(super) fn update_online(&mut self) {
         self.input_invitation();
-        self.navigation(4);
-        let clicked = self.hover_rows(30., 180., 580., 42., 4);
+        if self.network_ui.directory_profile.is_some() {
+            self.update_directory();
+            if self.network_ui.directory_ready {
+                self.network_ui.text.clear();
+                self.change_screen(Screen::Internet);
+                return;
+            }
+        }
+        self.navigation(3);
+        let clicked = self.hover_rows(30., 180., 580., 42., 3);
         if self.confirm() || clicked {
             match self.selection {
                 0 => self.paste_invitation(),
-                1 => {
-                    let invite = if self.network_ui.create && self.network_ui.text.trim().is_empty()
-                    {
-                        self.network_ui
-                            .saved
-                            .clone()
-                            .map(|server| Invitation { server, room: None })
-                            .ok_or(NetError::InvalidInvite)
-                    } else {
-                        Invitation::parse(&self.network_ui.text, self.network_ui.saved.as_ref())
-                    };
-                    let result = invite.and_then(|mut invitation| {
-                        if self.network_ui.create {
-                            invitation.room = None;
-                        } else if invitation.room.is_none() {
-                            self.network_ui.create = true;
-                            self.notify("Server invitation imported. Creating your online game.");
-                        }
-                        self.begin_network(Destination::Online(invitation), self.network_ui.create)
-                    });
-                    if let Err(error) = result {
-                        self.notify(error.to_string());
+                1 => match Invitation::parse(&self.network_ui.text, self.network_ui.saved.as_ref())
+                {
+                    Ok(invitation) => {
+                        self.network_ui.pending_room = invitation.room;
+                        self.connect_directory(invitation.server);
                     }
-                }
-                2 => self.open_devices(),
+                    Err(error) => self.notify(error.to_string()),
+                },
                 _ => self.back_from_online(),
             }
         }
@@ -189,69 +470,124 @@ impl App {
         }
     }
     pub(super) fn refresh_lan(&mut self) {
+        if self.network_ui.scan.is_some() {
+            return;
+        }
         let (tx, rx) = mpsc::channel();
         self.network_ui.scan = Some(rx);
-        self.network_ui.games.clear();
+        self.network_ui.next_scan = get_time() + 3.;
         std::thread::spawn(move || {
             let _ = tx.send(bomberman_net::discovery::browse());
         });
     }
     pub(super) fn update_lan(&mut self) {
-        self.input_invitation();
-        if let Some(scan) = &self.network_ui.scan {
-            if let Ok(result) = scan.try_recv() {
-                self.network_ui.scan = None;
-                match result {
-                    Ok(games) => self.network_ui.games = games,
-                    Err(_) => {
-                        self.notify("LAN discovery unavailable. Enter the host address to join.")
-                    }
-                }
-            }
-        }
-        let count = 6 + self.network_ui.games.len().min(5);
-        self.navigation(count);
-        let clicked = self.hover_rows(30., 105., 580., 28., count);
-        if self.confirm() || clicked {
-            let destination = match self.selection {
-                0 => Some((SocketAddr::from((Ipv4Addr::LOCALHOST, PORT)), true)),
-                1 => {
-                    self.paste_invitation();
-                    None
-                }
-                2 => {
+        if self.network_ui.lan_manual {
+            self.input_invitation();
+            self.navigation(2);
+            let clicked = self.hover_rows(30., 180., 580., 42., 2);
+            if self.confirm() || clicked {
+                if self.selection == 0 {
                     let text = self.network_ui.text.trim();
                     let address = text.parse::<SocketAddr>().or_else(|_| {
                         text.parse::<std::net::IpAddr>()
                             .map(|ip| SocketAddr::new(ip, PORT))
                     });
                     match address {
-                        Ok(address) => Some((address, false)),
-                        Err(_) => {
-                            self.notify(
-                                "Enter an IPv4/IPv6 address, optionally followed by :1997.",
-                            );
+                        Ok(address) => {
+                            if let Err(error) = self.begin_network(
+                                Destination::Lan {
+                                    address,
+                                    host: false,
+                                },
+                                false,
+                            ) {
+                                self.notify(error.to_string());
+                            }
+                        }
+                        Err(_) => self.notify("Enter the host IP, optionally followed by :1997."),
+                    }
+                } else {
+                    self.network_ui.lan_manual = false;
+                    self.network_ui.text.clear();
+                    self.selection = 1;
+                }
+            }
+            if self.back() {
+                self.network_ui.lan_manual = false;
+                self.network_ui.text.clear();
+                self.selection = 1;
+            }
+            return;
+        }
+        if let Some(result) = self
+            .network_ui
+            .scan
+            .as_ref()
+            .and_then(|scan| scan.try_recv().ok())
+        {
+            self.network_ui.scan = None;
+            match result {
+                Ok(games) => {
+                    let selected = self
+                        .selection
+                        .checked_sub(4)
+                        .and_then(|i| self.network_ui.games.get(i))
+                        .map(|g| g.address);
+                    self.network_ui.games = games;
+                    if let Some(address) = selected {
+                        self.selection = self
+                            .network_ui
+                            .games
+                            .iter()
+                            .position(|g| g.address == address)
+                            .map_or(0, |i| i + 4);
+                    }
+                    self.network_ui.lan_error = false;
+                }
+                Err(_) => {
+                    if !self.network_ui.lan_error {
+                        self.notify(NetError::Discovery.to_string());
+                    }
+                    self.network_ui.lan_error = true;
+                    self.network_ui.games.clear();
+                }
+            }
+        }
+        if get_time() >= self.network_ui.next_scan {
+            self.refresh_lan();
+        }
+        self.navigation(4 + self.network_ui.games.len());
+        let clicked = self.hover_rows(30., 104., 580., 26., 4)
+            || self.click_game_list(4, self.network_ui.games.len());
+        if self.confirm() || clicked {
+            let destination = match self.selection {
+                0 => Some((SocketAddr::from((Ipv4Addr::LOCALHOST, PORT)), true)),
+                1 => {
+                    self.network_ui.lan_manual = true;
+                    self.network_ui.text.clear();
+                    self.selection = 0;
+                    None
+                }
+                2 => {
+                    self.open_devices();
+                    None
+                }
+                3 => {
+                    self.change_screen(Screen::Multiplayer);
+                    None
+                }
+                i => {
+                    let game = &self.network_ui.games[i - 4];
+                    match crate::network::compatibility(&self.media.manifest)
+                        .check(&game.advertisement.compatibility)
+                    {
+                        Ok(()) => Some((game.address, false)),
+                        Err(error) => {
+                            self.notify(error.to_string());
                             None
                         }
                     }
                 }
-                3 => {
-                    self.refresh_lan();
-                    None
-                }
-                4 => {
-                    self.open_devices();
-                    None
-                }
-                5 => {
-                    self.change_screen(Screen::Multiplayer);
-                    None
-                }
-                i => self
-                    .network_ui
-                    .games
-                    .get(i - 6)
-                    .map(|game| (game.address, false)),
             };
             if let Some((address, host)) = destination {
                 if let Err(error) = self.begin_network(Destination::Lan { address, host }, host) {
@@ -634,21 +970,6 @@ impl App {
         let clicked = self.hover_rows(30., 300., 580., 24., actions.len());
         if self.confirm() || clicked {
             let result = match actions[self.selection] {
-                LobbyAction::CopyInvite
-                    if self.network.as_ref().is_some_and(|n| n.server.is_none()) =>
-                {
-                    self.notify("Friends can find this game in LAN games, or join your local IP on port 1997.");
-                    Ok(())
-                }
-                LobbyAction::CopyInvite => self
-                    .network
-                    .as_ref()
-                    .ok_or(NetError::Unavailable)
-                    .and_then(|n| n.invite())
-                    .map(|invite| {
-                        macroquad::miniquad::window::clipboard_set(&invite);
-                        self.notify("Invitation copied. Share it privately with friends.");
-                    }),
                 LobbyAction::Start => {
                     self.network
                         .as_mut()
@@ -686,10 +1007,17 @@ impl App {
         }
     }
     fn leave_network(&mut self) {
+        let online = self.network.as_ref().is_some_and(|n| n.server.is_some());
         self.network = None;
         self.simulation = None;
         self.paused = false;
-        self.change_screen(Screen::Main);
+        if online {
+            self.open_internet();
+        } else {
+            self.network_ui.lan_manual = false;
+            self.change_screen(Screen::Lan);
+            self.refresh_lan();
+        }
     }
     pub(super) async fn update_network_session(&mut self, elapsed_ms: u32) -> Result<()> {
         let network = self.network.as_mut().expect("active network");
@@ -833,117 +1161,214 @@ impl App {
             }
         }
     }
-    fn invitation_label(&self) -> String {
-        if self.network_ui.text.is_empty() {
-            "Paste invitation or type room code".into()
-        } else if self.network_ui.text.starts_with("AB1.") {
-            "Private invitation pasted".into()
-        } else {
-            truncate(&self.network_ui.text, 35)
-        }
-    }
-
-    pub(super) fn draw_multiplayer_menu(&self, internet: bool) {
+    pub(super) fn draw_multiplayer_menu(&self, _internet: bool) {
         self.background("MAINMENU.PCX", 0.97);
-        self.heading(if internet {
-            "INTERNET MULTIPLAYER"
-        } else {
-            "MULTIPLAYER"
-        });
+        self.heading("MULTIPLAYER");
         self.media.center_text(
-            if internet {
-                "Create a private game or join with an invitation."
-            } else {
-                "Choose LAN for nearby computers or Internet to play online."
-            },
+            "Play with nearby computers or your friends online.",
             100.,
             13.,
             LIGHT,
         );
-        let labels = if internet {
-            ["Create Online Game", "Join Game", "Back"]
-        } else {
-            ["LAN", "Internet", "Back"]
-        };
-        for (i, label) in labels.iter().enumerate() {
+        for (i, label) in ["LAN", "Internet", "Back"].iter().enumerate() {
             self.row(label, "Enter", i, 186. + i as f32 * 42., 16.);
         }
         self.footer("Arrow keys + Enter  |  Escape: back");
     }
     pub(super) fn draw_online(&self) {
         self.background("MAINMENU.PCX", 0.97);
-        self.heading(if self.network_ui.create {
-            "CREATE ONLINE GAME"
-        } else {
-            "JOIN GAME"
-        });
+        self.heading("CONNECT TO FRIENDS");
         self.media.center_text(
-            "Paste one private invitation. Returning friends can use a room code.",
+            "Paste the private server link once to find and host games.",
             79.,
             12.,
             LIGHT,
         );
         draw_rectangle(35., 111., 570., 37., Color::new(0.12, 0.2, 0.32, 1.));
-        self.media
-            .text(&self.invitation_label(), 48., 122., 15., GOLD);
-        self.media.center_text(
-            if self.network_ui.saved.is_some() {
-                "A private server is saved on this computer."
+        self.media.text(
+            if self.network_ui.text.is_empty() {
+                "Paste private server link"
             } else {
-                "First time: request the full invitation from your host."
+                "Private link ready"
+            },
+            48.,
+            122.,
+            15.,
+            GOLD,
+        );
+        self.media.center_text(
+            if self.network_ui.directory.is_some() {
+                "Connecting securely..."
+            } else {
+                "Ask a friend for the group's server link."
             },
             157.,
             12.,
             MUTED,
         );
-        for (i, label) in [
-            "Paste",
-            if self.network_ui.create {
-                "Create game"
-            } else {
-                "Join"
-            },
-            "Local keyboards and controllers",
-            "Back",
-        ]
-        .iter()
-        .enumerate()
-        {
+        for (i, label) in ["Paste server link", "Connect", "Back"].iter().enumerate() {
             self.row(label, "Enter", i, 186. + i as f32 * 42., 16.);
         }
-        self.footer("Ctrl-V / Cmd-V: paste  |  Backspace: edit  |  Escape: back");
+        self.footer("Ctrl-V / Cmd-V: paste  |  Backspace / Delete: clear  |  Escape: back");
     }
-    pub(super) fn draw_lan(&self) {
+    pub(super) fn draw_internet(&self) {
         self.background("MAINMENU.PCX", 0.97);
-        self.heading("LAN GAMES");
-        self.media
-            .center_text(&self.invitation_label(), 75., 14., GOLD);
+        self.heading("FRIENDS' GAMES");
+        self.media.center_text(
+            if self.network_ui.directory_ready {
+                "Host a game or join a friend. This list updates automatically."
+            } else {
+                "Connecting to your saved private server..."
+            },
+            75.,
+            12.,
+            LIGHT,
+        );
         for (i, label) in [
-            "Host LAN game",
-            "Paste address",
-            "Join address (port 1997)",
-            "Refresh LAN browser",
+            "Host game",
+            "Change server",
+            "Copy server link",
             "Local keyboards and controllers",
             "Back",
         ]
         .iter()
         .enumerate()
         {
-            self.row(label, "Enter", i, 108. + i as f32 * 28., 13.);
-        }
-        for (i, game) in self.network_ui.games.iter().take(5).enumerate() {
             self.row(
-                &format!("LAN {}", game.address),
-                &game.advertisement.compatibility.application,
-                i + 6,
-                276. + i as f32 * 28.,
+                label,
+                if i == 0 && !self.network_ui.directory_ready {
+                    "Unavailable"
+                } else {
+                    "Enter"
+                },
+                i,
+                107. + i as f32 * 26.,
                 13.,
             );
         }
-        self.footer(if self.network_ui.scan.is_some() {
-            "Searching IPv4 LAN..."
+        let compatibility = crate::network::compatibility(&self.media.manifest);
+        let offset = list_offset(self.selection, 5, self.network_ui.rooms.len());
+        for (i, room) in self
+            .network_ui
+            .rooms
+            .iter()
+            .enumerate()
+            .skip(offset)
+            .take(7)
+        {
+            let status = match room.joinable(&compatibility) {
+                Ok(()) => format!("{}/10 computers - Join", room.computers),
+                Err(NetError::Full) => "Full".into(),
+                Err(NetError::InProgress) => "Playing".into(),
+                Err(NetError::Assets) => "Different assets".into(),
+                _ => "Different version".into(),
+            };
+            self.row(
+                &format!("Game {}", room.code),
+                &status,
+                i + 5,
+                251. + (i - offset) as f32 * 26.,
+                13.,
+            );
+        }
+        if self.network_ui.rooms.is_empty() && self.network_ui.directory_ready {
+            self.media.center_text(
+                "No games yet. Anyone in your group can host one.",
+                285.,
+                13.,
+                MUTED,
+            );
+        }
+        self.footer(if self.network_ui.directory_error.is_some() {
+            "Server unavailable. Check your connection or choose Change server."
         } else {
-            "Select a discovered game or type the host IP. Both computers need matching assets."
+            "Friends using the same saved server appear here without new invitations."
+        });
+    }
+    pub(super) fn draw_lan(&self) {
+        self.background("MAINMENU.PCX", 0.97);
+        if self.network_ui.lan_manual {
+            self.heading("JOIN BY IP");
+            self.media.center_text(
+                "Enter the host's local IP address. The default port is 1997.",
+                79.,
+                12.,
+                LIGHT,
+            );
+            draw_rectangle(35., 111., 570., 37., Color::new(0.12, 0.2, 0.32, 1.));
+            self.media.text(
+                &if self.network_ui.text.is_empty() {
+                    "Host IP address".into()
+                } else {
+                    truncate(&self.network_ui.text, 45)
+                },
+                48.,
+                122.,
+                15.,
+                GOLD,
+            );
+            self.row("Join game", "Enter", 0, 186., 16.);
+            self.row("Back", "Enter", 1, 228., 16.);
+            self.footer("Type or Ctrl-V / Cmd-V: paste address  |  Escape: back");
+            return;
+        }
+        self.heading("LAN GAMES");
+        self.media.center_text(
+            "Host a game or select a nearby computer. Games appear automatically.",
+            75.,
+            12.,
+            LIGHT,
+        );
+        for (i, label) in [
+            "Host game",
+            "Join by IP",
+            "Local keyboards and controllers",
+            "Back",
+        ]
+        .iter()
+        .enumerate()
+        {
+            self.row(label, "Enter", i, 107. + i as f32 * 26., 13.);
+        }
+        let compatibility = crate::network::compatibility(&self.media.manifest);
+        let offset = list_offset(self.selection, 4, self.network_ui.games.len());
+        for (i, game) in self
+            .network_ui
+            .games
+            .iter()
+            .enumerate()
+            .skip(offset)
+            .take(7)
+        {
+            let status = match compatibility.check(&game.advertisement.compatibility) {
+                Ok(()) => "Join",
+                Err(NetError::Assets) => "Different assets",
+                _ => "Different version",
+            };
+            self.row(
+                &format!("{}", game.address),
+                status,
+                i + 4,
+                251. + (i - offset) as f32 * 26.,
+                13.,
+            );
+        }
+        if self.network_ui.games.is_empty() {
+            self.media.center_text(
+                if self.network_ui.lan_error {
+                    "Allow Local Network access and UDP 1997, or use Join by IP."
+                } else {
+                    "No nearby games yet. A friend can select Host game."
+                },
+                285.,
+                12.,
+                MUTED,
+            );
+        }
+        self.footer(if self.network_ui.scan.is_some() {
+            "Searching your local networks..."
+        } else {
+            "Same local network required  |  Arrow keys + Enter: join  |  Escape: back"
         });
     }
     pub(super) fn draw_network_devices(&self) {
@@ -972,7 +1397,13 @@ impl App {
     }
     pub(super) fn draw_network_lobby(&self) {
         self.background("MAINMENU.PCX", 0.97);
-        self.heading("PRIVATE GAME LOBBY");
+        self.heading(
+            if self.network.as_ref().is_some_and(|n| n.server.is_some()) {
+                "FRIENDS' GAME LOBBY"
+            } else {
+                "LAN GAME LOBBY"
+            },
+        );
         let Some(network) = &self.network else {
             return;
         };
@@ -992,8 +1423,12 @@ impl App {
         }
         self.media.center_text(
             &format!(
-                "Room {}  /  {}",
-                network.room,
+                "{}  /  {}",
+                if network.server.is_some() {
+                    format!("Game {}", network.room)
+                } else {
+                    "Local network game".into()
+                },
                 if network.host {
                     "You are the host"
                 } else {
@@ -1042,29 +1477,38 @@ impl App {
         }
         for (i, action) in lobby_actions(network.host).iter().enumerate() {
             let label = match action {
-                LobbyAction::CopyInvite => "Copy Invite",
                 LobbyAction::Start => "Start game",
                 LobbyAction::Rules => "Arena and battle rules",
                 LobbyAction::Colors => "Player colors",
                 LobbyAction::Devices => "Local keyboards and controllers",
                 LobbyAction::Leave => "Leave game",
             };
-            self.row(
-                label,
-                if matches!(action, LobbyAction::CopyInvite) && network.server.is_none() {
-                    "LAN: share host IP"
-                } else {
-                    "Enter"
-                },
-                i,
-                303. + i as f32 * 24.,
-                13.,
-            );
+            self.row(label, "Enter", i, 303. + i as f32 * 24., 13.);
         }
-        self.footer(if network.host {
-            "Choose arena and rules, then start when friends have selected their controls."
+        if network.host && network.server.is_none() {
+            let addresses = self
+                .network_ui
+                .lan_addresses
+                .iter()
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+                .join("  ");
+            self.footer(&format!(
+                "Friends can find this game automatically. Join by IP: {}",
+                truncate(&addresses, 55)
+            ));
         } else {
-            "Choose your controls and color, then wait for the host to start."
-        });
+            self.footer(if network.host {
+                "Start when friends have selected their controls."
+            } else {
+                "Choose your controls and color, then wait for the host to start."
+            });
+        }
     }
+}
+
+fn list_offset(selection: usize, base: usize, len: usize) -> usize {
+    selection
+        .saturating_sub(base + 6)
+        .min(len.saturating_sub(7))
 }

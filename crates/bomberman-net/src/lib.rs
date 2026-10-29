@@ -2,6 +2,7 @@
 //! This crate never initializes graphics, audio or input devices.
 pub mod broker;
 pub mod discovery;
+pub mod interfaces;
 pub mod invitation;
 pub mod protocol;
 pub mod session;

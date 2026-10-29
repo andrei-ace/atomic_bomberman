@@ -65,28 +65,49 @@ impl Broker {
     }
     pub fn open(&mut self, open: Open, out: Outbox) -> Result<(String, PeerId), NetError> {
         self.expire();
-        if let Some(token) = &self.token {
-            if !bool::from(token.as_bytes().ct_eq(open.token.as_bytes())) {
-                return Err(NetError::Unauthorized);
-            }
-        }
-        if open.compatibility.protocol != PROTOCOL_VERSION
-            || open.compatibility.application != APP_VERSION
-        {
-            return Err(NetError::Version);
-        }
-        if open.compatibility.assets.len() != 64
-            || !open
-                .compatibility
-                .assets
-                .bytes()
-                .all(|b| b.is_ascii_hexdigit())
-        {
-            return Err(NetError::Assets);
-        }
+        self.authenticate(&open.token, &open.compatibility)?;
         if self.connections() >= self.max_connections {
             return Err(NetError::RateLimit);
         }
+        self.open_authenticated(open, out)
+    }
+    pub fn authenticate(
+        &self,
+        supplied: &str,
+        compatibility: &Compatibility,
+    ) -> Result<(), NetError> {
+        if let Some(token) = &self.token {
+            if !bool::from(token.as_bytes().ct_eq(supplied.as_bytes())) {
+                return Err(NetError::Unauthorized);
+            }
+        }
+        if compatibility.protocol != PROTOCOL_VERSION || compatibility.application != APP_VERSION {
+            return Err(NetError::Version);
+        }
+        if compatibility.assets.len() != 64
+            || !compatibility.assets.bytes().all(|b| b.is_ascii_hexdigit())
+        {
+            return Err(NetError::Assets);
+        }
+        Ok(())
+    }
+    pub fn list_rooms(&mut self) -> Vec<RoomSummary> {
+        self.expire();
+        self.rooms
+            .iter()
+            .map(|(code, room)| RoomSummary {
+                code: code.clone(),
+                compatibility: room.compatibility.clone(),
+                computers: room.peers.len(),
+                playing: room.playing,
+            })
+            .collect()
+    }
+    fn open_authenticated(
+        &mut self,
+        open: Open,
+        out: Outbox,
+    ) -> Result<(String, PeerId), NetError> {
         let (code, id) = if let Some(code) = open.room {
             let room = self.rooms.get_mut(&code).ok_or(NetError::RoomExpired)?;
             room.compatibility.check(&open.compatibility)?;

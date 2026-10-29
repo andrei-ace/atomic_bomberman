@@ -1,0 +1,108 @@
+{
+  "passed": true,
+  "version": "0.3.0",
+  "protocol": 3,
+  "source": {
+    "commit": "b6285b0f1263ba3cb8265b24ffb3feba6cabe8ef",
+    "dirty": true,
+    "sha256": "05cf14e7f6f5d95cf3e958b166093248785ce59d07f438738417814fb1731e44"
+  },
+  "changes": [
+    "Validate pasted private links immediately and replace the whole field.",
+    "Backspace and Delete clear the hidden private link and cancel a pending connection.",
+    "Ordinary typing cannot silently alter a hidden private link.",
+    "Invalid or empty clipboard input discards stale private-link input.",
+    "Normalize empty Linux clipboard text to the same result as macOS."
+  ],
+  "macos": {
+    "original_clipboard_restored": true,
+    "passed": true,
+    "limitations": [
+      "Synthetic events stay in the game view; physical keyboard hardware is separate."
+    ],
+    "checks": [
+      "Paste server link button reads macOS clipboard and authenticates",
+      "Copy server link updates the macOS clipboard",
+      "Backspace discards the private link before Connect",
+      "Delete discards the private link before Connect",
+      "Invalid clipboard text cannot reuse the previous link",
+      "Empty clipboard does not reuse stale invitation text",
+      "Cmd-V authenticates a game-copied link after clearing and accidental typing"
+    ],
+    "error": null,
+    "platform": "macOS AppKit, actual packaged game UI"
+  },
+  "linux": {
+    "passed": true,
+    "platform": "Ubuntu 24.04 x86-64, isolated Xvfb, Mesa software rendering",
+    "injected_round_trip_tcp_delay_ms": 0,
+    "relay_environment": "deployed server, external TCP 443",
+    "checks": [
+      "Multiplayer directly below Start local battle",
+      "simple LAN browser and back navigation",
+      "Paste server link button reads the OS clipboard",
+      "Ctrl-V reads the OS clipboard",
+      "Copy server link updates the OS clipboard",
+      "Backspace and Delete clear the whole private link",
+      "Invalid and empty pastes clear stale input",
+      "Typing cannot silently change a hidden private link",
+      "A link copied by one game authenticates another game",
+      "create room",
+      "private profile mode 0600",
+      "LAN and game lobbies have no Copy Invite",
+      "friend joins through automatic discovery",
+      "multiple local keyboards/controllers in lobby",
+      "host-only Start and shared arena/rules/team editing",
+      "start after controls without added Ready toggle",
+      "personal colors for both local players and host",
+      "ten unique colors synchronized to both computers",
+      "session settings preserve saved local settings",
+      "original network flags disable Gold roulette",
+      "actual two-window battle",
+      "shared pause and identical serialized simulation",
+      "host departure ends session",
+      "saved server reuse",
+      "former client hosts without new invitation",
+      "credentials absent from logs"
+    ],
+    "limitations": [
+      "No physical controller tested.",
+      "macOS Cmd-V and Linux/macOS WAN play require Mac hardware."
+    ]
+  },
+  "linux_portable": {
+    "passed": true,
+    "platform": "Ubuntu 24.04 x86-64 under Docker emulation",
+    "checks": [
+      "relocated packaged launcher --help",
+      "packaged game launched in Xvfb",
+      "120 menu frames rendered",
+      "checksummed portable archive",
+      "original game assets excluded"
+    ],
+    "archive": "atomic-bomberman-0.3.0-linux-x86_64.tar.gz",
+    "sha256": "2576be0120b894e66c0ae5120f83573a151797a766e4460d477319f6398225d3",
+    "native_appimage_entrypoint_verified": false
+  },
+  "installed_mac_binary_sha256": "66d959e2654be1d9b9dfdaa9b93dd3127d769c537bf046ec08617e175d4e1d89",
+  "macos_install_signature_verified": true,
+  "existing_server_link_verified": true,
+  "artifacts": {
+    "atomic-bomberman-0.3.0-macos-arm64.zip": "43a91b0ff1ec40fc0e38c770046a26895b3cbcc392ee84a1dcf049e5c885dd27",
+    "atomic-bomberman-0.3.0-linux-x86_64.AppImage": "3670a6f94f8b16118dfdfe8544f8b82d906c045a8f92051b3e5709f38b8239b5",
+    "atomic-bomberman-0.3.0-linux-x86_64.tar.gz": "2576be0120b894e66c0ae5120f83573a151797a766e4460d477319f6398225d3"
+  },
+  "limitations": [
+    "Linux UI tests use X11/Xvfb under x86-64 Docker emulation.",
+    "The native AppImage entrypoint is not verified under the emulator; the portable Linux package launch passed.",
+    "The directory refreshes every three seconds, so departed games may remain visible until the next refresh."
+  ],
+  "repository_checks": {
+    "formatting": "passed",
+    "diff_whitespace": "passed",
+    "macos_workspace_clippy": "passed",
+    "linux_client_clippy": "passed",
+    "macos_client_and_network_tests": 20,
+    "linux_client_and_network_tests": 23
+  }
+}

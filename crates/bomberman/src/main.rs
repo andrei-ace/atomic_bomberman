@@ -3,6 +3,7 @@ mod audio_output;
 mod audio_policy;
 mod catalog;
 mod cli;
+mod clipboard;
 mod controls;
 mod graphics_startup;
 mod headless;
@@ -71,11 +72,17 @@ fn launch() -> Result<()> {
         high_dpi: true,
         window_resizable: true,
         sample_count: 1,
+        // Miniquad's default icon replaces the .app's Dock icon after the
+        // launcher execs this binary. Let AppKit keep the bundle's ICNS.
+        icon: if cfg!(target_os = "macos") {
+            None
+        } else {
+            Conf::default().icon
+        },
         platform: macroquad::miniquad::conf::Platform {
             swap_interval: Some(1),
             ..Default::default()
         },
-        ..Default::default()
     };
     macroquad::Window::from_config(conf, async move {
         graphics_startup::ready();

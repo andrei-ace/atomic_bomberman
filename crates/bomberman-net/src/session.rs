@@ -369,7 +369,7 @@ impl Replay {
             hash: None,
         };
         let events = self.apply(&frame)?;
-        if self.tick % 50 == 0 {
+        if self.tick.is_multiple_of(50) {
             frame.hash = Some(self.hash());
         }
         Ok((frame, events))

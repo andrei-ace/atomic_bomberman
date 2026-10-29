@@ -27,14 +27,30 @@ fn open(token: &str, room: Option<String>) -> Open {
 }
 
 #[test]
-fn opaque_invites_saved_server_and_private_profile() {
+fn server_urls_legacy_invites_and_private_profile() {
     let invitation = Invitation {
         server: profile(),
         room: Some("ABCD1234".into()),
     };
     let encoded = invitation.encode().unwrap();
-    assert!(!encoded.contains("127.0.0.1"));
+    assert!(encoded.starts_with("atomic-bomberman://127.0.0.1:443/#v=1&token="));
     assert_eq!(Invitation::parse(&encoded, None).unwrap(), invitation);
+    use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+    let legacy = format!(
+        "AB1.{}",
+        URL_SAFE_NO_PAD.encode(serde_json::to_vec(&invitation).unwrap())
+    );
+    assert_eq!(Invitation::parse(&legacy, None).unwrap(), invitation);
+    let mut ipv6 = invitation.clone();
+    ipv6.server.endpoint = "wss://[::1]:8443/v1/ws".into();
+    assert_eq!(
+        Invitation::parse(&ipv6.encode().unwrap(), None).unwrap(),
+        ipv6
+    );
+    assert!(Invitation::parse(&format!("{encoded}&token=duplicate"), None).is_err());
+    assert!(Invitation::parse(&encoded.replace("v=1", "v=2"), None).is_err());
+    assert!(Invitation::parse(&encoded.replace("pin=", "pin=bad"), None).is_err());
+    assert!(Invitation::parse(&encoded.replace("127.0.0.1", "user@127.0.0.1"), None).is_err());
     assert_eq!(
         Invitation::parse("abcd1234", Some(&invitation.server)).unwrap(),
         invitation

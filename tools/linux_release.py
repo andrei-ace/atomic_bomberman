@@ -140,10 +140,14 @@ def download(url, destination):
         shutil.copyfileobj(response, output)
 
 
-def build(clean):
+def build(clean, emulated_runtime=False):
     if platform.system() != 'Linux' or platform.machine() != 'x86_64':
         raise ValueError('Build the AppImage on Ubuntu 24.04 x86-64')
     info = provenance('x86_64-unknown-linux-gnu', clean)
+    if emulated_runtime:
+        info['validation'] = {'mode':'embedded runtime under x86 emulation',
+                              'native_appimage_entrypoint_verified':False,
+                              'reason':'Emulator rejects AppImage ABI marker and memfd execveat'}
     if 'VERSION_ID="24.04"' not in Path('/etc/os-release').read_text():
         raise ValueError('Use Ubuntu 24.04 to preserve the glibc baseline')
     checked('cargo', 'build', '--locked', '--release', '-p', 'bomberman', '-p', 'bomberman-assets', '--bins', '--examples')
@@ -212,11 +216,11 @@ def build(clean):
         image.chmod(0o755)
         image.with_suffix('.build.json').write_text(json.dumps(info, indent=2) + '\n')
         image.with_name(name + '.sha256').write_text(f'{sha256(image)}  {name}\n')
-        verify(image, clean)
+        verify(image, clean, emulated_runtime)
     print(f'Created {image.relative_to(ROOT)}')
 
 
-def verify(image, clean):
+def verify(image, clean, emulated_runtime=False):
     image = image.resolve()
     if image.with_name(image.name + '.sha256').read_text().split() != [sha256(image), image.name]:
         raise ValueError('AppImage checksum mismatch')
@@ -229,10 +233,25 @@ def verify(image, clean):
     if clean and info['source']['dirty']:
         raise ValueError('Release must come from a clean commit')
     with tempfile.TemporaryDirectory(prefix='atomic relocation with spaces ') as temporary:
+        runtime = None
+        if emulated_runtime:
+            original = (ROOT / 'build/dependencies/runtime-x86_64').read_bytes()
+            if hashlib.sha256(original).hexdigest() != RUNTIME_SHA or original not in prefix:
+                raise ValueError('Pinned embedded runtime missing from verified bootstrap')
+            original = bytearray(original); original[8:11] = bytes(3)
+            runtime = Path(temporary) / 'verified-embedded-runtime'
+            runtime.write_bytes(original); runtime.chmod(0o700)
+
+        def run_image(arguments, **kwargs):
+            if runtime:
+                kwargs['env'] = dict(kwargs.get('env',os.environ),
+                                     TARGET_APPIMAGE=str(image),APPIMAGE_EXTRACT_AND_RUN='1')
+            return subprocess.run([str(runtime or image),*arguments],**kwargs)
+
         runtime_environment = dict(os.environ)
         for variable in ['TARGET_APPIMAGE', 'APPIMAGE_EXTRACT_AND_RUN', 'APPIMAGELAUNCHER_DISABLE', 'NO_CLEANUP']:
             runtime_environment.pop(variable, None)
-        subprocess.run([str(image), '--appimage-extract'], cwd=temporary, env=runtime_environment, check=True, stdout=subprocess.DEVNULL)
+        run_image(['--appimage-extract'], cwd=temporary, env=runtime_environment, check=True, stdout=subprocess.DEVNULL)
         app = Path(temporary) / 'squashfs-root'
         docs = app / 'usr/share/doc/atomic-bomberman'
         if json.loads((docs / 'BUILD-INFO.json').read_text()) != info:
@@ -253,14 +272,15 @@ def verify(image, clean):
             raise ValueError('Relocated launcher help failed')
         runtime_environment['TMPDIR'] = temporary
         # Ordinary invocation must work without any environment workaround.
-        subprocess.run([str(image), '--help'], cwd=temporary, env=runtime_environment, check=True, stdout=subprocess.DEVNULL, timeout=30)
-        subprocess.run([str(image), '--help'], cwd=temporary, env=dict(runtime_environment, APPIMAGE_EXTRACT_AND_RUN='1'), check=True, stdout=subprocess.DEVNULL, timeout=30)
+        run_image(['--help'], cwd=temporary, env=runtime_environment, check=True, stdout=subprocess.DEVNULL, timeout=30)
+        run_image(['--help'], cwd=temporary, env=dict(runtime_environment, APPIMAGE_EXTRACT_AND_RUN='1'), check=True, stdout=subprocess.DEVNULL, timeout=30)
         if list(Path(temporary).glob('atomic-appimage-*')):
             raise ValueError('AppImage launch left temporary extraction directories behind')
         for path in [app / '.DirIcon', app / 'atomic-bomberman.png']:
             if path.read_bytes()[:8] != b'\x89PNG\r\n\x1a\n':
                 raise ValueError('Missing PNG application icon')
-    print(f'Verified {image.name}: checksum, hashes, relocation, dependencies, asset exclusion, plain launch without FUSE, cleanup')
+    mode = 'embedded-runtime extraction and launch under emulation; native AppImage entrypoint not exercised' if emulated_runtime else 'plain launch without FUSE, cleanup'
+    print(f'Verified {image.name}: checksum, hashes, relocation, dependencies, asset exclusion, {mode}')
 
 
 def main():
@@ -268,14 +288,16 @@ def main():
     subparsers = parser.add_subparsers(dest='command', required=True)
     build_parser = subparsers.add_parser('build')
     build_parser.add_argument('--release', action='store_true')
+    build_parser.add_argument('--verify-emulated-runtime', action='store_true', help='Check the pinned embedded runtime under x86 emulation; does not certify native AppImage entrypoint')
     verify_parser = subparsers.add_parser('verify')
     verify_parser.add_argument('image', type=Path)
     verify_parser.add_argument('--release', action='store_true')
+    verify_parser.add_argument('--verify-emulated-runtime', action='store_true')
     args = parser.parse_args()
     if args.command == 'build':
-        build(args.release)
+        build(args.release,args.verify_emulated_runtime)
     else:
-        verify(args.image, args.release)
+        verify(args.image, args.release,args.verify_emulated_runtime)
 
 
 if __name__ == '__main__':

@@ -145,6 +145,8 @@ def verify(archive, require_clean):
             raise ValueError('Release artifact was built from uncommitted source')
         with (app / 'Contents/Info.plist').open('rb') as stream:
             plist = plistlib.load(stream)
+        if not plist.get('NSLocalNetworkUsageDescription'):
+            raise ValueError('Bundle lacks its LAN permission description')
         if plist['CFBundleShortVersionString'] != info['version']:
             raise ValueError('Bundle version differs from release metadata')
         if archive.name != f"atomic-bomberman-{info['version']}-macos-arm64.zip":

@@ -17,5 +17,8 @@ bomberman-core.workspace = true
 bomberman-net.workspace = true
 sha2.workspace = true
 
+[target.'cfg(target_os = "macos")'.dependencies]
+objc = { package = "objc-rs", version = "=0.2.8" }
+
 [target.'cfg(target_os = "linux")'.dependencies]
 libc = "0.2"

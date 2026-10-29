@@ -109,6 +109,93 @@ fn compatibility() -> Compatibility {
 }
 
 #[tokio::test]
+async fn private_directory_discovers_any_host_without_creating_rooms_or_consuming_seats() {
+    let server = server().await;
+    let invitation = &server.invitation;
+    let mut browser = connect(invitation).await.unwrap();
+    send(
+        &mut browser,
+        Request::Browse(Browse {
+            token: invitation.server.token.clone(),
+            compatibility: compatibility(),
+        }),
+    )
+    .await;
+    assert!(matches!(receive(&mut browser).await, Event::Rooms(rooms) if rooms.is_empty()));
+    assert_eq!(server.relay.counts(), (0, 0));
+    let mut bad = connect(invitation).await.unwrap();
+    send(
+        &mut bad,
+        Request::Browse(Browse {
+            token: random_token(),
+            compatibility: compatibility(),
+        }),
+    )
+    .await;
+    assert!(matches!(
+        receive(&mut bad).await,
+        Event::Error(NetError::Unauthorized)
+    ));
+
+    let mut host = connect(invitation).await.unwrap();
+    let room = match open(&mut host, invitation, compatibility()).await {
+        Event::Welcome {
+            room, host: true, ..
+        } => room,
+        _ => panic!("host welcome missing"),
+    };
+    send(&mut browser, Request::ListRooms).await;
+    let rooms = match receive(&mut browser).await {
+        Event::Rooms(rooms) => rooms,
+        _ => panic!("directory missing"),
+    };
+    assert_eq!(rooms.len(), 1);
+    assert_eq!(rooms[0].code, room);
+    assert_eq!(rooms[0].computers, 1);
+    assert_eq!(rooms[0].joinable(&compatibility()), Ok(()));
+    let mut other_assets = compatibility();
+    other_assets.assets = "b".repeat(64);
+    assert_eq!(rooms[0].joinable(&other_assets), Err(NetError::Assets));
+    let mut full = rooms[0].clone();
+    full.computers = MAX_PLAYERS;
+    assert_eq!(full.joinable(&compatibility()), Err(NetError::Full));
+
+    send(&mut host, Request::Playing(true)).await;
+    // Pong on the same socket proves the earlier state change was handled.
+    send(&mut host, Request::Ping).await;
+    assert!(matches!(receive(&mut host).await, Event::Pong));
+    send(&mut browser, Request::ListRooms).await;
+    assert!(
+        matches!(receive(&mut browser).await, Event::Rooms(rooms) if rooms[0].joinable(&compatibility()) == Err(NetError::InProgress))
+    );
+    send(&mut host, Request::Leave).await;
+    assert!(matches!(
+        receive(&mut host).await,
+        Event::Error(NetError::HostLeft)
+    ));
+    send(&mut browser, Request::ListRooms).await;
+    assert!(matches!(receive(&mut browser).await, Event::Rooms(rooms) if rooms.is_empty()));
+    assert_eq!(server.relay.counts(), (0, 0));
+
+    // A directory connection cannot create or route a game without a fresh
+    // authenticated game connection.
+    send(
+        &mut browser,
+        Request::Open(Open {
+            token: invitation.server.token.clone(),
+            room: None,
+            compatibility: compatibility(),
+        }),
+    )
+    .await;
+    assert!(matches!(
+        receive(&mut browser).await,
+        Event::Error(NetError::Protocol)
+    ));
+    assert_eq!(server.relay.counts(), (0, 0));
+}
+
+#[tokio::test]
 async fn real_tls_invitation_flow_isolation_pin_auth_version_and_host_departure() {
     let server = server().await;
     let encoded = server.invitation.encode().unwrap();

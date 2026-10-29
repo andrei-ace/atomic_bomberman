@@ -30,7 +30,7 @@ async fn run() -> Result<()> {
     let mut args = std::env::args().skip(1);
     let command = args.next().unwrap_or_else(|| "--help".into());
     if command == "--help" || command == "-h" {
-        println!("bomberman-relay {}\n\nCommands: init, serve, export-invite, rotate-token\n\n  --state <directory>    Private persistent state outside the checkout (required)\n  --advertise <host:port> Destination entered locally (init only; default TLS port 443)\n  --listen <ip:port>     Bind address (init only; default 0.0.0.0:443)\n\ninit creates persistent TLS keys and an access token. export-invite prints a private\nserver invitation; share it privately. rotate-token requires a service restart.\nNo endpoint is built into this program.", env!("CARGO_PKG_VERSION"));
+        println!("bomberman-relay {}\n\nCommands: init, serve, export-invite, rotate-token\n\n  --state <directory>    Private persistent state outside the checkout (required)\n  --advertise <host:port> Override automatic public-IP detection (init only)\n  --listen <ip:port>     Bind address (init only; default 0.0.0.0:443)\n\ninit generates persistent TLS keys, a secret, and a private server URL.\nexport-invite prints that URL again. Friends paste it once to browse and host games.\nrotate-token requires a service restart. No endpoint is built into this program.", env!("CARGO_PKG_VERSION"));
         return Ok(());
     }
     let mut state = None;
@@ -49,23 +49,24 @@ async fn run() -> Result<()> {
     }
     let state = state.context("--state is required")?;
     match command.as_str() {
-        "init" => initialize(
-            &state,
-            advertise.context("init requires --advertise <host:port>")?,
-            listen,
-        )?,
-        "export-invite" => {
-            let config = load_config(&state)?;
-            let cert = fs::read(state.join("certificate.der"))?;
-            let invitation = Invitation {
-                server: ServerProfile {
-                    endpoint: config.advertised_endpoint,
-                    fingerprint: Sha256::digest(cert).into(),
-                    token: load_token(&state)?,
-                },
-                room: None,
+        "init" => {
+            let advertised = match advertise {
+                Some(address) => address,
+                None => {
+                    let ip = bomberman_net::interfaces::public_address(
+                        &bomberman_net::interfaces::interfaces()?,
+                    )?;
+                    if ip.is_ipv6() && listen.ip().is_unspecified() {
+                        listen.set_ip(std::net::Ipv6Addr::UNSPECIFIED.into());
+                    }
+                    SocketAddr::new(ip, listen.port()).to_string()
+                }
             };
-            println!("{}", invitation.encode()?);
+            initialize(&state, advertised, listen)?;
+            println!("{}", export_invite(&state)?);
+        }
+        "export-invite" => {
+            println!("{}", export_invite(&state)?);
         }
         "rotate-token" => {
             load_config(&state)?;
@@ -134,6 +135,19 @@ async fn run() -> Result<()> {
         _ => bail!("unknown command; use --help"),
     }
     Ok(())
+}
+fn export_invite(state: &Path) -> Result<String> {
+    let config = load_config(state)?;
+    let cert = fs::read(state.join("certificate.der"))?;
+    Ok(Invitation {
+        server: ServerProfile {
+            endpoint: config.advertised_endpoint,
+            fingerprint: Sha256::digest(cert).into(),
+            token: load_token(state)?,
+        },
+        room: None,
+    }
+    .encode()?)
 }
 fn private_write(path: &Path, bytes: &[u8]) -> Result<()> {
     let mut options = fs::OpenOptions::new();
@@ -219,6 +233,8 @@ fn initialize(state: &Path, advertise: String, listen: SocketAddr) -> Result<()>
         let _ = fs::remove_dir_all(stage);
     }
     result?;
-    println!("Initialized persistent TLS identity and access token. Use export-invite to get the private invitation.");
+    println!(
+        "Initialized persistent TLS identity. Share this private server link with your friends:"
+    );
     Ok(())
 }

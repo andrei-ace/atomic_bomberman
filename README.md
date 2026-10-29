@@ -32,7 +32,7 @@ Choose the built Mac ZIP asset; GitHub's **Source code** downloads require compi
 
    ```bash
    cd ~/Downloads
-   shasum -a 256 -c atomic-bomberman-0.2.0-macos-arm64.zip.sha256
+   shasum -a 256 -c atomic-bomberman-0.3.0-macos-arm64.zip.sha256
    ```
 
 2. Extract the ZIP and move **Atomic Bomberman.app** into **Applications**.
@@ -212,9 +212,9 @@ Download the versioned Linux x86-64 AppImage and matching checksum. It bundles a
 native first-launch importer, archive helper, desktop libraries and diagnostics:
 
 ```sh
-sha256sum -c atomic-bomberman-0.2.0-linux-x86_64.AppImage.sha256
-chmod +x atomic-bomberman-0.2.0-linux-x86_64.AppImage
-./atomic-bomberman-0.2.0-linux-x86_64.AppImage
+sha256sum -c atomic-bomberman-0.3.0-linux-x86_64.AppImage.sha256
+chmod +x atomic-bomberman-0.3.0-linux-x86_64.AppImage
+./atomic-bomberman-0.3.0-linux-x86_64.AppImage
 # The ordinary command automatically extracts and runs without FUSE.
 ```
 
@@ -224,15 +224,16 @@ Build on Ubuntu 24.04 with `libgtk-3-dev libarchive-tools librsvg2-common squash
 addition to the desktop libraries above, then run `tools/package_linux.sh`.
 
 **Multiplayer** appears directly below **Start local battle**. Inside it, choose
-**LAN** or **Internet**; Internet contains **Create Online Game** and **Join Game**.
-A first-time online player pastes one private invitation; returning friends can
-use a short room code. One host and up to nine clients share ten player slots;
+**LAN** or **Internet**. LAN shows nearby games automatically, with **Join by IP**
+as a fallback. Online friends paste the same private server URL once; their saved
+server then lists everyone's hosted games automatically, without new invitations.
+Anyone in the group can select **Host game**. One host and up to nine clients share ten player slots;
 each computer chooses its local keyboards/controllers and personal colors. The
 host chooses **Arena and battle rules** in the lobby and starts once at least
 one client has joined and every computer has selected controls. Clients wait
 for the host. Free-for-all and White/Red team battles follow the confirmed
 original network gameplay restrictions.
-All online connections are outbound TLS WebSockets on TCP 443. Use protocol 2
+All online connections are outbound TLS WebSockets on TCP 443. Use protocol 3
 and rebuild/upgrade the relay and every client from the same commit. No server
 endpoint is shipped. See [multiplayer](docs/online-play.md),
 [original-rule evidence](docs/multiplayer-original-rules.md), and

@@ -9,19 +9,21 @@ import socket
 import subprocess
 import tempfile
 import time
-from verify_relay import LatencyProxy
+from verify_relay import LatencyProxy, parse_invitation
 import base64
+import sys
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--display', required=True)
+    parser.add_argument('--display', default=os.environ.get('DISPLAY'), required=not bool(os.environ.get('DISPLAY')))
     parser.add_argument('--assets', type=Path, required=True)
     parser.add_argument('--xclip', type=Path, required=True)
     parser.add_argument('--game', type=Path, default=Path('target/debug/bomberman'))
     parser.add_argument('--relay', type=Path, default=Path('target/release/bomberman-relay'))
     parser.add_argument('--report', type=Path, required=True)
     parser.add_argument('--latency-ms', type=float, default=0)
+    parser.add_argument('--live-invite-stdin', action='store_true', help='Use the deployed server link on stdin instead of starting a local relay')
     args = parser.parse_args()
     x = C.CDLL('libX11.so.6'); xt = C.CDLL('libXtst.so.6')
     pointer, window_type = C.c_void_p, C.c_ulong
@@ -57,10 +59,25 @@ def main():
         if children: x.XFree(children)
         return set(result)
 
+    class WindowAttributes(C.Structure):
+        _fields_ = [(name, kind) for name,kind in [
+            ('x',C.c_int),('y',C.c_int),('width',C.c_int),('height',C.c_int),('border_width',C.c_int),('depth',C.c_int),
+            ('visual',C.c_void_p),('root',C.c_ulong),('window_class',C.c_int),('bit_gravity',C.c_int),('win_gravity',C.c_int),
+            ('backing_store',C.c_int),('backing_planes',C.c_ulong),('backing_pixel',C.c_ulong),('save_under',C.c_int),
+            ('colormap',C.c_ulong),('map_installed',C.c_int),('map_state',C.c_int),('all_event_masks',C.c_long),
+            ('your_event_mask',C.c_long),('do_not_propagate_mask',C.c_long),('override_redirect',C.c_int),('screen',C.c_void_p)]]
+    x.XGetWindowAttributes.argtypes = [pointer,window_type,C.POINTER(WindowAttributes)]
+
     probes = {}
     active_probe = [None]
     def focus(window):
         active_probe[0] = probes.get(window)
+        deadline=time.monotonic()+10
+        attributes=WindowAttributes()
+        while time.monotonic()<deadline:
+            if x.XGetWindowAttributes(display,window,C.byref(attributes)) and attributes.map_state==2: break
+            time.sleep(.05)
+        assert attributes.map_state==2, 'game window did not become viewable'
         x.XRaiseWindow(display,window); x.XSetInputFocus(display,window,2,0); x.XFlush(display); time.sleep(.1)
 
     def key(name, down=True):
@@ -77,7 +94,7 @@ def main():
         while not probe.exists() and time.monotonic()<deadline:
             time.sleep(.2); press('F12')
         state = json.loads(probe.read_text())
-        counts = {'Main':7,'Multiplayer':3,'Internet':3,'Online':4,'NetworkDevices':13,'NetworkRules':12,'Battle':4}
+        counts = {'Main':7,'Multiplayer':3,'Internet':len(state['browser']['rooms'])+5,'Online':3,'NetworkDevices':13,'NetworkRules':12,'Battle':4,'Lan':len(state['lan']['games'])+4}
         if state['screen'] == 'NetworkLobby':
             count = len(state['network']['actions'])
         elif state['screen'] == 'NetworkColors':
@@ -91,10 +108,12 @@ def main():
         press('Return')
 
     clipboard_jobs = []
-    def paste(text):
+    def set_clipboard(text):
         process = subprocess.Popen([str(args.xclip.resolve()),'-selection','clipboard','-in','-quiet','-loops','1'],
                                    stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=environment)
         process.stdin.write(text.encode()); process.stdin.close(); clipboard_jobs.append(process); time.sleep(.15)
+    def paste(text):
+        set_clipboard(text)
         key('Control_L'); press('v'); key('Control_L',False); time.sleep(.2)
 
     def clipboard():
@@ -103,21 +122,26 @@ def main():
 
     with tempfile.TemporaryDirectory(prefix='atomic online ui ') as temporary:
         base = Path(temporary); processes = []; logs = []
-        with socket.socket() as reserve:
-            reserve.bind(('127.0.0.1',0)); port=reserve.getsockname()[1]
-        state = base/'relay-state'
-        relay = str(args.relay.resolve())
-        subprocess.run([relay,'init','--state',str(state),'--advertise',f'127.0.0.1:{port}','--listen',f'127.0.0.1:{port}'],check=True,capture_output=True)
-        invitation = subprocess.check_output([relay,'export-invite','--state',str(state)],text=True).strip()
-        proxy = LatencyProxy(port, args.latency_ms) if args.latency_ms else None
-        if proxy:
-            value = invitation[4:]
-            decoded = json.loads(base64.urlsafe_b64decode(value+'='*((-len(value))%4)))
-            decoded['server']['endpoint'] = f'wss://127.0.0.1:{proxy.port}/v1/ws'
-            invitation = 'AB1.'+base64.urlsafe_b64encode(json.dumps(decoded).encode()).decode().rstrip('=')
-        log=(base/'relay.log').open('w'); logs.append(log)
-        processes.append(subprocess.Popen([relay,'serve','--state',str(state)],stdout=log,stderr=log))
-        time.sleep(.3)
+        if args.live_invite_stdin:
+            if args.latency_ms: parser.error('Latency proxy is only available for the disposable local relay')
+            invitation=sys.stdin.read().strip()
+            parse_invitation(invitation)
+            proxy=None
+        else:
+            with socket.socket() as reserve:
+                reserve.bind(('127.0.0.1',0)); port=reserve.getsockname()[1]
+            state = base/'relay-state'
+            relay = str(args.relay.resolve())
+            subprocess.run([relay,'init','--state',str(state),'--advertise',f'127.0.0.1:{port}','--listen',f'127.0.0.1:{port}'],check=True,capture_output=True)
+            invitation = subprocess.check_output([relay,'export-invite','--state',str(state)],text=True).strip()
+            proxy = LatencyProxy(port, args.latency_ms) if args.latency_ms else None
+            if proxy:
+                decoded = parse_invitation(invitation)
+                decoded['server']['endpoint'] = f'wss://127.0.0.1:{proxy.port}/v1/ws'
+                invitation = 'AB1.'+base64.urlsafe_b64encode(json.dumps(decoded).encode()).decode().rstrip('=')
+            log=(base/'relay.log').open('w'); logs.append(log)
+            processes.append(subprocess.Popen([relay,'serve','--state',str(state)],stdout=log,stderr=log))
+            time.sleep(.3)
 
         def launch(name):
             before=windows(); directory=base/name; directory.mkdir(); probe=directory/'probe.json'
@@ -145,10 +169,58 @@ def main():
             if screen: assert value['screen']==screen, (screen,value['screen'],value.get('message'))
             return value
 
-        def open_online(player, create):
-            focus(player[0]); select(1); snapshot(player,'Multiplayer')
-            select(1); snapshot(player,'Internet')
-            select(0 if create else 1); snapshot(player,'Online')
+        def open_online(player, paste_button=False, link=None, exercise_clear=False):
+            link = invitation if link is None else link
+            focus(player[0])
+            state = snapshot(player)
+            if state['screen'] == 'Main': select(1); snapshot(player,'Multiplayer'); select(1)
+            elif state['screen'] == 'Multiplayer': select(1)
+            state = snapshot(player)
+            if state['screen'] == 'Online':
+                if paste_button:
+                    set_clipboard(link); select(0)
+                    assert snapshot(player,'Online')['browser']['text_present'], 'Paste button did not read clipboard'
+                else:
+                    paste(link)
+                    assert snapshot(player,'Online')['browser']['text_present'], 'Ctrl-V did not read clipboard'
+                if exercise_clear:
+                    for clear_key in ('BackSpace', 'Delete'):
+                        press(clear_key)
+                        cleared = snapshot(player,'Online')
+                        assert not cleared['browser']['text_present'], clear_key+' did not clear the whole private link'
+                        assert cleared['browser']['text_bytes']==0
+                        select(1)
+                        assert not snapshot(player,'Online')['browser']['ready']
+                        paste(link)
+                    set_clipboard('not a server link'); select(0)
+                    invalid = snapshot(player,'Online')
+                    assert not invalid['browser']['text_present'], 'Invalid paste retained an old or malformed link'
+                    assert 'Invalid server link' in invalid['message']
+                    set_clipboard(''); select(0)
+                    empty = snapshot(player,'Online')
+                    assert not empty['browser']['text_present']
+                    assert 'No clipboard text' in empty['message']
+                    paste(link)
+                    original_bytes = snapshot(player,'Online')['browser']['text_bytes']
+                    press('x'); press('space')
+                    assert snapshot(player,'Online')['browser']['text_bytes']==original_bytes, 'Typing silently changed a hidden private link'
+                select(1)
+            deadline = time.monotonic()+30
+            while time.monotonic()<deadline:
+                state = snapshot(player)
+                if state['screen']=='Internet' and state['browser']['ready']: return state
+                time.sleep(.2)
+            raise AssertionError('Authenticated game browser did not open')
+
+        def join_discovered(player, code):
+            deadline=time.monotonic()+15
+            while time.monotonic()<deadline:
+                state=snapshot(player,'Internet')
+                for i,room in enumerate(state['browser']['rooms']):
+                    if room['code']==code:
+                        select(i+5); time.sleep(.5); return snapshot(player,'NetworkLobby')
+                time.sleep(.3)
+            raise AssertionError('Hosted room not discovered')
 
         def lobby_action(player, action):
             state = snapshot(player, 'NetworkLobby')
@@ -157,16 +229,22 @@ def main():
         try:
             host=launch('host'); snapshot(host,'Main')
             select(1); snapshot(host,'Multiplayer'); select(0); snapshot(host,'Lan')
-            press('Escape'); snapshot(host,'Multiplayer'); select(1); snapshot(host,'Internet')
+            assert 'CopyInvite' not in snapshot(host)['lan']['actions']
             press('Escape'); snapshot(host,'Multiplayer'); press('Escape'); snapshot(host,'Main')
-            open_online(host, True); paste(invitation); select(1); time.sleep(.5)
+            open_online(host, paste_button=True)
+            set_clipboard('stale clipboard')
+            select(2); copied=clipboard()
+            assert parse_invitation(copied)==parse_invitation(invitation), 'Copy server link did not update the OS clipboard'
+            select(0); time.sleep(.5)
             state_host=snapshot(host,'NetworkLobby'); assert state_host['network']['id']==1
             assert 'Ready' not in state_host['network']['actions']
+            assert 'CopyInvite' not in state_host['network']['actions']
             lobby_action(host, 'Start'); snapshot(host, 'NetworkLobby')
             profile=host[1]/'config/atomic-bomberman/connections.json'; assert profile.exists()
             assert profile.stat().st_mode&0o777==0o600
-            lobby_action(host, 'CopyInvite'); game_invitation=clipboard(); assert game_invitation.startswith('AB1.')
-            friend=launch('friend'); snapshot(friend,'Main'); open_online(friend, False); paste(game_invitation); select(1); time.sleep(.5)
+            code=state_host['network']['room']
+            friend=launch('friend'); snapshot(friend,'Main'); open_online(friend,link=copied,exercise_clear=True)
+            join_discovered(friend,code)
             state_friend=snapshot(friend,'NetworkLobby'); assert state_friend['network']['id']==2
             assert not {'Start', 'Rules', 'Ready'} & set(state_friend['network']['actions'])
             # A second keyboard is assigned locally through the actual lobby UI.
@@ -212,25 +290,28 @@ def main():
             focus(host[0]); select(3); time.sleep(.6)
             assert snapshot(friend)['network'] is None
             assert snapshot(host)['network'] is None
-            # Returning host uses saved profile; friend reuses its new short code.
-            open_online(host, True); select(1); time.sleep(.4)
-            state_host=snapshot(host,'NetworkLobby'); code=state_host['network']['room']
-            open_online(friend, False); paste(code); select(1); time.sleep(.4)
-            assert snapshot(friend,'NetworkLobby')['network']['id']==2
+            # Both computers reuse their saved group, with the former client hosting.
+            open_online(friend); select(0); time.sleep(.4)
+            code=snapshot(friend,'NetworkLobby')['network']['room']
+            open_online(host); join_discovered(host,code)
+            assert snapshot(host,'NetworkLobby')['network']['id']==2
+            assert snapshot(friend,'NetworkLobby')['network']['host']
             for log in logs: log.flush()
             for file in base.rglob('*.log'):
                 text=file.read_text()
-                assert invitation not in text and game_invitation not in text
+                assert invitation not in text
             report={'passed':True,'platform':'Ubuntu 24.04 x86-64, isolated Xvfb, Mesa software rendering',
-                    'injected_round_trip_tcp_delay_ms':args.latency_ms,
-                    'checks':['Multiplayer directly below Start local battle','LAN and Internet submenus and back navigation','fresh server invitation pasted with Ctrl-V','create room','private profile mode 0600',
-                              'Copy Invite through system clipboard','fresh friend joins with one full invitation',
+                    'injected_round_trip_tcp_delay_ms':args.latency_ms,'relay_environment':'deployed server, external TCP 443' if args.live_invite_stdin else 'disposable local TLS relay',
+                    'checks':['Multiplayer directly below Start local battle','simple LAN browser and back navigation','Paste server link button reads the OS clipboard','Ctrl-V reads the OS clipboard','Copy server link updates the OS clipboard',
+                              'Backspace and Delete clear the whole private link','Invalid and empty pastes clear stale input','Typing cannot silently change a hidden private link','A link copied by one game authenticates another game',
+                              'create room','private profile mode 0600',
+                              'LAN and game lobbies have no Copy Invite','friend joins through automatic discovery',
                               'multiple local keyboards/controllers in lobby','host-only Start and shared arena/rules/team editing',
                               'start after controls without added Ready toggle','personal colors for both local players and host',
                               'ten unique colors synchronized to both computers','session settings preserve saved local settings',
                               'original network flags disable Gold roulette','actual two-window battle',
                               'shared pause and identical serialized simulation','host departure ends session',
-                              'saved server reuse','short room-code reuse','credentials absent from logs'],
+                              'saved server reuse','former client hosts without new invitation','credentials absent from logs'],
                     'limitations':['No physical controller tested.','macOS Cmd-V and Linux/macOS WAN play require Mac hardware.']}
             args.report.parent.mkdir(parents=True,exist_ok=True); args.report.write_text(json.dumps(report,indent=2)+'\n')
             print(json.dumps(report,indent=2))

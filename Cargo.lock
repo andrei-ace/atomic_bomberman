@@ -190,7 +190,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "bomberman-assets",
@@ -199,6 +199,7 @@ dependencies = [
  "gilrs",
  "libc",
  "macroquad",
+ "objc-rs",
  "quad-snd",
  "serde",
  "serde_json",
@@ -207,7 +208,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-assets"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "png",
@@ -218,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-core"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -226,12 +227,13 @@ dependencies = [
 
 [[package]]
 name = "bomberman-net"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "base64",
  "bomberman-core",
  "futures-util",
+ "libc",
  "rand 0.8.5",
  "rustls",
  "serde",
@@ -245,7 +247,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-relay"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "axum",

@@ -97,6 +97,7 @@ impl ServerCertVerifier for PinnedCertificate {
 
 pub enum Destination {
     Online(Invitation),
+    Directory(ServerProfile),
     Lan { address: SocketAddr, host: bool },
 }
 /// All I/O lives on a background runtime. Both queues are bounded and every
@@ -166,6 +167,12 @@ async fn connect(
     mut rx: mpsc::Receiver<Request>,
     tx: &sync::SyncSender<Event>,
 ) -> Result<(), NetError> {
+    let (destination, browsing) = match destination {
+        Destination::Directory(server) => {
+            (Destination::Online(Invitation { server, room: None }), true)
+        }
+        destination => (destination, false),
+    };
     match destination {
         Destination::Online(invitation) => {
             invitation.validate()?;
@@ -199,19 +206,34 @@ async fn connect(
             })?;
             socket
                 .send(Message::Binary(
-                    encode(&Request::Open(Open {
-                        token: invitation.server.token,
-                        room: invitation.room,
-                        compatibility,
-                    }))?
+                    encode(&if browsing {
+                        Request::Browse(Browse {
+                            token: invitation.server.token,
+                            compatibility,
+                        })
+                    } else {
+                        Request::Open(Open {
+                            token: invitation.server.token,
+                            room: invitation.room,
+                            compatibility,
+                        })
+                    })?
                     .into(),
                 ))
                 .await
                 .map_err(|_| NetError::Disconnected)?;
             let mut heartbeat = tokio::time::interval(Duration::from_secs(10));
+            let mut refresh = tokio::time::interval_at(
+                tokio::time::Instant::now() + Duration::from_secs(3),
+                Duration::from_secs(3),
+            );
             let mut last_received = tokio::time::Instant::now();
             loop {
                 tokio::select! {
+                    _ = refresh.tick(), if browsing => {
+                        tokio::time::timeout(Duration::from_secs(5), socket.send(Message::Binary(encode(&Request::ListRooms)?.into())))
+                            .await.map_err(|_| NetError::Disconnected)?.map_err(|_| NetError::Disconnected)?;
+                    }
                     request = rx.recv() => {
                         let request = request.ok_or(NetError::Disconnected)?;
                         tokio::time::timeout(Duration::from_secs(5), socket.send(Message::Binary(encode(&request)?.into())))
@@ -239,8 +261,36 @@ async fn connect(
                     .await
                     .map_err(|_| NetError::Unavailable)?;
                 let broker = Arc::new(Mutex::new(Broker::new(None)));
+                let discovery = crate::discovery::bind()
+                    .await
+                    .map_err(|_| NetError::Discovery)?;
                 tokio::spawn(serve_lan(listener, broker));
-                tokio::spawn(crate::discovery::advertise(compatibility.clone()));
+                let discovery_compatibility = compatibility.clone();
+                let warnings = tx.clone();
+                tokio::spawn(async move {
+                    let mut socket = discovery;
+                    let mut warned = false;
+                    loop {
+                        if crate::discovery::advertise(socket, discovery_compatibility.clone())
+                            .await
+                            .is_err()
+                            && !warned
+                        {
+                            let _ = warnings.try_send(Event::Warning(NetError::Discovery));
+                            warned = true;
+                        }
+                        // A permission decision or interface change can fail
+                        // the first operation. Keep the hosted room discoverable
+                        // after access is granted without restarting the game.
+                        loop {
+                            tokio::time::sleep(Duration::from_secs(1)).await;
+                            if let Ok(rebound) = crate::discovery::bind().await {
+                                socket = rebound;
+                                break;
+                            }
+                        }
+                    }
+                });
             }
             let mut socket =
                 tokio::time::timeout(Duration::from_secs(5), TcpStream::connect(address))
@@ -284,6 +334,7 @@ async fn connect(
             };
             tokio::select! { result = reader => result, result = writer => result }
         }
+        Destination::Directory(_) => unreachable!("directory normalized above"),
     }
 }
 

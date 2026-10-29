@@ -58,6 +58,7 @@ cat > "$app/Contents/Info.plist" <<'PLIST'
 <key>LSMinimumSystemVersion</key><string>11.0</string>
 <key>LSApplicationCategoryType</key><string>public.app-category.games</string>
 <key>NSHighResolutionCapable</key><true/>
+<key>NSLocalNetworkUsageDescription</key><string>Find, host, and join Atomic Bomberman games with computers on your local network.</string>
 <key>NSSupportsAutomaticGraphicsSwitching</key><true/>
 </dict></plist>
 PLIST

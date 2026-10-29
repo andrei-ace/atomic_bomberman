@@ -1,11 +1,11 @@
-# Native private relay — 0.2.0
+# Native private relay — 0.3.0
 
 The native ARM64 package targets Ubuntu 26 on the existing CAX11 and works with
 glibc 2.39 or newer. No Docker, domain, certificate authority, database or original
 game assets are required. TLS terminates inside the Rust service. It forwards
 bounded messages between outbound clients; the player's computer hosts simulation.
 
-The server address is entered **locally during setup**. Keep state and invitations
+The server detects its public IP **locally during setup**; `--advertise` overrides it. Keep state and invitations
 outside the checkout and release artifacts. The example config intentionally has
 an unconfigured placeholder. Clients have no default endpoint.
 
@@ -15,17 +15,15 @@ Copy the ARM64 package and its checksum to the server. Check the checksum before
 extracting. Run the following from its extracted directory:
 
 ```sh
-sha256sum -c atomic-bomberman-0.2.0-relay-linux-arm64.tar.gz.sha256
+sha256sum -c atomic-bomberman-0.3.0-relay-linux-arm64.tar.gz.sha256
 sudo useradd --system --home-dir /var/lib/bomberman-relay \
   --shell /usr/sbin/nologin bomberman-relay
 sudo install -d -m755 /usr/local/lib/bomberman-relay
 sudo install -m755 bomberman-relay /usr/local/lib/bomberman-relay/bomberman-relay
 sudo install -m644 bomberman-relay.service /etc/systemd/system/
 sudo install -d -m700 -o bomberman-relay -g bomberman-relay /var/lib/bomberman-relay
-read -r -p 'Private advertised address (IP:443): ' relay_address
 sudo -u bomberman-relay /usr/local/lib/bomberman-relay/bomberman-relay init \
-  --state /var/lib/bomberman-relay/private --advertise "$relay_address"
-unset relay_address
+  --state /var/lib/bomberman-relay/private
 sudo systemctl daemon-reload
 sudo systemctl enable --now bomberman-relay
 sudo systemctl status bomberman-relay
@@ -49,8 +47,13 @@ sudo -u bomberman-relay /usr/local/lib/bomberman-relay/bomberman-relay export-in
   --state /var/lib/bomberman-relay/private
 ```
 
-Paste the single output string into **Create Online Game**. The host's **Copy
-Invite** includes the room code for friends. Do not include this output in logs,
+Paste the generated URL into **Multiplayer → Internet → Connect** on each
+computer once. Everyone can then host games and find the group's rooms in
+**Friends' games** without further invitations. **Copy server link** shares this
+same group link with another friend. The URL contains the reachable IP, random
+secret, and pinned certificate fingerprint. Automatic detection prefers a unique
+public IPv4 address, then a unique public IPv6 address. Behind NAT or with
+multiple public addresses, pass `--advertise <host:port>` explicitly. Do not include this output in logs,
 commits, screenshots, support tickets or a public release. All invited clients
 receive the destination address and can inspect it; privacy means excluding it
 from published artifacts and defaults, not hiding it from invited friends.
@@ -142,3 +145,19 @@ emulation establishes executable startup/operation, not Hetzner production
 capacity. Deployment and latency across real Linux/macOS peers require the
 private server address and machines. Do not describe unperformed production or
 cross-platform tests as passing; record the environment with each measurement.
+
+## Verify a deployed server
+
+The live mode tests existing TLS, authentication, discovery, room isolation,
+ordered input/frame forwarding, playing status, and cleanup. It creates temporary
+rooms and does not restart the service or rotate its secret. Pass the link on
+stdin; do not put credentials in command-line arguments or reports:
+
+```sh
+ssh root@your-server 'sudo -u bomberman-relay /usr/local/lib/bomberman-relay/bomberman-relay export-invite --state /var/lib/bomberman-relay/private' \
+  | python3 tools/verify_relay.py --live --invite-stdin --frames 100 --report /tmp/relay-live.json
+```
+
+The ordinary executable verifier uses disposable state, including token rotation.
+Directory connections share the service's existing socket, TLS, rate, message,
+and capacity limits but consume no room player slots.

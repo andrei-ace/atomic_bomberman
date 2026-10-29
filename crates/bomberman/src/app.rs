@@ -283,6 +283,8 @@ impl App {
                     "paused": self.paused,
                     "message": self.message.as_ref().map(|m| &m.0),
                     "simulation": self.simulation,
+                    "browser": self.network_ui.browser_probe(),
+                    "lan": self.network_ui.lan_probe(),
                     "network": self.network.as_ref().map(|n| serde_json::json!({
                         "id": n.id, "host": n.host, "room": n.room,
                         "lobby": n.lobby, "actions": network_ui::lobby_actions(n.host).iter().map(|action| format!("{action:?}")).collect::<Vec<_>>(), "tick": n.replay.as_ref().map(|r| r.tick),
@@ -345,6 +347,9 @@ impl App {
     }
 
     async fn update(&mut self, elapsed_ms: u32) -> Result<()> {
+        if !matches!(self.screen, Screen::Internet | Screen::Online) {
+            self.network_ui.stop_directory();
+        }
         if self.network.is_some() {
             self.update_network_session(elapsed_ms).await?;
             if self.network.is_none() {
@@ -391,7 +396,7 @@ impl App {
             Screen::Settings => self.update_settings(),
             Screen::Controls => self.update_controls(),
             Screen::Multiplayer => self.update_multiplayer_menu(false),
-            Screen::Internet => self.update_multiplayer_menu(true),
+            Screen::Internet => self.update_internet(),
             Screen::Online => self.update_online(),
             Screen::Lan => self.update_lan(),
             Screen::NetworkLobby => self.update_network_lobby(),
@@ -803,7 +808,7 @@ impl App {
             Screen::Results => self.draw_results(),
             Screen::Roulette => self.draw_roulette(),
             Screen::Multiplayer => self.draw_multiplayer_menu(false),
-            Screen::Internet => self.draw_multiplayer_menu(true),
+            Screen::Internet => self.draw_internet(),
             Screen::Online => self.draw_online(),
             Screen::Lan => self.draw_lan(),
             Screen::NetworkLobby => self.draw_network_lobby(),
@@ -1232,11 +1237,12 @@ impl App {
         // bodies follow slot order; held bombs follow players and Gold effects.
         for (tile, cell) in simulation.board.iter() {
             let (x, y) = tile_anchor(tile);
-            let kind = match cell.terrain {
-                Terrain::Floor => "blank",
-                Terrain::Wall => "solid",
-                Terrain::Brick => "brick",
-            };
+            let kind =
+                match crate::presentation::render_terrain(cell.terrain, tile, &simulation.flames) {
+                    Terrain::Floor => "blank",
+                    Terrain::Wall => "solid",
+                    Terrain::Brick => "brick",
+                };
             self.media
                 .state(&format!("tile {} {kind}", arena.id), 0, x, y + 17., None);
             if cell.terrain == Terrain::Floor {
@@ -1310,11 +1316,12 @@ impl App {
                 let name = format!("flame {wanted} green");
                 let frame = flame.render_frame as usize;
                 let metadata = self.media.state_metadata(&name, frame);
+                let (x, y) = crate::presentation::flame_anchor(x, y, metadata);
                 self.media.state(
                     &name,
                     frame,
-                    x + metadata[1] as f32 - 18.,
-                    y + 17.,
+                    x,
+                    y,
                     Some(self.battle_palette(flame.palette as usize)),
                 );
             }

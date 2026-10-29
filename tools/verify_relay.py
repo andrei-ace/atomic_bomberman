@@ -13,13 +13,39 @@ import subprocess
 import tempfile
 import threading
 import time
+import sys
+import re
+import tomllib
+from urllib.parse import urlsplit, parse_qs
+
+ROOT = Path(__file__).resolve().parents[1]
+APP_VERSION = tomllib.loads((ROOT / "Cargo.toml").read_text())["workspace"]["package"]["version"]
+PROTOCOL = int(re.search(r"PROTOCOL_VERSION: u32 = (\d+)", (ROOT / "crates/bomberman-net/src/protocol.rs").read_text())[1])
+
+def parse_invitation(text):
+    text = text.strip()
+    if text.startswith("AB1."):
+        value = text[4:]
+        return json.loads(base64.urlsafe_b64decode(value + "=" * ((-len(value)) % 4)))
+    url = urlsplit(text)
+    if url.scheme != "atomic-bomberman" or not url.hostname or url.username or url.password or url.query or url.path != "/":
+        raise ValueError("Invalid private server URL")
+    fields = parse_qs(url.fragment, strict_parsing=True)
+    if any(len(values) != 1 for values in fields.values()) or fields.get("v") != ["1"] or set(fields) - {"v","pin","token","room"}:
+        raise ValueError("Invalid private server URL fields")
+    host = f"[{url.hostname}]" if ":" in url.hostname else url.hostname
+    fingerprint = bytes.fromhex(fields["pin"][0])
+    if len(fingerprint) != 32: raise ValueError("Invalid certificate pin")
+    return {"server":{"endpoint": f"wss://{host}:{url.port or 443}/v1/ws", "fingerprint":list(fingerprint), "token":fields["token"][0]}, "room":fields.get("room",[None])[0]}
 
 
 class WebSocket:
-    def __init__(self, port, fingerprint):
-        raw = socket.create_connection(('127.0.0.1', port), timeout=5)
+    def __init__(self, port, fingerprint, host="127.0.0.1"):
+        raw = socket.create_connection((host, port), timeout=10)
         self.socket = ssl._create_unverified_context().wrap_socket(raw, server_hostname='atomic-relay.invalid')
-        assert hashlib.sha256(self.socket.getpeercert(binary_form=True)).digest() == bytes(fingerprint)
+        if hashlib.sha256(self.socket.getpeercert(binary_form=True)).digest() != bytes(fingerprint):
+            self.socket.close()
+            raise ValueError('Certificate pin mismatch')
         self.sent = self.received = 0
         key = base64.b64encode(os.urandom(16)).decode()
         request = (f'GET /v1/ws HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\n'
@@ -77,7 +103,7 @@ class WebSocket:
 
     def open(self, invitation, room=None, token=None):
         self.send({'Open': {'token': token or invitation['server']['token'], 'room': room,
-                           'compatibility': {'protocol': 2, 'application': '0.2.0', 'assets': 'a'*64}}})
+                           'compatibility': {'protocol': PROTOCOL, 'application': APP_VERSION, 'assets': 'a'*64}}})
         return self.receive()
 
     def close(self):
@@ -147,8 +173,78 @@ def memory_kib(pid):
     return int(next(line.split()[1] for line in fields if line.startswith('VmHWM:')))
 
 
+def verify_live(invitation, args):
+    endpoint = urlsplit(invitation['server']['endpoint'])
+    clients = []
+    def connect(pin=None):
+        connection = WebSocket(endpoint.port or 443, pin or invitation['server']['fingerprint'], endpoint.hostname)
+        clients.append(connection)
+        return connection
+    def directory(connection):
+        connection.send({'Browse': {'token': invitation['server']['token'], 'compatibility': {'protocol':PROTOCOL,'application':APP_VERSION,'assets':'a'*64}}})
+        response = connection.receive()
+        assert 'Rooms' in response, 'Directory authentication failed'
+        return response['Rooms']
+    def rooms(connection):
+        connection.send('ListRooms')
+        return connection.receive()['Rooms']
+    try:
+        browser = connect(); before = directory(browser)
+        rejected = connect()
+        assert rejected.open(invitation, token=base64.urlsafe_b64encode(os.urandom(32)).decode().rstrip('=')) == {'Error':'Unauthorized'}
+        try:
+            connect([0]*32)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('Wrong certificate pin was accepted')
+        host = connect(); welcome = host.open(invitation)['Welcome']; code = welcome['room']
+        listed = next(room for room in rooms(browser) if room['code'] == code)
+        assert listed['computers'] == 1 and not listed['playing']
+        friend = connect(); assert friend.open(invitation,code)['Welcome']['id'] == 2
+        assert host.receive() == {'PeerJoined':2}
+        isolated = connect(); other_code = isolated.open(invitation)['Welcome']['room']
+        sample = {'direction':None,'direction_mask':0,'bomb':False,'action':False}
+        latencies = []
+        for tick in range(1,args.frames+1):
+            started = time.perf_counter()
+            friend.send({'Send':{'to':1,'message':{'Input':{'sequence':tick,'seats':[{'seat':1,'input':sample}]}}}})
+            incoming = host.receive()['Message']
+            assert incoming['from'] == 2 and incoming['message']['Input']['sequence'] == tick
+            host.send({'Send':{'to':None,'message':{'Frame':{'tick':tick,'inputs':[sample]*2,'actions':[],'hash':None}}}})
+            assert friend.receive()['Message']['message']['Frame']['tick'] == tick
+            latencies.append((time.perf_counter()-started)*1000)
+        isolated.send('Ping')
+        assert isolated.receive() == 'Pong', 'Traffic crossed room boundaries'
+        host.send({'Playing':True}); host.send('Ping'); assert host.receive() == 'Pong'
+        assert next(room for room in rooms(browser) if room['code'] == code)['playing']
+        late = connect(); assert late.open(invitation,code) == {'Error':'InProgress'}
+        host.send('Leave'); assert friend.receive() == {'Error':'HostLeft'}
+        isolated.send('Leave'); assert isolated.receive() == {'Error':'HostLeft'}
+        after = rooms(browser)
+        assert not {code,other_code} & {room['code'] for room in after}
+        assert {room['code'] for room in before} <= {room['code'] for room in after}, 'Unrelated room disappeared'
+        latencies.sort()
+        report = {'passed':True,'version':APP_VERSION,'protocol':PROTOCOL,
+                  'environment':'External TCP/TLS/WebSocket connection to deployed relay',
+                  'port':endpoint.port or 443,'frames':args.frames,
+                  'input_and_frame_round_trip_ms':{'median':latencies[len(latencies)//2],'p95':latencies[min(len(latencies)-1,int(len(latencies)*.95))]},
+                  'checks':['TLS certificate pin','invalid pin rejected','invalid credentials rejected','authenticated directory',
+                            'new hosts appear without invites','joining discovered room','client inputs reach host',
+                            'ordered host frames reach client','two isolated rooms','playing status and late-join rejection',
+                            'host departure','temporary rooms removed'],
+                  'limitations':['Protocol smoke test; graphical Mac/Linux gameplay is verified separately.']}
+        args.report.parent.mkdir(parents=True,exist_ok=True)
+        args.report.write_text(json.dumps(report,indent=2)+'\n')
+        print(json.dumps(report,indent=2))
+    finally:
+        for connection in clients: connection.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--live', action='store_true', help='Test an existing relay without restarting or rotating its credentials')
+    parser.add_argument('--invite-stdin', action='store_true', help='Read the private server URL from stdin')
     parser.add_argument('--binary', type=Path, default=Path('target/release/bomberman-relay'))
     parser.add_argument('--emulator', type=Path)
     parser.add_argument('--sysroot', type=Path)
@@ -157,6 +253,10 @@ def main():
     parser.add_argument('--frames', type=int, default=250)
     parser.add_argument('--clients-per-room', type=int, default=9, choices=range(1, 10))
     args = parser.parse_args()
+    if args.live:
+        if not args.invite_stdin: parser.error('--live requires --invite-stdin')
+        verify_live(parse_invitation(sys.stdin.read()), args)
+        return
     command = [str(args.binary.resolve())]
     if args.emulator:
         command = [str(args.emulator.resolve()), '-L', str(args.sysroot.resolve()), *command]
@@ -176,9 +276,7 @@ def main():
 
         def invite():
             encoded = subprocess.check_output([*command, 'export-invite', *common], text=True).strip()
-            assert encoded.startswith('AB1.')
-            value = encoded[4:]
-            return json.loads(base64.urlsafe_b64decode(value+'='*((-len(value))%4)))
+            return parse_invitation(encoded)
 
         invitation = invite()
         proxy = LatencyProxy(port, args.latency_ms) if args.latency_ms else None
@@ -275,7 +373,7 @@ def main():
             assert renewed['server']['token'] not in logs
             assert invitation['server']['endpoint'] not in logs
             latencies.sort()
-            report = {'passed': True, 'version': '0.2.0',
+            report = {'passed': True, 'version': APP_VERSION,
                       'environment': 'ARM64 QEMU user emulation on Ubuntu 24.04 x86-64' if args.emulator else 'Ubuntu 24.04 x86-64 native loopback',
                       'binary_sha256': hashlib.sha256(args.binary.read_bytes()).hexdigest(),
                       'rooms': 2, 'outbound_connections': 2*(1+args.clients_per_room), 'remote_clients_per_room': args.clients_per_room, 'inputs_per_frame': 10, 'frames_per_room': args.frames, 'injected_round_trip_tcp_delay_ms': args.latency_ms,

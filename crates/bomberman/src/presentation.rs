@@ -4,6 +4,22 @@ use bomberman_assets::{AnimationAsset, AnimationFrame, AnimationSequence, Manife
 use bomberman_core::{Direction, Player};
 use std::collections::HashMap;
 
+/// Destruction leaves the brick solid for physics, but its transparent artwork
+/// must reveal the floor. Never mutate the authoritative board while drawing.
+pub fn render_terrain(
+    terrain: bomberman_core::Terrain,
+    tile: bomberman_core::TilePos,
+    flames: &[bomberman_core::Flame],
+) -> bomberman_core::Terrain {
+    if terrain == bomberman_core::Terrain::Brick
+        && flames.iter().any(|f| f.tile == tile && f.shape == 9)
+    {
+        bomberman_core::Terrain::Floor
+    } else {
+        terrain
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PlayerSprite {
     pub sequence: String,
@@ -44,6 +60,12 @@ pub fn native_metadata(sequence: &AnimationSequence, frame: usize) -> [i32; 2] {
 /// CIMG origin subtraction in native 0x4156c7, before clipping.
 pub fn image_position(frame: &AnimationFrame, x: f32, y: f32) -> (f32, f32) {
     (x - frame.origin_x as f32, y - frame.origin_y as f32)
+}
+
+/// Floor-flame states are cropped to different heights. Their second FRAM
+/// metadata word restores the vertical anchor; CIMG already centers X.
+pub fn flame_anchor(x: f32, y: f32, metadata: [i32; 2]) -> (f32, f32) {
+    (x, y + metadata[1] as f32)
 }
 
 pub fn direction_name(direction: Direction) -> &'static str {
@@ -125,6 +147,39 @@ mod tests {
     use super::*;
     use bomberman_assets::AnimationSequence;
     use bomberman_core::{GameConfig, Simulation};
+
+    #[test]
+    fn destroying_brick_reveals_floor_without_changing_physics_or_item_timing() {
+        use bomberman_core::{Flame, Terrain, TilePos};
+        let tile = TilePos::new(3, 3);
+        let mut flame = Flame {
+            tile,
+            owner: usize::MAX,
+            remaining_ms: 501,
+            animation_frame: 0,
+            render_frame: 0,
+            frame_accumulator_ms: 0,
+            shape: 9,
+            palette: 0,
+        };
+        for remaining in [501, 250, 1, 0] {
+            flame.remaining_ms = remaining;
+            assert_eq!(
+                render_terrain(Terrain::Brick, tile, &[flame.clone()]),
+                Terrain::Floor
+            );
+            assert_eq!(
+                render_terrain(Terrain::Brick, TilePos::new(4, 3), &[flame.clone()]),
+                Terrain::Brick
+            );
+        }
+        assert_eq!(render_terrain(Terrain::Brick, tile, &[]), Terrain::Brick);
+        flame.shape = 8;
+        assert_eq!(
+            render_terrain(Terrain::Brick, tile, &[flame]),
+            Terrain::Brick
+        );
+    }
 
     fn player() -> Player {
         Simulation::new(GameConfig::default(), 1)

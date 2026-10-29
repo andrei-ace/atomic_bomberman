@@ -77,13 +77,6 @@ impl Network {
             expected_hashes: BTreeMap::new(),
         })
     }
-    pub fn invite(&self) -> Result<String, NetError> {
-        Invitation {
-            server: self.server.clone().ok_or(NetError::InvalidInvite)?,
-            room: Some(self.room.clone()),
-        }
-        .encode()
-    }
     fn broadcast_lobby(&self) -> Result<(), NetError> {
         self.connection.message(
             None,
@@ -209,6 +202,7 @@ impl Network {
                 break;
             };
             match event {
+                Event::Warning(error) => self.warning = Some(error.to_string()),
                 Event::Welcome { id, room, host } => {
                     self.id = id;
                     self.room = room;
@@ -314,7 +308,7 @@ impl Network {
                 _ => return Err(NetError::Protocol),
             }
         }
-        if self.replay.is_some() {
+        if let Some(replay) = &mut self.replay {
             if inputs != self.last_input || now_ms.saturating_sub(self.sent_ms) >= 50 {
                 let lobby = self.lobby.as_ref().ok_or(NetError::Protocol)?;
                 let owned: Vec<_> = lobby
@@ -358,8 +352,7 @@ impl Network {
                     if !bots.is_empty() {
                         actions.push(Action::Bots(bots));
                     }
-                    let (frame, frame_events) =
-                        self.replay.as_mut().unwrap().advance(inputs, actions)?;
+                    let (frame, frame_events) = replay.advance(inputs, actions)?;
                     if let Some(hash) = frame.hash {
                         self.expected_hashes.insert(frame.tick, hash);
                         self.expected_hashes
