@@ -142,7 +142,9 @@ after review of these results; the measurements are not relabelled as passing.
 
 273 gameplay/workspace/audio checks passed before release preparation. The
 release also fixes the Intel CI fixture's TCP/UDP port-selection race, with a
-deterministic occupied-UDP-port regression; the CI matrix verifies the final commit.
+deterministic occupied-UDP-port regression. The full simulation matrix uses an
+optimized test profile, with assertions and overflow checks retained; macOS CI
+allows 35 minutes so the Intel runner can finish its release build.
 These include 480 seeded impairment games, 12 additional high-jitter/reordering
 games, 8,800 native-motion comparisons, and outage/round/rejection regressions.
 The sustained 300 ms one-way-delay regression now passes. The latest valid

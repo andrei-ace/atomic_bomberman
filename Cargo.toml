@@ -39,3 +39,8 @@ miniquad = { path = "vendor/miniquad" }
 lto = "thin"
 codegen-units = 1
 strip = "debuginfo"
+
+# The deterministic simulation matrix is CPU intensive on Intel CI runners.
+# Retain test assertions and overflow checks while optimizing replay work.
+[profile.test]
+opt-level = 1
