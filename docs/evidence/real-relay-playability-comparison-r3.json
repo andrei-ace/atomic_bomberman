@@ -1,0 +1,43 @@
+{
+  "complete": true,
+  "candidate_passed": true,
+  "repetitions": 3,
+  "environment": "Actual game windows and OS keys over the real public relay",
+  "baseline": [
+    "real-relay-playability-0.4.1-r3-1.json",
+    "real-relay-playability-0.4.1-r3-2.json",
+    "real-relay-playability-0.4.1-r3-3.json"
+  ],
+  "candidate": [
+    "real-relay-playability-0.5.0-r3-1.json",
+    "real-relay-playability-0.5.0-r3-2.json",
+    "real-relay-playability-0.5.0-r3-3.json"
+  ],
+  "limitations": [
+    "Sequential WAN runs observe changing Internet conditions.",
+    "Both players share a Linux test machine; physical display latency is not measured."
+  ],
+  "baseline_metrics": {
+    "movement_p95_ms": 64.557625,
+    "movement_draw_ready_p95_ms": 48.719125,
+    "stop_p95_ms": 211.262083,
+    "backward_after_release_p95_pixels": 8.0,
+    "bomb_p95_ms": 51.763,
+    "action_p95_ms": 84.109708,
+    "missed_actions": 1,
+    "late_dodge_rejections": 0,
+    "all_cases_passed": false
+  },
+  "candidate_metrics": {
+    "movement_p95_ms": 57.731834,
+    "movement_draw_ready_p95_ms": 41.39225,
+    "stop_p95_ms": 34.155375,
+    "backward_after_release_p95_pixels": 0.0,
+    "bomb_p95_ms": 59.793625,
+    "action_p95_ms": 83.954833,
+    "missed_actions": 0,
+    "late_dodge_rejections": 0,
+    "all_cases_passed": true
+  },
+  "fixture_sha256": "c2c08cbcb488e7cf8c25bc885b77447bdedfd0f79844b814c7e448a5157bd469"
+}

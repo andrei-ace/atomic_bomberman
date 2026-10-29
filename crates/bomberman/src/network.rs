@@ -3,6 +3,7 @@
 use crate::settings::Device;
 use bomberman_core::{GameConfig, GameEvent, PlayerInput, Simulation};
 use bomberman_net::{
+    authority::AuthorityTimeline,
     gameplay::{FrameHistory, FrameWindow, GameplayPacket},
     prediction::ClientPrediction,
     session::{InputBuffer, Replay},
@@ -51,6 +52,8 @@ pub struct Session {
     pub server: Option<ServerProfile>,
     pub warning: Option<String>,
     buffer: Option<InputBuffer>,
+    authority: Option<AuthorityTimeline>,
+    latest_motion: BTreeMap<usize, bomberman_net::authority::OwnerSample>,
     actions: Vec<Action>,
     accumulator: u32,
     expected_hashes: BTreeMap<u64, [u8; 32]>,
@@ -95,6 +98,8 @@ impl Session {
             server,
             warning: None,
             buffer: None,
+            authority: None,
+            latest_motion: BTreeMap::new(),
             actions: vec![],
             accumulator: 0,
             expected_hashes: BTreeMap::new(),
@@ -623,21 +628,30 @@ impl Session {
         if !self.host {
             self.input_accumulator = self.input_accumulator.saturating_add(elapsed_ms);
         }
-        while self.input_accumulator >= STEP_MS {
-            self.input_accumulator -= STEP_MS;
+        loop {
+            let period = self
+                .prediction
+                .as_ref()
+                .map_or(STEP_MS, ClientPrediction::capture_period_ms);
+            if self.input_accumulator < period {
+                break;
+            }
+            self.input_accumulator -= period;
             let prediction = self.prediction.as_mut().ok_or(NetError::Protocol)?;
             if prediction.is_fresh(now_ms) {
                 prediction.capture_at(
                     &inputs,
                     now_ms.saturating_sub(u64::from(self.input_accumulator)),
                 )?;
-                let packet = prediction.packet(self.start_generation);
-                self.connection.send_gameplay(Some(HOST), &packet)?;
+                for packet in prediction.packets(self.start_generation) {
+                    self.connection.send_gameplay(Some(HOST), &packet)?;
+                }
             } else {
                 // Keep retransmitting existing identities while frozen, so a
                 // restored UDP path recovers without fabricating fresh input.
-                self.connection
-                    .send_gameplay(Some(HOST), &prediction.packet(self.start_generation))?;
+                for packet in prediction.packets(self.start_generation) {
+                    self.connection.send_gameplay(Some(HOST), &packet)?;
+                }
             }
         }
         if self.host {
@@ -658,46 +672,60 @@ impl Session {
                 let prediction = self.prediction.as_mut().ok_or(NetError::Protocol)?;
                 prediction
                     .capture_at(&inputs, now_ms.saturating_sub(u64::from(self.accumulator)))?;
-                let GameplayPacket::Input {
-                    sequence, seats, ..
-                } = prediction.packet(self.start_generation)
-                else {
-                    unreachable!()
-                };
-                self.buffer
-                    .as_mut()
-                    .ok_or(NetError::Protocol)?
-                    .push_gameplay(HOST, sequence, &seats, now_ms)?;
+                let local_samples = prediction.latest_owned();
+                for sample in &local_samples {
+                    self.latest_motion.insert(sample.seat, *sample);
+                }
+                events.extend(prediction.take_feedback());
                 let buffer = self.buffer.as_mut().ok_or(NetError::Protocol)?;
-                let (inputs, bots) = buffer.next(now_ms);
+                let (_, bots) = buffer.next(now_ms);
                 let mut actions = std::mem::take(&mut self.actions);
+                let authority = self.authority.as_mut().ok_or(NetError::Protocol)?;
                 if !bots.is_empty() {
+                    authority.release(&bots);
                     actions.push(Action::Bots(bots));
                 }
-                let replay = self.replay.as_mut().unwrap();
-                let (mut frame, frame_events) = replay.advance(inputs, actions)?;
-                frame.acknowledgments = buffer.acknowledgments();
+                authority.receive(HOST, &local_samples)?;
+                authority.advance_wall(actions);
+                let committed = authority.settle()?;
+                for (frame, _) in committed {
+                    let replay = self.replay.as_mut().unwrap();
+                    let mut frame_events = replay.apply(&frame)?;
+                    let prediction = self.prediction.as_mut().unwrap();
+                    prediction.filter_confirmed_events(replay, &frame, &mut frame_events);
+                    prediction.record_acknowledgment(replay, &frame, now_ms)?;
+                    if let Some(hash) = frame.hash {
+                        self.expected_hashes.insert(frame.tick, hash);
+                        self.expected_hashes
+                            .retain(|tick, _| *tick + 3000 >= frame.tick);
+                    }
+                    self.history.push(frame);
+                    events.extend(frame_events);
+                }
+                if !self.history.recent().is_empty() {
+                    self.connection.send_gameplay(
+                        None,
+                        &GameplayPacket::Frames {
+                            generation: self.start_generation,
+                            frames: self.history.recent(),
+                        },
+                    )?;
+                }
+                self.connection.send_gameplay(
+                    None,
+                    &GameplayPacket::MotionEcho {
+                        generation: self.start_generation,
+                        tick: authority.wall_tick,
+                        samples: self.latest_motion.values().copied().collect(),
+                    },
+                )?;
                 self.prediction
                     .as_mut()
                     .unwrap()
-                    .record_acknowledgment(replay, &frame, now_ms)?;
-                self.prediction.as_mut().unwrap().take_feedback();
-                if let Some(hash) = frame.hash {
-                    self.expected_hashes.insert(frame.tick, hash);
-                    self.expected_hashes
-                        .retain(|tick, _| *tick + 3000 >= frame.tick);
-                }
-                self.history.push(frame);
-                self.connection.send_gameplay(
-                    None,
-                    &GameplayPacket::Frames {
-                        generation: self.start_generation,
-                        frames: self.history.recent(),
-                    },
-                )?;
-                events.extend(frame_events);
+                    .refresh_at(self.replay.as_ref().unwrap(), now_ms)?;
             }
-        } else if let Some(prediction) = &mut self.prediction {
+        }
+        if let Some(prediction) = &mut self.prediction {
             prediction.refresh_at(self.replay.as_ref().unwrap(), now_ms)?;
             self.predicted = Some(prediction.display(now_ms));
             events.extend(prediction.take_feedback());
@@ -710,7 +738,7 @@ impl Session {
             .as_ref()
             .ok_or(NetError::Protocol)?
             .owned_seats(self.id);
-        let mut prediction = ClientPrediction::new_at(
+        let mut prediction = ClientPrediction::new_owner_at(
             owned,
             self.replay.as_ref().ok_or(NetError::Protocol)?,
             self.clock_ms,
@@ -719,6 +747,14 @@ impl Session {
             if let Some(rtt_ms) = self.gameplay_rtt_ms {
                 prediction.seed_rtt(rtt_ms);
             }
+        }
+        prediction.refresh_at(self.replay.as_ref().unwrap(), self.clock_ms)?;
+        if self.host {
+            self.latest_motion.clear();
+            self.authority = Some(AuthorityTimeline::new(
+                self.replay.as_ref().unwrap().clone(),
+                self.lobby.as_ref().unwrap().owners.clone(),
+            ));
         }
         self.prediction = Some(prediction);
         self.predicted = None;
@@ -758,10 +794,16 @@ impl Session {
                                 .as_ref()
                                 .is_some_and(|lobby| lobby.peers.contains(&from))) =>
                 {
-                    self.connection.send_gameplay(
-                        Some(from),
-                        &GameplayPacket::ProbeReply { generation, nonce },
-                    )?;
+                    let reply = if self.host && !self.is_starting() {
+                        GameplayPacket::Clock {
+                            generation,
+                            nonce,
+                            tick: self.authority.as_ref().map_or(0, |a| a.wall_tick),
+                        }
+                    } else {
+                        GameplayPacket::ProbeReply { generation, nonce }
+                    };
+                    self.connection.send_gameplay(Some(from), &reply)?;
                 }
                 GameplayPacket::ProbeReply { nonce, .. } if self.host => {
                     if let Some(preparation) = &mut self.preparation {
@@ -776,6 +818,44 @@ impl Session {
                         if let Some(prediction) = &mut self.prediction {
                             prediction.seed_rtt(now_ms - nonce);
                         }
+                    }
+                }
+                GameplayPacket::Clock { nonce, tick, .. } if !self.host && from == HOST => {
+                    if nonce == self.probe_ms && nonce <= now_ms {
+                        self.gameplay_rtt_ms = Some(now_ms - nonce);
+                        if let Some(prediction) = &mut self.prediction {
+                            prediction.align_owner_clock(tick, now_ms - nonce);
+                        }
+                    }
+                }
+                GameplayPacket::Motion { samples, .. } if self.host && !self.is_starting() => {
+                    let authority = self.authority.as_mut().ok_or(NetError::Protocol)?;
+                    if let Err(error) = authority.receive(from, &samples) {
+                        self.connection
+                            .message(Some(from), GameMessage::Error(error))?;
+                        self.connection.send(Request::Kick(from))?;
+                    } else {
+                        self.peer_gameplay_ms.insert(from, now_ms);
+                        self.prediction
+                            .as_mut()
+                            .unwrap()
+                            .receive_motion(&samples, now_ms);
+                        for sample in samples {
+                            if self
+                                .latest_motion
+                                .get(&sample.seat)
+                                .is_none_or(|old| sample.tick > old.tick)
+                            {
+                                self.latest_motion.insert(sample.seat, sample);
+                            }
+                        }
+                    }
+                }
+                GameplayPacket::Motion { .. } if self.host => {}
+                GameplayPacket::MotionEcho { samples, .. } if !self.host && from == HOST => {
+                    self.last_gameplay_ms = now_ms;
+                    if let Some(prediction) = &mut self.prediction {
+                        prediction.receive_motion(&samples, now_ms);
                     }
                 }
                 GameplayPacket::Input {
@@ -906,11 +986,10 @@ impl Session {
                         )?;
                     }
                 } else {
-                    let checkpoint = self
-                        .replay
-                        .as_ref()
-                        .unwrap()
-                        .checkpoint(generation, self.buffer.as_ref().unwrap().acknowledgments());
+                    let checkpoint = self.replay.as_ref().unwrap().checkpoint(
+                        generation,
+                        self.authority.as_ref().unwrap().acknowledgments.clone(),
+                    );
                     self.connection
                         .message(Some(peer), GameMessage::Checkpoint(Box::new(checkpoint)))?;
                 }
@@ -1111,23 +1190,62 @@ mod tests {
         now += 100;
         host.pump(100, now, vec![PlayerInput::default(); 2])
             .unwrap();
-        let catch_up = host.history.range(1, 5).unwrap();
+        assert_eq!(host.authority.as_ref().unwrap().wall_tick, 5);
         assert_eq!(
-            catch_up
+            host.replay.as_ref().unwrap().tick,
+            0,
+            "missing remote motion must stay provisional"
+        );
+        let packets = host
+            .prediction
+            .as_ref()
+            .unwrap()
+            .packets(host.start_generation);
+        let GameplayPacket::Motion { samples, .. } = &packets[0] else {
+            panic!("owner motion expected")
+        };
+        assert_eq!(
+            samples
                 .iter()
-                .map(|frame| frame.acknowledgments[0].sample)
+                .rev()
+                .map(|sample| sample.sequence)
+                .collect::<Vec<_>>(),
+            vec![1, 2, 3, 4, 5]
+        );
+        assert_eq!(
+            samples
+                .iter()
+                .rev()
+                .map(|sample| sample.tick)
                 .collect::<Vec<_>>(),
             vec![1, 2, 3, 4, 5]
         );
         let mut hashes = BTreeMap::new();
-        for frame in catch_up {
-            // Client may drain these initial frames in the next pump. Retain
-            // their canonical hashes for the ordinary convergence assertions.
-            let mut replay = client.replay.as_ref().unwrap().clone();
-            for prior in host.history.range(1, frame.tick).unwrap() {
-                replay.apply(&prior).unwrap();
+        let mut verified = host.replay.as_ref().unwrap().clone();
+        let mut verified_generation = host.start_generation;
+        hashes.insert(verified.tick, verified.hash());
+        fn record_committed(
+            host: &Session,
+            verified: &mut Replay,
+            generation: &mut u64,
+            hashes: &mut BTreeMap<u64, [u8; 32]>,
+        ) {
+            if *generation != host.start_generation {
+                *generation = host.start_generation;
+                *verified = host.replay.as_ref().unwrap().clone();
+                hashes.insert(verified.tick, verified.hash());
             }
-            hashes.insert(frame.tick, replay.hash());
+            for frame in host
+                .history
+                .range(verified.tick + 1, host.replay.as_ref().unwrap().tick)
+                .unwrap_or_default()
+            {
+                verified.apply(&frame).unwrap();
+                hashes.insert(frame.tick, verified.hash());
+            }
+            assert!(host.authority.as_ref().is_none_or(
+                |a| a.wall_tick - a.committed.tick <= bomberman_net::authority::GRACE_TICKS
+            ));
         }
         for step in 0..200 {
             now += 20;
@@ -1146,8 +1264,7 @@ mod tests {
             }
             host.pump(20, now, vec![input; 2]).unwrap();
             host.prepared(now).unwrap();
-            let replay = host.replay.as_ref().unwrap();
-            hashes.insert(replay.tick, replay.hash());
+            record_committed(&host, &mut verified, &mut verified_generation, &mut hashes);
             thread::sleep(Duration::from_millis(20));
             client.pump(20, now, vec![input; 2]).unwrap();
             client.prepared(now).unwrap();

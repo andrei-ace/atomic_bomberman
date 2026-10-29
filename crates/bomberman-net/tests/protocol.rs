@@ -13,18 +13,22 @@ fn compatibility() -> Compatibility {
 }
 
 #[test]
-fn protocol_five_patch_release_keeps_the_existing_handshake() {
+fn owner_authority_rejects_the_protocol_five_handshake() {
     let old: Compatibility = serde_json::from_str(&format!(
         "{{\"protocol\":5,\"application\":\"0.4.0\",\"assets\":\"{}\"}}",
         "a".repeat(64)
     ))
     .unwrap();
     let current = compatibility();
-    assert_eq!(current, old);
-    assert_eq!(old.check(&current), Ok(()));
-    assert_eq!(Broker::new(None).authenticate("", &old), Ok(()));
-    let mut unknown = old;
-    unknown.application = "0.5.0".into();
+    assert_ne!(current, old);
+    assert_eq!(old.check(&current), Err(NetError::Version));
+    assert_eq!(
+        Broker::new(None).authenticate("", &old),
+        Err(NetError::Version)
+    );
+    assert_eq!(Broker::new(None).authenticate("", &current), Ok(()));
+    let mut unknown = current.clone();
+    unknown.application = "0.6.0".into();
     assert_eq!(current.check(&unknown), Err(NetError::Version));
     assert_eq!(
         Broker::new(None).authenticate("", &unknown),

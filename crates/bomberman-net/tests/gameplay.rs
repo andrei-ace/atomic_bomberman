@@ -32,6 +32,8 @@ fn frame(tick: u64) -> InputFrame {
         actions: vec![],
         hash: None,
         acknowledgments: vec![InputAck::default(); 10],
+
+        ..Default::default()
     }
 }
 
@@ -108,8 +110,8 @@ fn compact_packets_fit_ten_seats_and_validate_every_truncation() {
 }
 
 #[test]
-fn protocol_five_movement_datagram_keeps_its_exact_wire_bytes() {
-    let bytes = b"ABG5\x00\x07\x00\x00\x00\x00\x00\x00\x00\x2a\x00\x00\x00\x00\x00\x00\x00\x01\x00\x02\x00\x00";
+fn protocol_six_movement_datagram_has_its_own_magic() {
+    let bytes = b"ABG6\x00\x07\x00\x00\x00\x00\x00\x00\x00\x2a\x00\x00\x00\x00\x00\x00\x00\x01\x00\x02\x00\x00";
     let packet = GameplayPacket::Input {
         generation: 7,
         sequence: 42,

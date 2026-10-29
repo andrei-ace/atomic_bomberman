@@ -478,7 +478,26 @@ impl Replay {
         }
         let events = match self.stage {
             Stage::Battle => {
-                let events = self.simulation.step(STEP_MS, &frame.inputs);
+                let mut seats = std::collections::BTreeSet::new();
+                if frame.motions.iter().any(|sample| {
+                    !sample.valid()
+                        // A late owner fact can be applied forward at this
+                        // frame; its original source tick is never rewritten.
+                        || sample.tick > frame.tick
+                        || sample.seat >= self.inputs.len()
+                        || !seats.insert(sample.seat)
+                }) {
+                    return Err(NetError::Protocol);
+                }
+                let motions = frame
+                    .motions
+                    .iter()
+                    .filter(|sample| sample.active && sample.round == self.simulation.round)
+                    .map(|sample| (sample.seat, sample.motion))
+                    .collect::<Vec<_>>();
+                let events = self
+                    .simulation
+                    .step_motion(STEP_MS, &frame.inputs, &motions);
                 if matches!(self.simulation.phase, RoundPhase::MatchOver { .. }) {
                     self.stage = Stage::Results;
                 }
@@ -498,12 +517,24 @@ impl Replay {
         inputs: Vec<PlayerInput>,
         actions: Vec<Action>,
     ) -> Result<(InputFrame, Vec<GameEvent>), NetError> {
+        self.advance_motion(inputs, actions, vec![])
+    }
+    pub fn advance_motion(
+        &mut self,
+        inputs: Vec<PlayerInput>,
+        actions: Vec<Action>,
+        motions: Vec<crate::authority::OwnerSample>,
+    ) -> Result<(InputFrame, Vec<GameEvent>), NetError> {
         let mut frame = InputFrame {
             tick: self.tick + 1,
             inputs,
             actions,
             hash: None,
             acknowledgments: vec![],
+            motions,
+            revision: 0,
+            committed_through: self.tick + 1,
+            rejected_edges: vec![],
         };
         let events = self.apply(&frame)?;
         if self.tick.is_multiple_of(50) {

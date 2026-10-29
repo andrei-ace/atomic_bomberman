@@ -1,0 +1,24 @@
+{
+  "candidate_version": "0.5.0",
+  "protocol": 6,
+  "baseline_commit": "c6076f4c4143b9210e8b3f7a4205f08e3ee5e90b",
+  "source_dirty": true,
+  "correctness_checks_passed": true,
+  "workspace_and_audio_tests_passed": 273,
+  "authority_tests": 19,
+  "virtual_matches": 492,
+  "native_motion_steps": 8800,
+  "sustained_one_way_delay_ms": 300,
+  "sustained_delay_regression": "passed",
+  "macos_release_build": "passed",
+  "macos_binary_sha256": "aca9c483e4a8b2e3ab10c35bffeeeef91c4ffbbade95daf143abea7d7daef410",
+  "real_relay_followup": "real-relay-playability-comparison-r4.json",
+  "earlier_three_run_comparison": "real-relay-playability-comparison-r3.json",
+  "simulated_comparison": "authority-comparison-r2.json",
+  "publication_gate_passed": false,
+  "publication_gate_failures": [
+    "lan-10 settling reduction below 30 percent",
+    "lan-20 settling reduction below 30 percent"
+  ],
+  "publication": "No commit, push or release"
+}

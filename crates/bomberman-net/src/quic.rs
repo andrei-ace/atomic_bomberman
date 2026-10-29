@@ -22,7 +22,7 @@ use subtle::ConstantTimeEq;
 use tokio::sync::{Notify, Semaphore};
 
 pub const LAN_GAMEPLAY_PORT: u16 = 1998;
-const ALPN: &[u8] = b"atomic-bomberman/5";
+const ALPN: &[u8] = b"atomic-bomberman/6";
 const ENVELOPE: usize = 5;
 const MAX_PACKET: usize = 1000;
 const PROBE: u8 = 0;
@@ -58,6 +58,7 @@ struct ServerState {
 #[derive(Clone)]
 pub struct GameplayServer {
     endpoint: quinn::Endpoint,
+    public_port: Arc<AtomicUsize>,
     fingerprint: [u8; 32],
     state: Arc<Mutex<ServerState>>,
 }
@@ -99,6 +100,7 @@ impl GameplayServer {
             quinn::Endpoint::server(config, address).map_err(|_| NetError::UdpUnavailable)?;
         let server = Self {
             endpoint,
+            public_port: Default::default(),
             fingerprint,
             state: Default::default(),
         };
@@ -118,6 +120,15 @@ impl GameplayServer {
     pub fn close(&self) {
         self.endpoint.close(0u32.into(), b"shutdown");
     }
+    /// A relay behind a port mapping advertises the external port while its
+    /// socket retains the internal listen address. LAN keeps the bound port.
+    pub fn advertise_port(&self, port: u16) -> Result<(), NetError> {
+        if port == 0 {
+            return Err(NetError::Protocol);
+        }
+        self.public_port.store(usize::from(port), Ordering::Release);
+        Ok(())
+    }
     pub(crate) fn offer(&self, code: &str, peer: PeerId) -> GameplayOffer {
         let token = random_token();
         self.state.lock().unwrap().bindings.insert(
@@ -128,11 +139,14 @@ impl GameplayServer {
             },
         );
         GameplayOffer {
-            port: self
-                .endpoint
-                .local_addr()
-                .expect("bound QUIC socket")
-                .port(),
+            port: match self.public_port.load(Ordering::Acquire) {
+                0 => self
+                    .endpoint
+                    .local_addr()
+                    .expect("bound QUIC socket")
+                    .port(),
+                port => port as u16,
+            },
             fingerprint: self.fingerprint,
             token,
         }
@@ -228,7 +242,7 @@ impl GameplayServer {
             return;
         };
         let mut probe = None;
-        let mut budget = RateLimit::default();
+        let mut budget = RateLimit::gameplay();
         while let Ok(bytes) = connection.read_datagram().await {
             if bytes.is_empty()
                 || bytes.len() > MAX_PACKET + ENVELOPE
@@ -519,6 +533,8 @@ mod tests {
                         actions: vec![],
                         hash: None,
                         acknowledgments: vec![InputAck::default(); 2],
+
+                        ..Default::default()
                     }],
                 },
             )
@@ -597,7 +613,7 @@ pub(crate) struct GameplayIo {
     incoming: Mutex<VecDeque<(PeerId, GameplayPacket)>>,
     wake: Notify,
 }
-type LatestPackets = BTreeMap<(Option<PeerId>, u8), Vec<u8>>;
+type LatestPackets = BTreeMap<(Option<PeerId>, u8, usize), Vec<u8>>;
 impl GameplayIo {
     pub(crate) fn ready(&self) -> bool {
         self.ready.load(Ordering::Acquire)
@@ -611,10 +627,19 @@ impl GameplayIo {
             GameplayPacket::Frames { .. } => 1,
             GameplayPacket::Probe { .. } => 2,
             GameplayPacket::ProbeReply { .. } => 3,
+            GameplayPacket::Motion { .. } => 4,
+            GameplayPacket::MotionEcho { .. } => 5,
+            GameplayPacket::Clock { .. } => 6,
         };
         let bytes = packet.encode_with_limit(self.limit.load(Ordering::Acquire))?;
         let mut outgoing = self.outgoing.lock().unwrap();
-        let key = (to, kind);
+        let seat = match packet {
+            GameplayPacket::Motion { samples, .. } | GameplayPacket::MotionEcho { samples, .. } => {
+                samples.first().ok_or(NetError::Protocol)?.seat
+            }
+            _ => 0,
+        };
+        let key = (to, kind, seat);
         if outgoing.len() >= MAX_PLAYERS * 4 && !outgoing.contains_key(&key) {
             return Err(NetError::TooLarge);
         }
@@ -726,7 +751,7 @@ async fn run_client(
         tokio::select! {
             _ = io.wake.notified() => {
                 let outgoing = std::mem::take(&mut *io.outgoing.lock().unwrap());
-                for ((target, _), payload) in outgoing {
+                for ((target, _, _), payload) in outgoing {
                     let mut bytes = Vec::with_capacity(payload.len() + ENVELOPE);
                     bytes.push(DATA); bytes.extend_from_slice(&target.unwrap_or(0).to_le_bytes()); bytes.extend_from_slice(&payload);
                     connection.send_datagram(bytes.into()).map_err(|_| NetError::UdpUnavailable)?;

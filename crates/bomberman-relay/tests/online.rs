@@ -19,6 +19,9 @@ impl Drop for TestRelay {
     }
 }
 async fn server() -> TestRelay {
+    server_at(std::net::TcpListener::bind("127.0.0.1:0").unwrap()).await
+}
+async fn server_at(listener: std::net::TcpListener) -> TestRelay {
     let _ = rustls::crypto::ring::default_provider().install_default();
     let cert = rcgen::generate_simple_self_signed(vec!["atomic-relay.invalid".into()]).unwrap();
     let fingerprint = Sha256::digest(cert.cert.der()).into();
@@ -28,7 +31,6 @@ async fn server() -> TestRelay {
     )
     .await
     .unwrap();
-    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let address = listener.local_addr().unwrap();
     let handle = axum_server::Handle::new();
     // Use a known test token while keeping it out of all diagnostic output.
@@ -36,7 +38,9 @@ async fn server() -> TestRelay {
     let relay = bomberman_relay::Relay::new(token.clone(), 32, 16);
     let gameplay = relay
         .bind_gameplay(
-            address,
+            // TCP's ephemeral allocator does not reserve the UDP port. QUIC
+            // clients in another parallel test may already be using it.
+            "127.0.0.1:0".parse().unwrap(),
             cert.cert.der().to_vec(),
             cert.signing_key.serialize_der(),
         )
@@ -119,6 +123,35 @@ async fn open(socket: &mut Socket, invite: &Invitation, compatibility: Compatibi
 }
 fn compatibility() -> Compatibility {
     Compatibility::new("a".repeat(64))
+}
+
+#[tokio::test]
+async fn relay_fixture_starts_when_udp_at_the_control_port_is_occupied() {
+    let (listener, occupied) = (0..16)
+        .find_map(|_| {
+            let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+            match std::net::UdpSocket::bind(listener.local_addr().unwrap()) {
+                Ok(occupied) => Some((listener, occupied)),
+                Err(error) if error.kind() == std::io::ErrorKind::AddrInUse => None,
+                Err(error) => panic!("reserve regression UDP socket: {error}"),
+            }
+        })
+        .expect("reserve a TCP port with its UDP counterpart occupied");
+    let server = server_at(listener).await;
+    assert_ne!(
+        server.gameplay.local_addr().unwrap(),
+        occupied.local_addr().unwrap()
+    );
+    let mut browser = connect(&server.invitation).await.unwrap();
+    send(
+        &mut browser,
+        Request::Browse(Browse {
+            token: server.invitation.server.token.clone(),
+            compatibility: compatibility(),
+        }),
+    )
+    .await;
+    assert!(matches!(receive(&mut browser).await, Event::Rooms(rooms) if rooms.is_empty()));
 }
 
 #[tokio::test]

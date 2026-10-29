@@ -61,8 +61,6 @@ pub struct Network {
     published: Arc<Mutex<Published>>,
     stopped: Arc<AtomicBool>,
     worker: Option<thread::JoinHandle<()>>,
-    rendered_positions: Vec<bomberman_core::Position>,
-    last_draw: Instant,
 }
 
 impl Network {
@@ -109,8 +107,6 @@ impl Network {
             published,
             stopped,
             worker: Some(worker),
-            rendered_positions: Vec::new(),
-            last_draw: Instant::now(),
         })
     }
 
@@ -223,43 +219,10 @@ impl Network {
                 .as_ref()
                 .map(|replay| replay.simulation.clone())
         });
-        let elapsed = self.last_draw.elapsed().as_secs_f32();
-        self.last_draw = Instant::now();
         if let Some(display) = &mut self.predicted {
             if let Some(canonical) = &state.replay {
                 authoritative_hud(display, &canonical.simulation);
             }
-            let alpha = (elapsed / (STEP_MS as f32 / 1000.)).min(1.);
-            for (seat, player) in display.players.iter_mut().enumerate() {
-                let owned = self.lobby.as_ref().and_then(|lobby| lobby.owners.get(seat))
-                    == Some(&Some(self.id));
-                if !owned
-                    && !state.starting
-                    && matches!(display.phase, bomberman_core::RoundPhase::Playing)
-                    && !display.paused
-                {
-                    if let Some(previous) = self.rendered_positions.get(seat) {
-                        let target = player.presentation.render_position;
-                        // Teleports and round changes must not slide through
-                        // walls. Sub-tile network corrections may blend.
-                        if (target.x - previous.x).abs() < bomberman_core::TILE_WIDTH * 100
-                            && (target.y - previous.y).abs() < bomberman_core::TILE_HEIGHT * 100
-                        {
-                            player.presentation.render_position.x = previous.x
-                                + ((target.x - previous.x) as f32 * alpha).round() as i32;
-                            player.presentation.render_position.y = previous.y
-                                + ((target.y - previous.y) as f32 * alpha).round() as i32;
-                        }
-                    }
-                }
-            }
-            self.rendered_positions = display
-                .players
-                .iter()
-                .map(|player| player.presentation.render_position)
-                .collect();
-        } else {
-            self.rendered_positions.clear();
         }
         self.gameplay_rtt_ms = state.gameplay_rtt_ms;
         self.starting = state.starting;

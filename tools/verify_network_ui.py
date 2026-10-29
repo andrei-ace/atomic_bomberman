@@ -25,8 +25,23 @@ def main():
     parser.add_argument('--relay', type=Path, default=Path('target/release/bomberman-relay'))
     parser.add_argument('--report', type=Path, required=True)
     parser.add_argument('--latency-ms', type=float, default=0)
+    parser.add_argument('--jitter-ms', type=float, default=0)
+    parser.add_argument('--loss-percent', type=float, default=0)
+    parser.add_argument('--spike-ms', type=float, default=0, help='Extra UDP packet delay during recurring spikes')
+    parser.add_argument('--spike-duration-ms', type=float, default=100)
+    parser.add_argument('--spike-period-ms', type=float, default=3000)
     parser.add_argument('--live-invite-stdin', action='store_true', help='Use the deployed server link on stdin instead of starting a local relay')
+    parser.add_argument('--playability', action='store_true', help='Measure OS-key-to-frame timing with opt-in traces')
+    parser.add_argument('--single-play', action='store_true', help='Measure the offline local battle with the same key sequence')
+    parser.add_argument('--expected-version', help='Reject an incorrectly copied game binary before connecting')
     args = parser.parse_args()
+    if args.single_play:
+        if args.live_invite_stdin:parser.error('Single play does not use a relay invitation')
+        args.playability=True
+    if min(args.latency_ms,args.jitter_ms,args.loss_percent,args.spike_ms,args.spike_duration_ms) < 0 or args.loss_percent > 100:
+        parser.error('Delays must be nonnegative and loss must be between 0 and 100 percent')
+    if args.spike_period_ms <= 0 or args.spike_duration_ms > args.spike_period_ms:
+        parser.error('Spike period must be positive and at least as long as its duration')
     x = C.CDLL('libX11.so.6'); xt = C.CDLL('libXtst.so.6')
     pointer, window_type = C.c_void_p, C.c_ulong
     x.XOpenDisplay.argtypes = [C.c_char_p]; x.XOpenDisplay.restype = pointer
@@ -125,8 +140,10 @@ def main():
 
     with tempfile.TemporaryDirectory(prefix='atomic online ui ') as temporary:
         base = Path(temporary); processes = []; logs = []
-        if args.live_invite_stdin:
-            if args.latency_ms: parser.error('Latency proxy is only available for the disposable local relay')
+        if args.single_play:
+            invitation='';proxy=None
+        elif args.live_invite_stdin:
+            if args.latency_ms or args.jitter_ms or args.loss_percent or args.spike_ms: parser.error('Latency proxy is only available for the disposable local relay')
             invitation=sys.stdin.read().strip()
             parse_invitation(invitation)
             proxy=None
@@ -137,10 +154,12 @@ def main():
             relay = str(args.relay.resolve())
             subprocess.run([relay,'init','--state',str(state),'--advertise',f'127.0.0.1:{port}','--listen',f'127.0.0.1:{port}'],check=True,capture_output=True)
             invitation = subprocess.check_output([relay,'export-invite','--state',str(state)],text=True).strip()
-            proxy = ImpairmentProxy(port, args.latency_ms, 0, 0) if args.latency_ms else None
+            proxy = ImpairmentProxy(port, args.latency_ms, args.jitter_ms, args.loss_percent,
+                spike_ms=args.spike_ms, spike_duration_ms=args.spike_duration_ms if args.spike_ms else 0,
+                spike_period_ms=args.spike_period_ms) if any((args.latency_ms,args.jitter_ms,args.loss_percent,args.spike_ms)) else None
             if proxy:
                 decoded = parse_invitation(invitation)
-                decoded['server']['endpoint'] = f'wss://127.0.0.2:{proxy.port}/v1/ws'
+                decoded['server']['endpoint'] = f'wss://[::1]:{proxy.port}/v1/ws'
                 invitation = 'AB1.'+base64.urlsafe_b64encode(json.dumps(decoded).encode()).decode().rstrip('=')
             log=(base/'relay.log').open('w'); logs.append(log)
             processes.append(subprocess.Popen([relay,'serve','--state',str(state)],stdout=log,stderr=log))
@@ -149,6 +168,9 @@ def main():
         def launch(name):
             before=windows(); directory=base/name; directory.mkdir(); probe=directory/'probe.json'
             env=dict(environment,XDG_CONFIG_HOME=str(directory/'config'),ATOMIC_BOMBERMAN_STATE_PROBE=str(probe))
+            if args.playability:
+                env.update(ATOMIC_BOMBERMAN_INPUT_TRACE='1',ATOMIC_BOMBERMAN_TEST_CONFIG=str(directory/'test-config.json'))
+                (directory/'settings.json').write_text(json.dumps({'participant_count':2,'random_starts':False,'sudden_death':False}))
             log=(directory/'game.log').open('w'); logs.append(log)
             process=subprocess.Popen([str(args.game.resolve()),'--assets',str(args.assets.resolve()),'--settings',str(directory/'settings.json'),'--mute'],env=env,stdout=log,stderr=log)
             processes.append(process)
@@ -229,8 +251,38 @@ def main():
             state = snapshot(player, 'NetworkLobby')
             select(state['network']['actions'].index(action))
 
+        def save_playability(report):
+            import gzip,hashlib
+            raw=report.pop('_raw_traces')
+            trace_path=args.report.with_suffix('.traces.json.gz')
+            trace_path.parent.mkdir(parents=True,exist_ok=True)
+            trace_bytes=gzip.compress(json.dumps(raw,separators=(',',':')).encode(),mtime=0)
+            trace_path.write_bytes(trace_bytes)
+            report['trace_artifact']=trace_path.name
+            report['trace_sha256']=hashlib.sha256(trace_bytes).hexdigest()
+            report['game_sha256']=hashlib.sha256(args.game.read_bytes()).hexdigest()
+            report['fixture_sha256']=hashlib.sha256(Path(__file__).with_name('measure_playability.py').read_bytes()).hexdigest()
+            report['relay_environment']='none' if args.single_play else 'real public TCP/UDP 443' if args.live_invite_stdin else 'disposable relay'
+            if not args.live_invite_stdin and not args.single_play:
+                report['environment']='Actual game windows; XTest OS key events; Xvfb and Mesa; simulated relay impairment'
+                report['impairment']=dict(rtt_ms=args.latency_ms,jitter_ms=args.jitter_ms,loss_percent=args.loss_percent,
+                    spike_ms=args.spike_ms,spike_duration_ms=args.spike_duration_ms if args.spike_ms else 0,
+                    spike_period_ms=args.spike_period_ms,udp_received=proxy.received if proxy else 0,udp_dropped=proxy.dropped if proxy else 0)
+            serialized=json.dumps(report,indent=2)+'\n'
+            if invitation:assert invitation not in serialized
+            args.report.parent.mkdir(parents=True,exist_ok=True);args.report.write_text(serialized)
+            print(json.dumps({'passed':report['passed'],'version':report['version'],'metrics':report['metrics'],'missed_actions':report['missed_actions']},indent=2))
+            if not report['passed']:raise SystemExit(1)
+
         try:
-            host=launch('host'); snapshot(host,'Main')
+            host=launch('host'); initial=snapshot(host,'Main')
+            if args.expected_version:
+                assert initial.get('version')==args.expected_version, 'Game binary version does not match the requested baseline/candidate'
+            if args.single_play:
+                select(0);snapshot(host,'Battle')
+                from measure_playability import run
+                save_playability(run(host,host,focus,key,press,snapshot,lobby_action,single_play=True))
+                return
             select(1); snapshot(host,'Multiplayer'); select(0); snapshot(host,'Lan')
             assert 'CopyInvite' not in snapshot(host)['lan']['actions']
             press('Escape'); snapshot(host,'Multiplayer'); press('Escape'); snapshot(host,'Main')
@@ -249,6 +301,11 @@ def main():
             friend=launch('friend'); snapshot(friend,'Main'); open_online(friend,link=copied,exercise_clear=True)
             join_discovered(friend,code)
             state_friend=snapshot(friend,'NetworkLobby'); assert state_friend['network']['id']==2
+            if args.playability:
+                from measure_playability import run
+                report=run(host,friend,focus,key,press,snapshot,lobby_action)
+                save_playability(report)
+                return
             assert not {'Start', 'Rules', 'Ready'} & set(state_friend['network']['actions'])
             # A second keyboard is assigned locally through the actual lobby UI.
             lobby_action(friend, 'Devices'); snapshot(friend,'NetworkDevices'); select(1); press('Escape'); time.sleep(.3)

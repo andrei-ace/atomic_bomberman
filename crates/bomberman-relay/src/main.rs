@@ -100,6 +100,10 @@ async fn run() -> Result<()> {
                     datagram_key.serialize_der(),
                 )
                 .context("bind UDP gameplay socket")?;
+            let public_port = url::Url::parse(&config.advertised_endpoint)?
+                .port_or_known_default()
+                .context("advertised relay port missing")?;
+            gameplay.advertise_port(public_port)?;
             let maintenance = relay.clone();
             tokio::spawn(async move {
                 let mut interval = tokio::time::interval(Duration::from_secs(60));

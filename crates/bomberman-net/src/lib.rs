@@ -1,5 +1,6 @@
 //! Wire protocol, private invitations, bounded transport and deterministic replay.
 //! This crate never initializes graphics, audio or input devices.
+pub mod authority;
 pub mod broker;
 pub mod discovery;
 pub mod gameplay;

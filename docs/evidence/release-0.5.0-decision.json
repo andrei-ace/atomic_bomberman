@@ -1,0 +1,20 @@
+{
+  "version": "0.5.0",
+  "protocol": 6,
+  "recorded_at_utc": "2026-10-29T20:49:23.064017+00:00",
+  "authorization": "User explicitly requested commit, push, release creation and relay deployment after reviewing the reported results.",
+  "historical_strict_per_profile_gate_passed": false,
+  "historical_gate_failures": [
+    "lan-10 settling improvement below 30 percent",
+    "lan-20 settling improvement below 30 percent"
+  ],
+  "correctness_validation": "authority-validation-r4.json",
+  "live_followup": "real-relay-playability-comparison-r4.json",
+  "intel_ci_fix": {
+    "failed_run": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/40907660801",
+    "cause": "Relay test fixture selected a free TCP port and assumed its UDP port was free.",
+    "fix": "Independently allocate an ephemeral UDP port; explicitly test startup with UDP occupied at the TCP port.",
+    "local_relay_integration_tests_passed": 5
+  },
+  "identity_policy": "Preserve existing relay certificate, private key, access token and configuration."
+}

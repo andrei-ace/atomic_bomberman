@@ -36,25 +36,33 @@ class ImpairmentProxy:
     crosses four UDP legs: client->relay->host->relay->client.
     """
 
-    def __init__(self, port, rtt_ms, jitter_ms, loss_percent):
+    def __init__(self, port, rtt_ms, jitter_ms, loss_percent, gameplay_port=None, legs=4, seed=1997,
+                 spike_ms=0, spike_duration_ms=0, spike_period_ms=3000):
         self.port = port
-        self.delay = rtt_ms / 4000
-        self.jitter = jitter_ms / 4000
+        self.gameplay_port = gameplay_port or port
+        self.delay = rtt_ms / (1000 * legs)
+        self.jitter = jitter_ms / (1000 * legs)
         self.loss = loss_percent / 100
-        self.random = random.Random(1997)
+        self.random = random.Random(seed)
+        self.started = time.monotonic()
+        self.spike_delay = spike_ms / 1000
+        self.spike_duration_ms = spike_duration_ms
+        self.spike_period_ms = spike_period_ms
         self.stopped = threading.Event()
         self.streams = []
         self.backends = {}
         self.pending = []
         self.serial = itertools.count()
         self.received = self.forwarded = self.dropped = 0
-        self.tcp = socket.socket()
+        self.tcp = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        self.tcp.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
         self.tcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.tcp.bind(("127.0.0.2", port))
+        self.tcp.bind(("::1", port))
         self.tcp.listen(16)
         self.tcp.settimeout(.1)
-        self.udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.udp.bind(("127.0.0.2", port))
+        self.udp = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+        self.udp.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
+        self.udp.bind(("::1", self.gameplay_port))
         self.udp.setblocking(False)
         self.selector = selectors.DefaultSelector()
         self.selector.register(self.udp, selectors.EVENT_READ, None)
@@ -109,6 +117,8 @@ class ImpairmentProxy:
             self.dropped += 1
             return
         delay = max(0, self.delay + self.random.uniform(-self.jitter, self.jitter))
+        if self.spike_duration_ms and (time.monotonic() - self.started) * 1000 % self.spike_period_ms < self.spike_duration_ms:
+            delay += self.spike_delay
         heapq.heappush(
             self.pending,
             (time.monotonic() + delay, next(self.serial), destination, address, data),
@@ -141,7 +151,7 @@ class ImpairmentProxy:
                     backend = self.backends.get(address)
                     if backend is None:
                         backend = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                        backend.connect(("127.0.0.1", self.port))
+                        backend.connect(("127.0.0.1", self.gameplay_port))
                         backend.setblocking(False)
                         self.backends[address] = backend
                         self.selector.register(backend, selectors.EVENT_READ, address)
@@ -192,10 +202,13 @@ def stop(process):
             process.wait(timeout=5)
 
 
-def launch(example, role, report, link, room=None):
-    arguments = [str(example), role, "online", str(report)]
-    if room is not None:
+def launch(example, role, report, link, room=None, mode="online", address=None, seats=1, players=2):
+    arguments = [str(example), role, mode, str(report)]
+    if mode == "online" and room is not None:
         arguments.append(room)
+    elif mode == "lan" and role == "join":
+        arguments.append(address)
+    arguments.extend(["--seats", str(seats), "--players", str(players)])
     process = subprocess.Popen(
         arguments, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
@@ -217,12 +230,12 @@ def output_error(process, link):
     return text[-2000:]
 
 
-def run_pair(example, directory, link):
+def run_pair(example, directory, link, mode="online", address=None, host_seats=1, client_seats=1, players=2):
     host_report = directory / "host.json"
     client_report = directory / "client.json"
     host = client = None
     try:
-        host = launch(example, "host", host_report, link)
+        host = launch(example, "host", host_report, link, mode=mode, address=address, seats=host_seats, players=players)
         ready = host_report.with_suffix(".ready.json")
         deadline = time.monotonic() + 25
         while not ready.exists():
@@ -232,7 +245,7 @@ def run_pair(example, directory, link):
                 raise RuntimeError("Host did not announce its temporary room")
             time.sleep(.02)
         room = json.loads(ready.read_text())["room"]
-        client = launch(example, "join", client_report, link, room)
+        client = launch(example, "join", client_report, link, room, mode=mode, address=address, seats=client_seats, players=players)
         deadline = time.monotonic() + 65
         while client.poll() is None or host.poll() is None:
             if client.poll() not in (None, 0):
@@ -247,6 +260,8 @@ def run_pair(example, directory, link):
         assert host_data["passed"] and client_data["passed"]
         assert host_data["state_hash"] == client_data["state_hash"], "Canonical state differs"
         assert client_data["gameplay_rtt_ms"], "No gameplay probe completed"
+        build = {key: client_data[key] for key in ("version", "protocol", "fixture_sha256")}
+        assert build == {key: host_data[key] for key in build}, "Host and client builds differ"
         samples = client_data["samples"]
         assert len(samples) == 10 and all(s["sample_to_visible_ms"] is not None for s in samples)
         latency = sorted(s["sample_to_visible_ms"] for s in samples)
@@ -254,6 +269,7 @@ def run_pair(example, directory, link):
         max_backward_step = max(s["max_backward_step_pixels"] for s in samples)
         return {
             "passed": max_backward_step <= MAX_BACKWARD_STEP_PIXELS,
+            "build": build,
             "presentation": client_data["presentation"],
             "host_platform": host_data["platform"],
             "client_platform": client_data["platform"],
@@ -316,9 +332,9 @@ def local_case(args, impairment):
                     if time.monotonic() > deadline:
                         raise RuntimeError("Disposable relay listener timed out")
                     time.sleep(.02)
-            proxy = ImpairmentProxy(port, **impairment)
+            proxy = ImpairmentProxy(port, seed=getattr(args, "seed", 1997), **impairment)
             parsed = urlsplit(link)
-            link = urlunsplit((parsed.scheme, f"127.0.0.2:{port}", parsed.path, parsed.query, parsed.fragment))
+            link = urlunsplit((parsed.scheme, f"[::1]:{port}", parsed.path, parsed.query, parsed.fragment))
             result = run_pair(args.example, directory, link)
             assert proxy.forwarded > 0, "No encrypted UDP traffic crossed the proxy"
             if impairment["loss_percent"]:

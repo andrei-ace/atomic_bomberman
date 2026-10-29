@@ -13,6 +13,8 @@ use bomberman_core::{
     Simulation, Terrain, TilePos, TILE_HEIGHT, TILE_WIDTH,
 };
 use macroquad::prelude::*;
+#[cfg(debug_assertions)]
+mod input_trace;
 mod network_ui;
 use network_ui::NetworkUi;
 
@@ -57,6 +59,8 @@ enum Screen {
 }
 
 pub struct App {
+    #[cfg(debug_assertions)]
+    input_trace: input_trace::InputTrace,
     cli: Cli,
     settings: Settings,
     media: Media,
@@ -96,6 +100,8 @@ impl App {
         target.texture.set_filter(FilterMode::Nearest);
         let network_ui = NetworkUi::new(&settings);
         let mut this = Self {
+            #[cfg(debug_assertions)]
+            input_trace: input_trace::InputTrace::new(),
             cli,
             settings,
             media,
@@ -190,6 +196,8 @@ impl App {
                 }
                 frame_started = std::time::Instant::now();
             }
+            #[cfg(debug_assertions)]
+            let trace_input = self.input_trace.observe();
             self.controllers.poll();
             #[cfg(target_os = "macos")]
             if !self.cli.mute {
@@ -235,6 +243,10 @@ impl App {
             #[cfg(debug_assertions)]
             self.write_state_probe()?;
             self.draw();
+            #[cfg(debug_assertions)]
+            if let Some(sample) = input_trace::sample(self, trace_input) {
+                self.input_trace.push(sample);
+            }
             self.frame += 1;
             if self.cli.smoke_frames.is_some_and(|n| self.frame >= n) {
                 if let Some(path) = &self.cli.screenshot {
@@ -261,6 +273,8 @@ impl App {
                 break;
             }
             next_frame().await;
+            #[cfg(debug_assertions)]
+            self.input_trace.presented();
         }
         Ok(())
     }
@@ -275,6 +289,9 @@ impl App {
                 let temporary = path.with_extension("json.tmp");
                 let state = serde_json::json!({
                     "frame": self.frame,
+                    "version": bomberman_net::APP_VERSION,
+                    "protocol": bomberman_net::PROTOCOL_VERSION,
+                    "input_trace": self.input_trace.frames(),
                     "screen": format!("{:?}", self.screen),
                     "selection": self.selection,
                     "paused": self.paused,
@@ -348,6 +365,37 @@ impl App {
     }
 
     async fn update(&mut self, elapsed_ms: u32) -> Result<()> {
+        #[cfg(debug_assertions)]
+        if self.input_trace.enabled() {
+            if let Some(network) = &mut self.network {
+                if network.host && is_key_pressed(KeyCode::F9) && network.replay.is_none() {
+                    if let Some(path) = std::env::var_os("ATOMIC_BOMBERMAN_TEST_CONFIG") {
+                        let config = serde_json::from_slice(&std::fs::read(path)?)?;
+                        network.configure(config)?;
+                    }
+                }
+                if network.host
+                    && is_key_pressed(KeyCode::F10)
+                    && network.replay.is_some()
+                    && !network.is_starting()
+                {
+                    network.action(bomberman_net::Action::Rematch)?;
+                }
+            } else if is_key_pressed(KeyCode::F9) {
+                if let Some(path) = std::env::var_os("ATOMIC_BOMBERMAN_TEST_CONFIG") {
+                    let mut config: bomberman_core::GameConfig =
+                        serde_json::from_slice(&std::fs::read(path)?)?;
+                    config.network_play = false;
+                    self.media.ensure_arena(config.arena.index()).await?;
+                    self.simulation = Some(Simulation::new(config, self.cli.seed)?);
+                    self.paused = false;
+                    self.time_remainder_ms = 0.;
+                    self.change_screen(Screen::Battle);
+                }
+            } else if is_key_pressed(KeyCode::F10) && self.simulation.is_some() {
+                self.rematch().await?;
+            }
+        }
         if !matches!(self.screen, Screen::Internet | Screen::Online) {
             self.network_ui.stop_directory();
         }

@@ -248,6 +248,8 @@ fn frame(tick: u64) -> InputFrame {
         actions: vec![],
         hash: None,
         acknowledgments: vec![InputAck::default(); 2],
+
+        ..Default::default()
     }
 }
 

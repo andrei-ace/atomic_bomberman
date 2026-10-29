@@ -5,6 +5,7 @@ mod control_sound_tests;
 mod gold;
 mod hazards;
 mod items;
+mod network_motion;
 #[cfg(test)]
 mod network_tests;
 mod physics;
@@ -14,6 +15,7 @@ mod presentation;
 mod round_persistence_tests;
 mod setup;
 pub use gold::GoldParticle;
+pub use network_motion::AvatarMotion;
 pub use physics::PhysicsState;
 
 use crate::*;
@@ -21,6 +23,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Simulation {
+    #[serde(skip)]
+    network_motions: Vec<(usize, AvatarMotion)>,
+    #[serde(skip)]
+    network_owned: Vec<usize>,
     pub config: GameConfig,
     pub board: Board,
     pub players: Vec<Player>,
@@ -89,6 +95,8 @@ impl Simulation {
         config.validate()?;
         let n = config.players.len();
         let mut result = Self {
+            network_motions: vec![],
+            network_owned: vec![],
             players: config
                 .players
                 .iter()
@@ -854,6 +862,11 @@ impl Simulation {
         }
     }
     pub fn kill_player(&mut self, player: usize, killer: Option<usize>) {
+        // A speculative local world cannot finalize the owner's death. The
+        // host evaluates the recorded path before committing that outcome.
+        if self.network_owned.contains(&player) {
+            return;
+        }
         let motion_remainder = self.player_motion_remainder(player);
         let Some(p) = self.players.get_mut(player) else {
             return;

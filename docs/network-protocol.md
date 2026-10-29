@@ -1,14 +1,20 @@
 # Multiplayer responsiveness
 
-Version 0.4.1 keeps protocol 5, the `ABG5` datagram format, the QUIC ALPN,
-and the `0.4.0` application compatibility identifier. Existing 0.4.0 peers
-and relays remain compatible. The host remains authoritative, while each
-client immediately predicts its own movement, bomb/action visuals, and control
-sounds. Confirmed input acknowledgments rebuild prediction without changing
-the canonical replay hash. Predicted sounds are identified by local seat and
-button transition, so confirmation or resimulation does not play them twice.
+Version **0.5.0** uses protocol **6**, `ABG6`, QUIC ALPN
+`atomic-bomberman/6` and compatibility family `0.5.0`. Clients and relay must
+upgrade together; 0.4.x is incompatible. Existing server links, certificates
+and access tokens remain valid.
 
-### Prediction timing and corrections in 0.4.1
+Each computer advances its own avatars immediately. The host accepts owner
+motion and resolves shared interactions within a provisional tail bounded to
+100 ms. Late facts are evaluated forward; committed history stays immutable.
+Button transitions retain ordered identities, and confirmed control sounds do
+not repeat. See [rationale, conflict rules and measurements](owner-authority.md).
+
+### Historical 0.4.1 prediction timing and corrections
+
+This section records the earlier control-prediction model for comparison with
+the 0.5.0 owner-motion design above.
 
 Movement ACKs identify the newest state selected by the host. They do not count
 how many 20 ms movement steps the host simulated: several samples can coalesce
@@ -106,7 +112,8 @@ deterministic replay. Older gaps recover through a verified full checkpoint.
 Prediction stops after 500 ms without canonical tick progress; a failed UDP path ends
 the affected connection instead of silently switching gameplay to TCP.
 
-Movement always uses the newest sample. Bomb/action transitions retain ordered
+Owner movement uses the newest motion facts; late facts are applied forward.
+Committed outcomes cannot be revised. Bomb/action transitions retain ordered
 IDs and repeat until consumed; each seat has a maximum of 16 pending edges.
 Controls release after 250 ms without fresh observations, and disconnected
 players become bots after five seconds.

@@ -1,14 +1,15 @@
 # Desktop and relay releases
 
-Version **0.4.1**, Rust **1.89.0**, one annotated Git tag for all three packages:
+Version **0.5.0**, Rust **1.89.0**, one annotated Git tag for all three packages:
 Linux x86-64 AppImage (Ubuntu 24.04 baseline, X11/XWayland), Apple Silicon Mac ZIP,
 and native Linux ARM64 relay (Ubuntu 26 deployment; glibc 2.39 minimum).
-The multiplayer protocol remains **5**. Version 0.4.1 fixes client movement
-snap-back, keeps a stable prediction clock, and blends small position corrections
-over 80 ms. Its wire format and deterministic core are unchanged from 0.4.0;
-0.4.0 clients and relays remain compatible when original source-file hashes match.
-The handshake retains the `0.4.0` compatibility identifier independently of the
-0.4.1 package version. Updating the client is enough to receive the prediction fixes.
+The multiplayer protocol is **6**, with `ABG6`, QUIC ALPN
+`atomic-bomberman/6` and compatibility family `0.5.0`. Clients and relay must
+upgrade together; 0.4.x is incompatible. Each computer supplies its owned
+avatar motion, while the host resolves shared outcomes within a bounded 100 ms
+provisional window. Late motion and button identities recover without reopening
+committed history. Existing certificates, private server links and tokens remain
+valid. See [the design and measured results](owner-authority.md).
 Original game assets, imported caches, media, private relay state and invitations
 are excluded. Keep `dist/`, `build/` and private server state out of source commits.
 
@@ -50,10 +51,10 @@ Review and commit the intended source, then build from that clean commit:
 ```sh
 # Ubuntu 24.04 x86-64:
 tools/package_linux.sh --release
-python3 tools/linux_release.py verify dist/github/atomic-bomberman-0.4.1-linux-x86_64.AppImage --release
+python3 tools/linux_release.py verify dist/github/atomic-bomberman-0.5.0-linux-x86_64.AppImage --release
 # Apple Silicon Mac:
 tools/package_macos.sh --release
-python3 tools/macos_release.py verify dist/github/atomic-bomberman-0.4.1-macos-arm64.zip --release
+python3 tools/macos_release.py verify dist/github/atomic-bomberman-0.5.0-macos-arm64.zip --release
 # Native ARM64 Linux:
 cargo build --locked --release -p bomberman-relay
 python3 tools/package_relay.py --release
@@ -81,7 +82,7 @@ ad-hoc signed, with no Developer ID signing/notarization setup.
 
 ## Coordinated release
 
-Create and push an annotated `v0.4.1` tag only after reviewing the commit and
+Create and push an annotated `v0.5.0` tag only after reviewing the commit and
 platform checks. Its push starts **Desktop and relay release**; the same workflow
 can also be dispatched manually for an existing annotated version tag. The
 workflow uses separate native Linux x86-64, Mac ARM64 and Linux ARM64 runners.
@@ -117,10 +118,10 @@ upright loading screens, the vertical anchor for cropped flame sprites, and empt
 floor underneath exploding bricks. Original player-colored flames are retained.
 
 Clients preload battle media in the lobby and acknowledge match preparation
-before the shared countdown. Protocol 5 also requires successful bidirectional
+before the shared countdown. Protocol 6 also requires successful bidirectional
 QUIC gameplay probes. Internet play needs both TCP 443 and UDP 443; LAN hosts
 need TCP/UDP 1997 and UDP 1998. Existing private server links and TLS identities
-remain valid. The 0.4.1 client also works with the existing 0.4.0 relay.
+remain valid. All players and the relay must use the 0.5.0 compatibility family.
 
 Run `python3 tools/verify_datagram.py --report /tmp/datagram-check.json` against
 the built relay and `network_latency` example. It exercises production session

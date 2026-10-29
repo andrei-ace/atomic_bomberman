@@ -1,10 +1,10 @@
 # Private online and LAN games
 
-Use version **0.4.1**, protocol **5**, for improved client movement on Linux
-and Mac. The 0.4.0 clients and relay remain compatible: the handshake keeps the
-0.4.0 compatibility identifier and original source-file hashes must match.
-Import the same edition of Atomic Bomberman. The relay has no original game data and never
-runs the simulation.
+Use version **0.5.0**, protocol **6**, on every client and the relay. Older
+0.4.x clients and relays are incompatible. Existing private server links and
+saved profiles remain valid when the server keeps its certificate and token.
+Import the same edition of Atomic Bomberman. The relay has no original game data
+and never runs the simulation.
 
 ## Online
 
@@ -99,11 +99,11 @@ their original palettes.
 
 ## During play
 
-The host runs simulation and bots at fixed 20 ms steps. Clients respond locally
-through prediction while confirming the host's ordered input frames. Movement
-uses the newest input; button press and release transitions are retained until
-consumed, so packet bursts cannot build a queue of obsolete directions or erase
-short taps. Redundant frames and requested repairs recover packet loss; prediction
+Each computer advances its own avatars at fixed 20 ms steps. The host resolves
+shared simulation and bots with a provisional window bounded to 100 ms. Ordinary
+confirmation preserves the owner motion path. Newest late motion is evaluated
+forward without rewriting committed outcomes; button press/release identities
+remain ordered and retained until acknowledged, including through latency spikes. Redundant frames and requested repairs recover packet loss; prediction
 is bounded during a stalled connection.
 Every second, clients verify an authoritative SHA-256 of the simulation state.
 A confirmed mismatch ends that client's session with a synchronization error. Simulation
@@ -135,7 +135,7 @@ games and incompatible versions/assets without displaying credentials.
   access on Mac, or use **Join by IP**. Permit TCP 1997 and UDP 1998 for joining
   and gameplay even when using a manual address.
 - **Incompatible version:** upgrade the relay and every client to the same
-  release. Protocol 5 clients cannot play through a protocol 4 relay.
+  release. Protocol 6 clients cannot play through a protocol 5 relay.
 - **Different assets:** import the same original game edition on every client.
 - **Access revoked or certificate changed:** ask the administrator for the
   current full server link and import it through **Change server**.

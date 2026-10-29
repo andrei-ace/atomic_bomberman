@@ -8,6 +8,10 @@ use crate::{
 use bomberman_core::{ControlSoundKind, GameEvent, Player, PlayerInput, Position, Simulation};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
+#[path = "prediction/owner.rs"]
+mod owner;
+use owner::OwnedState;
+
 const MAX_PREDICT_TICKS: usize = 500 / STEP_MS as usize;
 const MAX_INPUT_HISTORY: usize = 256;
 const CORRECTION_MS: u64 = 80;
@@ -57,6 +61,7 @@ impl MotionBoundary {
 }
 
 pub struct ClientPrediction {
+    owner: Option<OwnedState>,
     owned: Vec<usize>,
     sequence: u64,
     observed: Vec<PlayerInput>,
@@ -91,6 +96,7 @@ impl ClientPrediction {
     pub fn new_at(owned_seats: Vec<usize>, canonical: &Replay, now_ms: u64) -> Self {
         let n = owned_seats.len();
         Self {
+            owner: None,
             owned: owned_seats,
             sequence: 0,
             observed: vec![PlayerInput::default(); n],
@@ -149,6 +155,18 @@ impl ClientPrediction {
                 display.players[*seat].presentation.render_position = from;
             }
         }
+        if self.owner.is_some() {
+            for (seat, player) in display.players.iter_mut().enumerate() {
+                if self.boundaries[seat].alive && !player.alive {
+                    player.alive = true;
+                    player.presentation.render_alive = true;
+                    player.presentation.render_visible = true;
+                    player.presentation.render_special = 0;
+                    player.presentation.render_frame = 0;
+                }
+            }
+        }
+        self.display_remote(&mut display, now_ms);
         display
     }
     pub fn is_fresh(&self, now_ms: u64) -> bool {
@@ -156,6 +174,14 @@ impl ClientPrediction {
     }
     /// Existing gameplay probes can seed the clock before the first input ACK.
     pub fn seed_rtt(&mut self, rtt_ms: u64) {
+        if self.owner.is_some() {
+            if self.sequence == 0 && self.lead_eighths.is_none() {
+                let lead = (rtt_ms / 2).min(MAX_PREDICTION_MS);
+                self.clock_ms = self.clock_ms.saturating_add(lead);
+                self.lead_eighths = Some(lead * 8);
+            }
+            return;
+        }
         if self.lead_eighths.is_none() {
             let lead = rtt_ms.clamp(u64::from(STEP_MS), MAX_PREDICTION_MS);
             self.lead_eighths = Some(lead * 8);
@@ -239,6 +265,9 @@ impl ClientPrediction {
         self.capture_at(inputs, self.now_ms.saturating_add(u64::from(STEP_MS)))
     }
     pub fn capture_at(&mut self, inputs: &[PlayerInput], now_ms: u64) -> Result<(), NetError> {
+        if self.owner.is_some() {
+            return self.capture_owned(inputs, now_ms);
+        }
         self.observe(inputs)?;
         self.now_ms = self.now_ms.max(now_ms);
         self.sequence = self.sequence.checked_add(1).ok_or(NetError::Protocol)?;
@@ -313,6 +342,9 @@ impl ClientPrediction {
             self.pending_capture_ms = Some(sample.captured_ms);
         }
         self.commit_acknowledgments(&frame.acknowledgments);
+        if self.owner.is_some() {
+            self.confirm_owned(canonical, frame);
+        }
         self.confirmed_inputs.clone_from(&frame.inputs);
         self.note_progress(canonical, now_ms);
         self.dirty = true;
@@ -336,10 +368,22 @@ impl ClientPrediction {
         self.validate_acknowledgments(canonical, acknowledgments)?;
         self.commit_acknowledgments(acknowledgments);
         self.confirmed_inputs.clone_from(&canonical.inputs);
+        if self.owner.is_some() {
+            self.clock_ms = self.clock_ms.max(canonical.tick * u64::from(STEP_MS));
+            self.phase_error_ms = 0;
+            self.pending_capture_ms = None;
+            self.predicted = canonical.clone();
+            self.dirty = true;
+            return self.refresh_at(canonical, now_ms);
+        }
         self.clock_ms = canonical.tick.saturating_mul(u64::from(STEP_MS));
         self.phase_error_ms = 0;
         self.pending_capture_ms = None;
         self.corrections.fill(Correction::default());
+        if let Some(owner) = &mut self.owner {
+            owner.samples.clear();
+            owner.remote.clear();
+        }
         self.predicted = canonical.clone();
         self.note_progress(canonical, now_ms);
         self.dirty = true;
@@ -398,6 +442,9 @@ impl ClientPrediction {
         self.refresh_at(canonical, self.now_ms)
     }
     pub fn refresh_at(&mut self, canonical: &Replay, now_ms: u64) -> Result<(), NetError> {
+        if self.owner.is_some() {
+            return self.refresh_owned(canonical, now_ms);
+        }
         self.note_progress(canonical, now_ms);
         if !self.dirty
             && self.baseline_tick == canonical.tick

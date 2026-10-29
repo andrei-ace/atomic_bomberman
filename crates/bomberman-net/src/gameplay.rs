@@ -1,5 +1,6 @@
 //! Small, independently decodable gameplay datagrams. State is supersedable;
 //! button edges and authoritative frame gaps have explicit recovery identities.
+use crate::authority::{OwnerSample, RejectedEdge, MOTION_HISTORY};
 use crate::{Action, InputAck, InputFrame, NetError, MAX_PLAYERS};
 use bomberman_core::{Direction, PlayerInput};
 use std::collections::{BTreeMap, VecDeque};
@@ -23,6 +24,20 @@ pub struct GameplaySeatInput {
 }
 #[derive(Clone, Debug)]
 pub enum GameplayPacket {
+    Motion {
+        generation: u64,
+        samples: Vec<OwnerSample>,
+    },
+    MotionEcho {
+        generation: u64,
+        tick: u64,
+        samples: Vec<OwnerSample>,
+    },
+    Clock {
+        generation: u64,
+        nonce: u64,
+        tick: u64,
+    },
     Input {
         generation: u64,
         sequence: u64,
@@ -45,6 +60,9 @@ pub enum GameplayPacket {
 impl GameplayPacket {
     pub fn generation(&self) -> u64 {
         match self {
+            Self::Motion { generation, .. }
+            | Self::MotionEcho { generation, .. }
+            | Self::Clock { generation, .. } => *generation,
             Self::Input { generation, .. }
             | Self::Frames { generation, .. }
             | Self::Probe { generation, .. }
@@ -52,22 +70,49 @@ impl GameplayPacket {
         }
     }
     pub fn host_only(&self) -> bool {
-        matches!(self, Self::Frames { .. })
+        matches!(
+            self,
+            Self::Frames { .. } | Self::MotionEcho { .. } | Self::Clock { .. }
+        )
     }
     pub fn encode(&self) -> Result<Vec<u8>, NetError> {
         self.encode_with_limit(MAX_DATAGRAM)
     }
     pub fn encode_with_limit(&self, limit: usize) -> Result<Vec<u8>, NetError> {
         let limit = limit.min(MAX_DATAGRAM);
-        let mut out = b"ABG5".to_vec();
+        let mut out = b"ABG6".to_vec();
         out.push(match self {
             Self::Input { .. } => 0,
             Self::Frames { .. } => 1,
             Self::Probe { .. } => 2,
             Self::ProbeReply { .. } => 3,
+            Self::Motion { .. } => 4,
+            Self::MotionEcho { .. } => 5,
+            Self::Clock { .. } => 6,
         });
         put64(&mut out, self.generation());
         match self {
+            Self::Motion { samples, .. } | Self::MotionEcho { samples, .. } => {
+                let max = if matches!(self, Self::Motion { .. }) {
+                    MOTION_HISTORY
+                } else {
+                    MAX_PLAYERS
+                };
+                if samples.is_empty() || samples.len() > max {
+                    return Err(NetError::Protocol);
+                }
+                if let Self::MotionEcho { tick, .. } = self {
+                    put64(&mut out, *tick);
+                }
+                out.push(samples.len() as u8);
+                for sample in samples {
+                    encode_sample(&mut out, sample)?;
+                }
+            }
+            Self::Clock { nonce, tick, .. } => {
+                put64(&mut out, *nonce);
+                put64(&mut out, *tick);
+            }
             Self::Input {
                 sequence, seats, ..
             } => {
@@ -128,12 +173,44 @@ impl GameplayPacket {
             return Err(NetError::TooLarge);
         }
         let mut r = Reader(bytes);
-        if r.take(4)? != b"ABG5" {
+        if r.take(4)? != b"ABG6" {
             return Err(NetError::Protocol);
         }
         let kind = r.u8()?;
         let generation = r.u64()?;
         let packet = match kind {
+            4 | 5 => {
+                let tick = if kind == 5 { r.u64()? } else { 0 };
+                let n = r.count(if kind == 4 {
+                    MOTION_HISTORY
+                } else {
+                    MAX_PLAYERS
+                })?;
+                if n == 0 {
+                    return Err(NetError::Protocol);
+                }
+                let mut samples = Vec::with_capacity(n);
+                for _ in 0..n {
+                    samples.push(decode_sample(&mut r)?);
+                }
+                if kind == 4 {
+                    Self::Motion {
+                        generation,
+                        samples,
+                    }
+                } else {
+                    Self::MotionEcho {
+                        generation,
+                        tick,
+                        samples,
+                    }
+                }
+            }
+            6 => Self::Clock {
+                generation,
+                nonce: r.u64()?,
+                tick: r.u64()?,
+            },
             0 => {
                 let sequence = r.u64()?;
                 let count = r.count(MAX_PLAYERS)?;
@@ -239,6 +316,23 @@ fn encode_frame(frame: &InputFrame) -> Result<Vec<u8>, NetError> {
     if let Some(hash) = frame.hash {
         out.extend(hash);
     }
+    if frame.motions.len() > MAX_PLAYERS || frame.rejected_edges.len() > MAX_PLAYERS {
+        return Err(NetError::Protocol);
+    }
+    put64(&mut out, frame.revision);
+    put64(&mut out, frame.committed_through);
+    out.push(frame.motions.len() as u8);
+    for sample in &frame.motions {
+        encode_sample(&mut out, sample)?;
+    }
+    out.push(frame.rejected_edges.len() as u8);
+    for edge in &frame.rejected_edges {
+        if edge.seat >= MAX_PLAYERS {
+            return Err(NetError::Protocol);
+        }
+        out.push(edge.seat as u8);
+        put64(&mut out, edge.through);
+    }
     Ok(out)
 }
 fn decode_frame(bytes: &[u8]) -> Result<InputFrame, NetError> {
@@ -286,6 +380,25 @@ fn decode_frame(bytes: &[u8]) -> Result<InputFrame, NetError> {
         1 => Some(r.take(32)?.try_into().map_err(|_| NetError::Protocol)?),
         _ => return Err(NetError::Protocol),
     };
+    let revision = r.u64()?;
+    let committed_through = r.u64()?;
+    let n = r.count(MAX_PLAYERS)?;
+    let mut motions = Vec::with_capacity(n);
+    for _ in 0..n {
+        motions.push(decode_sample(&mut r)?);
+    }
+    let n = r.count(MAX_PLAYERS)?;
+    let mut rejected_edges = Vec::with_capacity(n);
+    for _ in 0..n {
+        let seat = r.u8()? as usize;
+        if seat >= MAX_PLAYERS {
+            return Err(NetError::Protocol);
+        }
+        rejected_edges.push(RejectedEdge {
+            seat,
+            through: r.u64()?,
+        });
+    }
     if !r.0.is_empty() {
         return Err(NetError::Protocol);
     }
@@ -295,6 +408,10 @@ fn decode_frame(bytes: &[u8]) -> Result<InputFrame, NetError> {
         actions,
         hash,
         acknowledgments,
+        motions,
+        revision,
+        committed_through,
+        rejected_edges,
     })
 }
 fn encode_input(input: PlayerInput) -> Result<u16, NetError> {
@@ -338,8 +455,94 @@ fn put16(out: &mut Vec<u8>, n: u16) {
 fn put64(out: &mut Vec<u8>, n: u64) {
     out.extend(n.to_le_bytes());
 }
+fn encode_sample(out: &mut Vec<u8>, sample: &OwnerSample) -> Result<(), NetError> {
+    if !sample.valid() {
+        return Err(NetError::Protocol);
+    }
+    out.push(sample.seat as u8);
+    put64(out, sample.tick);
+    out.extend(sample.round.to_le_bytes());
+    out.push(u8::from(sample.active));
+    put64(out, sample.sequence);
+    put64(out, sample.edge);
+    put16(out, encode_input(sample.input)?);
+    out.extend(sample.motion.position.x.to_le_bytes());
+    out.extend(sample.motion.position.y.to_le_bytes());
+    put16(
+        out,
+        encode_input(PlayerInput {
+            direction: Some(sample.motion.facing),
+            ..Default::default()
+        })?,
+    );
+    out.push(u8::from(sample.motion.moving));
+    out.extend(sample.motion.remainder.to_le_bytes());
+    put16(
+        out,
+        encode_input(PlayerInput {
+            direction: sample.motion.ice_direction,
+            ..Default::default()
+        })?,
+    );
+    out.extend(sample.motion.ice_remaining_ms.to_le_bytes());
+    Ok(())
+}
+fn decode_sample(r: &mut Reader<'_>) -> Result<OwnerSample, NetError> {
+    let seat = r.u8()? as usize;
+    let tick = r.u64()?;
+    let round = r.i32()? as u32;
+    let active = match r.u8()? {
+        0 => false,
+        1 => true,
+        _ => return Err(NetError::Protocol),
+    };
+    let sequence = r.u64()?;
+    let edge = r.u64()?;
+    let input = decode_input(r.u16()?)?;
+    let position = bomberman_core::Position {
+        x: r.i32()?,
+        y: r.i32()?,
+    };
+    let facing = decode_input(r.u16()?)?
+        .direction
+        .ok_or(NetError::Protocol)?;
+    let moving = match r.u8()? {
+        0 => false,
+        1 => true,
+        _ => return Err(NetError::Protocol),
+    };
+    let remainder = r.i32()?;
+    let ice_direction = decode_input(r.u16()?)?.direction;
+    let ice_remaining_ms = r.i32()? as u32;
+    let sample = OwnerSample {
+        seat,
+        tick,
+        round,
+        active,
+        sequence,
+        edge,
+        input,
+        motion: bomberman_core::AvatarMotion {
+            position,
+            facing,
+            moving,
+            remainder,
+            ice_direction,
+            ice_remaining_ms,
+        },
+    };
+    if !sample.valid() {
+        return Err(NetError::Protocol);
+    }
+    Ok(sample)
+}
 struct Reader<'a>(&'a [u8]);
 impl<'a> Reader<'a> {
+    fn i32(&mut self) -> Result<i32, NetError> {
+        Ok(i32::from_le_bytes(
+            self.take(4)?.try_into().map_err(|_| NetError::Protocol)?,
+        ))
+    }
     fn take(&mut self, n: usize) -> Result<&'a [u8], NetError> {
         if n > self.0.len() {
             return Err(NetError::Protocol);

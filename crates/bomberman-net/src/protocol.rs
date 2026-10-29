@@ -4,11 +4,10 @@ use std::{collections::BTreeSet, fmt};
 
 pub type PeerId = u32;
 pub const HOST: PeerId = 1;
-pub const PROTOCOL_VERSION: u32 = 5;
+pub const PROTOCOL_VERSION: u32 = 6;
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
-/// Protocol 5's deterministic gameplay/handshake family. Presentation-only
-/// patch releases keep this identifier so existing clients and relays work.
-pub const COMPATIBLE_APP_VERSION: &str = "0.4.0";
+/// Owner motion and bounded host commitment require the same simulation family.
+pub const COMPATIBLE_APP_VERSION: &str = "0.5.0";
 pub const PORT: u16 = 1997;
 pub const STEP_MS: u32 = 20;
 pub const MAX_PLAYERS: usize = 10;
@@ -249,7 +248,7 @@ pub struct SeatInput {
     pub seat: usize,
     pub input: PlayerInput,
 }
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct InputFrame {
     pub tick: u64,
     pub inputs: Vec<PlayerInput>,
@@ -257,6 +256,14 @@ pub struct InputFrame {
     pub hash: Option<[u8; 32]>,
     #[serde(default)]
     pub acknowledgments: Vec<InputAck>,
+    #[serde(default)]
+    pub motions: Vec<crate::authority::OwnerSample>,
+    #[serde(default)]
+    pub revision: u64,
+    #[serde(default)]
+    pub committed_through: u64,
+    #[serde(default)]
+    pub rejected_edges: Vec<crate::authority::RejectedEdge>,
 }
 /// Acknowledges controls actually selected for a simulation step, rather than
 /// packets merely received. Movement and button transitions progress separately.

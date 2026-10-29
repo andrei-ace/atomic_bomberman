@@ -23,7 +23,7 @@ pub use model::*;
 pub use rng::DeterministicRng;
 pub use roulette::{RouletteFrame, RoulettePhase, RouletteWheel};
 pub use scheme::*;
-pub use simulation::{GoldParticle, PhysicsState, Simulation};
+pub use simulation::{AvatarMotion, GoldParticle, PhysicsState, Simulation};
 pub use sound::SoundSelector;
 
 #[cfg(test)]

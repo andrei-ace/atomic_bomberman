@@ -340,6 +340,7 @@ pub struct RateLimit {
     since: Instant,
     messages: u32,
     bytes: usize,
+    message_limit: u32,
 }
 impl Default for RateLimit {
     fn default() -> Self {
@@ -347,17 +348,30 @@ impl Default for RateLimit {
             since: Instant::now(),
             messages: 0,
             bytes: 0,
+            message_limit: 240,
         }
     }
 }
 impl RateLimit {
+    /// Several local avatars shard their redundant motion history. Keep the
+    /// control-stream budget unchanged and bound gameplay separately.
+    pub fn gameplay() -> Self {
+        Self {
+            message_limit: MAX_PLAYERS as u32 * 60 + 120,
+            ..Self::default()
+        }
+    }
     pub fn accept(&mut self, bytes: usize) -> bool {
         if self.since.elapsed() >= Duration::from_secs(1) {
-            *self = Self::default();
+            let message_limit = self.message_limit;
+            *self = Self {
+                message_limit,
+                ..Self::default()
+            };
         }
         self.messages += 1;
         self.bytes = self.bytes.saturating_add(bytes);
-        self.messages <= 240 && self.bytes <= 2 * 1024 * 1024
+        self.messages <= self.message_limit && self.bytes <= 2 * 1024 * 1024
     }
 }
 
@@ -376,6 +390,8 @@ mod tests {
                 actions: vec![],
                 hash: None,
                 acknowledgments: vec![],
+
+                ..Default::default()
             }),
         };
         let mut sent = 0;

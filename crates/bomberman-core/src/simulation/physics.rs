@@ -466,6 +466,13 @@ impl Simulation {
             self.players[player].facing = direction;
         }
         let direction = self.ice_direction_input(player, direction);
+        if self.apply_network_motion(player, direction) {
+            return;
+        }
+        self.move_player_native_tail(player, direction);
+    }
+
+    pub(super) fn move_player_native_tail(&mut self, player: usize, direction: Option<Direction>) {
         let belt = self.board.get(self.players[player].tile()).and_then(|c| {
             if let Hazard::Conveyor(d) = c.hazard {
                 Some(d)

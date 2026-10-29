@@ -1,0 +1,162 @@
+{
+  "passed": true,
+  "build": {
+    "version": "0.5.0",
+    "protocol": 6,
+    "fixture_sha256": "836df91878e54798778c48149af65e45799a5f256e6d14a11b10e718cd42242e"
+  },
+  "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+  "host_platform": "macos",
+  "client_platform": "macos",
+  "canonical_state_hash": "8425bc8d137d91b4a482d2f93f540887428d7935fa3eb984e8f8ef4f1d7cf66d",
+  "host_tick": 301,
+  "client_tick": 300,
+  "observed_gameplay_rtt_ms": [
+    16,
+    13,
+    12,
+    13
+  ],
+  "sample_to_visible_ms": {
+    "median": 19.146437499999998,
+    "p95": 20.863458,
+    "max": 20.863458
+  },
+  "responsiveness_target_ms": 40,
+  "responsiveness_target_met": true,
+  "visible_before_confirmation_samples": 10,
+  "movement_continuity": {
+    "max_backward_step_pixels": 0.0,
+    "backward_step_limit_pixels": 8,
+    "total_backward_correction_pixels": 0.0,
+    "max_last_movement_after_release_ms": 0.040209000000011486,
+    "settled_samples": 10,
+    "observation_window_ms": 400
+  },
+  "samples": [
+    {
+      "actual_release_ms": 58.751208,
+      "backward_correction_pixels": 0.0,
+      "canonical_tick": 10,
+      "direction": "Right",
+      "last_movement_after_release_ms": 0.03820899999999483,
+      "max_backward_step_pixels": 0.0,
+      "sample_to_confirmation_ms": 58.78941699999999,
+      "sample_to_visible_ms": 20.011125,
+      "settled_after_release_ms": 0.03820899999999483,
+      "visible_before_confirmation": true
+    },
+    {
+      "actual_release_ms": 55.75525,
+      "backward_correction_pixels": 0.0,
+      "canonical_tick": 31,
+      "direction": "Left",
+      "last_movement_after_release_ms": 0.03404199999999946,
+      "max_backward_step_pixels": 0.0,
+      "sample_to_confirmation_ms": 55.789291999999996,
+      "sample_to_visible_ms": 17.442417000000003,
+      "settled_after_release_ms": 0.03404199999999946,
+      "visible_before_confirmation": true
+    },
+    {
+      "actual_release_ms": 56.588375000000006,
+      "backward_correction_pixels": 0.0,
+      "canonical_tick": 52,
+      "direction": "Right",
+      "last_movement_after_release_ms": 0.03541599999999079,
+      "max_backward_step_pixels": 0.0,
+      "sample_to_confirmation_ms": 56.623791,
+      "sample_to_visible_ms": 18.044500000000003,
+      "settled_after_release_ms": 0.03541599999999079,
+      "visible_before_confirmation": true
+    },
+    {
+      "actual_release_ms": 53.085292,
+      "backward_correction_pixels": 0.0,
+      "canonical_tick": 73,
+      "direction": "Left",
+      "last_movement_after_release_ms": 0.0327920000000006,
+      "max_backward_step_pixels": 0.0,
+      "sample_to_confirmation_ms": 53.118084,
+      "sample_to_visible_ms": 17.350125000000002,
+      "settled_after_release_ms": 0.0327920000000006,
+      "visible_before_confirmation": true
+    },
+    {
+      "actual_release_ms": 54.489875,
+      "backward_correction_pixels": 0.0,
+      "canonical_tick": 95,
+      "direction": "Right",
+      "last_movement_after_release_ms": 0.03933300000000628,
+      "max_backward_step_pixels": 0.0,
+      "sample_to_confirmation_ms": 54.529208000000004,
+      "sample_to_visible_ms": 19.963958,
+      "settled_after_release_ms": 0.03933300000000628,
+      "visible_before_confirmation": true
+    },
+    {
+      "actual_release_ms": 55.993333,
+      "backward_correction_pixels": 0.0,
+      "canonical_tick": 117,
+      "direction": "Left",
+      "last_movement_after_release_ms": 0.035834000000001254,
+      "max_backward_step_pixels": 0.0,
+      "sample_to_confirmation_ms": 56.029167,
+      "sample_to_visible_ms": 16.833667,
+      "settled_after_release_ms": 0.035834000000001254,
+      "visible_before_confirmation": true
+    },
+    {
+      "actual_release_ms": 40.728083,
+      "backward_correction_pixels": 0.0,
+      "canonical_tick": 137,
+      "direction": "Right",
+      "last_movement_after_release_ms": 0.037709000000006654,
+      "max_backward_step_pixels": 0.0,
+      "sample_to_confirmation_ms": 58.33575,
+      "sample_to_visible_ms": 19.931,
+      "settled_after_release_ms": 0.037709000000006654,
+      "visible_before_confirmation": true
+    },
+    {
+      "actual_release_ms": 54.734832999999995,
+      "backward_correction_pixels": 0.0,
+      "canonical_tick": 159,
+      "direction": "Left",
+      "last_movement_after_release_ms": 0.040209000000011486,
+      "max_backward_step_pixels": 0.0,
+      "sample_to_confirmation_ms": 36.488082999999996,
+      "sample_to_visible_ms": 18.684917,
+      "settled_after_release_ms": 0.040209000000011486,
+      "visible_before_confirmation": true
+    },
+    {
+      "actual_release_ms": 56.530792000000005,
+      "backward_correction_pixels": 0.0,
+      "canonical_tick": 180,
+      "direction": "Right",
+      "last_movement_after_release_ms": 0.033290999999998405,
+      "max_backward_step_pixels": 0.0,
+      "sample_to_confirmation_ms": 37.355582999999996,
+      "sample_to_visible_ms": 19.607958,
+      "settled_after_release_ms": 0.033290999999998405,
+      "visible_before_confirmation": true
+    },
+    {
+      "actual_release_ms": 59.274125,
+      "backward_correction_pixels": 0.0,
+      "canonical_tick": 201,
+      "direction": "Left",
+      "last_movement_after_release_ms": 0.03362500000000068,
+      "max_backward_step_pixels": 0.0,
+      "sample_to_confirmation_ms": 59.30775,
+      "sample_to_visible_ms": 20.863458,
+      "settled_after_release_ms": 0.03362500000000068,
+      "visible_before_confirmation": true
+    }
+  ],
+  "environment": "Native macOS ARM64; ten production LAN avatars, nine on one client; 10ms injected RTT",
+  "players": 10,
+  "host_seats": 1,
+  "client_seats": 9
+}

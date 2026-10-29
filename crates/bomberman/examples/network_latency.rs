@@ -35,6 +35,7 @@ struct Sample {
     sample_to_visible_ms: Option<f64>,
     sample_to_confirmation_ms: Option<f64>,
     visible_before_confirmation: bool,
+    actual_release_ms: Option<f64>,
     backward_correction_pixels: f64,
     max_backward_step_pixels: f64,
     last_movement_after_release_ms: Option<f64>,
@@ -62,9 +63,10 @@ impl Trial {
             self.result.max_backward_step_pixels =
                 self.result.max_backward_step_pixels.max(backward);
         }
-        if display != self.previous_display && self.started.elapsed() >= PULSE {
-            self.result.last_movement_after_release_ms =
-                Some(elapsed - PULSE.as_secs_f64() * 1000.);
+        if display != self.previous_display {
+            if let Some(released) = self.result.actual_release_ms {
+                self.result.last_movement_after_release_ms = Some((elapsed - released).max(0.));
+            }
         }
         self.previous_display = display;
         let changed = |position: Position, before: Position| match self.result.direction {
@@ -101,6 +103,19 @@ fn run() -> Result<()> {
     let host = args[0] == "host";
     let online = args[1] == "online";
     let report = PathBuf::from(&args[2]);
+    let option = |name: &str, default: usize| -> Result<usize> {
+        args.windows(2)
+            .find(|pair| pair[0] == name)
+            .map_or(Ok(default), |pair| {
+                pair[1].parse().context("Invalid fixture count")
+            })
+    };
+    let local_seats = option("--seats", 1)?;
+    let players = option("--players", 2)?;
+    ensure!(
+        (1..=9).contains(&local_seats) && (2..=10).contains(&players),
+        "Invalid fixture seat count"
+    );
     let compatibility = Compatibility::new("a".repeat(64));
     let destination = if online {
         let mut link = String::new();
@@ -146,7 +161,7 @@ fn run() -> Result<()> {
         enclosement_depth: 0,
         ..Default::default()
     };
-    config.players.truncate(2);
+    config.players.truncate(players);
     config.scheme.brick_density = 0;
     config.scheme.rows.fill("...............".into());
     config.scheme.starts[0].tile = TilePos::new(2, 2);
@@ -155,7 +170,7 @@ fn run() -> Result<()> {
         destination,
         compatibility,
         host.then_some(config),
-        vec![settings::Device::Keyboard1],
+        vec![settings::Device::Keyboard1; local_seats],
     )?;
     let started = Instant::now();
     let mut previous = started;
@@ -197,6 +212,7 @@ fn run() -> Result<()> {
                             sample_to_visible_ms: None,
                             sample_to_confirmation_ms: None,
                             visible_before_confirmation: false,
+                            actual_release_ms: None,
                             backward_correction_pixels: 0.,
                             max_backward_step_pixels: 0.,
                             last_movement_after_release_ms: None,
@@ -204,6 +220,12 @@ fn run() -> Result<()> {
                         },
                     });
                 }
+            }
+        }
+        if let Some(current) = &mut trial {
+            if current.started.elapsed() >= PULSE && current.result.actual_release_ms.is_none() {
+                current.result.actual_release_ms =
+                    Some(current.started.elapsed().as_secs_f64() * 1000.);
             }
         }
         let input = trial
@@ -217,7 +239,7 @@ fn run() -> Result<()> {
         session.pump(
             iteration.duration_since(previous).as_millis() as u32,
             started.elapsed().as_millis() as u64,
-            vec![input],
+            vec![input; local_seats],
         )?;
         previous = iteration;
         session.prepared(started.elapsed().as_millis() as u64)?;
@@ -270,7 +292,10 @@ fn run() -> Result<()> {
                     // A full correction interval of quiet artwork distinguishes
                     // settling from simply reaching the observation limit.
                     if current.started.elapsed().as_secs_f64() * 1000.
-                        - PULSE.as_secs_f64() * 1000.
+                        - current
+                            .result
+                            .actual_release_ms
+                            .unwrap_or(PULSE.as_secs_f64() * 1000.)
                         - last_movement
                         >= 80.
                     {
@@ -294,6 +319,9 @@ fn run() -> Result<()> {
                     "platform": std::env::consts::OS,
                     "architecture": std::env::consts::ARCH,
                     "host": host,
+                    "version": bomberman_net::APP_VERSION,
+                    "protocol": bomberman_net::PROTOCOL_VERSION,
+                    "fixture_sha256": format!("{:x}", Sha256::digest(include_bytes!("network_latency.rs"))),
                     "transport": if online { "Internet QUIC datagrams" } else { "LAN QUIC datagrams" },
                     "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
                     "tick": replay.tick,
@@ -307,7 +335,7 @@ fn run() -> Result<()> {
                 if host {
                     let finish = Instant::now() + Duration::from_secs(2);
                     while Instant::now() < finish {
-                        session.pump(0, 0, vec![PlayerInput::default()])?;
+                        session.pump(0, 0, vec![PlayerInput::default(); local_seats])?;
                         thread::sleep(POLL);
                     }
                 }
