@@ -1,9 +1,44 @@
-# 0.5.1 movement and relay acceptance
+# Multiplayer release and relay acceptance
 
-This working tree prepares 0.5.1, protocol 7 (`ABG7`,
-`atomic-bomberman/7`, compatibility family `0.5.1`). Clients and relay must
-upgrade together. Saved server links, access tokens, certificates, transport
-buffers, rate limits and timeouts are preserved. The private relay deployment
+## 0.6.0 release and deployment
+
+[Release v0.6.0](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.6.0)
+provides Windows x64, Linux x86-64 and Apple Silicon Mac clients, plus native Linux
+ARM64 and amd64 relays. All five native build jobs and the publisher passed.
+The [downloaded-release verification](evidence/0.6.0-release-validation.json)
+checks all 15 assets against GitHub digests, sidecar checksums and the common
+tagged source, including package contents and the Mac signature.
+
+Protocol 7 and the 0.5.1 compatibility family remain supported, including saved
+server links. LAN discovery and encrypted gameplay share UDP 1997; lobby control
+uses TCP 1997. Automatic discovery omits localhost entries while manual joining
+at 127.0.0.1 remains available. The [LAN check](evidence/0.6.0-lan-datagram.json)
+uses production sessions with synthetic 0/10/20 ms RTT on Mac loopback.
+
+The existing ARM64 relay was updated from 0.5.1 using the exact published archive
+after release verification. Its [deployment record](evidence/0.6.0-relay-deployment.json)
+ties the running process to the published executable hash and verifies TCP/UDP
+443, the unchanged certificate, invitation and private files, and the rollback
+binary. An early readiness check triggered a verified rollback; the successful
+attempt waits for the new executable before checking service health.
+
+The [pre-deployment WAN check](evidence/0.6.0-before-deployment-wan.json) and
+[post-deployment WAN check](evidence/0.6.0-deployed-wan.json) both passed using
+two production session coordinators over the real network, with no injected
+impairment. After deployment, canonical state matched, all ten movement samples
+settled, no backward corrections were observed, and p95 presentation latency was
+25.03 ms. The service remained active with the same verified process afterward.
+These measurements use two Mac clients and sampled predicted positions without
+a graphics window. Native Windows CI covers the importer, launcher lifecycle,
+audio fallback and QUIC traffic; physical Windows graphics, audio, controllers
+and cross-platform hardware play remain unverified.
+
+## 0.5.1 movement and relay acceptance
+
+This section records the 0.5.1 upgrade to protocol 7 (`ABG7`,
+`atomic-bomberman/7`, compatibility family `0.5.1`). Clients and relays
+upgrading from 0.5.0 had to upgrade together. Saved server links, access tokens,
+certificates, transport buffers, rate limits and timeouts are preserved. The private relay deployment
 and actual WAN checks below were performed after explicit user authorization.
 Release publication remains separate.
 
@@ -32,7 +67,7 @@ position. A new round's deferred spawn never advertises an off-board death pose
 as active motion. Native conveyor centering has its own collision proof in the
 render detector.
 
-## Correctness coverage
+### Correctness coverage
 
 `cargo test --locked --workspace` includes:
 
@@ -72,7 +107,7 @@ ATOMIC_MATRIX_REPRO=docs/evidence/0.5.1-regressions/native-conveyor-centering.js
 The [regression index](evidence/0.5.1-regressions/index.json) distinguishes
 prediction/session bugs from detector corrections and generator overload.
 
-## Real gameplay load
+### Real gameplay load
 
 ```sh
 cargo build --locked --release -p bomberman --example relay_load \
@@ -124,7 +159,7 @@ each sampled movement frame and canonical hashes keyed by generation, round and
 tick; raw compressed traces accompany the report. These software presentation
 bounds do not measure physical display or audio-device latency.
 
-## Recorded candidate results
+### Recorded candidate results
 
 The [validation record](evidence/0.5.1-validation.json) records 269 passing
 workspace tests (four optional fixtures/helpers ignored), 24 passing audio
@@ -158,7 +193,7 @@ binaries to the uncommitted source. The retained failure traces include the
 released-input bug while prediction was a round ahead of canonical state; its
 focused regression was observed failing before the fix and passing afterward.
 
-## Diagnostics and WAN boundary
+### Diagnostics and WAN boundary
 
 Gameplay diagnostics are read-only. Relay summaries appear every ten seconds
 during play and on disconnect. They include traffic, RTT, QUIC sender loss
@@ -197,7 +232,7 @@ the public Linux ARM64 relay. These are one repetition per room size; Internet
 conditions vary. Physical display latency and human competitive play were not
 measured by these WAN runs.
 
-## Main screen and client menus
+### Main screen and client menus
 
 The main-screen footer displays the compiled version (`v0.5.1`). LAN and WAN
 clients retain Resume, Help and Leave in the pause menu and Leave on the results

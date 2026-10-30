@@ -1,0 +1,72 @@
+{
+  "release": "https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.6.0",
+  "source_commit": "3a6a63c9de73674854f386a22fd5ef6f315450b2",
+  "assets_verified": 15,
+  "source_digest": "28b511d020ea281638b4d458f5b98a8464b34544b061544279a406ab3d40b912",
+  "packages": {
+    "atomic-bomberman-0.6.0-linux-x86_64": "x86_64-unknown-linux-gnu",
+    "atomic-bomberman-0.6.0-macos-arm64": "aarch64-apple-darwin",
+    "atomic-bomberman-0.6.0-windows-x86_64": "x86_64-pc-windows-msvc",
+    "atomic-bomberman-0.6.0-relay-linux-arm64": "aarch64-unknown-linux-gnu",
+    "atomic-bomberman-0.6.0-relay-linux-x86_64": "x86_64-unknown-linux-gnu"
+  },
+  "github_digests_and_sidecar_checksums_valid": true,
+  "source_digest_matches_local_tagged_source": true,
+  "macos_signature_and_relocated_launcher_verified": true,
+  "windows_and_relay_architecture_and_package_boundaries_verified": true,
+  "native_linux_entrypoint_verified_in_ci": true,
+  "downloaded_linux_package_verified_under_amd64_emulation": true,
+  "native_ci": {
+    "workflow_run": 41054194036,
+    "source_commit": "3a6a63c9de73674854f386a22fd5ef6f315450b2",
+    "jobs": [
+      {
+        "id": 124057463100,
+        "name": "build (windows-2022, windows, python)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 124057463264,
+        "name": "build (ubuntu-24.04-arm, relay-arm64, python3, aarch64-unknown-linux-gnu)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 124057463272,
+        "name": "build (ubuntu-24.04, relay-amd64, python3, x86_64-unknown-linux-gnu)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 124057463307,
+        "name": "build (ubuntu-24.04, linux, python3)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 124057463516,
+        "name": "build (macos-15, macos, python3)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 124067842606,
+        "name": "publish",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "format_version": 1,
+  "version": "0.6.0",
+  "protocol": 7,
+  "compatibility_family": "0.5.1",
+  "verified_at_utc": "2026-10-30T12:55:34.190997+00:00",
+  "main_ci": {
+    "Windows": 41052149158,
+    "Linux": 41052149135,
+    "macOS": 41052149121
+  },
+  "main_ci_conclusion": "success"
+}
