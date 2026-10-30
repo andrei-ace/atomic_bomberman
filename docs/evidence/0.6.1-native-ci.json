@@ -1,0 +1,210 @@
+{
+  "version": "0.6.1",
+  "source_commit": "88b521986b60c01b05dc1f0b942c72dc02713adc",
+  "tag": "v0.6.1",
+  "all_native_ci_passed": true,
+  "runs": [
+    {
+      "name": "release",
+      "id": 41084735204,
+      "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/41084735204",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 124162794270,
+          "name": "build (ubuntu-24.04, linux, python3)",
+          "conclusion": "success",
+          "steps": [
+            "Set up job",
+            "Validate tag syntax",
+            "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+            "Check annotated tag and version",
+            "Linux build dependencies",
+            "Source and package checks",
+            "Compare portable replay digest",
+            "Linux launcher and AppImage",
+            "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+            "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Complete job"
+          ]
+        },
+        {
+          "id": 124162794525,
+          "name": "build (ubuntu-24.04, relay-amd64, python3, x86_64-unknown-linux-gnu)",
+          "conclusion": "success",
+          "steps": [
+            "Set up job",
+            "Validate tag syntax",
+            "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+            "Check annotated tag and version",
+            "Linux build dependencies",
+            "Source and package checks",
+            "Compare portable replay digest",
+            "Native Linux relay",
+            "Relay gameplay over QUIC",
+            "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+            "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Complete job"
+          ]
+        },
+        {
+          "id": 124162794590,
+          "name": "build (windows-2022, windows, python)",
+          "conclusion": "success",
+          "steps": [
+            "Set up job",
+            "Validate tag syntax",
+            "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+            "Check annotated tag and version",
+            "Source and package checks",
+            "Compare portable replay digest",
+            "Windows launcher and portable ZIP",
+            "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+            "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Complete job"
+          ]
+        },
+        {
+          "id": 124162794595,
+          "name": "build (ubuntu-24.04-arm, relay-arm64, python3, aarch64-unknown-linux-gnu)",
+          "conclusion": "success",
+          "steps": [
+            "Set up job",
+            "Validate tag syntax",
+            "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+            "Check annotated tag and version",
+            "Linux build dependencies",
+            "Source and package checks",
+            "Compare portable replay digest",
+            "Native Linux relay",
+            "Relay gameplay over QUIC",
+            "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+            "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Complete job"
+          ]
+        },
+        {
+          "id": 124162794787,
+          "name": "build (macos-15, macos, python3)",
+          "conclusion": "success",
+          "steps": [
+            "Set up job",
+            "Validate tag syntax",
+            "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+            "Check annotated tag and version",
+            "Source and package checks",
+            "Compare portable replay digest",
+            "Mac launcher and ZIP",
+            "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+            "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Complete job"
+          ]
+        },
+        {
+          "id": 124173615635,
+          "name": "publish",
+          "conclusion": "success",
+          "steps": [
+            "Set up job",
+            "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Run actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333",
+            "Verify all artifacts and publish release",
+            "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Complete job"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "windows",
+      "id": 41084730937,
+      "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/41084730937",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 124162778902,
+          "name": "check",
+          "conclusion": "success",
+          "steps": [
+            "Set up job",
+            "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+            "Run python tools/test_release_packages.py",
+            "Compare portable replay digest",
+            "Native launcher lifecycle",
+            "Fetch locked workspace dependencies for offline license metadata",
+            "Run python tools/windows_release.py build --release",
+            "Production gameplay over QUIC",
+            "Full source and simulation checks",
+            "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+            "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Complete job"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "linux",
+      "id": 41084730841,
+      "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/41084730841",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 124162778292,
+          "name": "check",
+          "conclusion": "success",
+          "steps": [
+            "Set up job",
+            "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+            "Run sudo apt-get update && sudo apt-get install -y pkg-config libudev-dev libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libgtk-3-dev libarchive-tools librsvg2-common squashfs-tools",
+            "Run tools/check.sh",
+            "Run python3 tools/test_release_packages.py",
+            "Run python3 tools/test_linux_launcher.py",
+            "Run cargo run --locked -p bomberman-net --example replay_digest > build/replay-digest.txt",
+            "Run python3 tools/verify_replay_digest.py build/replay-digest.txt",
+            "Run tools/package_linux.sh",
+            "Run python3 tools/test_appimage_bootstrap.py dist/github/*.AppImage",
+            "Native amd64 relay package and QUIC gameplay",
+            "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+            "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Complete job"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "macos",
+      "id": 41084730428,
+      "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/41084730428",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 124162778775,
+          "name": "check (macos-15)",
+          "conclusion": "success",
+          "steps": [
+            "Set up job",
+            "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+            "Run tools/check.sh",
+            "Run python3 tools/test_release_packages.py",
+            "Run tools/test_macos_launcher.sh",
+            "Run cargo run --locked -p bomberman-net --example replay_digest > build/replay-digest.txt",
+            "Run python3 tools/verify_replay_digest.py build/replay-digest.txt",
+            "Run cargo build --locked --release --workspace",
+            "Package Apple Silicon app",
+            "Upload Apple Silicon app",
+            "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "Complete job"
+          ]
+        }
+      ]
+    }
+  ]
+}

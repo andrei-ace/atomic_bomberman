@@ -1,5 +1,40 @@
 # Multiplayer release and relay acceptance
 
+## 0.6.1 alignment release and deployment
+
+[Release v0.6.1](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.6.1)
+fixes cropped flame placement across all ten colors and animation frames. The
+[alignment audit](render-alignment.md) also compares the other battle sprites,
+player poses, hazards and GPU pixels with original executable routines.
+Protocol 7, the 0.5.1 compatibility family and the single LAN port remain unchanged.
+
+All five native release jobs, the publisher and the standalone Windows, Linux
+and Mac CI jobs passed; see the [native CI record](evidence/0.6.1-native-ci.json).
+The [downloaded-release verification](evidence/0.6.1-release-validation.json)
+checks all 15 published assets against GitHub digests, sidecar checksums and
+the common tagged source `88b521986b60c01b05dc1f0b942c72dc02713adc`.
+The Mac signature and relocated launcher passed locally. The downloaded Linux
+AppImage passed local Linux emulation checks; its native entrypoint passed in CI.
+
+The existing ARM64 relay was upgraded from 0.6.0 using the exact published
+archive after artifact verification. The [deployment record](evidence/0.6.1-relay-deployment.json)
+matches the running executable hash to that package, retains the previous binary
+for rollback, and verifies TCP/UDP 443, the unchanged private files, certificate
+and saved invitation. A fresh check after gameplay confirmed the same process
+and executable remained active with the same private state.
+
+All three pre-deployment compatibility sessions matched canonical state with
+zero backward corrections. The [initial session](evidence/0.6.1-before-deployment-wan.json)
+measured p95 presentation latency of 43.86 ms, above the 40 ms target; the
+[second](evidence/0.6.1-before-deployment-wan-2.json) and
+[third](evidence/0.6.1-before-deployment-wan-3.json) measured 25.05 and 25.34 ms.
+The [post-deployment WAN check](evidence/0.6.1-deployed-wan.json) passed the strict
+latency check at 23.67 ms, with matching canonical state, all ten movement
+samples settled and zero backward corrections. These are real network sessions
+with no injected impairment, using two Mac production coordinators without a
+graphics window. Physical Windows graphics, audio, controllers and cross-platform
+hardware play remain unverified.
+
 ## 0.6.0 release and deployment
 
 [Release v0.6.0](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.6.0)

@@ -1,0 +1,22 @@
+{
+  "release": "https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.6.1",
+  "source_commit": "88b521986b60c01b05dc1f0b942c72dc02713adc",
+  "assets_verified": 15,
+  "source_digest": "2f941c45c1e0e71f44edde764411a08f94a47231af9b368f61fafbb2982083c8",
+  "packages": {
+    "atomic-bomberman-0.6.1-linux-x86_64": "x86_64-unknown-linux-gnu",
+    "atomic-bomberman-0.6.1-macos-arm64": "aarch64-apple-darwin",
+    "atomic-bomberman-0.6.1-windows-x86_64": "x86_64-pc-windows-msvc",
+    "atomic-bomberman-0.6.1-relay-linux-arm64": "aarch64-unknown-linux-gnu",
+    "atomic-bomberman-0.6.1-relay-linux-x86_64": "x86_64-unknown-linux-gnu"
+  },
+  "github_digests_and_sidecar_checksums_valid": true,
+  "source_digest_matches_local_tagged_source": true,
+  "macos_signature_and_relocated_launcher_verified": true,
+  "windows_and_relay_architecture_and_package_boundaries_verified": true,
+  "native_ci_passed": true,
+  "native_ci_report": "0.6.1-native-ci.json",
+  "linux_downloaded_appimage_verified_under_emulation": true,
+  "linux_native_appimage_entrypoint_verified_in_ci": true,
+  "linux_local_verification_limit": "Downloaded AppImage verified under Linux amd64 emulation; native entrypoint verification is from the native Linux release job."
+}
