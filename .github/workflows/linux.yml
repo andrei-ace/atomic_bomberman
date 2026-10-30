@@ -21,11 +21,18 @@ jobs:
           components: rustfmt, clippy
       - run: sudo apt-get update && sudo apt-get install -y pkg-config libudev-dev libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libgtk-3-dev libarchive-tools librsvg2-common squashfs-tools
       - run: tools/check.sh
+      - run: python3 tools/test_release_packages.py
       - run: python3 tools/test_linux_launcher.py
       - run: cargo run --locked -p bomberman-net --example replay_digest > build/replay-digest.txt
       - run: diff docs/evidence/network-replay-digest.txt build/replay-digest.txt
       - run: tools/package_linux.sh
       - run: python3 tools/test_appimage_bootstrap.py dist/github/*.AppImage
+      - name: Native amd64 relay package and QUIC gameplay
+        run: |
+          cargo build --locked --release -p bomberman-relay
+          python3 tools/package_relay.py --target x86_64-unknown-linux-gnu --release
+          cargo build --locked --release -p bomberman --example network_latency
+          python3 tools/verify_datagram.py --relay target/release/bomberman-relay --example target/release/examples/network_latency --report build/linux-amd64-quic.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: atomic-bomberman-linux-x86_64

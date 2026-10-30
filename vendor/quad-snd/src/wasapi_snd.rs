@@ -64,142 +64,288 @@ mod consts {
     pub const BUFFER_FRAMES: u32 = 4096;
 }
 
-unsafe fn audio_thread(mut mixer: crate::mixer::Mixer) {
-    CoInitializeEx(std::ptr::null_mut(), COINIT_MULTITHREADED);
+// Own every COM interface and event on the audio thread. Initialization and
+// device-loss errors retain a live mixer instead of panicking its receiver.
+use std::{
+    cell::RefCell,
+    ptr,
+    sync::{Arc, Mutex},
+    thread,
+    time::{Duration, Instant},
+};
+use winapi::shared::ntdef::HANDLE;
 
-    let buffer_end_event = CreateEventA(std::ptr::null_mut(), FALSE, FALSE, std::ptr::null());
-    assert!(buffer_end_event.is_null() == false);
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum OutputStatus {
+    Device,
+    SilentRequested,
+    Unavailable(String),
+}
+thread_local! {
+    static OUTPUT: RefCell<Option<Arc<Mutex<OutputStatus>>>> = const { RefCell::new(None) };
+}
+pub fn output_status() -> Option<OutputStatus> {
+    OUTPUT.with(|slot| {
+        slot.borrow()
+            .as_ref()
+            .map(|status| status.lock().unwrap().clone())
+    })
+}
 
-    let mut device_enumerator: *mut IMMDeviceEnumerator = std::ptr::null_mut();
-    let hr = CoCreateInstance(
-        &CLSID_IMMDeviceEnumerator,
-        std::ptr::null_mut(),
-        CLSCTX_ALL,
-        &IID_IMMDeviceEnumerator,
-        &mut device_enumerator as *mut _ as _,
-    );
-    assert!(hr >= 0, "CoCreatInstance failed");
-
-    let mut device: *mut IMMDevice = std::ptr::null_mut();
-    let hr = (*device_enumerator).GetDefaultAudioEndpoint(eRender, eConsole, &mut device);
-    assert!(hr >= 0, "GetDefaultAudioEndPoint failed");
-
-    let mut audio_client: *mut IAudioClient = std::ptr::null_mut();
-    let hr = (*device).Activate(
-        &IID_IAudioClient,
-        CLSCTX_ALL,
-        std::ptr::null_mut(),
-        &mut audio_client as *mut _ as _,
-    );
-    assert!(hr >= 0, "Device Activate failed");
-
-    let mut state = 0;
-    (*device).GetState(&mut state);
-    assert!(
-        state & DEVICE_STATE_ACTIVE != 0,
-        "Default device not active"
-    );
-
-    let format = WAVEFORMATEX {
-        nChannels: consts::CHANNELS as _,
-        nSamplesPerSec: consts::SAMPLE_RATE as _,
-        wFormatTag: WAVE_FORMAT_EXTENSIBLE,
-        wBitsPerSample: 32,
-        nBlockAlign: consts::CHANNELS as u16 * 4,
-        nAvgBytesPerSec: consts::CHANNELS as u32 * consts::SAMPLE_RATE as u32 * 4,
-        cbSize: (std::mem::size_of::<WAVEFORMATEXTENSIBLE>() - std::mem::size_of::<WAVEFORMATEX>())
-            as _,
-    };
-
-    const FRONT_LEFT: u32 = 0b0001;
-    const FRONT_RIGHT: u32 = 0b0010;
-
-    let format_extensible = WAVEFORMATEXTENSIBLE {
-        Format: format,
-        Samples: 4 * 8,
-        dwChannelMask: FRONT_LEFT | FRONT_RIGHT,
-        SubFormat: ksmedia::KSDATAFORMAT_SUBTYPE_IEEE_FLOAT,
-    };
-
-    // https://docs.microsoft.com/en-us/windows/win32/coreaudio/audclnt-streamflags-xxx-constants
-    const AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM: u32 = 0x80000000;
-    const AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY: u32 = 0x08000000;
-
-    let dur = consts::BUFFER_FRAMES as f64 / (consts::SAMPLE_RATE as f64 * 1.0 / 10000000.0);
-    let hr = (*audio_client).Initialize(
-        AUDCLNT_SHAREMODE_SHARED,
-        AUDCLNT_STREAMFLAGS_EVENTCALLBACK
-            | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM
-            | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY,
-        dur as _,
-        0,
-        &format_extensible as *const _ as _,
-        std::ptr::null(),
-    );
-    if hr < 0 {
-        println!("Error code: 0x{:x}", hr as u32);
+struct Wasapi {
+    com: bool,
+    event: HANDLE,
+    enumerator: *mut IMMDeviceEnumerator,
+    device: *mut IMMDevice,
+    client: *mut IAudioClient,
+    render: *mut IAudioRenderClient,
+    frames: u32,
+}
+fn check(operation: &str, code: i32) -> Result<(), String> {
+    if code < 0 {
+        Err(format!("{operation}: HRESULT 0x{:08x}", code as u32))
+    } else {
+        Ok(())
     }
-    assert!(hr >= 0, "audio_client.Initialize failed");
-
-    let mut dst_buffer_frames = 0;
-    let hr = (*audio_client).GetBufferSize(&mut dst_buffer_frames);
-    assert!(hr >= 0, "GetBufferSize failed");
-
-    let mut render_client: *mut IAudioRenderClient = std::ptr::null_mut();
-    let hr = (*audio_client).GetService(&IID_IAudioRenderClient, &mut render_client as *mut _ as _);
-    assert!(
-        hr >= 0,
-        "sokol_audio wasapi: audio client GetService failed"
-    );
-
-    let hr = (*audio_client).SetEventHandle(buffer_end_event);
-    assert!(hr >= 0, "SetEventHandle failed");
-
-    (*audio_client).Start();
-    loop {
-        WaitForSingleObject(buffer_end_event, INFINITE);
-
-        let mut padding = 0;
-        if (*audio_client).GetCurrentPadding(&mut padding) < 0 {
-            continue;
+}
+impl Wasapi {
+    fn open() -> Result<Self, String> {
+        let mut output = Self {
+            com: false,
+            event: ptr::null_mut(),
+            enumerator: ptr::null_mut(),
+            device: ptr::null_mut(),
+            client: ptr::null_mut(),
+            render: ptr::null_mut(),
+            frames: 0,
+        };
+        unsafe {
+            check(
+                "CoInitializeEx",
+                CoInitializeEx(ptr::null_mut(), COINIT_MULTITHREADED),
+            )?;
+            output.com = true;
+            output.event = CreateEventA(ptr::null_mut(), FALSE, FALSE, ptr::null());
+            if output.event.is_null() {
+                return Err("CreateEvent failed".into());
+            }
+            check(
+                "CoCreateInstance",
+                CoCreateInstance(
+                    &CLSID_IMMDeviceEnumerator,
+                    ptr::null_mut(),
+                    CLSCTX_ALL,
+                    &IID_IMMDeviceEnumerator,
+                    &mut output.enumerator as *mut _ as _,
+                ),
+            )?;
+            if output.enumerator.is_null() {
+                return Err("No audio device enumerator".into());
+            }
+            check(
+                "GetDefaultAudioEndpoint",
+                (*output.enumerator).GetDefaultAudioEndpoint(eRender, eConsole, &mut output.device),
+            )?;
+            if output.device.is_null() {
+                return Err("No default audio output".into());
+            }
+            check(
+                "Activate",
+                (*output.device).Activate(
+                    &IID_IAudioClient,
+                    CLSCTX_ALL,
+                    ptr::null_mut(),
+                    &mut output.client as *mut _ as _,
+                ),
+            )?;
+            if output.client.is_null() {
+                return Err("No audio client".into());
+            }
+            let format = WAVEFORMATEXTENSIBLE {
+                Format: WAVEFORMATEX {
+                    wFormatTag: WAVE_FORMAT_EXTENSIBLE,
+                    nChannels: consts::CHANNELS as _,
+                    nSamplesPerSec: consts::SAMPLE_RATE,
+                    nAvgBytesPerSec: consts::SAMPLE_RATE * consts::CHANNELS * 4,
+                    nBlockAlign: consts::CHANNELS as u16 * 4,
+                    wBitsPerSample: 32,
+                    cbSize: (std::mem::size_of::<WAVEFORMATEXTENSIBLE>()
+                        - std::mem::size_of::<WAVEFORMATEX>()) as _,
+                },
+                Samples: 32,
+                dwChannelMask: 3,
+                SubFormat: ksmedia::KSDATAFORMAT_SUBTYPE_IEEE_FLOAT,
+            };
+            let duration =
+                (consts::BUFFER_FRAMES as f64 / consts::SAMPLE_RATE as f64 * 10_000_000.) as i64;
+            check(
+                "Initialize",
+                (*output.client).Initialize(
+                    AUDCLNT_SHAREMODE_SHARED,
+                    AUDCLNT_STREAMFLAGS_EVENTCALLBACK | 0x80000000 | 0x08000000,
+                    duration,
+                    0,
+                    &format as *const _ as _,
+                    ptr::null(),
+                ),
+            )?;
+            check(
+                "GetBufferSize",
+                (*output.client).GetBufferSize(&mut output.frames),
+            )?;
+            check(
+                "GetService",
+                (*output.client)
+                    .GetService(&IID_IAudioRenderClient, &mut output.render as *mut _ as _),
+            )?;
+            if output.render.is_null() {
+                return Err("No audio render client".into());
+            }
+            check(
+                "SetEventHandle",
+                (*output.client).SetEventHandle(output.event),
+            )?;
+            check("Start", (*output.client).Start())?;
         }
-        let num_frames = dst_buffer_frames - padding;
-
-        if num_frames == 0 {
-            continue;
+        Ok(output)
+    }
+    fn fill(&mut self, mixer: &mut crate::mixer::Mixer) -> Result<(), String> {
+        unsafe {
+            match WaitForSingleObject(self.event, 20) {
+                258 => return Ok(()),
+                0 => (),
+                _ => return Err("Audio event wait failed".into()),
+            }
+            let mut padding = 0;
+            check(
+                "GetCurrentPadding",
+                (*self.client).GetCurrentPadding(&mut padding),
+            )?;
+            if padding > self.frames {
+                return Err("Invalid audio buffer padding".into());
+            }
+            let frames = self.frames - padding;
+            if frames == 0 {
+                return Ok(());
+            }
+            let mut buffer = ptr::null_mut();
+            check("GetBuffer", (*self.render).GetBuffer(frames, &mut buffer))?;
+            if buffer.is_null() {
+                return Err("No audio render buffer".into());
+            }
+            mixer.fill_audio_buffer(
+                std::slice::from_raw_parts_mut(buffer as *mut f32, frames as usize * 2),
+                frames as usize,
+            );
+            check("ReleaseBuffer", (*self.render).ReleaseBuffer(frames, 0))?;
         }
-
-        let mut wasapi_buffer: *mut u8 = std::ptr::null_mut();
-        if (*render_client).GetBuffer(num_frames, &mut wasapi_buffer) < 0 {
-            continue;
+        Ok(())
+    }
+}
+impl Drop for Wasapi {
+    fn drop(&mut self) {
+        unsafe {
+            if !self.client.is_null() {
+                (*self.client).Stop();
+            }
+            if !self.render.is_null() {
+                (*self.render).Release();
+            }
+            if !self.client.is_null() {
+                (*self.client).Release();
+            }
+            if !self.device.is_null() {
+                (*self.device).Release();
+            }
+            if !self.enumerator.is_null() {
+                (*self.enumerator).Release();
+            }
+            if !self.event.is_null() {
+                winapi::um::handleapi::CloseHandle(self.event);
+            }
+            if self.com {
+                CoUninitialize();
+            }
         }
-        assert!(wasapi_buffer.is_null() == false);
-
-        let buffer = std::slice::from_raw_parts_mut(
-            wasapi_buffer as *mut f32,
-            num_frames as usize * consts::CHANNELS as usize,
-        );
-
-        mixer.fill_audio_buffer(buffer, num_frames as _);
-
-        (*render_client).ReleaseBuffer(num_frames, 0);
     }
 }
 
 pub struct AudioContext {
     pub(crate) mixer_ctrl: crate::mixer::MixerControl,
+    stop: mpsc::Sender<()>,
+    worker: Option<thread::JoinHandle<()>>,
 }
-
 impl AudioContext {
-    pub fn new() -> AudioContext {
-        use crate::mixer::Mixer;
-
-        let (mixer_builder, mixer_ctrl) = Mixer::new();
-        std::thread::spawn(move || unsafe {
-            audio_thread(mixer_builder.build());
-        });
-
-        AudioContext { mixer_ctrl }
+    pub fn new() -> Self {
+        Self::create(
+            std::env::var_os("ATOMIC_BOMBERMAN_SILENT_AUDIO").is_some(),
+            Wasapi::open,
+        )
+    }
+    fn create(silent: bool, initialize: fn() -> Result<Wasapi, String>) -> Self {
+        let (builder, mixer_ctrl) = crate::mixer::Mixer::new();
+        let (stop, receiver) = mpsc::channel();
+        let (ready_tx, ready_rx) = mpsc::sync_channel(1);
+        let status = Arc::new(Mutex::new(OutputStatus::SilentRequested));
+        OUTPUT.with(|slot| *slot.borrow_mut() = Some(status.clone()));
+        let worker = thread::Builder::new()
+            .name("bomberman-wasapi".into())
+            .spawn(move || {
+                let mut mixer = builder.build();
+                let mut device = if silent {
+                    None
+                } else {
+                    match initialize() {
+                        Ok(device) => {
+                            *status.lock().unwrap() = OutputStatus::Device;
+                            Some(device)
+                        }
+                        Err(error) => {
+                            *status.lock().unwrap() = OutputStatus::Unavailable(error);
+                            None
+                        }
+                    }
+                };
+                let _ = ready_tx.send(());
+                let mut samples = vec![0.; consts::BUFFER_FRAMES as usize * 2];
+                let period = Duration::from_secs_f64(
+                    consts::BUFFER_FRAMES as f64 / consts::SAMPLE_RATE as f64,
+                );
+                loop {
+                    match receiver.try_recv() {
+                        Ok(()) | Err(mpsc::TryRecvError::Disconnected) => break,
+                        Err(mpsc::TryRecvError::Empty) => (),
+                    }
+                    if let Some(output) = &mut device {
+                        if let Err(error) = output.fill(&mut mixer) {
+                            *status.lock().unwrap() = OutputStatus::Unavailable(error);
+                            device = None;
+                        }
+                    } else {
+                        let started = Instant::now();
+                        mixer.fill_audio_buffer(&mut samples, consts::BUFFER_FRAMES as usize);
+                        match receiver.recv_timeout(period.saturating_sub(started.elapsed())) {
+                            Ok(()) | Err(mpsc::RecvTimeoutError::Disconnected) => break,
+                            Err(mpsc::RecvTimeoutError::Timeout) => (),
+                        }
+                    }
+                }
+            })
+            .expect("start audio worker");
+        ready_rx.recv().expect("initialize audio worker");
+        Self {
+            mixer_ctrl,
+            stop,
+            worker: Some(worker),
+        }
+    }
+}
+impl Drop for AudioContext {
+    fn drop(&mut self) {
+        let _ = self.stop.send(());
+        if let Some(worker) = self.worker.take() {
+            let _ = worker.join();
+        }
     }
 }
 
@@ -228,5 +374,53 @@ impl Sound {
 
     pub fn delete(&self, ctx: &AudioContext) {
         ctx.mixer_ctrl.delete(self.sound_id);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn short_wav() -> Vec<u8> {
+        let mut wav = Vec::new();
+        wav.extend(b"RIFF");
+        wav.extend(436u32.to_le_bytes());
+        wav.extend(b"WAVEfmt ");
+        wav.extend(16u32.to_le_bytes());
+        wav.extend(1u16.to_le_bytes());
+        wav.extend(2u16.to_le_bytes());
+        wav.extend(44100u32.to_le_bytes());
+        wav.extend(176400u32.to_le_bytes());
+        wav.extend(4u16.to_le_bytes());
+        wav.extend(16u16.to_le_bytes());
+        wav.extend(b"data");
+        wav.extend(400u32.to_le_bytes());
+        wav.extend([0; 400]);
+        wav
+    }
+    fn unavailable() -> Result<Wasapi, String> {
+        Err("synthetic missing output device".into())
+    }
+    #[test]
+    fn mute_and_device_failure_keep_consuming_commands_and_shut_down() {
+        for silent in [true, false] {
+            let context = AudioContext::create(silent, unavailable);
+            if silent {
+                assert_eq!(output_status(), Some(OutputStatus::SilentRequested));
+            } else {
+                assert!(matches!(
+                    output_status(),
+                    Some(OutputStatus::Unavailable(_))
+                ));
+            }
+            let sound = Sound::load(&context, &short_wav());
+            sound.play(&context, PlaySoundParams::default());
+            let started = Instant::now();
+            while crate::active_one_shots() > 0 && started.elapsed() < Duration::from_secs(2) {
+                thread::sleep(Duration::from_millis(5));
+            }
+            assert_eq!(crate::active_one_shots(), 0);
+            sound.delete(&context);
+            drop(context);
+        }
     }
 }

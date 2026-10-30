@@ -11,15 +11,24 @@ use std::{
 const MAX_IMAGE: u64 = 2 * 1024 * 1024 * 1024;
 
 fn bsdtar() -> PathBuf {
-    if cfg!(target_os = "linux") {
-        if let Ok(executable) = std::env::current_exe() {
-            let bundled = executable.parent().unwrap().join("bsdtar");
-            if bundled.is_file() {
-                return bundled;
+    #[cfg(windows)]
+    {
+        // Resolve the OS copy directly, never an executable from the archive's
+        // directory or a user-controlled PATH entry.
+        super::windows_system_directory().join("tar.exe")
+    }
+    #[cfg(not(windows))]
+    {
+        if cfg!(target_os = "linux") {
+            if let Ok(executable) = std::env::current_exe() {
+                let bundled = executable.parent().unwrap().join("bsdtar");
+                if bundled.is_file() {
+                    return bundled;
+                }
             }
         }
+        PathBuf::from("/usr/bin/bsdtar")
     }
-    PathBuf::from("/usr/bin/bsdtar")
 }
 
 pub(crate) struct ArchiveImage {

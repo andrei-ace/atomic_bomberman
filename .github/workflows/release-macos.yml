@@ -15,6 +15,10 @@ concurrency:
   group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: true
 env:
+  PYTHONUTF8: '1'
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: core.autocrlf
+  GIT_CONFIG_VALUE_0: 'false'
   RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 jobs:
   build:
@@ -27,7 +31,13 @@ jobs:
           - runner: macos-15
             artifact: macos
           - runner: ubuntu-24.04-arm
-            artifact: relay
+            artifact: relay-arm64
+            target: aarch64-unknown-linux-gnu
+          - runner: ubuntu-24.04
+            artifact: relay-amd64
+            target: x86_64-unknown-linux-gnu
+          - runner: windows-2022
+            artifact: windows
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 35
     steps:
@@ -45,13 +55,17 @@ jobs:
       - name: Check annotated tag and version
         shell: bash
         run: |
-          test "$RELEASE_TAG" = "v$(python3 tools/macos_release.py version)"
+          test "$RELEASE_TAG" = "v$(python tools/macos_release.py version)"
           test "$(git cat-file -t "refs/tags/$RELEASE_TAG")" = tag
           test "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")" = "$(git rev-parse HEAD)"
       - name: Linux build dependencies
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y pkg-config libudev-dev libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libgtk-3-dev libarchive-tools librsvg2-common squashfs-tools
-      - run: tools/check.sh
+      - name: Source and package checks
+        shell: bash
+        run: |
+          bash tools/check.sh
+          python tools/test_release_packages.py
       - name: Compare portable replay digest
         shell: bash
         run: |
@@ -69,12 +83,27 @@ jobs:
         run: |
           tools/test_macos_launcher.sh
           tools/package_macos.sh --release
-      - name: Native ARM64 relay
-        if: matrix.artifact == 'relay'
+      - name: Native Linux relay
+        if: startsWith(matrix.artifact, 'relay-')
         run: |
           cargo build --locked --release -p bomberman-relay
           target/release/bomberman-relay --help
-          python3 tools/package_relay.py --release
+          python3 tools/package_relay.py --target "${{ matrix.target }}" --release
+      - name: Windows launcher and portable ZIP
+        if: matrix.artifact == 'windows'
+        shell: bash
+        run: |
+          cargo build --locked --release -p bomberman-windows-launcher
+          python tools/test_windows_launcher.py
+          python tools/windows_release.py build --release
+          cargo build --locked --release -p bomberman-relay
+          cargo build --locked --release -p bomberman --example network_latency
+          python tools/verify_datagram.py --relay target/release/bomberman-relay.exe --example target/release/examples/network_latency.exe --report build/windows-release-quic.json
+      - name: Relay gameplay over QUIC
+        if: startsWith(matrix.artifact, 'relay-')
+        run: |
+          cargo build --locked --release -p bomberman --example network_latency
+          python3 tools/verify_datagram.py --relay target/release/bomberman-relay --example target/release/examples/network_latency --report build/release-quic.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-${{ matrix.artifact }}
@@ -91,63 +120,26 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          persist-credentials: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: release-*
           path: release
           merge-multiple: true
       - name: Verify all artifacts and publish release
-        working-directory: release
         shell: bash
         run: |
-          sha256sum -c ./*.sha256
           export RELEASE_COMMIT=$(gh api "repos/$GH_REPO/commits/$RELEASE_TAG" --jq .sha)
-          python3 - <<'PY'
-          import json, os
-          from pathlib import Path
-          version = os.environ['RELEASE_TAG'][1:]
-          targets = set()
-          manifests = sorted(Path('.').glob('*.build.json'))
-          assert len(manifests) == 3, 'expected Mac, Linux and ARM64 relay'
-          for path in manifests:
-              info = json.loads(path.read_text())
-              assert info['version'] == version
-              assert info['source']['dirty'] is False
-              assert info['source']['commit'] == os.environ['RELEASE_COMMIT'], 'tag moved after build'
-              assert info['original_game_data_included'] is False
-              targets.add(info['target'])
-          assert targets == {'aarch64-apple-darwin', 'x86_64-unknown-linux-gnu', 'aarch64-unknown-linux-gnu'}
-          Path('release-notes.md').write_text(
-              f"Atomic Bomberman {version}, built from `{os.environ['RELEASE_COMMIT']}`.\n\n"
-              "Download the Linux AppImage or Apple Silicon Mac ZIP and its checksum. "
-              "Both import your original game data on first launch. Original data and private "
-              "relay endpoints are excluded. The Mac app is ad-hoc signed and not notarized.\n\n"
-              "The ARM64 relay archive includes the native service, systemd unit, setup "
-              "instructions, licenses and provenance. Configure its address privately during setup.\n\n"
-              "Multiplayer uses protocol 7: each computer controls its own avatars immediately, "
-              "while the host resolves shared outcomes within a bounded 100 ms provisional window. "
-              f"Upgrade all clients and the relay to {version}; 0.5.0 and earlier are incompatible. "
-              "Existing certificates, access tokens and saved server links remain valid. "
-              "Internet play requires both TCP 443 "
-              "(authentication/lobby/recovery) and UDP 443 (gameplay), with no TCP gameplay fallback. "
-              "LAN hosts require TCP/UDP 1997 plus UDP 1998. Existing private access links remain valid.\n\n"
-              + "This release fixes delayed owner-motion collision walks beyond 80 pixels and "
-              "preserves native walking-animation phase through confirmation. Released inputs "
-              "remain released when prediction enters a new round before canonical confirmation. "
-              "Reliable repairs use compact frames within the existing control budgets. "
-              "The main screen displays the game version, and network clients keep Resume, Help "
-              "and Leave while restart/rematch controls are shown only to the host. Continuous "
-              "state and render checks accompany gameplay relay-load measurements. "
-              "Coverage, reproducible evidence and WAN acceptance are recorded in "
-              "docs/wan-consistency.md. Software presentation bounds do not measure physical displays.\n\n"
-              + "See the README for client installation, original game data import, and creating/importing "
-              "the private server access key. All three artifacts come from the same tagged commit "
-              "and include build metadata.\n")
-          PY
+          test "$(gh api "repos/$GH_REPO/git/ref/tags/$RELEASE_TAG" --jq .object.type)" = tag
+          python3 tools/verify_release.py --directory release --tag "$RELEASE_TAG" --commit "$RELEASE_COMMIT" --notes release-notes.md
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             echo 'Release already exists; refusing to overwrite assets.' >&2
             exit 1
           fi
-          gh release create "$RELEASE_TAG" ./*.AppImage ./*.zip ./*.tar.gz ./*.sha256 ./*.build.json \
+          test "$(gh api "repos/$GH_REPO/commits/$RELEASE_TAG" --jq .sha)" = "$RELEASE_COMMIT"
+          gh release create "$RELEASE_TAG" release/*.AppImage release/*.zip release/*.tar.gz release/*.sha256 release/*.build.json \
             --verify-tag --latest --title "Atomic Bomberman ${RELEASE_TAG#v}" \
             --notes-file release-notes.md

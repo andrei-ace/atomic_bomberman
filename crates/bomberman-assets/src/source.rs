@@ -79,11 +79,23 @@ fn walk(
             walk(root, &e.path(), depth + 1, files)?;
         } else if ty.is_file() {
             let p = e.path();
-            let relative = p
+            // Filesystem separators are platform-specific; manifest identifiers
+            // and archive member names always use '/'. Validate each native
+            // component before joining, rather than accepting archive '\\'.
+            let components = p
                 .strip_prefix(root)?
-                .to_str()
-                .context("source path is not UTF-8")?;
-            check_relative(relative)?;
+                .components()
+                .map(|part| {
+                    let Component::Normal(name) = part else {
+                        anyhow::bail!("unsafe source path");
+                    };
+                    let name = name.to_str().context("source path is not UTF-8")?;
+                    check_relative(name)?;
+                    Ok(name)
+                })
+                .collect::<Result<Vec<_>>>()?;
+            let relative = components.join("/");
+            check_relative(&relative)?;
             let name = relative.to_ascii_uppercase();
             ensure!(
                 files.insert(name.clone(), p).is_none(),
@@ -482,6 +494,11 @@ mod tests {
         fs::write(t.0.join("color.pal"), b"palette").unwrap();
         let mut source = Source::open(&t.0).unwrap();
         assert_eq!(source.read("COLOR.PAL").unwrap(), b"palette");
+        fs::create_dir_all(t.0.join("Data/ANI")).unwrap();
+        fs::write(t.0.join("Data/ANI/walk.ani"), b"animation").unwrap();
+        let mut source = Source::open(&t.0).unwrap();
+        assert_eq!(source.read("DATA/ANI/WALK.ANI").unwrap(), b"animation");
+        fs::remove_dir_all(t.0.join("Data")).unwrap();
         fs::write(t.0.join("COLOR.PAL"), b"ambiguous").unwrap();
         // APFS is commonly case-insensitive: the second write then replaces
         // the first file rather than creating an ambiguous source directory.

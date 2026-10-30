@@ -27,3 +27,10 @@ joins its worker. Per-context output status distinguishes hardware from silent
 fallback in diagnostics. Queue setup failure injection and shutdown tests cover
 partial initialization. Generated ABI tests use `offset_of!` rather than
 dereferencing null pointers. The decoder and PCM mixing remain unchanged.
+
+The Windows WASAPI backend also owns its COM interfaces and event on a named
+worker. Initialization and device-loss failures keep a paced silent mixer;
+explicit mute skips device initialization. Dropping the context joins the
+worker and releases partial initialization. Output-status reporting distinguishes
+silent fallback from physical output. Synthetic missing-device tests exercise
+command consumption and shutdown without requiring a speaker.

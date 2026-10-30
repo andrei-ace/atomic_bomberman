@@ -22,7 +22,7 @@ use std::{
 use subtle::ConstantTimeEq;
 use tokio::sync::{Notify, Semaphore};
 
-pub const LAN_GAMEPLAY_PORT: u16 = 1998;
+pub const LAN_GAMEPLAY_PORT: u16 = PORT;
 const ALPN: &[u8] = b"atomic-bomberman/7";
 const ENVELOPE: usize = 5;
 const MAX_PACKET: usize = 1000;
@@ -86,6 +86,31 @@ impl GameplayServer {
         private_key: Vec<u8>,
         broker: &Arc<Mutex<Broker>>,
     ) -> Result<Self, NetError> {
+        Self::bind_inner(address, certificate, private_key, broker, None)
+    }
+    pub(crate) fn lan(
+        address: SocketAddr,
+        broker: &Arc<Mutex<Broker>>,
+        compatibility: Compatibility,
+        warnings: Option<std::sync::mpsc::SyncSender<Event>>,
+    ) -> Result<Self, NetError> {
+        let cert = rcgen::generate_simple_self_signed(vec!["atomic-relay.invalid".into()])
+            .map_err(|_| NetError::UdpUnavailable)?;
+        Self::bind_inner(
+            address,
+            cert.cert.der().to_vec(),
+            cert.signing_key.serialize_der(),
+            broker,
+            Some((compatibility, warnings)),
+        )
+    }
+    fn bind_inner(
+        address: SocketAddr,
+        certificate: Vec<u8>,
+        private_key: Vec<u8>,
+        broker: &Arc<Mutex<Broker>>,
+        discovery: Option<(Compatibility, Option<std::sync::mpsc::SyncSender<Event>>)>,
+    ) -> Result<Self, NetError> {
         let fingerprint = Sha256::digest(&certificate).into();
         let mut tls = rustls::ServerConfig::builder_with_provider(Arc::new(
             rustls::crypto::ring::default_provider(),
@@ -103,8 +128,32 @@ impl GameplayServer {
             .map_err(|_| NetError::UdpUnavailable)?;
         let mut config = quinn::ServerConfig::with_crypto(Arc::new(crypto));
         config.transport_config(Arc::new(transport_config()));
-        let endpoint =
-            quinn::Endpoint::server(config, address).map_err(|_| NetError::UdpUnavailable)?;
+        let endpoint = if let Some((compatibility, warnings)) = discovery {
+            use quinn::Runtime;
+            let runtime = Arc::new(quinn::TokioRuntime);
+            let socket =
+                std::net::UdpSocket::bind(address).map_err(|_| NetError::UdpUnavailable)?;
+            socket
+                .set_nonblocking(true)
+                .map_err(|_| NetError::UdpUnavailable)?;
+            let socket = runtime
+                .wrap_udp_socket(socket)
+                .map_err(|_| NetError::UdpUnavailable)?;
+            let socket = Arc::new(crate::lan_socket::LanSocket::new(
+                socket,
+                compatibility,
+                warnings,
+            )?);
+            quinn::Endpoint::new_with_abstract_socket(
+                Default::default(),
+                Some(config),
+                socket,
+                runtime,
+            )
+            .map_err(|_| NetError::UdpUnavailable)?
+        } else {
+            quinn::Endpoint::server(config, address).map_err(|_| NetError::UdpUnavailable)?
+        };
         let server = Self {
             endpoint,
             public_port: Default::default(),
@@ -523,8 +572,28 @@ mod tests {
 
     #[tokio::test]
     async fn encrypted_datagrams_bind_once_route_trusted_identities_and_revoke() {
+        routed_datagrams(false).await;
+    }
+
+    #[tokio::test]
+    async fn discovery_and_encrypted_gameplay_share_one_udp_port() {
+        routed_datagrams(true).await;
+    }
+
+    async fn routed_datagrams(shared_lan: bool) {
         let broker = Arc::new(Mutex::new(Broker::new(None)));
-        let server = GameplayServer::ephemeral("127.0.0.1:0".parse().unwrap(), &broker).unwrap();
+        let compatibility = Compatibility::new("a".repeat(64));
+        let server = if shared_lan {
+            GameplayServer::lan(
+                "127.0.0.1:0".parse().unwrap(),
+                &broker,
+                compatibility.clone(),
+                None,
+            )
+            .unwrap()
+        } else {
+            GameplayServer::ephemeral("127.0.0.1:0".parse().unwrap(), &broker).unwrap()
+        };
         broker.lock().unwrap().set_gameplay(server.clone());
         let address = server.local_addr().unwrap();
         let (room, _, host_offer, _host_control) = open(&broker, None).await;
@@ -535,6 +604,19 @@ mod tests {
         let friend = tokio::spawn(client(address, client_offer.clone(), client_io.clone()));
         ready(&host_io).await;
         ready(&client_io).await;
+        let discovery = if shared_lan {
+            assert_eq!(LAN_GAMEPLAY_PORT, PORT);
+            assert!(
+                std::net::UdpSocket::bind(address).is_err(),
+                "the shared host socket owns this UDP port exclusively"
+            );
+            Some(tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap())
+        } else {
+            None
+        };
+        if let Some(socket) = &discovery {
+            probe_discovery(socket, address, &compatibility).await;
+        }
         host_io
             .send(
                 Some(peer),
@@ -566,6 +648,9 @@ mod tests {
         assert!(
             matches!(packet(&host_io).await, (id, GameplayPacket::ProbeReply { nonce: 123, .. }) if id == peer)
         );
+        if let Some(socket) = &discovery {
+            probe_discovery(socket, address, &compatibility).await;
+        }
         let reused = Arc::new(GameplayIo::default());
         assert!(client(address, client_offer, reused.clone()).await.is_err());
         assert!(!reused.ready());
@@ -607,6 +692,34 @@ mod tests {
         new_friend.abort();
         server.close();
         host.abort();
+    }
+
+    async fn probe_discovery(
+        socket: &tokio::net::UdpSocket,
+        address: SocketAddr,
+        compatibility: &Compatibility,
+    ) {
+        tokio::time::timeout(Duration::from_secs(3), async {
+            let mut bytes = [0u8; 2048];
+            loop {
+                socket
+                    .send_to(crate::discovery::QUERY, address)
+                    .await
+                    .unwrap();
+                if let Ok(Ok((len, from))) =
+                    tokio::time::timeout(Duration::from_millis(150), socket.recv_from(&mut bytes))
+                        .await
+                {
+                    assert_eq!(from, address);
+                    let reply: crate::discovery::Advertisement =
+                        serde_json::from_slice(&bytes[..len]).unwrap();
+                    assert_eq!(&reply.compatibility, compatibility);
+                    break;
+                }
+            }
+        })
+        .await
+        .expect("discovery replies while QUIC connections are active");
     }
 
     #[tokio::test]

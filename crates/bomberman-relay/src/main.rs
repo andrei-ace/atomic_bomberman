@@ -73,6 +73,7 @@ async fn run() -> Result<()> {
             let temporary = state.join(format!(".token-{}", random_token()));
             private_write(&temporary, random_token().as_bytes())?;
             fs::rename(temporary, state.join("access-token"))?;
+            #[cfg(unix)]
             fs::File::open(&state)?.sync_all()?;
             println!("Access token rotated. Restart the service and export a new invitation.");
         }
@@ -241,6 +242,7 @@ fn initialize(state: &Path, advertise: String, listen: SocketAddr) -> Result<()>
         )?;
         private_write(&stage.join("access-token"), token.as_bytes())?;
         fs::rename(&stage, state)?;
+        #[cfg(unix)]
         fs::File::open(parent)?.sync_all()?;
         Ok(())
     })();

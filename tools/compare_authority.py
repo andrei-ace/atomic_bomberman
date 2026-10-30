@@ -30,13 +30,13 @@ PROFILES = [
 ]
 
 
-def run_case(example, relay, profile, seed):
+def run_case(example, relay, profile, seed, gameplay_port=1997):
     name, transport, rtt, jitter, loss = profile
     impairment = dict(rtt_ms=rtt, jitter_ms=jitter, loss_percent=loss)
     if transport == "relay":
         return local_case(SimpleNamespace(example=example, relay=relay, seed=seed), impairment)
     with tempfile.TemporaryDirectory(prefix="atomic-lan-comparison-") as directory:
-        proxy = ImpairmentProxy(1997, **impairment, gameplay_port=1998, legs=2, seed=seed)
+        proxy = ImpairmentProxy(1997, **impairment, gameplay_port=gameplay_port, legs=2, seed=seed)
         try:
             result = run_pair(example, Path(directory), "", mode="lan", address="[::1]:1997")
             assert proxy.forwarded, "LAN packets bypassed the impairment proxy"
@@ -64,10 +64,14 @@ def main():
     parser.add_argument("--baseline-relay", type=Path, required=True)
     parser.add_argument("--candidate-example", type=Path, default=ROOT / "target/debug/examples/network_latency")
     parser.add_argument("--candidate-relay", type=Path, default=ROOT / "target/debug/bomberman-relay")
+    parser.add_argument("--baseline-lan-gameplay-port", type=int, default=1998)
+    parser.add_argument("--candidate-lan-gameplay-port", type=int, default=1997)
     parser.add_argument("--repetitions", type=int, default=5)
     parser.add_argument("--profiles", nargs="+", choices=[p[0] for p in PROFILES])
     parser.add_argument("--report", type=Path, required=True)
     args = parser.parse_args()
+    if any(not 1 <= port <= 65535 for port in [args.baseline_lan_gameplay_port, args.candidate_lan_gameplay_port]):
+        parser.error("LAN gameplay ports must be between 1 and 65535")
     if args.repetitions < 1:
         parser.error("repetitions must be positive")
     binaries = {name: getattr(args, name).resolve() for name in
@@ -96,7 +100,7 @@ def main():
             order = ("baseline", "candidate") if repetition % 2 == 0 else ("candidate", "baseline")
             for build in order:
                 try:
-                    case = run_case(binaries[build + "_example"], binaries[build + "_relay"], profile, 1997 + repetition)
+                    case = run_case(binaries[build + "_example"], binaries[build + "_relay"], profile, 1997 + repetition, gameplay_port=getattr(args, build + "_lan_gameplay_port"))
                 except (AssertionError, RuntimeError, OSError, ValueError) as error:
                     entry["error"] = str(error)
                     entry["passed"] = False

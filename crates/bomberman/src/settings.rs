@@ -180,6 +180,8 @@ impl Settings {
 pub fn default_path() -> PathBuf {
     if let Some(base) = std::env::var_os("XDG_CONFIG_HOME") {
         PathBuf::from(base).join("atomic-bomberman/settings.json")
+    } else if cfg!(windows) {
+        bomberman_net::invitation::profile_path().with_file_name("settings.json")
     } else if let Some(base) = std::env::var_os("HOME") {
         let relative = if cfg!(target_os = "macos") {
             "Library/Application Support/Atomic Bomberman/settings.json"

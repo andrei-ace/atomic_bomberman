@@ -106,6 +106,13 @@ fn server_urls_legacy_invites_and_private_profile() {
         ServerProfile::load(&path).unwrap(),
         Some(invitation.server.clone())
     );
+    // Replacing an existing profile must work as well as the first save,
+    // including on Windows where directory fsync is unavailable.
+    invitation.server.save(&path).unwrap();
+    assert_eq!(
+        ServerProfile::load(&path).unwrap(),
+        Some(invitation.server.clone())
+    );
     #[cfg(unix)]
     {
         use std::os::unix::fs::{symlink, PermissionsExt};

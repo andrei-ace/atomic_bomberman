@@ -303,41 +303,14 @@ async fn connect(
                     .await
                     .map_err(|_| NetError::Unavailable)?;
                 let broker = Arc::new(Mutex::new(Broker::new(None)));
-                let datagrams = GameplayServer::ephemeral(
+                let datagrams = GameplayServer::lan(
                     SocketAddr::from((Ipv4Addr::UNSPECIFIED, LAN_GAMEPLAY_PORT)),
                     &broker,
+                    compatibility.clone(),
+                    Some(tx.clone()),
                 )?;
                 broker.lock().unwrap().set_gameplay(datagrams);
-                let discovery = crate::discovery::bind()
-                    .await
-                    .map_err(|_| NetError::Discovery)?;
                 tokio::spawn(serve_lan(listener, broker));
-                let discovery_compatibility = compatibility.clone();
-                let warnings = tx.clone();
-                tokio::spawn(async move {
-                    let mut socket = discovery;
-                    let mut warned = false;
-                    loop {
-                        if crate::discovery::advertise(socket, discovery_compatibility.clone())
-                            .await
-                            .is_err()
-                            && !warned
-                        {
-                            let _ = warnings.try_send(Event::Warning(NetError::Discovery));
-                            warned = true;
-                        }
-                        // A permission decision or interface change can fail
-                        // the first operation. Keep the hosted room discoverable
-                        // after access is granted without restarting the game.
-                        loop {
-                            tokio::time::sleep(Duration::from_secs(1)).await;
-                            if let Ok(rebound) = crate::discovery::bind().await {
-                                socket = rebound;
-                                break;
-                            }
-                        }
-                    }
-                });
             }
             let mut socket =
                 tokio::time::timeout(Duration::from_secs(5), TcpStream::connect(address))

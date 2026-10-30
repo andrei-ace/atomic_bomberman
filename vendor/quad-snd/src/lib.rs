@@ -31,7 +31,7 @@ mod mixer;
 
 pub use snd::{AudioContext, Playback, Sound};
 
-#[cfg(any(target_os = "macos", target_os = "ios"))]
+#[cfg(any(target_os = "macos", target_os = "ios", target_os = "windows"))]
 pub use snd::{output_status, OutputStatus};
 
 /// Pending and currently mixing non-looped voices in this thread's context.

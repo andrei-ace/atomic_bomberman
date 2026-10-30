@@ -89,7 +89,7 @@ impl fmt::Display for NetError {
             Self::Full => "This game is full (ten players maximum).",
             Self::ColorTaken => "That color is already assigned. Choose an available color.",
             Self::Version => {
-                "Incompatible game or protocol version. Everyone must use the same release."
+                "Incompatible game or protocol version. Everyone must use compatible releases."
             }
             Self::Assets => {
                 "Original game assets differ. Everyone must import the same game edition."
@@ -107,7 +107,7 @@ impl fmt::Display for NetError {
                 "Cannot read or save the private server profile. Check its permissions."
             }
             Self::Discovery => "LAN discovery unavailable. Allow Local Network access and UDP 1997, or use Join by IP.",
-            Self::UdpUnavailable => "Gameplay connection unavailable. Allow UDP 443 to the Internet relay, or UDP 1998 to the LAN host. TCP alone cannot start a match.",
+            Self::UdpUnavailable => "Gameplay connection unavailable. Allow UDP 443 to the Internet relay, or UDP 1997 to the LAN host. TCP alone cannot start a match.",
         })
     }
 }

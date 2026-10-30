@@ -6,7 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-const QUERY: &[u8] = b"ATOMIC-BOMBERMAN-LAN-1";
+pub(crate) const QUERY: &[u8] = b"ATOMIC-BOMBERMAN-LAN-1";
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Advertisement {
     pub name: String,
@@ -18,26 +18,20 @@ pub struct FoundGame {
     pub advertisement: Advertisement,
 }
 
-/// Bind before announcing a hosted game, so failures reach the UI.
-pub async fn bind() -> io::Result<tokio::net::UdpSocket> {
-    tokio::net::UdpSocket::bind((Ipv4Addr::UNSPECIFIED, PORT)).await
-}
-pub async fn advertise(
-    socket: tokio::net::UdpSocket,
-    compatibility: Compatibility,
-) -> io::Result<()> {
-    let reply = serde_json::to_vec(&Advertisement {
-        name: "LAN game".into(),
-        compatibility,
-    })?;
-    let mut bytes = [0; 128];
-    loop {
-        let (len, address) = socket.recv_from(&mut bytes).await?;
-        if &bytes[..len] == QUERY {
-            socket.send_to(&reply, address).await?;
-        }
+fn found_game(from: SocketAddr, bytes: &[u8]) -> Option<FoundGame> {
+    if from.port() != PORT || !from.is_ipv4() || from.ip().is_loopback() {
+        return None;
     }
+    let advertisement: Advertisement = serde_json::from_slice(bytes).ok()?;
+    if advertisement.name.len() >= 64 {
+        return None;
+    }
+    Some(FoundGame {
+        address: from,
+        advertisement,
+    })
 }
+
 pub fn host_addresses() -> io::Result<Vec<SocketAddr>> {
     Ok(interfaces()?
         .into_iter()
@@ -51,10 +45,7 @@ pub fn host_addresses() -> io::Result<Vec<SocketAddr>> {
 /// Repeated probes use sockets bound to each interface, so default route
 /// selection cannot divert subnet broadcasts away from Wi-Fi or Ethernet.
 pub fn browse() -> io::Result<Vec<FoundGame>> {
-    let mut targets = vec![
-        (Ipv4Addr::UNSPECIFIED, Ipv4Addr::BROADCAST),
-        (Ipv4Addr::LOCALHOST, Ipv4Addr::LOCALHOST),
-    ];
+    let mut targets = vec![(Ipv4Addr::UNSPECIFIED, Ipv4Addr::BROADCAST)];
     for interface in interfaces()? {
         if let (IpAddr::V4(address), Some(broadcast)) = (interface.address, interface.broadcast) {
             targets.push((address, broadcast));
@@ -97,20 +88,10 @@ pub fn browse() -> io::Result<Vec<FoundGame>> {
             for _ in 0..64 {
                 match socket.recv_from(&mut bytes) {
                     Ok((len, from)) => {
-                        if let Ok(advertisement) =
-                            serde_json::from_slice::<Advertisement>(&bytes[..len])
-                        {
-                            let address = SocketAddr::new(from.ip(), PORT);
-                            if from.port() == PORT
-                                && from.is_ipv4()
-                                && advertisement.name.len() < 64
-                                && games.len() < 128
-                                && !games.iter().any(|g| g.address == address)
+                        if let Some(game) = found_game(from, &bytes[..len]) {
+                            if games.len() < 128 && !games.iter().any(|g| g.address == game.address)
                             {
-                                games.push(FoundGame {
-                                    address,
-                                    advertisement,
-                                });
+                                games.push(game);
                             }
                         }
                     }
@@ -134,4 +115,30 @@ pub fn browse() -> io::Result<Vec<FoundGame>> {
     }
     games.sort_by_key(|game| game.address);
     Ok(games)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn one_host_does_not_appear_as_both_loopback_and_its_network_adapter() {
+        let reply = serde_json::to_vec(&Advertisement {
+            name: "LAN game".into(),
+            compatibility: Compatibility::new("a".repeat(64)),
+        })
+        .unwrap();
+        let addresses = [
+            "127.0.0.1:1997",
+            "127.10.0.1:1997",
+            "[::1]:1997",
+            "192.168.50.4:1997",
+        ];
+        let games: Vec<_> = addresses
+            .iter()
+            .filter_map(|address| found_game(address.parse().unwrap(), &reply))
+            .collect();
+        assert_eq!(games.len(), 1);
+        assert_eq!(games[0].address, "192.168.50.4:1997".parse().unwrap());
+        assert!(found_game("192.168.50.4:1998".parse().unwrap(), &reply).is_none());
+    }
 }

@@ -101,7 +101,12 @@ rejection remains necessary.
 ## Transport and recovery
 
 Internet play uses pinned QUIC datagrams on UDP 443 and existing TLS WebSocket
-control on TCP 443. LAN uses TCP 1997, discovery UDP 1997, and gameplay UDP 1998.
+control on TCP 443. LAN uses TCP 1997 and a single UDP 1997 socket shared by discovery and gameplay.
+Exact discovery requests are answered outside QUIC; other datagrams retain
+Quinn's batching, offload and addressing metadata. Browsing omits loopback
+probes/replies so the same host is listed by its LAN address once. Manual
+joining to loopback remains supported. Existing clients use the UDP port in
+the host's gameplay offer, so this preserves protocol 7 compatibility.
 Every player must complete a bidirectional gameplay probe before the host begins.
 There is no TCP gameplay fallback.
 

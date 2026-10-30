@@ -1,10 +1,11 @@
-# Native private relay — 0.5.1
+# Native private relay — 0.6.0
 
-The native ARM64 package targets Ubuntu 26 on the existing CAX11 and works with
-glibc 2.39 or newer. No Docker, domain, certificate authority, database or original
+Native Linux packages are available for ARM64 (`aarch64`) and amd64 (`x86_64`),
+with Ubuntu 24.04/glibc 2.39 or newer as the baseline. The existing ARM64 CAX11
+deployment runs Ubuntu 26. No Docker, domain, certificate authority, database or original
 game assets are required. The service forwards bounded traffic between outbound
-clients; the player's computer hosts simulation. Version 0.5.1 uses protocol 7 and the 0.5.1 handshake family.
-All clients and the relay must upgrade together; 0.5.0 and earlier are incompatible.
+clients; the player's computer hosts simulation. Version 0.6.0 retains protocol 7 and the 0.5.1 handshake family.
+Compatible 0.5.1/0.6.0 clients and relays interoperate; 0.5.0 and earlier are incompatible.
 
 The relay listens on the same port number for two transports: secure WebSockets
 over **TCP 443** for authentication, browsing, lobby, setup, and requested
@@ -17,11 +18,13 @@ an unconfigured placeholder. Clients have no default endpoint.
 
 ## Install
 
-Copy the ARM64 package and its checksum to the server. Check the checksum before
+Run `uname -m` on the server: choose `relay-linux-arm64` for `aarch64`, or
+`relay-linux-x86_64` for `x86_64`. Copy that package and its checksum to the server.
+The example below uses ARM64; substitute `x86_64` for an amd64 server. Check the checksum before
 extracting. Run the following from its extracted directory:
 
 ```sh
-sha256sum -c atomic-bomberman-0.5.1-relay-linux-arm64.tar.gz.sha256
+sha256sum -c atomic-bomberman-0.6.0-relay-linux-arm64.tar.gz.sha256
 sudo useradd --system --home-dir /var/lib/bomberman-relay \
   --shell /usr/sbin/nologin bomberman-relay
 sudo install -d -m755 /usr/local/lib/bomberman-relay
@@ -71,7 +74,7 @@ From another computer, the same command can be run with
 `ssh root@your-server 'sudo -u bomberman-relay /usr/local/lib/bomberman-relay/bomberman-relay export-invite --state /var/lib/bomberman-relay/private'`.
 
 Copy the complete generated URL. On each client open **Multiplayer → Internet →
-Paste server link**, paste with **Ctrl-V** on Linux or **Command-V** on Mac, and
+Paste server link**, paste with **Ctrl-V** on Windows/Linux or **Command-V** on Mac, and
 select **Connect**. The link imports the access secret and certificate fingerprint
 together; no manual certificate installation is needed. Everyone can then host
 games and find the group's rooms in
@@ -90,7 +93,7 @@ Verify each new package's checksum and provenance. Install a new binary to a
 separate temporary filename, atomically rename it over the installed executable,
 and restart the service. Keep the previous binary for rollback. Keep the private
 state directory. Existing saved client profiles continue to work with the same
-certificate and token. Protocol 7 accepts the 0.5.1 compatibility family; 0.5.0 and earlier clients
+certificate and token. Protocol 7 accepts the 0.5.1 compatibility family, including 0.6.0; 0.5.0 and earlier clients
 receive a version error. Preserve `/var/lib/bomberman-relay/private` and do not
 run `init` again during an update.
 
@@ -155,7 +158,7 @@ verify handshake signatures using Rustls's cryptographic provider. QUIC uses TLS
 public-CA and expiry checks. See the
 [Rustls verifier interface](https://docs.rs/rustls/0.23.31/rustls/client/danger/trait.ServerCertVerifier.html).
 
-## Build natively on Ubuntu 26 ARM64
+## Build natively on Linux ARM64 or amd64
 
 Install Rust **1.89.0** (or newer) and `build-essential pkg-config`. The relay
 uses Rustls/ring and does not depend on OpenSSL or any desktop library.
@@ -163,7 +166,11 @@ uses Rustls/ring and does not depend on OpenSSL or any desktop library.
 ```sh
 cargo build --locked --release -p bomberman-relay
 cargo test --locked -p bomberman-net -p bomberman-relay
-python3 tools/package_relay.py --release
+python3 tools/package_relay.py --target aarch64-unknown-linux-gnu --release
+# On amd64, choose this target instead (the default remains ARM64):
+python3 tools/package_relay.py --target x86_64-unknown-linux-gnu --release
+# Verify a downloaded archive without starting the service:
+python3 tools/package_relay.py --verify /path/to/atomic-bomberman-0.6.0-relay-linux-x86_64.tar.gz --release
 ```
 
 `--release` requires a clean committed checkout. The package includes the binary,

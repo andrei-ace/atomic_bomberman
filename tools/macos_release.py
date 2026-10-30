@@ -17,7 +17,7 @@ BINARIES = {'AtomicBomberman', 'bomberman', 'bomberman-assets', 'audio-probe', '
 
 
 def run(*arguments):
-    return subprocess.check_output(arguments, cwd=ROOT, text=True).strip()
+    return subprocess.check_output(arguments, cwd=ROOT, text=True, encoding='utf-8').strip()
 
 
 def sha256(path):
@@ -40,9 +40,9 @@ def dependency_notices(app, target='aarch64-apple-darwin', output=None):
     packages = json.loads(run('cargo', 'metadata', '--locked', '--offline', '--format-version', '1',
                               '--filter-platform', target))
     libc = next(item for item in packages['packages'] if item['name'] == 'libc')
-    mit = (Path(libc['manifest_path']).parent / 'LICENSE-MIT').read_text()
+    mit = (Path(libc['manifest_path']).parent / 'LICENSE-MIT').read_text(encoding='utf-8')
     mit = mit[mit.index('Permission is hereby granted'):]
-    apache = (ROOT / 'vendor/quad-snd/LICENSE-APACHE').read_text()
+    apache = (ROOT / 'vendor/quad-snd/LICENSE-APACHE').read_text(encoding='utf-8')
     notices = ['Third-party Rust dependency notices\n'
                'Package authors and license declarations come from the locked Cargo metadata.\n'
                'Published license files are reproduced below. Where a crate publishes only a\n'
@@ -64,7 +64,7 @@ def dependency_notices(app, target='aarch64-apple-darwin', output=None):
         for path in sorted(set(texts)):
             if directory not in path.resolve().parents:
                 raise ValueError(f'License file escapes its package: {package["name"]}')
-            notices.append(f'\n--- {path.name} ---\n' + path.read_text(errors='replace'))
+            notices.append(f'\n--- {path.name} ---\n' + path.read_text(encoding='utf-8', errors='replace'))
         if not texts:
             declared = package['license'] or ''
             if 'MIT' in declared:
@@ -73,7 +73,7 @@ def dependency_notices(app, target='aarch64-apple-darwin', output=None):
                 notices.append('\nApache-2.0 license terms:\n' + apache)
             if 'MIT' not in declared and 'Apache-2.0' not in declared:
                 raise ValueError(f'Missing published license text for {package["name"]}')
-    (output or app / 'Contents/Resources/licenses/THIRD-PARTY-NOTICES.txt').write_text('\n'.join(notices))
+    (output or app / 'Contents/Resources/licenses/THIRD-PARTY-NOTICES.txt').write_text('\n'.join(notices), encoding='utf-8')
     return inventory
 
 

@@ -45,7 +45,7 @@ pub fn prepare(requested_mute: bool) -> anyhow::Result<(bool, Option<String>)> {
 
 #[cfg(not(target_os = "linux"))]
 pub fn prepare(requested_mute: bool) -> anyhow::Result<(bool, Option<String>)> {
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
     if requested_mute {
         std::env::set_var("ATOMIC_BOMBERMAN_SILENT_AUDIO", "1");
     }
@@ -55,7 +55,7 @@ pub fn prepare(requested_mute: bool) -> anyhow::Result<(bool, Option<String>)> {
 /// Call after creating the audio context. A failed queue still has a live,
 /// sample-paced mixer, but must never count as physical speaker verification.
 pub fn after_initialization(requested_mute: bool) -> (bool, Option<String>) {
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
     match quad_snd::output_status() {
         Some(quad_snd::OutputStatus::Unavailable(reason)) => {
             return (

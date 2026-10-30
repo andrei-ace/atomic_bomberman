@@ -1,0 +1,52 @@
+name: Windows
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  PYTHONUTF8: '1'
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: core.autocrlf
+  GIT_CONFIG_VALUE_0: 'false'
+jobs:
+  check:
+    runs-on: windows-2022
+    timeout-minutes: 35
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66 # Rust 1.89.0
+        with:
+          components: rustfmt, clippy
+      - run: bash tools/check.sh
+      - run: python tools/test_release_packages.py
+      - name: Compare portable replay digest
+        run: |
+          mkdir -p build
+          cargo run --locked -p bomberman-net --example replay_digest > build/replay-digest.txt
+          diff docs/evidence/network-replay-digest.txt build/replay-digest.txt
+      - name: Native launcher lifecycle
+        run: |
+          cargo build --locked --release -p bomberman-windows-launcher
+          python tools/test_windows_launcher.py
+      - run: python tools/windows_release.py build --release
+      - name: Production gameplay over QUIC
+        run: |
+          cargo build --locked --release -p bomberman-relay
+          cargo build --locked --release -p bomberman --example network_latency
+          python tools/verify_datagram.py --relay target/release/bomberman-relay.exe --example target/release/examples/network_latency.exe --report build/windows-quic.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: atomic-bomberman-windows-x86_64
+          path: dist/github/*
+          if-no-files-found: error

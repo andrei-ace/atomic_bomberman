@@ -1,14 +1,14 @@
 # Desktop and relay releases
 
-Version **0.5.1**, Rust **1.89.0**, one annotated Git tag for all three packages:
-Linux x86-64 AppImage (Ubuntu 24.04 baseline, X11/XWayland), Apple Silicon Mac ZIP,
-and native Linux ARM64 relay (Ubuntu 26 deployment; glibc 2.39 minimum).
-The multiplayer protocol is **7**, with `ABG7`, QUIC ALPN
-`atomic-bomberman/7` and compatibility family `0.5.1`. Clients and relay must
-upgrade together; 0.5.0 and earlier are incompatible. Each computer supplies its owned
-avatar motion, while the host resolves shared outcomes within a bounded 100 ms
-provisional window. Late motion and button identities recover without reopening
-committed history. Existing certificates, private server links and tokens remain
+Version **0.6.0**, Rust **1.89.0**, one annotated Git tag for five packages:
+Windows x64 portable ZIP (Windows 10 22H2/11), Linux x86-64 AppImage (Ubuntu 24.04,
+X11/XWayland), Apple Silicon Mac ZIP, and Linux ARM64/amd64 relay archives
+(glibc 2.39 minimum; the existing ARM64 deployment runs Ubuntu 26).
+The multiplayer protocol remains **7**, with `ABG7`, QUIC ALPN
+`atomic-bomberman/7` and compatibility family **0.5.1**. Version 0.6.0 interoperates
+with compatible 0.5.1 clients/relays and matching game data; 0.5.0 and earlier
+are incompatible. Avatar authority and the bounded 100 ms provisional window
+are unchanged. Existing certificates, private server links and tokens remain
 valid. See [the design and measured results](owner-authority.md).
 Original game assets, imported caches, media, private relay state and invitations
 are excluded. Keep `dist/`, `build/` and private server state out of source commits.
@@ -22,14 +22,16 @@ remains a separate step.
 
 Run `tools/check.sh`. Linux additionally needs `libarchive-tools libgtk-3-dev
 librsvg2-common squashfs-tools` alongside the desktop build libraries in README. Run
+`python3 tools/test_release_packages.py` on every platform,
 `python3 tools/test_linux_launcher.py` on Linux and `tools/test_macos_launcher.sh`
-on a Mac. `bomberman-net` tests deterministic replay, transitions, ownership,
+on a Mac. Windows runs the equivalent Rust checks through Git Bash and
+`python tools/test_windows_launcher.py` after building its launcher. `bomberman-net` tests deterministic replay, transitions, ownership,
 host start authority, personal colors, disconnects and rematches; relay tests
 use real loopback TLS. Local gameplay retains its roulette checks. The
 `tools/verify_datagram.py` exercises production client prediction over encrypted
 UDP at 0/40/80/160 ms gameplay RTT, plus jitter and packet loss.
 CI is configured to compare the network replay fixture with the same committed
-digest on Linux x86-64, macOS ARM64 and native ARM64 runners.
+digest on Linux x86-64, macOS ARM64, Windows x64 and native ARM64 runners.
 
 Network gameplay comparisons cover
 [384 pickup/infection/contact cases](evidence/network-powerups-parity.json),
@@ -56,13 +58,19 @@ Review and commit the intended source, then build from that clean commit:
 ```sh
 # Ubuntu 24.04 x86-64:
 tools/package_linux.sh --release
-python3 tools/linux_release.py verify dist/github/atomic-bomberman-0.5.1-linux-x86_64.AppImage --release
+python3 tools/linux_release.py verify dist/github/atomic-bomberman-0.6.0-linux-x86_64.AppImage --release
 # Apple Silicon Mac:
 tools/package_macos.sh --release
-python3 tools/macos_release.py verify dist/github/atomic-bomberman-0.5.1-macos-arm64.zip --release
-# Native ARM64 Linux:
+python3 tools/macos_release.py verify dist/github/atomic-bomberman-0.6.0-macos-arm64.zip --release
+# Windows x64 (MSVC C++ tools and Python, PowerShell or Git Bash):
+python tools/windows_release.py build --release
+# Native Linux relay, choose the matching target:
 cargo build --locked --release -p bomberman-relay
-python3 tools/package_relay.py --release
+python3 tools/package_relay.py --target aarch64-unknown-linux-gnu --release
+# Or, on native Linux amd64:
+python3 tools/package_relay.py --target x86_64-unknown-linux-gnu --release
+# Reverify either downloaded relay archive:
+python3 tools/package_relay.py --verify dist/github/atomic-bomberman-0.6.0-relay-linux-x86_64.tar.gz --release
 ```
 
 The AppImage builder verifies its pinned official type-2 runtime SHA-256; the
@@ -87,21 +95,33 @@ ad-hoc signed, with no Developer ID signing/notarization setup.
 
 ## Coordinated release
 
-Create and push an annotated `v0.5.1` tag only after reviewing the commit and
+Create and push an annotated `v0.6.0` tag only after reviewing the commit and
 platform checks. Its push starts **Desktop and relay release**; the same workflow
 can also be dispatched manually for an existing annotated version tag. The
-workflow uses separate native Linux x86-64, Mac ARM64 and Linux ARM64 runners.
+workflow builds Linux x86-64 client, Mac ARM64 client, Windows x64 client,
+Linux ARM64 relay and Linux amd64 relay on matching native runners.
 Each validates the annotated tag/version, tests the source, compares the shared
 replay digest, builds from a clean checkout and verifies its package.
 
-Only the final publish job has release-write permission. It downloads all three
-packages, verifies checksums and provenance, checks that the remote tag still
+Windows builds use MSVC with a static CRT and verify that executable imports
+require system DLLs only. The portable launcher uses per-user storage, versioned
+validated caches and cancellable helper jobs. Original `.exe` files are excluded
+through a fixed distribution file list. LF checkouts keep cross-platform source
+digests identical. Windows remains unsigned. Native lifecycle CI verifies the
+first-run window, Unicode/spaced relocation, import repair, exclusive import locks
+and helper-tree termination with synthetic data. Physical GUI/audio/controller
+and Windows-to-Linux/Mac play still require recorded hardware smoke tests.
+
+Only the final publish job has release-write permission. It downloads all five
+packages, verifies checksums, executable hashes, embedded/external provenance and
+matching source digests, checks that the remote tag still
 identifies their common source commit, refuses to overwrite an existing release,
 and publishes the release after all build jobs succeed. Actions are pinned to commits.
 Test downloaded packages and retain the previous relay binary for rollback. Keep repository visibility
 unchanged and never attach separate asset-transfer archives.
 
-Native Mac GUI/clipboard and real Linux-to-Mac play need those machines.
+Native Windows/Mac GUI, audio, clipboard, controllers and cross-platform play
+need those machines. CI headless/loopback checks do not certify these devices.
 Private Hetzner deployment and WAN acceptance need the server's locally entered
 address and access. Record environment-specific measurements separately from unit
 and loopback tests; see `docs/evidence/network-validation.json`.
@@ -125,8 +145,8 @@ floor underneath exploding bricks. Original player-colored flames are retained.
 Clients preload battle media in the lobby and acknowledge match preparation
 before the shared countdown. Protocol 7 also requires successful bidirectional
 QUIC gameplay probes. Internet play needs both TCP 443 and UDP 443; LAN hosts
-need TCP/UDP 1997 and UDP 1998. Existing private server links and TLS identities
-remain valid. All players and the relay must use the 0.5.1 compatibility family.
+need TCP/UDP 1997. Existing private server links and TLS identities
+remain valid. All players and the relay must use the 0.5.1 compatibility family (including 0.6.0).
 
 Run `python3 tools/verify_datagram.py --report /tmp/datagram-check.json` against
 the built relay and `network_latency` example. It exercises production session

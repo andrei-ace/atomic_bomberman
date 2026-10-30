@@ -10,6 +10,7 @@ pub struct Interface {
     pub broadcast: Option<Ipv4Addr>,
 }
 
+#[cfg(unix)]
 pub fn interfaces() -> io::Result<Vec<Interface>> {
     let mut head = std::ptr::null_mut();
     // getifaddrs owns this list until freeifaddrs. Family checks precede every
@@ -63,6 +64,113 @@ pub fn interfaces() -> io::Result<Vec<Interface>> {
         }
     }
     unsafe { libc::freeifaddrs(head) };
+    Ok(result)
+}
+
+#[cfg(windows)]
+pub fn interfaces() -> io::Result<Vec<Interface>> {
+    use windows_sys::Win32::{
+        Foundation::{ERROR_BUFFER_OVERFLOW, ERROR_NO_DATA},
+        NetworkManagement::{
+            IpHelper::{
+                GetAdaptersAddresses, GAA_FLAG_SKIP_ANYCAST, GAA_FLAG_SKIP_DNS_SERVER,
+                GAA_FLAG_SKIP_MULTICAST, IP_ADAPTER_ADDRESSES_LH,
+            },
+            Ndis::IfOperStatusUp,
+        },
+        Networking::WinSock::{AF_INET, AF_INET6, AF_UNSPEC, SOCKADDR_IN, SOCKADDR_IN6},
+    };
+    let mut size = 15_000u32;
+    let mut storage;
+    let mut attempts = 0;
+    loop {
+        if size > 1024 * 1024 || attempts == 3 {
+            return Err(io::Error::other(
+                "Network interfaces changed during enumeration",
+            ));
+        }
+        attempts += 1;
+        // The Windows API returns linked structs inside this aligned buffer.
+        storage = vec![0u64; (size as usize).div_ceil(8)];
+        let result = unsafe {
+            GetAdaptersAddresses(
+                AF_UNSPEC as u32,
+                GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER,
+                std::ptr::null(),
+                storage.as_mut_ptr().cast(),
+                &mut size,
+            )
+        };
+        if result == ERROR_NO_DATA {
+            return Ok(Vec::new());
+        }
+        if result == ERROR_BUFFER_OVERFLOW {
+            continue;
+        }
+        if result != 0 {
+            return Err(io::Error::from_raw_os_error(result as i32));
+        }
+        break;
+    }
+    let mut result = Vec::new();
+    let mut adapter = storage.as_ptr().cast::<IP_ADAPTER_ADDRESSES_LH>();
+    while !adapter.is_null() {
+        let item = unsafe { &*adapter };
+        adapter = item.Next;
+        // PPP, software loopback and tunnel interfaces do not supply LAN broadcasts.
+        if item.OperStatus != IfOperStatusUp || matches!(item.IfType, 23 | 24 | 131) {
+            continue;
+        }
+        let mut unicast = item.FirstUnicastAddress;
+        while !unicast.is_null() {
+            let entry = unsafe { &*unicast };
+            unicast = entry.Next;
+            let socket = entry.Address.lpSockaddr;
+            if socket.is_null() {
+                continue;
+            }
+            let family = unsafe { (*socket).sa_family };
+            let interface = if family == AF_INET
+                && entry.Address.iSockaddrLength as usize >= std::mem::size_of::<SOCKADDR_IN>()
+            {
+                let address = unsafe {
+                    Ipv4Addr::from(
+                        (*socket.cast::<SOCKADDR_IN>())
+                            .sin_addr
+                            .S_un
+                            .S_addr
+                            .to_ne_bytes(),
+                    )
+                };
+                let prefix = u32::from(entry.OnLinkPrefixLength);
+                if prefix > 32 || address.is_unspecified() || address.is_loopback() {
+                    continue;
+                }
+                let mask = Ipv4Addr::from(u32::MAX.checked_shl(32 - prefix).unwrap_or(0));
+                Interface {
+                    address: address.into(),
+                    broadcast: (prefix < 31).then(|| subnet_broadcast(address, mask)),
+                }
+            } else if family == AF_INET6
+                && entry.Address.iSockaddrLength as usize >= std::mem::size_of::<SOCKADDR_IN6>()
+            {
+                let address =
+                    unsafe { Ipv6Addr::from((*socket.cast::<SOCKADDR_IN6>()).sin6_addr.u.Byte) };
+                if address.is_unspecified() || address.is_loopback() {
+                    continue;
+                }
+                Interface {
+                    address: address.into(),
+                    broadcast: None,
+                }
+            } else {
+                continue;
+            };
+            if !result.contains(&interface) {
+                result.push(interface);
+            }
+        }
+    }
     Ok(result)
 }
 

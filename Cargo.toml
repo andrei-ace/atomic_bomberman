@@ -1,10 +1,10 @@
 [workspace]
-members = ["crates/bomberman-core", "crates/bomberman-assets", "crates/bomberman-net", "crates/bomberman-relay", "crates/bomberman"]
+members = ["crates/bomberman-core", "crates/bomberman-assets", "crates/bomberman-net", "crates/bomberman-relay", "crates/bomberman", "crates/bomberman-windows-launcher"]
 exclude = ["vendor/quad-snd", "vendor/miniquad"]
 resolver = "2"
 
 [workspace.package]
-version = "0.5.1"
+version = "0.6.0"
 edition = "2021"
 rust-version = "1.89"
 license = "MIT"

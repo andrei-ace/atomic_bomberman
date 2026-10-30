@@ -1245,11 +1245,36 @@ mod tests {
             thread::sleep(Duration::from_millis(20));
         }
         assert_eq!(host.id, HOST);
-        let discovered = bomberman_net::discovery::browse().unwrap();
-        assert!(discovered
-            .iter()
-            .any(|game| game.address.port() == PORT
-                && game.advertisement.compatibility == compatibility));
+        // Probe the real discovery wire format directly: automatic browsing
+        // intentionally excludes localhost and depends on a real LAN adapter.
+        let probe = std::net::UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+        probe
+            .set_read_timeout(Some(Duration::from_millis(150)))
+            .unwrap();
+        let mut reply = [0; 2048];
+        let deadline = std::time::Instant::now() + Duration::from_secs(3);
+        let (length, source) = loop {
+            probe.send_to(b"ATOMIC-BOMBERMAN-LAN-1", address).unwrap();
+            match probe.recv_from(&mut reply) {
+                Ok(packet) => break packet,
+                Err(error)
+                    if matches!(
+                        error.kind(),
+                        std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                    ) =>
+                {
+                    assert!(
+                        std::time::Instant::now() < deadline,
+                        "LAN discovery reply timed out"
+                    )
+                }
+                Err(error) => panic!("LAN discovery failed: {error}"),
+            }
+        };
+        assert_eq!(source, address);
+        let advertisement: bomberman_net::discovery::Advertisement =
+            serde_json::from_slice(&reply[..length]).unwrap();
+        assert_eq!(advertisement.compatibility, compatibility);
         let mut client = Session::new(
             Destination::Lan {
                 address,

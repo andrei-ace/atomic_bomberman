@@ -1,7 +1,8 @@
 # Private online and LAN games
 
-Use version **0.5.1**, protocol **7**, on every client and the relay. Older
-0.4.x clients and relays are incompatible. Existing private server links and
+Version **0.6.0** retains protocol **7** and the **0.5.1** compatibility family.
+Windows, Linux and Mac clients interoperate with compatible 0.5.1/0.6.0 relays.
+Version 0.5.0 and earlier is incompatible. Existing private server links and
 saved profiles remain valid when the server keeps its certificate and token.
 Import the same edition of Atomic Bomberman. The relay has no original game data
 and never runs the simulation.
@@ -13,7 +14,7 @@ and never runs the simulation.
    certificate fingerprint. The administrator creates it once during
    [relay setup](relay.md) and can retrieve it with `export-invite` afterward.
 2. Open **Multiplayer → Internet → Paste server link**, paste the entire link
-   with **Ctrl-V** on Linux or **Command-V** on Mac, and select **Connect**.
+   with **Ctrl-V** on Windows/Linux or **Command-V** on Mac, and select **Connect**.
    Each friend does this once. The profile is saved privately after authentication;
    the certificate fingerprint is imported with the link automatically.
 3. The **Friends' games** browser opens automatically on later visits. Anyone can
@@ -51,7 +52,10 @@ The private profile is separate from settings: Linux uses
 `~/.config/atomic-bomberman/connections.json`); macOS uses
 `~/Library/Application Support/Atomic Bomberman/connections.json` unless
 `XDG_CONFIG_HOME` overrides it. The file is created with mode 0600, its directory
-with mode 0700. Delete this file to forget the server. No endpoint or token is
+with mode 0700 on Unix. Windows uses
+`%LOCALAPPDATA%\Atomic Bomberman\connections.json` unless `XDG_CONFIG_HOME`
+overrides it; new profile files use a protected owner/administrators/SYSTEM ACL.
+Delete this file to forget the server. No endpoint or token is
 shipped in source, default settings, documentation or release binaries.
 
 Both host and friends connect **outbound on TCP 443 and UDP 443**. Secure
@@ -70,16 +74,18 @@ an account or a per-room password. Share only with trusted friends.
 Open **Multiplayer → LAN**. One computer selects **Host game**; friends select
 its address from the automatically refreshed list. LAN has no invitations.
 If the game does not appear, select **Join by IP** and type or paste the address
-shown in the host's lobby. TCP 1997 carries lobby/control, UDP 1997 supplies
-automatic IPv4 discovery, and UDP 1998 carries QUIC gameplay. Permit all three
-on the host's LAN
-firewall. On macOS, allow Atomic Bomberman under **System Settings → Privacy &
+shown in the host's lobby. TCP 1997 carries lobby/control; one UDP 1997 socket
+handles both automatic IPv4 discovery and QUIC gameplay. Permit TCP and UDP 1997
+on the host's LAN firewall. On macOS, allow Atomic Bomberman under **System Settings → Privacy &
 Security → Local Network**. This permission is separate from the firewall.
-Discovery retries across active Wi-Fi/Ethernet subnets and reports socket errors. Discovery stays on the local network; different subnets can use manual
+Discovery retries across active Wi-Fi/Ethernet subnets and reports socket errors.
+Discovery stays on the local network; different subnets can use manual
 address joining. A manually entered IPv6 address is also supported. Manual IP
-joining still requires UDP 1998. LAN gameplay is encrypted; the initial control
-connection exchanges the host's temporary certificate fingerprint automatically.
-Use LAN mode on a trusted local network.
+joining still requires UDP 1997. Automatic discovery omits `127.0.0.1` and other
+loopback replies to avoid showing a host twice. Manual joining to `127.0.0.1`
+remains available for testing two instances on one computer. LAN gameplay is encrypted; the initial control connection exchanges the host's temporary certificate fingerprint automatically.
+Use LAN mode on a trusted local network. The single-port setup applies to
+0.6.0 hosts; older compatible hosts can still advertise UDP 1998.
 
 ## Lobby
 
@@ -132,7 +138,7 @@ games and incompatible versions/assets without displaying credentials.
   player's network and inbound UDP 443 on the relay's cloud firewall. TCP 443
   must also stay open. A TCP-only connection can browse games but cannot play.
 - **LAN host is missing:** permit UDP 1997 for discovery, allow Local Network
-  access on Mac, or use **Join by IP**. Permit TCP 1997 and UDP 1998 for joining
+  access on Mac, or use **Join by IP**. Permit TCP 1997 and UDP 1997 for joining
   and gameplay even when using a manual address.
 - **Incompatible version:** upgrade the relay and every client to the same
   release. Protocol 6 clients cannot play through a protocol 5 relay.

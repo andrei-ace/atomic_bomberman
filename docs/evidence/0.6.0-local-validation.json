@@ -1,0 +1,33 @@
+{
+  "format_version": 1,
+  "version": "0.6.0",
+  "phase": "local pre-push validation",
+  "protocol": 7,
+  "compatibility_family": "0.5.1",
+  "source": {
+    "commit": "72fd23839dff4c7caf2038f785ceae692dbf5201",
+    "dirty": true,
+    "sha256": "f35b5783a59466f78a7e957fb7341f948c243e3a822ad40dd16251f1eee76e8e"
+  },
+  "recorded_at_utc": "2026-10-30T10:21:03.757173+00:00",
+  "changes": [
+    "LAN discovery and QUIC share UDP 1997; TCP control retains 1997.",
+    "Automatic discovery omits loopback probes/replies; manual 127.0.0.1 joining remains supported.",
+    "Windows x64 client and Linux amd64 relay are permanent release targets."
+  ],
+  "checks": {
+    "network_library": "15 passed including shared-socket traffic, GRO/ECN metadata, fair scheduling and permission retry",
+    "production_lan_coordinator": "passed, direct discovery plus multi-device play/pause/rematch/disconnect",
+    "duplicate_loopback_regression": "passed",
+    "portable_replay_digest": "matches committed fixture",
+    "macos_clippy": "workspace/all targets passed",
+    "windows_cross_clippy": "Rust 1.89, workspace/all targets passed",
+    "package_boundaries": "5 passed"
+  },
+  "lan_traffic_report": "0.6.0-lan-datagram.json",
+  "native_ci": "will run on the pushed commit; publication requires all five native build jobs",
+  "limitations": [
+    "Traffic impairment is synthetic, on macOS loopback, with production predicted display positions and no physical device measurements.",
+    "Windows native lifecycle, unit and QUIC checks are delegated to native Windows CI."
+  ]
+}

@@ -1,22 +1,22 @@
 # Atomic Bomberman in Rust
 
-A native Linux and macOS reconstruction of Atomic Bomberman, with local, LAN,
+A native Windows, Linux and macOS reconstruction of Atomic Bomberman, with local, LAN,
 and private Internet battles for 2–10 players and bots. It includes all 11 arenas,
 68 supplied schemes, teams, powerups, diseases, arena hazards, and rematches.
-The Rust game runs directly on Linux and macOS. REA and Ghidra are used during
+The Rust game runs directly on Windows, Linux and macOS. REA and Ghidra are used during
 development.
 
 **You need your original Atomic Bomberman game data.** Release downloads contain
 the application and importer; original graphics, sounds, and other game assets
 are imported locally from your copy of the game.
 
-**0.5.1 uses protocol 7.** Upgrade clients and relay together; saved server credentials remain valid. Validation and deployment status are recorded in [WAN consistency](docs/wan-consistency.md).
+**0.6.0 retains protocol 7 and the 0.5.1 compatibility family.** Compatible 0.5.1 clients and relays remain supported; saved server credentials remain valid. Validation and deployment status are recorded in [WAN consistency](docs/wan-consistency.md).
 
 ## Install a client and import game data
 
-Download the **0.5.1** application and matching checksum from
-[GitHub Release v0.5.1](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.5.1).
-Choose the built AppImage or Mac ZIP asset. GitHub's **Source code** archives
+Download the **0.6.0** application and matching checksum from
+[GitHub Release v0.6.0](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.6.0).
+Choose the Windows ZIP, Linux AppImage or Mac ZIP asset. GitHub's **Source code** archives
 require compilation.
 
 ### Linux x86-64
@@ -24,13 +24,22 @@ require compilation.
 Requires Ubuntu 24.04 or newer with X11/XWayland. In the download directory:
 
 ```sh
-sha256sum -c atomic-bomberman-0.5.1-linux-x86_64.AppImage.sha256
-chmod +x atomic-bomberman-0.5.1-linux-x86_64.AppImage
-./atomic-bomberman-0.5.1-linux-x86_64.AppImage
+sha256sum -c atomic-bomberman-0.6.0-linux-x86_64.AppImage.sha256
+chmod +x atomic-bomberman-0.6.0-linux-x86_64.AppImage
+./atomic-bomberman-0.6.0-linux-x86_64.AppImage
 ```
 
 The AppImage runs without FUSE and bundles the importer and desktop libraries.
 See [Linux installation](docs/INSTALL-linux.md) for repair, data paths, and logs.
+
+### Windows x64
+
+Requires Windows 10 22H2 or Windows 11, x64. Download
+`atomic-bomberman-0.6.0-windows-x86_64.zip` and its checksum. Compare
+`Get-FileHash <zip> -Algorithm SHA256` with the `.sha256` sidecar, choose
+**Extract All**, then double-click **Atomic Bomberman.exe**. The package is
+portable and unsigned. See [Windows installation](docs/INSTALL-windows.md) for
+first-run import, saved-data locations, repair and diagnostics.
 
 ### macOS Apple Silicon
 
@@ -38,13 +47,12 @@ Requires an Apple Silicon Mac (M1 or later). Verify the download in Terminal:
 
 ```sh
 cd ~/Downloads
-shasum -a 256 -c atomic-bomberman-0.5.1-macos-arm64.zip.sha256
+shasum -a 256 -c atomic-bomberman-0.6.0-macos-arm64.zip.sha256
 ```
 
 Extract the ZIP, move **Atomic Bomberman.app** into **Applications**, and open it.
 The app is ad-hoc signed; [Mac installation](docs/INSTALL-macos.md) explains
-macOS approval and troubleshooting. No Rust, Homebrew, Python, or Windows
-installation is needed for either release package.
+macOS approval and troubleshooting. Packaged applications require no Rust or Python installation.
 
 ### First launch
 
@@ -55,7 +63,7 @@ data, and starts the game. Allow about 0.6 GB for the saved assets plus temporar
 import space. Later launches reuse the saved data.
 
 Each multiplayer computer imports the same game edition and uses protocol **7**.
-**0.5.1 requires matching 0.5.1 clients and relay**; 0.5.0 and earlier are incompatible.
+**0.6.0 and 0.5.1 share a compatible client/relay family**; 0.5.0 and earlier are incompatible.
 Each computer controls its own avatars immediately, while the host resolves
 shared outcomes within a bounded 100 ms provisional window. Existing private
 server links, TLS identities and saved connection profiles remain valid.
@@ -78,7 +86,7 @@ Controls can be remapped in the game.
 | Fullscreen | F11; Command-Control-F on Mac | | |
 
 Settings and imported data stay outside the application, so replacing the
-AppImage or Mac app preserves them. A missing audio output permits silent play.
+AppImage, Mac app or Windows directory preserves them. A missing audio output permits silent play.
 
 ## Internet play: create and import an access key
 
@@ -88,7 +96,7 @@ the same full link once, then finds friends' hosted games automatically.
 
 ### Create a key on a new relay
 
-An administrator installs the native ARM64 relay using [relay setup](docs/relay.md).
+An administrator installs the Linux ARM64 or amd64 relay using [relay setup](docs/relay.md).
 Initialize its private state once:
 
 ```sh
@@ -122,7 +130,7 @@ open as well.
 ### Import the key on each client
 
 1. Copy the full private server link from the administrator or a friend.
-2. Open **Multiplayer → Internet → Paste server link**. Use **Ctrl-V** on Linux
+2. Open **Multiplayer → Internet → Paste server link**. Use **Ctrl-V** on Windows/Linux
    or **Command-V** on Mac, then select **Connect**.
 3. In **Friends' games**, select **Host game** or join a listed game. Each
    computer chooses its local keyboards/controllers and player colors.
@@ -146,12 +154,12 @@ Allow these inbound ports on the LAN host:
 | Protocol and port | Purpose |
 | --- | --- |
 | TCP 1997 | Lobby and control |
-| UDP 1997 | Automatic discovery |
-| UDP 1998 | Encrypted QUIC gameplay |
+| UDP 1997 | Automatic discovery and encrypted QUIC gameplay |
 
 On Mac, also allow Atomic Bomberman under **System Settings → Privacy & Security
 → Local Network**. Manual IP joining bypasses discovery, but gameplay still
-requires UDP 1998. See [multiplayer](docs/online-play.md).
+requires UDP 1997. Loopback entries are excluded from discovery; manual IP
+joining can still use `127.0.0.1` for two instances on the same computer. See [multiplayer](docs/online-play.md).
 
 ## Build and verify from source
 
@@ -162,7 +170,8 @@ sudo apt-get install build-essential pkg-config libudev-dev libasound2-dev \
   libx11-dev libxi-dev libgl1-mesa-dev libarchive-tools
 ```
 
-On Mac, install Xcode Command Line Tools. From the checkout:
+On Mac, install Xcode Command Line Tools. On Windows, install MSVC C++ build tools;
+see [Windows source builds](docs/INSTALL-windows.md). From the checkout:
 
 ```sh
 tools/check.sh
@@ -173,7 +182,8 @@ cargo run --locked --release -p bomberman -- --assets local-assets --windowed
 ```
 
 Linux packaging additionally needs `libgtk-3-dev librsvg2-common squashfs-tools`.
-Use `tools/package_linux.sh` or `tools/package_macos.sh` for desktop packages;
+Use `tools/package_linux.sh`, `tools/package_macos.sh`, or
+`python tools/windows_release.py build` for desktop packages;
 the [release procedure](docs/releases.md) covers coordinated desktop/relay builds.
 The importer accepts archives, images, and extracted folders. Original media,
 imported caches, private keys, invitations, and build outputs stay out of Git and

@@ -5,6 +5,23 @@ mod manifest;
 mod source;
 pub use manifest::*;
 
+/// Resolve Windows' system directory without searching PATH for helpers.
+#[cfg(windows)]
+pub fn windows_system_directory() -> std::path::PathBuf {
+    use std::os::windows::ffi::OsStringExt;
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn GetSystemDirectoryW(buffer: *mut u16, size: u32) -> u32;
+    }
+    let mut buffer = vec![0; 32768];
+    let length = unsafe { GetSystemDirectoryW(buffer.as_mut_ptr(), buffer.len() as u32) };
+    assert!(
+        length > 0 && (length as usize) < buffer.len(),
+        "Windows system directory unavailable"
+    );
+    std::ffi::OsString::from_wide(&buffer[..length as usize]).into()
+}
+
 use anyhow::{bail, ensure, Context, Result};
 use sha2::{Digest, Sha256};
 use std::{

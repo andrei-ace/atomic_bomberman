@@ -169,13 +169,20 @@ pub fn profile_path() -> PathBuf {
     if let Some(base) = std::env::var_os("XDG_CONFIG_HOME") {
         return PathBuf::from(base).join("atomic-bomberman/connections.json");
     }
-    let home = std::env::var_os("HOME")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from("."));
-    if cfg!(target_os = "macos") {
-        home.join("Library/Application Support/Atomic Bomberman/connections.json")
-    } else {
-        home.join(".config/atomic-bomberman/connections.json")
+    #[cfg(windows)]
+    return crate::windows::data_directory()
+        .expect("Windows LocalAppData folder unavailable")
+        .join("connections.json");
+    #[cfg(not(windows))]
+    {
+        let home = std::env::var_os("HOME")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from("."));
+        if cfg!(target_os = "macos") {
+            home.join("Library/Application Support/Atomic Bomberman/connections.json")
+        } else {
+            home.join(".config/atomic-bomberman/connections.json")
+        }
     }
 }
 impl ServerProfile {
@@ -186,6 +193,10 @@ impl ServerProfile {
             Err(_) => return Err(NetError::PrivateFile),
         };
         if !metadata.is_file() || metadata.len() > 4096 {
+            return Err(NetError::PrivateFile);
+        }
+        #[cfg(windows)]
+        if crate::windows::is_reparse(&metadata) {
             return Err(NetError::PrivateFile);
         }
         #[cfg(unix)]
@@ -222,6 +233,13 @@ impl ServerProfile {
         {
             return Err(NetError::PrivateFile);
         }
+        #[cfg(windows)]
+        if crate::windows::is_reparse(
+            &fs::symlink_metadata(parent).map_err(|_| NetError::PrivateFile)?,
+        ) || fs::symlink_metadata(path).is_ok_and(|m| crate::windows::is_reparse(&m))
+        {
+            return Err(NetError::PrivateFile);
+        }
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
@@ -230,18 +248,29 @@ impl ServerProfile {
         }
         let temporary = parent.join(format!(".connections-{}", random_token()));
         let result = (|| -> std::io::Result<()> {
+            #[cfg(not(windows))]
             let mut options = fs::OpenOptions::new();
+            #[cfg(not(windows))]
             options.write(true).create_new(true);
             #[cfg(unix)]
             {
                 use std::os::unix::fs::OpenOptionsExt;
                 options.mode(0o600);
             }
+            #[cfg(not(windows))]
             let mut file = options.open(&temporary)?;
+            #[cfg(windows)]
+            let mut file = crate::windows::create_private_file(&temporary)?;
             file.write_all(&serde_json::to_vec(self)?)?;
             file.sync_all()?;
+            drop(file);
+            #[cfg(not(windows))]
             fs::rename(&temporary, path)?;
-            fs::File::open(parent)?.sync_all()
+            #[cfg(windows)]
+            crate::windows::replace_file(&temporary, path)?;
+            #[cfg(unix)]
+            fs::File::open(parent)?.sync_all()?;
+            Ok(())
         })();
         if result.is_err() {
             let _ = fs::remove_file(&temporary);

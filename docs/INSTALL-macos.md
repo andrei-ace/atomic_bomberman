@@ -14,14 +14,14 @@ Playing requires no Rust, Homebrew, Python, Windows, or emulator.
 ## Download and install
 
 1. Open [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases)
-   and download `atomic-bomberman-0.5.1-macos-arm64.zip` and the matching
+   and download `atomic-bomberman-0.6.0-macos-arm64.zip` and the matching
    `.zip.sha256` file. Use the Mac ZIP asset; GitHub's automatic **Source code**
    archives contain source, rather than a built application.
 2. In Terminal, change to the download directory and verify the ZIP:
 
    ```bash
    cd ~/Downloads
-   shasum -a 256 -c atomic-bomberman-0.5.1-macos-arm64.zip.sha256
+   shasum -a 256 -c atomic-bomberman-0.6.0-macos-arm64.zip.sha256
    ```
 
    The result should be `OK`. Download the files again if the checksum fails.
@@ -108,7 +108,7 @@ private links and saved profiles remain valid after upgrading.
 
 **Multiplayer → LAN** discovers nearby games automatically and offers **Join by
 IP** when discovery is unavailable. Permit TCP 1997, UDP 1997 for discovery, and
-UDP 1998 for gameplay on the host. Allow Local Network access when macOS asks;
+UDP 1997 for discovery and gameplay on the host. Allow Local Network access when macOS asks;
 it can also be enabled under **System Settings → Privacy & Security → Local
-Network**. Manual IP joining still requires UDP 1998. See
+Network**. Manual IP joining still requires UDP 1997. See
 [multiplayer](online-play.md) for lobby options and troubleshooting.
