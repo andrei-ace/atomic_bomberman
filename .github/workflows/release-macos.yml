@@ -71,7 +71,7 @@ jobs:
         run: |
           mkdir -p build
           cargo run --locked -p bomberman-net --example replay_digest > build/replay-digest.txt
-          diff docs/evidence/network-replay-digest.txt build/replay-digest.txt
+          python tools/verify_replay_digest.py build/replay-digest.txt
       - name: Linux launcher and AppImage
         if: matrix.artifact == 'linux'
         run: |

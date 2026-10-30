@@ -80,7 +80,8 @@ certificate fingerprint together. It is saved privately, so later visits open
 
 The client needs outbound TCP 443 and UDP 443; the relay needs both ports inbound.
 UDP is required for gameplay. Keep TCP 443 for login, the browser, and control.
-Version 0.5.1 uses protocol 7 and requires matching 0.5.1 clients and relay; 0.5.0 and earlier are incompatible. Existing links and
+Version 0.6.0 retains protocol 7 and the 0.5.1 compatibility family;
+compatible clients and relays interoperate. Version 0.5.0 and earlier is incompatible. Existing links and
 saved profiles survive the upgrade.
 
 For LAN, open **Multiplayer → LAN** and host or join a nearby game. Permit TCP

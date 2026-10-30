@@ -12,6 +12,7 @@ import zipfile
 import package_relay
 import verify_release
 import windows_release
+import verify_replay_digest
 
 VERSION = '0.6.0'
 SOURCE = {'commit': '1' * 40, 'dirty': False, 'sha256': '2' * 64}
@@ -59,6 +60,21 @@ class PackageTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp.cleanup()
+
+    def test_replay_digest_accepts_line_endings_and_rejects_changed_or_malformed_hashes(self):
+        expected = self.root / 'expected.txt'
+        actual = self.root / 'actual.txt'
+        expected.write_bytes(b'a' * 64 + b'\n')
+        for ending in [b'\n', b'\r\n', b'']:
+            actual.write_bytes(b'a' * 64 + ending)
+            verify_replay_digest.verify(actual, expected)
+        actual.write_bytes(b'b' * 64 + b'\r\n')
+        with self.assertRaisesRegex(ValueError, 'differs'):
+            verify_replay_digest.verify(actual, expected)
+        for malformed in [b'a' * 63, b'A' * 64, b'a' * 64 + b' \n', b'a' * 64 + b'\n\n']:
+            actual.write_bytes(malformed)
+            with self.assertRaises(ValueError):
+                verify_replay_digest.verify(actual, expected)
 
     def windows(self, changed=None):
         name = f'atomic-bomberman-{VERSION}-windows-x86_64'

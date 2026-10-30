@@ -24,7 +24,7 @@ jobs:
       - run: python3 tools/test_release_packages.py
       - run: python3 tools/test_linux_launcher.py
       - run: cargo run --locked -p bomberman-net --example replay_digest > build/replay-digest.txt
-      - run: diff docs/evidence/network-replay-digest.txt build/replay-digest.txt
+      - run: python tools/verify_replay_digest.py build/replay-digest.txt
       - run: tools/package_linux.sh
       - run: python3 tools/test_appimage_bootstrap.py dist/github/*.AppImage
       - name: Native amd64 relay package and QUIC gameplay

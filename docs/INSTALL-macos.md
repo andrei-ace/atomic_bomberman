@@ -103,12 +103,13 @@ privately and opens **Friends' games** automatically on later visits. Select
 
 The client needs outbound TCP 443 and UDP 443, and the relay needs both ports
 inbound. UDP gameplay is required; TCP 443 remains necessary for login, browsing,
-and control. Version 0.5.1 uses protocol 7 and requires matching 0.5.1 clients and relay; 0.5.0 and earlier are incompatible. Existing
+and control. Version 0.6.0 retains protocol 7 and the 0.5.1 compatibility family;
+compatible clients and relays interoperate. Version 0.5.0 and earlier is incompatible. Existing
 private links and saved profiles remain valid after upgrading.
 
 **Multiplayer → LAN** discovers nearby games automatically and offers **Join by
-IP** when discovery is unavailable. Permit TCP 1997, UDP 1997 for discovery, and
-UDP 1997 for discovery and gameplay on the host. Allow Local Network access when macOS asks;
+IP** when discovery is unavailable. Permit TCP and UDP 1997 on the host; one UDP port handles both discovery
+and gameplay. Allow Local Network access when macOS asks;
 it can also be enabled under **System Settings → Privacy & Security → Local
 Network**. Manual IP joining still requires UDP 1997. See
 [multiplayer](online-play.md) for lobby options and troubleshooting.
