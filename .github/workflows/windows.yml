@@ -38,6 +38,8 @@ jobs:
         run: |
           cargo build --locked --release -p bomberman-windows-launcher
           python tools/test_windows_launcher.py
+      - name: Fetch locked workspace dependencies for offline license metadata
+        run: cargo fetch --locked --target x86_64-pc-windows-msvc
       - run: python tools/windows_release.py build --release
       - name: Production gameplay over QUIC
         run: |
