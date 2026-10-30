@@ -561,7 +561,7 @@ impl Media {
     }
 
     /// Original 0x41db41 exposes the two metadata words of the first FRAM.
-    /// Flame placement uses the second word for vertical alignment of cropped sprites.
+    /// Flame placement uses both words to align cropped animation frames.
     pub fn state_metadata(&self, name: &str, frame: usize) -> [i32; 2] {
         self.sequence(name).map_or([0, 0], |(_, sequence)| {
             crate::presentation::native_metadata(sequence, frame)

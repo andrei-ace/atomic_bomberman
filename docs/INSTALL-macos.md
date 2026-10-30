@@ -14,14 +14,14 @@ Playing requires no Rust, Homebrew, Python, Windows, or emulator.
 ## Download and install
 
 1. Open [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases)
-   and download `atomic-bomberman-0.6.0-macos-arm64.zip` and the matching
+   and download `atomic-bomberman-0.6.1-macos-arm64.zip` and the matching
    `.zip.sha256` file. Use the Mac ZIP asset; GitHub's automatic **Source code**
    archives contain source, rather than a built application.
 2. In Terminal, change to the download directory and verify the ZIP:
 
    ```bash
    cd ~/Downloads
-   shasum -a 256 -c atomic-bomberman-0.6.0-macos-arm64.zip.sha256
+   shasum -a 256 -c atomic-bomberman-0.6.1-macos-arm64.zip.sha256
    ```
 
    The result should be `OK`. Download the files again if the checksum fails.
@@ -103,7 +103,7 @@ privately and opens **Friends' games** automatically on later visits. Select
 
 The client needs outbound TCP 443 and UDP 443, and the relay needs both ports
 inbound. UDP gameplay is required; TCP 443 remains necessary for login, browsing,
-and control. Version 0.6.0 retains protocol 7 and the 0.5.1 compatibility family;
+and control. Version 0.6.1 retains protocol 7 and the 0.5.1 compatibility family;
 compatible clients and relays interoperate. Version 0.5.0 and earlier is incompatible. Existing
 private links and saved profiles remain valid after upgrading.
 

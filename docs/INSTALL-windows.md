@@ -6,12 +6,12 @@ Atomic Bomberman game data.
 
 ## Download and launch
 
-Download `atomic-bomberman-0.6.0-windows-x86_64.zip` and its `.sha256` sidecar.
+Download `atomic-bomberman-0.6.1-windows-x86_64.zip` and its `.sha256` sidecar.
 In PowerShell, compare the displayed SHA-256 with the sidecar:
 
 ```powershell
-Get-FileHash .\atomic-bomberman-0.6.0-windows-x86_64.zip -Algorithm SHA256
-Get-Content .\atomic-bomberman-0.6.0-windows-x86_64.zip.sha256
+Get-FileHash .\atomic-bomberman-0.6.1-windows-x86_64.zip -Algorithm SHA256
+Get-Content .\atomic-bomberman-0.6.1-windows-x86_64.zip.sha256
 ```
 
 Choose **Extract All**, open the extracted directory, and double-click
@@ -55,7 +55,7 @@ For LAN hosting, allow the application on Windows Firewall's **Private networks*
 when prompted. Hosting needs TCP/UDP 1997. **Join by IP** is available
 when automatic discovery is unavailable. See `docs/online-play.md`.
 
-Version 0.6.0 retains protocol 7 and the 0.5.1 compatibility family. Windows,
+Version 0.6.1 retains protocol 7 and the 0.5.1 compatibility family. Windows,
 Linux and Mac clients can play together with a compatible ARM64 or amd64 relay
 and matching original game data. Version 0.5.0 and earlier are incompatible.
 
@@ -88,7 +88,7 @@ Build from source with Rust 1.89+ and Visual Studio's MSVC C++ build tools:
 
 ```powershell
 python tools/windows_release.py build
-python tools/windows_release.py verify dist/github/atomic-bomberman-0.6.0-windows-x86_64.zip
+python tools/windows_release.py verify dist/github/atomic-bomberman-0.6.1-windows-x86_64.zip
 ```
 
 Build-time Python is not required by the packaged application. Use `--release`

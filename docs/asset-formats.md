@@ -42,8 +42,13 @@ Tests cover extracted directories and synthetic ISO9660/MODE1 images as well as
 malformed media and cache tampering.
 
 
-Floor-flame frames have different cropped heights. Their second FRAM metadata
-word restores their vertical anchor; CIMG origins already center the horizontal
-position. Applying that metadata on X displaces horizontal rays from the center.
-The connected-cross GPU fixture covers this call-site geometry as well as all
-colors and terminal destruction/cleanup frames.
+Floor-flame frames have different cropped shapes. Native `0x426f04..0x426f46`
+adds the first FRAM metadata word on X and the second on Y, with Y based on the
+tile's bottom pixel minus half its height. Relative to the tile center this is
+`(x + metadata[0], y + metadata[1] - 1)`. CIMG origin subtraction happens afterward.
+Omitting X offsets shifts different frames by different amounts. Ground sprites
+use the tile's bottom pixel, 17 pixels below its center; players, bombs, shadows,
+powerups, tiles, destruction effects and hazards share this coordinate rule.
+`tools/compare_flame_presentation.py` checks the actual native flame call site,
+ground helpers and bitmap rectangles. The connected-cross GPU fixture separately
+checks all colors and terminal destruction/cleanup frames.

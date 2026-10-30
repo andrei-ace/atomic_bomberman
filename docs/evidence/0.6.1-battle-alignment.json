@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "asset_manifest_sha256": "d3b83beeb76f9aecf0435468a94c2f7bda722e4e845c9f1af5a2da5b7aababbd",
+  "fixtures": 4595,
+  "flame_fixtures": 2090,
+  "colors": 10,
+  "floor_flame_shapes": 9,
+  "brick_arenas": 11,
+  "other_battle_sequences": 122,
+  "other_battle_states": 2340,
+  "ground_tiles": 165,
+  "native_entries": [
+    "0x426d06",
+    "0x426524",
+    "0x42655f",
+    "0x41daa7",
+    "0x41db41",
+    "0x4156c7"
+  ],
+  "compared": [
+    "native per-frame X and Y offsets",
+    "actual queued anchor for every color",
+    "CIMG origin subtraction and final bitmap rectangle",
+    "wrapped floor frames",
+    "clamped brick destruction frames",
+    "corner and central board tiles",
+    "all ground anchors across the 15 by 11 board",
+    "every active battle sprite state: players, bombs, shadows, tiles, powerups, hazards and Gold"
+  ],
+  "limitations": [
+    "Validated imported data supplies animation tables; parser checks are separate.",
+    "Ground sprite selection is supplied data; player action/lifecycle selection has a separate native comparison.",
+    "No original application or platform entry point executes."
+  ]
+}

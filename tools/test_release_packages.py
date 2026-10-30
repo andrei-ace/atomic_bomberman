@@ -14,7 +14,7 @@ import verify_release
 import windows_release
 import verify_replay_digest
 
-VERSION = '0.6.0'
+VERSION = '0.6.1'
 SOURCE = {'commit': '1' * 40, 'dirty': False, 'sha256': '2' * 64}
 
 

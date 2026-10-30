@@ -1,0 +1,99 @@
+{
+  "passed": true,
+  "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+  "fixtures": 1792,
+  "native_entries": {
+    "alive": "0x41ff2f..0x420870",
+    "dead": "0x41f3e4..0x420d45",
+    "corner_activation": "0x41f8e5..0x41fa11"
+  },
+  "coverage": {
+    "death_sequences": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+    ],
+    "corner_sequences": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "specials": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "elapsed_ms": [
+      0,
+      1,
+      7,
+      16,
+      33,
+      50,
+      75,
+      150
+    ],
+    "arithmetic": [
+      "signed16 remainder wrap",
+      "unsigned16 frame wrap",
+      "unsigned asset frame modulo"
+    ],
+    "carrying": true,
+    "disease_palette": true,
+    "team_palette_reveal": true,
+    "angel_rise_and_early_exit": true,
+    "death_power_release": true,
+    "corner_selection_with_walls_ground_air_and_carried_bombs": 256
+  },
+  "compared": [
+    "original queued sequence,frame,palette,position",
+    "all animation counters and remainders",
+    "active flag and position",
+    "inventory after death release",
+    "every spawned item state/kind",
+    "selected sounds and shared RNG"
+  ],
+  "hooks": [
+    "actual imported MASTER sequence lookup and lengths",
+    "graphics queues record original parameters",
+    "resource data and physical audio I/O"
+  ],
+  "limitations": [
+    "This executes actual original presentation/death blocks, not the Windows event loop.",
+    "Movement, input, transit and action behavior before/after these blocks have separate engine/component comparisons.",
+    "Raster color output is checked by the separate frontend pixel comparison."
+  ]
+}

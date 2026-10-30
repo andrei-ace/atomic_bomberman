@@ -3,7 +3,7 @@ use crate::{
     cli::Cli,
     controls::{fullscreen_shortcut, key_named, Controllers, ACTIONS, PAD_BUTTONS},
     media::{Media, MUSIC},
-    presentation::player_sprite,
+    presentation::{ground_anchor, player_sprite},
     settings::{Device, Settings},
 };
 use anyhow::{Context, Result};
@@ -1300,6 +1300,7 @@ impl App {
         // bodies follow slot order; held bombs follow players and Gold effects.
         for (tile, cell) in simulation.board.iter() {
             let (x, y) = tile_anchor(tile);
+            let (x, y) = ground_anchor(x, y);
             let kind =
                 match crate::presentation::render_terrain(cell.terrain, tile, &simulation.flames) {
                     Terrain::Floor => "blank",
@@ -1307,26 +1308,22 @@ impl App {
                     Terrain::Brick => "brick",
                 };
             self.media
-                .state(&format!("tile {} {kind}", arena.id), 0, x, y + 17., None);
+                .state(&format!("tile {} {kind}", arena.id), 0, x, y, None);
             if cell.terrain == Terrain::Floor {
-                self.draw_hazard(
-                    cell.hazard,
-                    x,
-                    y + 17.,
-                    simulation.hazard_frame(tile) as usize,
-                );
+                self.draw_hazard(cell.hazard, x, y, simulation.hazard_frame(tile) as usize);
             }
         }
         for (tile, cell) in simulation.board.iter() {
             if cell.item_render_visible {
                 if let Some(powerup) = Powerup::from_id(cell.item_render_kind) {
                     let (x, y) = tile_anchor(tile);
+                    let (x, y) = ground_anchor(x, y);
                     let (_, name) = powerup_art(powerup);
                     self.media.state(
                         &format!("power {name}"),
                         cell.item_render_frame as usize,
                         x,
-                        y + 17.,
+                        y,
                         None,
                     );
                 }
@@ -1338,8 +1335,8 @@ impl App {
                 && player.presentation.render_special != 5
         }) {
             let (x, y) = player.presentation.render_position.pixel();
-            self.media
-                .state("shadow", 0, BOARD_X + x, BOARD_Y + y + 17., None);
+            let (x, y) = ground_anchor(BOARD_X + x, BOARD_Y + y);
+            self.media.state("shadow", 0, x, y, None);
         }
         for bomb in simulation
             .bombs
@@ -1352,6 +1349,7 @@ impl App {
             let (x, y) = tile_anchor(tile);
             for flame in simulation.flames.iter().filter(|flame| flame.tile == tile) {
                 if flame.shape == 9 {
+                    let (x, y) = ground_anchor(x, y);
                     let name = format!("flame brick {}", arena.id);
                     let frame = (flame.render_frame as usize)
                         .min(self.media.sequence_len(&name).saturating_sub(1));
@@ -1359,7 +1357,7 @@ impl App {
                         &name,
                         frame,
                         x,
-                        y + 17.,
+                        y,
                         Some(self.battle_palette(flame.palette as usize)),
                     );
                     continue;
@@ -1395,7 +1393,7 @@ impl App {
             .filter(|player| player.presentation.render_visible)
         {
             let (x, y) = player.presentation.render_position.pixel();
-            let (x, y) = (BOARD_X + x, BOARD_Y + y + 17.);
+            let (x, y) = ground_anchor(BOARD_X + x, BOARD_Y + y);
             let sprite = player_sprite(player);
             if sprite.dead && sprite.frame >= self.media.sequence_len(&sprite.sequence) {
                 continue;
@@ -1424,13 +1422,9 @@ impl App {
             .filter(|particle| particle.render_visible)
         {
             let (x, y) = particle.position.pixel();
-            self.media.state(
-                "goldman",
-                particle.render_frame as usize,
-                BOARD_X + x,
-                BOARD_Y + y + 17.,
-                Some(0),
-            );
+            let (x, y) = ground_anchor(BOARD_X + x, BOARD_Y + y);
+            self.media
+                .state("goldman", particle.render_frame as usize, x, y, Some(0));
         }
         for bomb in simulation
             .bombs
@@ -1501,7 +1495,7 @@ impl App {
 
     fn draw_bomb(&self, bomb: &bomberman_core::Bomb) {
         let (x, y) = bomb.visual_position().pixel();
-        let (x, y) = (BOARD_X + x, BOARD_Y + y + 17.);
+        let (x, y) = ground_anchor(BOARD_X + x, BOARD_Y + y);
         let sequence = if bomb.dud {
             "bomb regular green dud"
         } else {

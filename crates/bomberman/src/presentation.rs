@@ -62,10 +62,21 @@ pub fn image_position(frame: &AnimationFrame, x: f32, y: f32) -> (f32, f32) {
     (x - frame.origin_x as f32, y - frame.origin_y as f32)
 }
 
-/// Floor-flame states are cropped to different heights. Their second FRAM
-/// metadata word restores the vertical anchor; CIMG already centers X.
+/// Native 0x42655f anchors ground sprites at the last pixel of the tile,
+/// 17 pixels below the simulation's tile center for a 36-pixel-high cell.
+pub fn ground_anchor(x: f32, y: f32) -> (f32, f32) {
+    (x, y + (bomberman_core::TILE_HEIGHT / 2 - 1) as f32)
+}
+
+/// Native 0x426f04..0x426f46 applies both FRAM offsets, then subtracts half
+/// the tile height from the ground anchor. Cropped frames need their X offset
+/// as well as Y; CIMG origin subtraction happens afterward in image_position.
 pub fn flame_anchor(x: f32, y: f32, metadata: [i32; 2]) -> (f32, f32) {
-    (x, y + metadata[1] as f32)
+    let (x, y) = ground_anchor(x, y);
+    (
+        x + metadata[0] as f32,
+        y + metadata[1] as f32 - (bomberman_core::TILE_HEIGHT / 2) as f32,
+    )
 }
 
 pub fn direction_name(direction: Direction) -> &'static str {
@@ -147,6 +158,20 @@ mod tests {
     use super::*;
     use bomberman_assets::AnimationSequence;
     use bomberman_core::{GameConfig, Simulation};
+
+    #[test]
+    fn cropped_flames_match_original_call_site_anchors() {
+        assert_eq!(ground_anchor(40., 78.), (40., 95.));
+        for (metadata, expected) in [
+            ([-1, 16], (39., 93.)), // north tip, first MFLAME frame
+            ([3, 16], (43., 93.)),  // center
+            ([3, 11], (43., 88.)),  // cropped west segment
+            ([3, 8], (43., 85.)),   // cropped east segment
+            ([0, 0], (40., 77.)),
+        ] {
+            assert_eq!(flame_anchor(40., 78., metadata), expected);
+        }
+    }
 
     #[test]
     fn destroying_brick_reveals_floor_without_changing_physics_or_item_timing() {

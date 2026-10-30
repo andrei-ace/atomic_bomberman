@@ -241,7 +241,10 @@ async fn run(assets: PathBuf, output: PathBuf) -> Result<()> {
                         let (ai, si) = index[&name];
                         let sequence = &manifest.animations[ai].sequences[si];
                         let metadata = sequence.offsets[state % sequence.frames.len()];
-                        let flame_anchor = (anchor.0, anchor.1 + metadata[1]);
+                        // Original 0x426f04..0x426f46: frame metadata on both
+                        // axes, with ground Y minus half a tile's height.
+                        let flame_anchor =
+                            (anchor.0 + metadata[0], anchor.1 + 17 - 18 + metadata[1]);
                         let production_anchor = presentation::flame_anchor(
                             anchor.0 as f32,
                             anchor.1 as f32,
@@ -283,10 +286,15 @@ async fn run(assets: PathBuf, output: PathBuf) -> Result<()> {
                     .export_png(&output.join("failure-expected.png").to_string_lossy());
                     anyhow::bail!("GPU mismatch: arena {id}, color {color}, state {state}");
                 }
-                if arena == 0 && (color == 0 || color == 1 || color == 5) {
-                    pixels.export_png(
+                if arena == 0 || arena == 6 {
+                    Image {
+                        bytes: actual,
+                        width: WIDTH as u16,
+                        height: HEIGHT as u16,
+                    }
+                    .export_png(
                         &output
-                            .join(format!("explosion-color{color}-{state:02}.png"))
+                            .join(format!("explosion-arena{id}-color{color}-{state:02}.png"))
                             .to_string_lossy(),
                     );
                 }
@@ -296,7 +304,7 @@ async fn run(assets: PathBuf, output: PathBuf) -> Result<()> {
             }
         }
     }
-    let report = serde_json::json!({"passed":true,"platform":std::env::consts::OS,"cases":cases,"arenas":manifest.arenas.len(),"colors":10,"floor_flame_shapes":9,"checks":["GPU pixels match independent palette compositor","floor beneath transparent brick destruction","all original destruction states","all floor-flame shapes and frame wrapping","connected cross geometry with vertically anchored cropped sprites","terminal destruction frame","no leftover pixels after cleanup"],"limitations":["Deterministic renderer fixtures; physical monitor inspection is separate."]});
+    let report = serde_json::json!({"passed":true,"platform":std::env::consts::OS,"cases":cases,"arenas":manifest.arenas.len(),"colors":10,"floor_flame_shapes":9,"checks":["GPU pixels match independent palette compositor","floor beneath transparent brick destruction","all original destruction states","all floor-flame shapes and frame wrapping","connected cross geometry with native X and Y frame offsets","terminal destruction frame","no leftover pixels after cleanup"],"limitations":["Deterministic renderer fixtures; physical monitor inspection is separate."]});
     std::fs::write(
         output.join("report.json"),
         serde_json::to_vec_pretty(&report)?,

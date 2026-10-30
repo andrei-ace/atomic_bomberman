@@ -1,7 +1,8 @@
 # Private online and LAN games
 
-Version **0.6.0** retains protocol **7** and the **0.5.1** compatibility family.
-Windows, Linux and Mac clients interoperate with compatible 0.5.1/0.6.0 relays.
+Version **0.6.1** retains protocol **7** and the **0.5.1** compatibility family.
+Windows, Linux and Mac clients interoperate with compatible 0.5.1-family relays,
+including 0.6.0 and 0.6.1.
 Version 0.5.0 and earlier is incompatible. Existing private server links and
 saved profiles remain valid when the server keeps its certificate and token.
 Import the same edition of Atomic Bomberman. The relay has no original game data
@@ -85,7 +86,7 @@ joining still requires UDP 1997. Automatic discovery omits `127.0.0.1` and other
 loopback replies to avoid showing a host twice. Manual joining to `127.0.0.1`
 remains available for testing two instances on one computer. LAN gameplay is encrypted; the initial control connection exchanges the host's temporary certificate fingerprint automatically.
 Use LAN mode on a trusted local network. The single-port setup applies to
-0.6.0 hosts; older compatible hosts can still advertise UDP 1998.
+0.6.0 and later hosts; older compatible hosts can still advertise UDP 1998.
 
 ## Lobby
 

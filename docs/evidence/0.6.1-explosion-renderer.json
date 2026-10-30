@@ -1,0 +1,20 @@
+{
+  "arenas": 11,
+  "cases": 1260,
+  "checks": [
+    "GPU pixels match independent palette compositor",
+    "floor beneath transparent brick destruction",
+    "all original destruction states",
+    "all floor-flame shapes and frame wrapping",
+    "connected cross geometry with native X and Y frame offsets",
+    "terminal destruction frame",
+    "no leftover pixels after cleanup"
+  ],
+  "colors": 10,
+  "floor_flame_shapes": 9,
+  "limitations": [
+    "Deterministic renderer fixtures; physical monitor inspection is separate."
+  ],
+  "passed": true,
+  "platform": "macos"
+}

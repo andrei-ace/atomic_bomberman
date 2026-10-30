@@ -10,12 +10,15 @@ development.
 the application and importer; original graphics, sounds, and other game assets
 are imported locally from your copy of the game.
 
-**0.6.0 retains protocol 7 and the 0.5.1 compatibility family.** Compatible 0.5.1 clients and relays remain supported; saved server credentials remain valid. Validation and deployment status are recorded in [WAN consistency](docs/wan-consistency.md).
+**0.6.1 retains protocol 7 and the 0.5.1 compatibility family.** Compatible 0.5.1 clients and relays remain supported; saved server credentials remain valid. Validation and deployment status are recorded in [WAN consistency](docs/wan-consistency.md).
+
+Version 0.6.1 fixes cropped flame alignment across all colors and animation frames.
+The [sprite alignment audit](docs/render-alignment.md) also checks the other battle artwork.
 
 ## Install a client and import game data
 
-Download the **0.6.0** application and matching checksum from
-[GitHub Release v0.6.0](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.6.0).
+Download the **0.6.1** application and matching checksum from
+[GitHub Release v0.6.1](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.6.1).
 Choose the Windows ZIP, Linux AppImage or Mac ZIP asset. GitHub's **Source code** archives
 require compilation.
 
@@ -24,9 +27,9 @@ require compilation.
 Requires Ubuntu 24.04 or newer with X11/XWayland. In the download directory:
 
 ```sh
-sha256sum -c atomic-bomberman-0.6.0-linux-x86_64.AppImage.sha256
-chmod +x atomic-bomberman-0.6.0-linux-x86_64.AppImage
-./atomic-bomberman-0.6.0-linux-x86_64.AppImage
+sha256sum -c atomic-bomberman-0.6.1-linux-x86_64.AppImage.sha256
+chmod +x atomic-bomberman-0.6.1-linux-x86_64.AppImage
+./atomic-bomberman-0.6.1-linux-x86_64.AppImage
 ```
 
 The AppImage runs without FUSE and bundles the importer and desktop libraries.
@@ -35,7 +38,7 @@ See [Linux installation](docs/INSTALL-linux.md) for repair, data paths, and logs
 ### Windows x64
 
 Requires Windows 10 22H2 or Windows 11, x64. Download
-`atomic-bomberman-0.6.0-windows-x86_64.zip` and its checksum. Compare
+`atomic-bomberman-0.6.1-windows-x86_64.zip` and its checksum. Compare
 `Get-FileHash <zip> -Algorithm SHA256` with the `.sha256` sidecar, choose
 **Extract All**, then double-click **Atomic Bomberman.exe**. The package is
 portable and unsigned. See [Windows installation](docs/INSTALL-windows.md) for
@@ -47,7 +50,7 @@ Requires an Apple Silicon Mac (M1 or later). Verify the download in Terminal:
 
 ```sh
 cd ~/Downloads
-shasum -a 256 -c atomic-bomberman-0.6.0-macos-arm64.zip.sha256
+shasum -a 256 -c atomic-bomberman-0.6.1-macos-arm64.zip.sha256
 ```
 
 Extract the ZIP, move **Atomic Bomberman.app** into **Applications**, and open it.
@@ -63,7 +66,7 @@ data, and starts the game. Allow about 0.6 GB for the saved assets plus temporar
 import space. Later launches reuse the saved data.
 
 Each multiplayer computer imports the same game edition and uses protocol **7**.
-**0.6.0 and 0.5.1 share a compatible client/relay family**; 0.5.0 and earlier are incompatible.
+**0.6.1 and 0.5.1 share a compatible client/relay family**; 0.5.0 and earlier are incompatible.
 Each computer controls its own avatars immediately, while the host resolves
 shared outcomes within a bounded 100 ms provisional window. Existing private
 server links, TLS identities and saved connection profiles remain valid.
