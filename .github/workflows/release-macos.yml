@@ -28,16 +28,21 @@ jobs:
         include:
           - runner: ubuntu-24.04
             artifact: linux
+            python: python3
           - runner: macos-15
             artifact: macos
+            python: python3
           - runner: ubuntu-24.04-arm
             artifact: relay-arm64
+            python: python3
             target: aarch64-unknown-linux-gnu
           - runner: ubuntu-24.04
             artifact: relay-amd64
+            python: python3
             target: x86_64-unknown-linux-gnu
           - runner: windows-2022
             artifact: windows
+            python: python
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 35
     steps:
@@ -55,7 +60,7 @@ jobs:
       - name: Check annotated tag and version
         shell: bash
         run: |
-          test "$RELEASE_TAG" = "v$(python tools/macos_release.py version)"
+          test "$RELEASE_TAG" = "v$("${{ matrix.python }}" tools/macos_release.py version)"
           test "$(git cat-file -t "refs/tags/$RELEASE_TAG")" = tag
           test "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")" = "$(git rev-parse HEAD)"
       - name: Linux build dependencies
@@ -65,13 +70,13 @@ jobs:
         shell: bash
         run: |
           bash tools/check.sh
-          python tools/test_release_packages.py
+          "${{ matrix.python }}" tools/test_release_packages.py
       - name: Compare portable replay digest
         shell: bash
         run: |
           mkdir -p build
           cargo run --locked -p bomberman-net --example replay_digest > build/replay-digest.txt
-          python tools/verify_replay_digest.py build/replay-digest.txt
+          "${{ matrix.python }}" tools/verify_replay_digest.py build/replay-digest.txt
       - name: Linux launcher and AppImage
         if: matrix.artifact == 'linux'
         run: |

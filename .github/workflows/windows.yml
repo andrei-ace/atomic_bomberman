@@ -28,7 +28,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66 # Rust 1.89.0
         with:
           components: rustfmt, clippy
-      - run: bash tools/check.sh
       - run: python tools/test_release_packages.py
       - name: Compare portable replay digest
         run: |
@@ -45,6 +44,8 @@ jobs:
           cargo build --locked --release -p bomberman-relay
           cargo build --locked --release -p bomberman --example network_latency
           python tools/verify_datagram.py --relay target/release/bomberman-relay.exe --example target/release/examples/network_latency.exe --report build/windows-quic.json
+      - name: Full source and simulation checks
+        run: bash tools/check.sh
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: atomic-bomberman-windows-x86_64
