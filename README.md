@@ -10,12 +10,12 @@ development.
 the application and importer; original graphics, sounds, and other game assets
 are imported locally from your copy of the game.
 
-The working tree prepares **0.5.1 / protocol 7**. It requires matching clients and relay; saved server credentials remain valid. Validation and deployment status are recorded in [WAN consistency](docs/wan-consistency.md).
+**0.5.1 uses protocol 7.** Upgrade clients and relay together; saved server credentials remain valid. Validation and deployment status are recorded in [WAN consistency](docs/wan-consistency.md).
 
 ## Install a client and import game data
 
-Download the **0.5.0** application and matching checksum from
-[GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases).
+Download the **0.5.1** application and matching checksum from
+[GitHub Release v0.5.1](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.5.1).
 Choose the built AppImage or Mac ZIP asset. GitHub's **Source code** archives
 require compilation.
 
@@ -24,9 +24,9 @@ require compilation.
 Requires Ubuntu 24.04 or newer with X11/XWayland. In the download directory:
 
 ```sh
-sha256sum -c atomic-bomberman-0.5.0-linux-x86_64.AppImage.sha256
-chmod +x atomic-bomberman-0.5.0-linux-x86_64.AppImage
-./atomic-bomberman-0.5.0-linux-x86_64.AppImage
+sha256sum -c atomic-bomberman-0.5.1-linux-x86_64.AppImage.sha256
+chmod +x atomic-bomberman-0.5.1-linux-x86_64.AppImage
+./atomic-bomberman-0.5.1-linux-x86_64.AppImage
 ```
 
 The AppImage runs without FUSE and bundles the importer and desktop libraries.
@@ -38,7 +38,7 @@ Requires an Apple Silicon Mac (M1 or later). Verify the download in Terminal:
 
 ```sh
 cd ~/Downloads
-shasum -a 256 -c atomic-bomberman-0.5.0-macos-arm64.zip.sha256
+shasum -a 256 -c atomic-bomberman-0.5.1-macos-arm64.zip.sha256
 ```
 
 Extract the ZIP, move **Atomic Bomberman.app** into **Applications**, and open it.
@@ -54,8 +54,8 @@ image. The importer reads the source without changing it, validates the imported
 data, and starts the game. Allow about 0.6 GB for the saved assets plus temporary
 import space. Later launches reuse the saved data.
 
-Each multiplayer computer imports the same game edition and uses protocol **6**.
-**0.5.0 requires matching 0.5.0 clients and relay**; 0.4.x is incompatible.
+Each multiplayer computer imports the same game edition and uses protocol **7**.
+**0.5.1 requires matching 0.5.1 clients and relay**; 0.5.0 and earlier are incompatible.
 Each computer controls its own avatars immediately, while the host resolves
 shared outcomes within a bounded 100 ms provisional window. Existing private
 server links, TLS identities and saved connection profiles remain valid.

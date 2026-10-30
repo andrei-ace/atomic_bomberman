@@ -1,6 +1,6 @@
 # Desktop and relay releases
 
-Prepared candidate **0.5.1** (unpublished), Rust **1.89.0**, one annotated Git tag for all three packages:
+Version **0.5.1**, Rust **1.89.0**, one annotated Git tag for all three packages:
 Linux x86-64 AppImage (Ubuntu 24.04 baseline, X11/XWayland), Apple Silicon Mac ZIP,
 and native Linux ARM64 relay (Ubuntu 26 deployment; glibc 2.39 minimum).
 The multiplayer protocol is **7**, with `ABG7`, QUIC ALPN

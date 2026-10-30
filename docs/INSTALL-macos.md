@@ -14,20 +14,20 @@ Playing requires no Rust, Homebrew, Python, Windows, or emulator.
 ## Download and install
 
 1. Open [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases)
-   and download `atomic-bomberman-0.5.0-macos-arm64.zip` and the matching
+   and download `atomic-bomberman-0.5.1-macos-arm64.zip` and the matching
    `.zip.sha256` file. Use the Mac ZIP asset; GitHub's automatic **Source code**
    archives contain source, rather than a built application.
 2. In Terminal, change to the download directory and verify the ZIP:
 
    ```bash
    cd ~/Downloads
-   shasum -a 256 -c atomic-bomberman-0.5.0-macos-arm64.zip.sha256
+   shasum -a 256 -c atomic-bomberman-0.5.1-macos-arm64.zip.sha256
    ```
 
    The result should be `OK`. Download the files again if the checksum fails.
 3. Double-click the ZIP. Move **Atomic Bomberman.app** into **Applications**.
    Keep the included `README.txt` for installation and recovery instructions.
-4. Open the app from Applications. This preview is ad-hoc signed and is not
+4. Open the app from Applications. The app is ad-hoc signed and is not
    notarized. If macOS blocks it, first verify the download and its source;
    Apple's supported per-app approval is **System Settings → Privacy & Security
    → Open Anyway** after the first launch attempt. See
@@ -103,7 +103,7 @@ privately and opens **Friends' games** automatically on later visits. Select
 
 The client needs outbound TCP 443 and UDP 443, and the relay needs both ports
 inbound. UDP gameplay is required; TCP 443 remains necessary for login, browsing,
-and control. Version 0.5.0 uses protocol 6 and requires matching 0.5.0 clients and relay; 0.4.x is incompatible. Existing
+and control. Version 0.5.1 uses protocol 7 and requires matching 0.5.1 clients and relay; 0.5.0 and earlier are incompatible. Existing
 private links and saved profiles remain valid after upgrading.
 
 **Multiplayer → LAN** discovers nearby games automatically and offers **Join by
