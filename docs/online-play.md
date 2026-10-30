@@ -1,6 +1,6 @@
 # Private online and LAN games
 
-Use version **0.5.0**, protocol **6**, on every client and the relay. Older
+Use version **0.5.1**, protocol **7**, on every client and the relay. Older
 0.4.x clients and relays are incompatible. Existing private server links and
 saved profiles remain valid when the server keeps its certificate and token.
 Import the same edition of Atomic Bomberman. The relay has no original game data

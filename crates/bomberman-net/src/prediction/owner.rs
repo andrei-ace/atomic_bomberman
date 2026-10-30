@@ -180,13 +180,25 @@ impl ClientPrediction {
         self.now_ms = self.now_ms.max(now_ms);
         self.phase_error_ms -= self.phase_error_ms.clamp(-2, 2);
         self.sequence = self.sequence.checked_add(1).ok_or(NetError::Protocol)?;
+        if self.captured_at.len() == MAX_INPUT_HISTORY {
+            self.captured_at.pop_front();
+        }
+        self.captured_at.push_back((self.sequence, now_ms));
         self.clock_ms = self.clock_ms.saturating_add(u64::from(STEP_MS));
         let target = (self.clock_ms / u64::from(STEP_MS)).max(self.predicted.tick + 1);
         // The initial half-RTT aligns the owner's fixed clock with the host,
         // without treating a coalesced sample acknowledgement as elapsed time.
         while self.predicted.tick + 1 < target {
+            let mut catchup = self.confirmed_inputs.clone();
+            for (local, &seat) in self.owned.iter().enumerate() {
+                catchup[seat].direction = self.observed[local].direction;
+                catchup[seat].direction_mask = self.observed[local].direction_mask;
+            }
             self.predicted
-                .advance(self.confirmed_inputs.clone(), vec![])?;
+                .simulation
+                .step_owned(STEP_MS, &catchup, &[], &self.owned);
+            self.predicted.tick += 1;
+            self.predicted.inputs = catchup;
         }
         self.clock_ms = target * u64::from(STEP_MS);
         let mut held = self.confirmed_inputs.clone();
@@ -224,7 +236,8 @@ impl ClientPrediction {
                 seat,
                 tick: target,
                 round: self.predicted.simulation.round,
-                active: self.predicted.simulation.players[seat].alive,
+                active: self.predicted.simulation.players[seat].alive
+                    && self.predicted.simulation.player_initialized(seat),
                 sequence: self.sequence,
                 edge: owner.applied_edges[local],
                 input: recorded[local],
@@ -262,11 +275,24 @@ impl ClientPrediction {
             if let Some(sample) = frame.motions.iter().find(|sample| sample.seat == seat) {
                 if canonical.simulation.players[seat].alive
                     && sample.active
+                    && sample.round == canonical.simulation.round
                     && canonical.simulation.players[seat].position != sample.motion.position
                 {
                     // Keep the immutable wire facts, but recompute subsequent
                     // local motion after a genuine shared collision conflict.
                     owner.invalid_through[local] = self.sequence;
+                    self.reconciliation_serial = self.reconciliation_serial.saturating_add(1);
+                    *self.reconciliation_by_seat.entry(seat).or_default() += 1;
+                    let from = sample.motion.position;
+                    let to = canonical.simulation.players[seat].position;
+                    if (i64::from(from.x) - i64::from(to.x)).abs()
+                        + (i64::from(from.y) - i64::from(to.y)).abs()
+                        >= 1000
+                    {
+                        crate::diagnostics::log_record(
+                            &serde_json::json!({"event":"significant_reconciliation","room_tag":self.diagnostic_context.0,"peer":self.diagnostic_context.1,"generation":self.diagnostic_context.2,"round":canonical.simulation.round,"tick":canonical.tick,"seat":seat,"owner":from,"canonical":to,"cause":"authoritative_path_conflict"}),
+                        );
+                    }
                 }
             }
         }
@@ -285,10 +311,15 @@ impl ClientPrediction {
             return Ok(());
         }
         if canonical.simulation.round != self.baseline_round {
+            self.reconciliation_serial = self.reconciliation_serial.saturating_add(1);
+            for seat in &self.owned {
+                *self.reconciliation_by_seat.entry(*seat).or_default() += 1;
+            }
             let owner = self.owner.as_mut().unwrap();
-            owner
-                .samples
-                .retain(|sample| sample.edge > self.acknowledgments[sample.seat].edge);
+            owner.samples.retain(|sample| {
+                sample.round == canonical.simulation.round
+                    || sample.edge > self.acknowledgments[sample.seat].edge
+            });
             owner.remote.clear();
             for input in &mut self.confirmed_inputs {
                 input.direction = None;
@@ -313,22 +344,45 @@ impl ClientPrediction {
         let target = (self.clock_ms / u64::from(STEP_MS))
             .clamp(canonical.tick, canonical.tick + MAX_PREDICT_TICKS as u64);
         let owner = self.owner.as_ref().unwrap();
+        let previous_tick = self.predicted.tick;
+        let previous_positions = self
+            .owned
+            .iter()
+            .map(|seat| self.predicted.simulation.players[*seat].position)
+            .collect::<Vec<_>>();
+        let mut conflicts = self
+            .owned
+            .iter()
+            .enumerate()
+            .map(|(local, seat)| {
+                owner.samples.iter().any(|sample| {
+                    sample.seat == *seat
+                        && sample.round == canonical.simulation.round
+                        && sample.tick > canonical.tick
+                        && sample.sequence <= owner.invalid_through[local]
+                })
+            })
+            .collect::<Vec<_>>();
         let mut replay = canonical.clone();
         let mut held = self.confirmed_inputs.clone();
         for tick in canonical.tick + 1..=target {
             let mut motions = vec![];
+            // Replay can enter the next round before the delayed canonical
+            // baseline does. Its inputs and poses belong to that replay round.
+            let round = replay.simulation.round;
             for (local, &seat) in self.owned.iter().enumerate() {
-                if let Some(sample) = owner.samples.iter().find(|sample| {
-                    sample.tick == tick
-                        && sample.seat == seat
-                        && sample.round == canonical.simulation.round
+                if let Some(sample) = owner.samples.iter().rev().find(|sample| {
+                    sample.tick <= tick && sample.seat == seat && sample.round == round
                 }) {
                     held[seat] = sample.input;
                     if sample.edge <= self.acknowledgments[seat].edge {
                         held[seat].bomb = self.confirmed_inputs[seat].bomb;
                         held[seat].action = self.confirmed_inputs[seat].action;
                     }
-                    if sample.sequence > owner.invalid_through[local] {
+                    if sample.active
+                        && sample.tick == tick
+                        && sample.sequence > owner.invalid_through[local]
+                    {
                         motions.push((seat, sample.motion));
                     }
                 }
@@ -336,8 +390,39 @@ impl ClientPrediction {
             replay
                 .simulation
                 .step_owned(STEP_MS, &held, &motions, &self.owned);
+            for (seat, motion) in &motions {
+                if replay.simulation.players[*seat].alive
+                    && replay.simulation.players[*seat].position != motion.position
+                {
+                    if let Some(local) = self.owned.iter().position(|id| id == seat) {
+                        // A newly committed bomb/obstacle can block a predicted
+                        // path before that particular owner fact is ACKed.
+                        // The native collision walk supplies the proof here.
+                        conflicts[local] = true;
+                    }
+                }
+            }
             replay.tick = tick;
             replay.inputs.clone_from(&held);
+        }
+        for (local, &seat) in self.owned.iter().enumerate() {
+            let from = previous_positions[local];
+            let to = replay.simulation.players[seat].position;
+            if previous_tick == replay.tick && from != to && conflicts[local] {
+                // A confirmed collision can invalidate several future facts.
+                // Each rebuild inside that proven conflict window is a new
+                // reconciliation, even without a second conflicting ACK.
+                self.reconciliation_serial = self.reconciliation_serial.saturating_add(1);
+                *self.reconciliation_by_seat.entry(seat).or_default() += 1;
+                if (i64::from(from.x) - i64::from(to.x)).abs()
+                    + (i64::from(from.y) - i64::from(to.y)).abs()
+                    >= 1000
+                {
+                    crate::diagnostics::log_record(
+                        &serde_json::json!({"event":"significant_reconciliation","room_tag":self.diagnostic_context.0,"peer":self.diagnostic_context.1,"generation":self.diagnostic_context.2,"round":canonical.simulation.round,"tick":canonical.tick,"seat":seat,"from":from,"to":to,"cause":"continued_authoritative_path_conflict"}),
+                    );
+                }
+            }
         }
         self.predicted = replay;
         self.dirty = false;
@@ -379,5 +464,74 @@ impl ClientPrediction {
                 player.presentation.render_moving = latest.motion.moving;
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bomberman_core::{ControlKind, Direction, GameConfig, Simulation};
+
+    #[test]
+    fn deferred_new_round_spawn_never_advertises_an_off_board_death_pose_as_active() {
+        let mut canonical = Replay::new(Simulation::new(GameConfig::default(), 1997).unwrap());
+        canonical.simulation.config.countdown_ms = 0;
+        canonical.simulation.players[0].config.control = ControlKind::Human;
+        canonical
+            .advance(vec![PlayerInput::default(); 10], vec![])
+            .unwrap();
+        canonical.simulation.players[0].alive = false;
+        canonical.simulation.players[0].position.y = -100;
+        canonical.simulation.phase = bomberman_core::RoundPhase::RoundOver {
+            remaining_ms: 20,
+            winner: None,
+        };
+        let mut prediction = ClientPrediction::new_owner_at(vec![0], &canonical, 0);
+        prediction
+            .capture_at(&[PlayerInput::default()], 20)
+            .unwrap();
+        let first = prediction.latest_owned()[0];
+        assert_eq!(first.round, 2);
+        assert!(!first.active);
+        assert!(first.valid());
+        prediction
+            .capture_at(&[PlayerInput::default()], 40)
+            .unwrap();
+        let next = prediction.latest_owned()[0];
+        assert!(next.active && next.valid());
+    }
+
+    #[test]
+    fn clock_catchup_uses_the_observed_release_instead_of_stale_confirmed_movement() {
+        let mut config = GameConfig {
+            countdown_ms: 0,
+            random_starts: false,
+            enclosement_depth: 0,
+            ..Default::default()
+        };
+        config.scheme.rows.fill("...............".into());
+        config.scheme.brick_density = 0;
+        for player in &mut config.players {
+            player.control = ControlKind::Human;
+        }
+        let mut canonical = Replay::new(Simulation::new(config, 1997).unwrap());
+        canonical
+            .advance(vec![PlayerInput::default(); 10], vec![])
+            .unwrap();
+        let mut prediction = ClientPrediction::new_owner_at(vec![0], &canonical, 0);
+        prediction.confirmed_inputs[0].direction = Some(Direction::Down);
+        // The fixed owner clock can lead the rebuilt replay after a stalled
+        // consumer or a checkpoint. The next observation is an actual release.
+        prediction.clock_ms += 200;
+        let before = prediction.replay().simulation.players[0].position;
+        prediction
+            .capture_at(&[PlayerInput::default()], 220)
+            .unwrap();
+        assert_eq!(prediction.replay().simulation.players[0].position, before);
+        assert!(
+            !prediction.display(220).players[0]
+                .presentation
+                .render_moving
+        );
     }
 }

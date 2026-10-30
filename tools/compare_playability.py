@@ -10,8 +10,10 @@ from pathlib import Path
 import shlex
 import statistics
 import subprocess
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
+APP_VERSION = re.search(r'version = "([^"\n]+)"', (ROOT / 'Cargo.toml').read_text())[1]
 
 
 def metrics(cases):
@@ -74,7 +76,7 @@ def main():
     for repetition in range(1, args.repetitions + 1):
         order = ('baseline', 'candidate') if repetition % 2 else ('candidate', 'baseline')
         for build in order:
-            version = '0.4.1' if build == 'baseline' else '0.5.0'
+            version = '0.4.1' if build == 'baseline' else APP_VERSION
             name = f'real-relay-playability-{version}-{args.label}-{repetition}'
             case_path = args.report.parent / f'{name}.json'
             command = ['docker', 'exec', '-i', args.container, 'python3',

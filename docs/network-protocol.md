@@ -1,8 +1,8 @@
 # Multiplayer responsiveness
 
-Version **0.5.0** uses protocol **6**, `ABG6`, QUIC ALPN
-`atomic-bomberman/6` and compatibility family `0.5.0`. Clients and relay must
-upgrade together; 0.4.x is incompatible. Existing server links, certificates
+The prepared **0.5.1** candidate uses protocol **7**, `ABG7`, QUIC ALPN
+`atomic-bomberman/7` and compatibility family `0.5.1`. Clients and relay must
+upgrade together; 0.5.0 and earlier are incompatible. Existing server links, certificates
 and access tokens remain valid.
 
 Each computer advances its own avatars immediately. The host accepts owner
@@ -14,7 +14,7 @@ not repeat. See [rationale, conflict rules and measurements](owner-authority.md)
 ### Historical 0.4.1 prediction timing and corrections
 
 This section records the earlier control-prediction model for comparison with
-the 0.5.0 owner-motion design above.
+the 0.5.1 owner-motion design above.
 
 Movement ACKs identify the newest state selected by the host. They do not count
 how many 20 ms movement steps the host simulated: several samples can coalesce
@@ -123,3 +123,10 @@ See [online setup](online-play.md), [relay setup](relay.md), and
 gameplay RTT separately from measured round-trip and input-to-presentation
 latency. Headless presentation checks do not establish physical display or
 audio-device latency.
+
+Protocol 7 reliable `Repair.frames` is a bounded base64 string containing a
+little-endian u16 frame count, then a u16 byte length and the gameplay frame
+encoding for each frame. The limit remains 256 frames, each at most 1,000 bytes;
+normal host replies chunk at 32 frames. All frames must decode completely with
+no trailing bytes. This preserves the existing control rate and byte limits
+under simultaneous recovery.

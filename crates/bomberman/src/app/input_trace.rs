@@ -67,7 +67,9 @@ fn players(simulation: &Simulation) -> Vec<Value> {
     simulation.players.iter().map(|p| json!({"id":p.id,"alive":p.alive,
         "visible":p.presentation.render_visible,"render_alive":p.presentation.render_alive,
         "position":p.presentation.render_position,"physics":p.position,"facing":p.presentation.render_facing,
-        "moving":p.presentation.render_moving})).collect()
+        "moving":p.presentation.render_moving,"animation":p.presentation.render_frame,
+        "special":p.presentation.render_special,"walk_pixels":p.presentation.walk_pixels,
+        "airborne_ms":p.airborne_ms})).collect()
 }
 fn bombs(simulation: &Simulation) -> Vec<Value> {
     simulation
@@ -94,6 +96,8 @@ pub(super) fn sample(app: &App, observed: Option<Observed>) -> Option<Value> {
         "input_observed_ns":observed.timestamp,"keys":observed.keys,
         "draw_submitted_ns":now_ns(),"swap_returned_ns":Value::Null,
         "tick":replay.map_or(u64::from(app.frame), |replay| replay.tick),"round":canonical.round,
+        "generation":network.map(|network|network.generation),
+        "canonical_hash":replay.map(|replay|replay.hash()),
         "rtt_ms":network.and_then(|network| network.gameplay_rtt_ms),"peer":network.map(|network| network.id),
         "transport":if network.is_some() { "network" } else { "offline" },
         "players":players(simulation),"bombs":bombs(simulation),

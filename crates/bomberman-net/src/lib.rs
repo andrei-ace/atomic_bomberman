@@ -2,6 +2,7 @@
 //! This crate never initializes graphics, audio or input devices.
 pub mod authority;
 pub mod broker;
+pub mod diagnostics;
 pub mod discovery;
 pub mod gameplay;
 pub mod interfaces;
@@ -11,6 +12,7 @@ pub mod protocol;
 pub mod quic;
 pub mod session;
 pub mod transport;
+pub mod verification;
 pub use gameplay::*;
 pub use invitation::{Invitation, ServerProfile};
 pub use protocol::*;

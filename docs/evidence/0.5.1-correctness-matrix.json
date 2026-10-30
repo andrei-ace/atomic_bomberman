@@ -1,0 +1,24 @@
+{
+  "arenas": 11,
+  "canonical_hash_and_shared_events_checked_at_each_matching_tick": true,
+  "complete": true,
+  "detector_fault_fixtures": "consistency::oracles_detect_backward_jump_stale_pose_state_drift_and_duplicate_action",
+  "games": 1056,
+  "layout_rotation": [
+    "open",
+    "corridor",
+    "bricks"
+  ],
+  "matching_committed_ticks": 261591,
+  "owner_render_samples": 1584000,
+  "passed": true,
+  "players": [
+    2,
+    10
+  ],
+  "profiles": 8,
+  "protocol": 7,
+  "seeds": 6,
+  "ticks_per_game": 250,
+  "version": "0.5.1"
+}

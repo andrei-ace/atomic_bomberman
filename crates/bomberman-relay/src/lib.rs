@@ -118,6 +118,7 @@ async fn session(mut socket: WebSocket, relay: Relay) {
             return;
         }
     };
+    let context = relay.broker.lock().unwrap().diagnostic_context(&code, peer);
     let (mut sink, mut stream) = socket.split();
     let reader = async {
         let mut budget = RateLimit::default();
@@ -126,27 +127,27 @@ async fn session(mut socket: WebSocket, relay: Relay) {
             match incoming {
                 Ok(Some(Ok(Message::Binary(bytes)))) => {
                     if !budget.accept(bytes.len()) {
-                        break;
+                        if let Some((room_tag, generation)) = &context {
+                            let (messages, bytes) = budget.usage();
+                            bomberman_net::diagnostics::log_record(
+                                &serde_json::json!({"event":"control_rate_limit","room_tag":room_tag,"peer":peer,"generation":generation,"messages":messages,"bytes":bytes}),
+                            );
+                        }
+                        break "control_rate_limit".to_owned();
                     }
                     let Ok(request) = decode::<Request>(&bytes) else {
-                        break;
+                        break "invalid_control".to_owned();
                     };
-                    if relay
-                        .broker
-                        .lock()
-                        .unwrap()
-                        .route(&code, peer, request)
-                        .is_err()
-                    {
-                        break;
+                    if let Err(error) = relay.broker.lock().unwrap().route(&code, peer, request) {
+                        break format!("route_{error:?}");
                     }
                 }
                 Ok(Some(Ok(Message::Ping(_) | Message::Pong(_)))) => {
                     if !budget.accept(0) {
-                        break;
+                        break "control_rate_limit".to_owned();
                     }
                 }
-                _ => break,
+                _ => break "control_receive_closed".to_owned(),
             }
         }
     };
@@ -155,9 +156,9 @@ async fn session(mut socket: WebSocket, relay: Relay) {
         loop {
             let (message, fatal) = tokio::select! {
                 event = rx.recv() => {
-                    let Some(delivery) = event else { break; };
+                    let Some(delivery) = event else { break "control_queue_closed".to_owned(); };
                     let fatal = matches!(delivery.event, Event::Error(_));
-                    let Ok(bytes) = encode(&delivery.event) else { break; };
+                    let Ok(bytes) = encode(&delivery.event) else { break "control_encode".to_owned(); };
                     (Message::Binary(bytes.into()), fatal)
                 }
                 _ = heartbeat.tick() => (Message::Ping(vec![].into()), false),
@@ -167,12 +168,23 @@ async fn session(mut socket: WebSocket, relay: Relay) {
                 Ok(Ok(()))
             ) || fatal
             {
-                break;
+                break if fatal {
+                    "fatal_control_event"
+                } else {
+                    "control_send_closed"
+                }
+                .to_owned();
             }
         }
     };
-    tokio::select! { _ = reader => {}, _ = writer => {} }
-    relay.broker.lock().unwrap().close(&code, peer);
+    let cause = tokio::select! { reason = reader => reason, reason = writer => reason };
+    let mut broker = relay.broker.lock().unwrap();
+    if let Some((room_tag, generation)) = broker.diagnostic_context(&code, peer).or(context) {
+        bomberman_net::diagnostics::log_record(
+            &serde_json::json!({"event":"control_connection_closed","room_tag":room_tag,"peer":peer,"generation":generation,"cause":cause}),
+        );
+    }
+    broker.close(&code, peer);
 }
 async fn directory(mut socket: WebSocket, relay: Relay, browse: Browse) {
     let authenticated = relay

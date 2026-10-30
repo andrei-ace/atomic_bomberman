@@ -4,7 +4,7 @@ exclude = ["vendor/quad-snd", "vendor/miniquad"]
 resolver = "2"
 
 [workspace.package]
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 rust-version = "1.89"
 license = "MIT"
@@ -40,7 +40,7 @@ lto = "thin"
 codegen-units = 1
 strip = "debuginfo"
 
-# The deterministic simulation matrix is CPU intensive on Intel CI runners.
+# The deterministic simulation matrix is CPU intensive on CI runners.
 # Retain test assertions and overflow checks while optimizing replay work.
 [profile.test]
 opt-level = 1

@@ -1,0 +1,1066 @@
+{
+  "achieved_committed_ticks_per_second": 50.05,
+  "application_rtt_ms": {
+    "max": 36,
+    "p50": 11,
+    "p95": 15,
+    "p99": 31,
+    "samples": 86085
+  },
+  "canonical_ticks_compared": 3501,
+  "client_diagnostics": [
+    {
+      "forwarding": {
+        "buckets": [],
+        "max_us": 0,
+        "samples": 0
+      },
+      "generation": 1,
+      "peer": 1,
+      "room_tag": "fc03cee7ec659f27",
+      "traffic": {
+        "incoming_high_water": 24,
+        "outgoing_high_water": 9,
+        "queue_evictions": 0,
+        "queue_rejections": 0,
+        "received_bytes": 10607553,
+        "received_packets": 32130,
+        "send_buffer_pressure": 0,
+        "send_failures": 0,
+        "sent_bytes": 4641253,
+        "sent_packets": 7621,
+        "superseded_packets": 0
+      },
+      "transport": {
+        "congestion_events": 0,
+        "congestion_window": 12000,
+        "rtt_us": 90,
+        "send_buffer_free": 4064,
+        "sender_lost_packets": 0,
+        "sender_sent_packets": 16509,
+        "udp_rx_bytes": 11554232,
+        "udp_rx_packets": 31103,
+        "udp_tx_bytes": 5276129,
+        "udp_tx_packets": 16508
+      }
+    },
+    {
+      "forwarding": {
+        "buckets": [],
+        "max_us": 0,
+        "samples": 0
+      },
+      "generation": 1,
+      "peer": 2,
+      "room_tag": "fc03cee7ec659f27",
+      "traffic": {
+        "incoming_high_water": 4,
+        "outgoing_high_water": 2,
+        "queue_evictions": 0,
+        "queue_rejections": 0,
+        "received_bytes": 4622485,
+        "received_packets": 7069,
+        "send_buffer_pressure": 0,
+        "send_failures": 0,
+        "sent_bytes": 1178617,
+        "sent_packets": 3570,
+        "superseded_packets": 0
+      },
+      "transport": {
+        "congestion_events": 0,
+        "congestion_window": 12000,
+        "rtt_us": 117,
+        "send_buffer_free": 4064,
+        "sender_lost_packets": 0,
+        "sender_sent_packets": 3901,
+        "udp_rx_bytes": 4790736,
+        "udp_rx_packets": 4162,
+        "udp_tx_bytes": 1337408,
+        "udp_tx_packets": 3900
+      }
+    },
+    {
+      "forwarding": {
+        "buckets": [],
+        "max_us": 0,
+        "samples": 0
+      },
+      "generation": 1,
+      "peer": 3,
+      "room_tag": "fc03cee7ec659f27",
+      "traffic": {
+        "incoming_high_water": 4,
+        "outgoing_high_water": 2,
+        "queue_evictions": 0,
+        "queue_rejections": 0,
+        "received_bytes": 4622485,
+        "received_packets": 7069,
+        "send_buffer_pressure": 0,
+        "send_failures": 0,
+        "sent_bytes": 1178617,
+        "sent_packets": 3570,
+        "superseded_packets": 0
+      },
+      "transport": {
+        "congestion_events": 0,
+        "congestion_window": 12000,
+        "rtt_us": 124,
+        "send_buffer_free": 4064,
+        "sender_lost_packets": 0,
+        "sender_sent_packets": 3999,
+        "udp_rx_bytes": 4791232,
+        "udp_rx_packets": 4047,
+        "udp_tx_bytes": 1339030,
+        "udp_tx_packets": 3998
+      }
+    },
+    {
+      "forwarding": {
+        "buckets": [],
+        "max_us": 0,
+        "samples": 0
+      },
+      "generation": 1,
+      "peer": 4,
+      "room_tag": "fc03cee7ec659f27",
+      "traffic": {
+        "incoming_high_water": 4,
+        "outgoing_high_water": 2,
+        "queue_evictions": 0,
+        "queue_rejections": 0,
+        "received_bytes": 4622485,
+        "received_packets": 7069,
+        "send_buffer_pressure": 0,
+        "send_failures": 0,
+        "sent_bytes": 1178617,
+        "sent_packets": 3570,
+        "superseded_packets": 0
+      },
+      "transport": {
+        "congestion_events": 0,
+        "congestion_window": 12000,
+        "rtt_us": 133,
+        "send_buffer_free": 4064,
+        "sender_lost_packets": 0,
+        "sender_sent_packets": 4257,
+        "udp_rx_bytes": 4792125,
+        "udp_rx_packets": 4040,
+        "udp_tx_bytes": 1341834,
+        "udp_tx_packets": 4256
+      }
+    },
+    {
+      "forwarding": {
+        "buckets": [],
+        "max_us": 0,
+        "samples": 0
+      },
+      "generation": 1,
+      "peer": 5,
+      "room_tag": "fc03cee7ec659f27",
+      "traffic": {
+        "incoming_high_water": 4,
+        "outgoing_high_water": 2,
+        "queue_evictions": 0,
+        "queue_rejections": 0,
+        "received_bytes": 4622485,
+        "received_packets": 7069,
+        "send_buffer_pressure": 0,
+        "send_failures": 0,
+        "sent_bytes": 1178617,
+        "sent_packets": 3570,
+        "superseded_packets": 0
+      },
+      "transport": {
+        "congestion_events": 0,
+        "congestion_window": 12000,
+        "rtt_us": 194,
+        "send_buffer_free": 4064,
+        "sender_lost_packets": 0,
+        "sender_sent_packets": 4758,
+        "udp_rx_bytes": 4803483,
+        "udp_rx_packets": 4447,
+        "udp_tx_bytes": 1352093,
+        "udp_tx_packets": 4757
+      }
+    },
+    {
+      "forwarding": {
+        "buckets": [],
+        "max_us": 0,
+        "samples": 0
+      },
+      "generation": 1,
+      "peer": 6,
+      "room_tag": "fc03cee7ec659f27",
+      "traffic": {
+        "incoming_high_water": 4,
+        "outgoing_high_water": 2,
+        "queue_evictions": 0,
+        "queue_rejections": 0,
+        "received_bytes": 4622485,
+        "received_packets": 7069,
+        "send_buffer_pressure": 0,
+        "send_failures": 0,
+        "sent_bytes": 1178617,
+        "sent_packets": 3570,
+        "superseded_packets": 0
+      },
+      "transport": {
+        "congestion_events": 0,
+        "congestion_window": 12000,
+        "rtt_us": 136,
+        "send_buffer_free": 4064,
+        "sender_lost_packets": 0,
+        "sender_sent_packets": 4364,
+        "udp_rx_bytes": 4789749,
+        "udp_rx_packets": 3905,
+        "udp_tx_bytes": 1341033,
+        "udp_tx_packets": 4363
+      }
+    },
+    {
+      "forwarding": {
+        "buckets": [],
+        "max_us": 0,
+        "samples": 0
+      },
+      "generation": 1,
+      "peer": 7,
+      "room_tag": "fc03cee7ec659f27",
+      "traffic": {
+        "incoming_high_water": 4,
+        "outgoing_high_water": 2,
+        "queue_evictions": 0,
+        "queue_rejections": 0,
+        "received_bytes": 4622485,
+        "received_packets": 7069,
+        "send_buffer_pressure": 0,
+        "send_failures": 0,
+        "sent_bytes": 1178617,
+        "sent_packets": 3570,
+        "superseded_packets": 0
+      },
+      "transport": {
+        "congestion_events": 0,
+        "congestion_window": 12000,
+        "rtt_us": 417,
+        "send_buffer_free": 4064,
+        "sender_lost_packets": 0,
+        "sender_sent_packets": 4241,
+        "udp_rx_bytes": 4788065,
+        "udp_rx_packets": 3837,
+        "udp_tx_bytes": 1338440,
+        "udp_tx_packets": 4240
+      }
+    },
+    {
+      "forwarding": {
+        "buckets": [],
+        "max_us": 0,
+        "samples": 0
+      },
+      "generation": 1,
+      "peer": 8,
+      "room_tag": "fc03cee7ec659f27",
+      "traffic": {
+        "incoming_high_water": 4,
+        "outgoing_high_water": 2,
+        "queue_evictions": 0,
+        "queue_rejections": 0,
+        "received_bytes": 4622485,
+        "received_packets": 7069,
+        "send_buffer_pressure": 0,
+        "send_failures": 0,
+        "sent_bytes": 1178617,
+        "sent_packets": 3570,
+        "superseded_packets": 0
+      },
+      "transport": {
+        "congestion_events": 0,
+        "congestion_window": 12000,
+        "rtt_us": 540,
+        "send_buffer_free": 4064,
+        "sender_lost_packets": 0,
+        "sender_sent_packets": 4151,
+        "udp_rx_bytes": 4787658,
+        "udp_rx_packets": 3817,
+        "udp_tx_bytes": 1336699,
+        "udp_tx_packets": 4150
+      }
+    },
+    {
+      "forwarding": {
+        "buckets": [],
+        "max_us": 0,
+        "samples": 0
+      },
+      "generation": 1,
+      "peer": 9,
+      "room_tag": "fc03cee7ec659f27",
+      "traffic": {
+        "incoming_high_water": 4,
+        "outgoing_high_water": 2,
+        "queue_evictions": 0,
+        "queue_rejections": 0,
+        "received_bytes": 4622485,
+        "received_packets": 7069,
+        "send_buffer_pressure": 0,
+        "send_failures": 0,
+        "sent_bytes": 1178617,
+        "sent_packets": 3570,
+        "superseded_packets": 0
+      },
+      "transport": {
+        "congestion_events": 0,
+        "congestion_window": 12000,
+        "rtt_us": 414,
+        "send_buffer_free": 4064,
+        "sender_lost_packets": 0,
+        "sender_sent_packets": 4105,
+        "udp_rx_bytes": 4787516,
+        "udp_rx_packets": 3809,
+        "udp_tx_bytes": 1335809,
+        "udp_tx_packets": 4104
+      }
+    },
+    {
+      "forwarding": {
+        "buckets": [],
+        "max_us": 0,
+        "samples": 0
+      },
+      "generation": 1,
+      "peer": 10,
+      "room_tag": "fc03cee7ec659f27",
+      "traffic": {
+        "incoming_high_water": 4,
+        "outgoing_high_water": 2,
+        "queue_evictions": 0,
+        "queue_rejections": 0,
+        "received_bytes": 4622485,
+        "received_packets": 7069,
+        "send_buffer_pressure": 0,
+        "send_failures": 0,
+        "sent_bytes": 1178617,
+        "sent_packets": 3570,
+        "superseded_packets": 0
+      },
+      "transport": {
+        "congestion_events": 0,
+        "congestion_window": 12000,
+        "rtt_us": 1989,
+        "send_buffer_free": 4064,
+        "sender_lost_packets": 0,
+        "sender_sent_packets": 3892,
+        "udp_rx_bytes": 4786871,
+        "udp_rx_packets": 3768,
+        "udp_tx_bytes": 1331831,
+        "udp_tx_packets": 3891
+      }
+    }
+  ],
+  "explained_render_boundaries": 81099,
+  "failure_trace": null,
+  "first_failure": null,
+  "generator_scheduling_delay_ms": {
+    "max": 22,
+    "p50": 1,
+    "p95": 3,
+    "p99": 3,
+    "samples": 9565
+  },
+  "host_commit_to_client_apply_ms": {
+    "max": 100,
+    "p50": 5,
+    "p95": 8,
+    "p99": 45,
+    "samples": 27009
+  },
+  "intentional_supersessions": 0,
+  "latency_distributions": {
+    "application_rtt_ms": {
+      "buckets": [
+        [
+          5,
+          1771
+        ],
+        [
+          6,
+          8779
+        ],
+        [
+          7,
+          15381
+        ],
+        [
+          8,
+          6352
+        ],
+        [
+          10,
+          161
+        ],
+        [
+          11,
+          14145
+        ],
+        [
+          12,
+          12695
+        ],
+        [
+          13,
+          16970
+        ],
+        [
+          14,
+          2398
+        ],
+        [
+          15,
+          4808
+        ],
+        [
+          25,
+          1366
+        ],
+        [
+          31,
+          1119
+        ],
+        [
+          36,
+          140
+        ]
+      ],
+      "max": 36,
+      "samples": 86085
+    },
+    "generator_scheduling_delay_ms": {
+      "buckets": [
+        [
+          0,
+          2661
+        ],
+        [
+          1,
+          2938
+        ],
+        [
+          2,
+          2807
+        ],
+        [
+          3,
+          1148
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          15,
+          1
+        ],
+        [
+          16,
+          2
+        ],
+        [
+          17,
+          3
+        ],
+        [
+          18,
+          1
+        ],
+        [
+          20,
+          1
+        ],
+        [
+          21,
+          1
+        ],
+        [
+          22,
+          1
+        ]
+      ],
+      "max": 22,
+      "samples": 9565
+    },
+    "host_commit_to_client_apply_ms": {
+      "buckets": [
+        [
+          0,
+          11580
+        ],
+        [
+          5,
+          2345
+        ],
+        [
+          6,
+          3966
+        ],
+        [
+          7,
+          6921
+        ],
+        [
+          8,
+          1665
+        ],
+        [
+          11,
+          13
+        ],
+        [
+          13,
+          25
+        ],
+        [
+          14,
+          22
+        ],
+        [
+          18,
+          8
+        ],
+        [
+          19,
+          17
+        ],
+        [
+          20,
+          20
+        ],
+        [
+          21,
+          24
+        ],
+        [
+          22,
+          15
+        ],
+        [
+          23,
+          2
+        ],
+        [
+          25,
+          4
+        ],
+        [
+          27,
+          6
+        ],
+        [
+          28,
+          1
+        ],
+        [
+          29,
+          14
+        ],
+        [
+          33,
+          8
+        ],
+        [
+          34,
+          6
+        ],
+        [
+          35,
+          4
+        ],
+        [
+          36,
+          2
+        ],
+        [
+          37,
+          6
+        ],
+        [
+          39,
+          16
+        ],
+        [
+          40,
+          9
+        ],
+        [
+          41,
+          9
+        ],
+        [
+          42,
+          14
+        ],
+        [
+          43,
+          12
+        ],
+        [
+          45,
+          9
+        ],
+        [
+          46,
+          5
+        ],
+        [
+          47,
+          7
+        ],
+        [
+          52,
+          6
+        ],
+        [
+          54,
+          2
+        ],
+        [
+          55,
+          4
+        ],
+        [
+          57,
+          9
+        ],
+        [
+          58,
+          4
+        ],
+        [
+          60,
+          9
+        ],
+        [
+          62,
+          14
+        ],
+        [
+          63,
+          3
+        ],
+        [
+          64,
+          9
+        ],
+        [
+          65,
+          14
+        ],
+        [
+          74,
+          26
+        ],
+        [
+          76,
+          12
+        ],
+        [
+          78,
+          12
+        ],
+        [
+          79,
+          32
+        ],
+        [
+          80,
+          27
+        ],
+        [
+          81,
+          4
+        ],
+        [
+          83,
+          15
+        ],
+        [
+          84,
+          6
+        ],
+        [
+          85,
+          18
+        ],
+        [
+          86,
+          10
+        ],
+        [
+          100,
+          18
+        ]
+      ],
+      "max": 100,
+      "samples": 27009
+    },
+    "owner_sample_to_confirmation_ms": {
+      "buckets": [
+        [
+          20,
+          2154
+        ],
+        [
+          21,
+          1977
+        ],
+        [
+          22,
+          2121
+        ],
+        [
+          23,
+          2487
+        ],
+        [
+          24,
+          2018
+        ],
+        [
+          25,
+          2022
+        ],
+        [
+          26,
+          2308
+        ],
+        [
+          27,
+          2649
+        ],
+        [
+          28,
+          2121
+        ],
+        [
+          29,
+          2315
+        ],
+        [
+          30,
+          2005
+        ],
+        [
+          31,
+          1936
+        ],
+        [
+          32,
+          1693
+        ],
+        [
+          33,
+          1130
+        ],
+        [
+          34,
+          518
+        ],
+        [
+          35,
+          15
+        ],
+        [
+          36,
+          4
+        ],
+        [
+          37,
+          8
+        ],
+        [
+          38,
+          9
+        ],
+        [
+          39,
+          6
+        ],
+        [
+          40,
+          6
+        ],
+        [
+          41,
+          7
+        ],
+        [
+          42,
+          10
+        ],
+        [
+          43,
+          17
+        ],
+        [
+          44,
+          26
+        ],
+        [
+          45,
+          28
+        ],
+        [
+          46,
+          2
+        ],
+        [
+          47,
+          4
+        ],
+        [
+          48,
+          4
+        ],
+        [
+          49,
+          2
+        ],
+        [
+          51,
+          12
+        ],
+        [
+          54,
+          15
+        ],
+        [
+          55,
+          15
+        ],
+        [
+          56,
+          4
+        ],
+        [
+          59,
+          6
+        ],
+        [
+          60,
+          4
+        ],
+        [
+          61,
+          2
+        ],
+        [
+          62,
+          9
+        ],
+        [
+          63,
+          6
+        ],
+        [
+          64,
+          22
+        ],
+        [
+          65,
+          21
+        ],
+        [
+          68,
+          9
+        ],
+        [
+          71,
+          5
+        ],
+        [
+          74,
+          7
+        ],
+        [
+          75,
+          6
+        ],
+        [
+          76,
+          4
+        ],
+        [
+          79,
+          6
+        ],
+        [
+          80,
+          3
+        ],
+        [
+          81,
+          2
+        ],
+        [
+          82,
+          9
+        ],
+        [
+          83,
+          14
+        ],
+        [
+          84,
+          13
+        ],
+        [
+          85,
+          21
+        ],
+        [
+          91,
+          5
+        ],
+        [
+          94,
+          7
+        ],
+        [
+          95,
+          6
+        ],
+        [
+          96,
+          4
+        ],
+        [
+          99,
+          6
+        ],
+        [
+          100,
+          3
+        ],
+        [
+          101,
+          2
+        ],
+        [
+          102,
+          9
+        ],
+        [
+          103,
+          5
+        ],
+        [
+          104,
+          13
+        ],
+        [
+          105,
+          21
+        ],
+        [
+          111,
+          5
+        ],
+        [
+          114,
+          7
+        ],
+        [
+          115,
+          6
+        ],
+        [
+          116,
+          4
+        ],
+        [
+          119,
+          6
+        ],
+        [
+          120,
+          3
+        ],
+        [
+          121,
+          2
+        ],
+        [
+          122,
+          9
+        ],
+        [
+          123,
+          5
+        ],
+        [
+          124,
+          13
+        ],
+        [
+          125,
+          21
+        ],
+        [
+          131,
+          5
+        ],
+        [
+          136,
+          4
+        ],
+        [
+          142,
+          9
+        ],
+        [
+          143,
+          5
+        ]
+      ],
+      "max": 143,
+      "samples": 30002
+    }
+  },
+  "lifetime_application_failures": 0,
+  "limitations": [
+    "Headless production session display state; physical display and audio are outside this measurement.",
+    "Latency histograms cover the full measurement at 1ms resolution; RTT samples are cached application-probe observations. Forwarding uses separate relay timestamps."
+  ],
+  "measurement_end_unix_ms": 1793322076315,
+  "measurement_seconds": 60,
+  "measurement_start_unix_ms": 1793322016329,
+  "owner_sample_to_confirmation_ms": {
+    "max": 143,
+    "p50": 26,
+    "p95": 33,
+    "p99": 65,
+    "samples": 30002
+  },
+  "passed": true,
+  "players_per_room": 10,
+  "protocol": 7,
+  "queue_evictions": 0,
+  "received_packets_per_second": 1367.7,
+  "rematches": 0,
+  "render_frames_checked": 111790,
+  "rooms": 1,
+  "sampled_render_frames": 111790,
+  "seed": 1999,
+  "send_failures_and_queue_rejections": 0,
+  "sent_packets_per_second": 567.7,
+  "shared_outcomes": {
+    "bomb_placements": 83,
+    "deaths": 65,
+    "detonations": 71,
+    "round_results": 6
+  },
+  "version": "0.5.1",
+  "warmup_seconds": 10
+}

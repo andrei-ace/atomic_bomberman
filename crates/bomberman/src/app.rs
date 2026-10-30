@@ -15,8 +15,15 @@ use bomberman_core::{
 use macroquad::prelude::*;
 #[cfg(debug_assertions)]
 mod input_trace;
+mod menus;
 mod network_ui;
+use menus::{pause_actions, results_actions, PauseAction, ResultsAction};
 use network_ui::NetworkUi;
+
+const MAIN_FOOTER: &str = concat!(
+    "Arrow keys + Enter  /  F1 help  /  F11 fullscreen  /  v",
+    env!("CARGO_PKG_VERSION")
+);
 
 const GOLD: Color = Color::new(1., 0.87, 0.23, 1.);
 const LIGHT: Color = Color::new(0.91, 0.94, 1., 1.);
@@ -290,6 +297,9 @@ impl App {
                 let state = serde_json::json!({
                     "frame": self.frame,
                     "version": bomberman_net::APP_VERSION,
+                    "main_footer": MAIN_FOOTER,
+                    "pause_actions": pause_actions(self.network.as_ref().map(|n| n.host)).iter().map(|action| format!("{action:?}")).collect::<Vec<_>>(),
+                    "results_actions": results_actions(self.network.as_ref().map(|n| n.host)).iter().map(|action| format!("{action:?}")).collect::<Vec<_>>(),
                     "protocol": bomberman_net::PROTOCOL_VERSION,
                     "input_trace": self.input_trace.frames(),
                     "screen": format!("{:?}", self.screen),
@@ -462,14 +472,15 @@ impl App {
             }
             Screen::Battle => self.update_battle(elapsed_ms).await?,
             Screen::Results => {
-                self.navigation(3);
-                let click = self.hover_rows(160., 360., 320., 29., 3);
+                let actions = results_actions(None);
+                self.navigation(actions.len());
+                let click = self.hover_rows(160., 360., 320., 29., actions.len());
                 if self.back() {
                     self.change_screen(Screen::Main);
                     self.media.music("MENU").await;
                 } else if self.confirm() || click {
-                    match self.selection {
-                        0 => {
+                    match actions[self.selection] {
+                        ResultsAction::Rematch => {
                             if self
                                 .simulation
                                 .as_ref()
@@ -484,8 +495,8 @@ impl App {
                                 self.rematch().await?;
                             }
                         }
-                        1 => self.change_screen(Screen::Setup),
-                        _ => {
+                        ResultsAction::Configure => self.change_screen(Screen::Setup),
+                        ResultsAction::Leave => {
                             self.change_screen(Screen::Main);
                             self.media.music("MENU").await;
                         }
@@ -782,21 +793,22 @@ impl App {
             self.selection = 0;
         }
         if self.paused {
-            self.navigation(4);
-            let click = self.hover_rows(190., 190., 260., 36., 4);
+            let actions = pause_actions(None);
+            self.navigation(actions.len());
+            let click = self.hover_rows(190., 190., 260., 36., actions.len());
             if self.confirm() || click {
-                match self.selection {
-                    0 => self.paused = false,
-                    1 => {
+                match actions[self.selection] {
+                    PauseAction::Resume => self.paused = false,
+                    PauseAction::Help => {
                         self.previous = Screen::Battle;
                         self.previous_selection = self.selection;
                         self.change_screen(Screen::Help);
                     }
-                    2 => {
+                    PauseAction::Restart => {
                         self.paused = false;
                         self.rematch().await?;
                     }
-                    _ => {
+                    PauseAction::Leave => {
                         self.change_screen(Screen::Main);
                         self.media.music("MENU").await;
                     }
@@ -966,7 +978,7 @@ impl App {
             12.,
             LIGHT,
         );
-        self.footer("Arrow keys + Enter  /  F1 help  /  F11 fullscreen  /  Native Rust");
+        self.footer(MAIN_FOOTER);
     }
 
     fn draw_setup(&self) {
@@ -1456,13 +1468,18 @@ impl App {
             }
         }
         if self.paused {
+            let network = self.network.as_ref().map(|n| n.host);
+            let actions = pause_actions(network);
             draw_rectangle(0., 0., 640., 480., Color::new(0., 0., 0., 0.75));
-            draw_rectangle(175., 136., 290., 229., Color::new(0.025, 0.04, 0.09, 0.98));
+            draw_rectangle(
+                175.,
+                136.,
+                290.,
+                85. + actions.len() as f32 * 36.,
+                Color::new(0.025, 0.04, 0.09, 0.98),
+            );
             self.media.center_text("PAUSED", 151., 24., GOLD);
-            for (i, label) in ["Resume battle", "Help", "Restart match", "Main menu"]
-                .iter()
-                .enumerate()
-            {
+            for (i, action) in actions.iter().enumerate() {
                 if self.selection == i {
                     draw_rectangle(
                         187.,
@@ -1473,7 +1490,7 @@ impl App {
                     );
                 }
                 self.media.center_text(
-                    label,
+                    action.label(network.is_some()),
                     197. + i as f32 * 36.,
                     17.,
                     if self.selection == i { GOLD } else { LIGHT },
@@ -1637,26 +1654,8 @@ impl App {
             self.media
                 .text(&player.kills.to_string(), 452., y, 13., LIGHT);
         }
-        for (i, label) in [
-            if simulation.config.gold_bomberman {
-                "Rematch / Gold roulette"
-            } else {
-                "Rematch"
-            },
-            if self.network.is_some() {
-                "Return to lobby (host)"
-            } else {
-                "Change players and arena"
-            },
-            if self.network.is_some() {
-                "Leave game"
-            } else {
-                "Main menu"
-            },
-        ]
-        .iter()
-        .enumerate()
-        {
+        let network = self.network.as_ref().map(|n| n.host);
+        for (i, action) in results_actions(network).iter().enumerate() {
             if self.selection == i {
                 draw_rectangle(
                     145.,
@@ -1667,13 +1666,17 @@ impl App {
                 );
             }
             self.media.center_text(
-                label,
+                action.label(network.is_some(), simulation.config.gold_bomberman),
                 365. + i as f32 * 29.,
                 15.,
                 if self.selection == i { GOLD } else { LIGHT },
             );
         }
-        self.footer("Enter: select  |  Escape: main menu");
+        self.footer(match network {
+            Some(false) => "Waiting for the host  |  Enter / Escape: leave game",
+            Some(true) => "Enter: select  |  Escape: leave game",
+            None => "Enter: select  |  Escape: main menu",
+        });
     }
 
     fn draw_roulette(&self) {

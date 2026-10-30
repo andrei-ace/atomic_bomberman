@@ -179,6 +179,9 @@ impl Connection {
     pub fn gameplay_ready(&self) -> bool {
         self.gameplay.ready()
     }
+    pub fn gameplay_diagnostics(&self) -> crate::diagnostics::GameplayDiagnostics {
+        self.gameplay.diagnostics()
+    }
 }
 impl Drop for Connection {
     fn drop(&mut self) {

@@ -10,6 +10,8 @@ development.
 the application and importer; original graphics, sounds, and other game assets
 are imported locally from your copy of the game.
 
+The working tree prepares **0.5.1 / protocol 7**. It requires matching clients and relay; saved server credentials remain valid. Validation and deployment status are recorded in [WAN consistency](docs/wan-consistency.md).
+
 ## Install a client and import game data
 
 Download the **0.5.0** application and matching checksum from

@@ -110,8 +110,8 @@ fn compact_packets_fit_ten_seats_and_validate_every_truncation() {
 }
 
 #[test]
-fn protocol_six_movement_datagram_has_its_own_magic() {
-    let bytes = b"ABG6\x00\x07\x00\x00\x00\x00\x00\x00\x00\x2a\x00\x00\x00\x00\x00\x00\x00\x01\x00\x02\x00\x00";
+fn protocol_seven_movement_datagram_has_its_own_magic() {
+    let bytes = b"ABG7\x00\x07\x00\x00\x00\x00\x00\x00\x00\x2a\x00\x00\x00\x00\x00\x00\x00\x01\x00\x02\x00\x00";
     let packet = GameplayPacket::Input {
         generation: 7,
         sequence: 42,
@@ -1005,4 +1005,64 @@ fn rejected_placement_has_no_fabricated_local_audio() {
     prediction.refresh(&canonical).unwrap();
     assert!(prediction.take_feedback().is_empty());
     assert!(prediction.replay().simulation.bombs.is_empty());
+}
+
+#[test]
+fn reliable_repair_uses_bounded_compact_frames_and_rejects_corrupt_encodings() {
+    let simulation = Simulation::new(GameConfig::default(), 1997).unwrap();
+    let frames = (1..=32)
+        .map(|tick| {
+            let mut value = frame(tick);
+            value.motions = (0..10)
+                .map(|seat| bomberman_net::authority::OwnerSample {
+                    seat,
+                    tick,
+                    round: 1,
+                    active: true,
+                    sequence: tick,
+                    edge: 0,
+                    input: PlayerInput::default(),
+                    motion: simulation.avatar_motion(seat),
+                })
+                .collect();
+            value
+        })
+        .collect::<Vec<_>>();
+    let verbose_size = serde_json::to_vec(&frames).unwrap().len();
+    let message = GameMessage::Repair {
+        generation: 7,
+        frames: frames.clone(),
+    };
+    let bytes = encode(&message).unwrap();
+    assert!(bytes.len() < 50_000 && bytes.len() * 3 < verbose_size);
+    let GameMessage::Repair {
+        generation,
+        frames: actual,
+    } = decode(&bytes).unwrap()
+    else {
+        panic!("repair kind");
+    };
+    assert_eq!(generation, 7);
+    assert_eq!(
+        serde_json::to_value(actual).unwrap(),
+        serde_json::to_value(&frames).unwrap()
+    );
+    let mut value = serde_json::to_value(message).unwrap();
+    let encoded = value["Repair"]["frames"].as_str().unwrap().to_owned();
+    for corrupt in [
+        String::new(),
+        "!".into(),
+        encoded[..encoded.len() - 4].into(),
+        "A".repeat(400_000),
+    ] {
+        value["Repair"]["frames"] = corrupt.into();
+        assert!(serde_json::from_value::<GameMessage>(value.clone()).is_err());
+    }
+    let mut budget = bomberman_net::broker::RateLimit::default();
+    for _ in 0..9 {
+        assert!(
+            budget.accept(bytes.len()),
+            "simultaneous ten-client repair exceeded the unchanged control byte budget"
+        );
+    }
 }

@@ -88,6 +88,11 @@ pub struct ClientPrediction {
     // shift the ordinal of another control's sound on the same button edge.
     heard: BTreeSet<(usize, u64, u8, usize)>,
     feedback: Vec<GameEvent>,
+    diagnostic_context: (String, PeerId, u64),
+    reconciliation_serial: u64,
+    reconciliation_by_seat: BTreeMap<usize, u64>,
+    captured_at: VecDeque<(u64, u64)>,
+    confirmation_latencies: VecDeque<u64>,
 }
 impl ClientPrediction {
     pub fn new(owned_seats: Vec<usize>, canonical: &Replay) -> Self {
@@ -97,6 +102,11 @@ impl ClientPrediction {
         let n = owned_seats.len();
         Self {
             owner: None,
+            diagnostic_context: (String::new(), 0, 0),
+            reconciliation_serial: 0,
+            reconciliation_by_seat: BTreeMap::new(),
+            captured_at: VecDeque::new(),
+            confirmation_latencies: VecDeque::new(),
             owned: owned_seats,
             sequence: 0,
             observed: vec![PlayerInput::default(); n],
@@ -136,6 +146,18 @@ impl ClientPrediction {
     }
     pub fn replay(&self) -> &Replay {
         &self.predicted
+    }
+    pub fn set_diagnostic_context(&mut self, room_tag: String, peer: PeerId, generation: u64) {
+        self.diagnostic_context = (room_tag, peer, generation);
+    }
+    pub fn reconciliation_serial(&self) -> u64 {
+        self.reconciliation_serial
+    }
+    pub fn seat_reconciliation_serial(&self, seat: usize) -> u64 {
+        self.reconciliation_by_seat.get(&seat).copied().unwrap_or(0)
+    }
+    pub fn take_confirmation_latencies(&mut self) -> Vec<u64> {
+        self.confirmation_latencies.drain(..).collect()
     }
     /// Only artwork receives correction offsets. Physics, decisions and hashes
     /// always read the unmodified canonical or speculative replay.
@@ -341,6 +363,18 @@ impl ClientPrediction {
         if let Some(sample) = sample.and_then(|id| self.samples.iter().find(|s| s.sequence == id)) {
             self.pending_capture_ms = Some(sample.captured_ms);
         }
+        for seat in &self.owned {
+            let sample = frame.acknowledgments[*seat].sample;
+            if sample > self.acknowledgments[*seat].sample {
+                if let Some((_, captured)) = self.captured_at.iter().find(|(id, _)| *id == sample) {
+                    if self.confirmation_latencies.len() == 512 {
+                        self.confirmation_latencies.pop_front();
+                    }
+                    self.confirmation_latencies
+                        .push_back(now_ms.saturating_sub(*captured));
+                }
+            }
+        }
         self.commit_acknowledgments(&frame.acknowledgments);
         if self.owner.is_some() {
             self.confirm_owned(canonical, frame);
@@ -369,6 +403,13 @@ impl ClientPrediction {
         self.commit_acknowledgments(acknowledgments);
         self.confirmed_inputs.clone_from(&canonical.inputs);
         if self.owner.is_some() {
+            self.reconciliation_serial = self.reconciliation_serial.saturating_add(1);
+            for seat in &self.owned {
+                *self.reconciliation_by_seat.entry(*seat).or_default() += 1;
+            }
+            crate::diagnostics::log_record(
+                &serde_json::json!({"event":"prediction_checkpoint_recovery","room_tag":self.diagnostic_context.0,"peer":self.diagnostic_context.1,"generation":self.diagnostic_context.2,"from_tick":self.predicted.tick,"canonical_tick":canonical.tick,"cause":"verified_checkpoint"}),
+            );
             self.clock_ms = self.clock_ms.max(canonical.tick * u64::from(STEP_MS));
             self.phase_error_ms = 0;
             self.pending_capture_ms = None;
@@ -410,6 +451,9 @@ impl ClientPrediction {
                 || ack.sample > self.sequence
                 || ack.edge > self.edge_ids[i]
             {
+                crate::diagnostics::log_record(
+                    &serde_json::json!({"event":"acknowledgment_rejected","room_tag":self.diagnostic_context.0,"peer":self.diagnostic_context.1,"generation":self.diagnostic_context.2,"tick":canonical.tick,"seat":seat,"sample":ack.sample,"previous_sample":previous.sample,"local_sequence":self.sequence,"edge":ack.edge,"previous_edge":previous.edge,"local_edge":self.edge_ids[i]}),
+                );
                 return Err(NetError::Protocol);
             }
         }

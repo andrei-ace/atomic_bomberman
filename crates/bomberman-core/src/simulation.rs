@@ -245,7 +245,8 @@ impl Simulation {
         self.surviving_side_cache
     }
 
-    pub(crate) fn player_initialized(&self, player: usize) -> bool {
+    /// Read-only native spawn boundary, used by presentation verification.
+    pub fn player_initialized(&self, player: usize) -> bool {
         !self
             .initial_spawn_pending
             .get(player)

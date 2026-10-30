@@ -1,0 +1,27 @@
+{
+  "version": "0.5.1",
+  "protocol": 7,
+  "scope": "UI and CI follow-up after network acceptance, before committing. A clean package is rebuilt after the commit.",
+  "app_tests_passed": 12,
+  "formatting_passed": true,
+  "clippy_passed": true,
+  "macos_launcher_passed": true,
+  "workflow_yaml_parsed": true,
+  "intel_runner_removed": true,
+  "lan_menu_report": "0.5.1-ui-lan-menus.json",
+  "wan_transport_menu_report": "0.5.1-ui-wan-menus.json",
+  "pre_commit_mac_game_sha256": "eab8414da3143557ae865e9af68242ffe2b2b62ad41ca658742e671ce1dea8f6",
+  "pre_commit_package_source": {
+    "repository": "https://github.com/andrei-ace/atomic_bomberman",
+    "commit": "dabf87b7a661fdab3a597d1894ea48feb61afe93",
+    "dirty": true,
+    "sha256": "0ebe91d93571d09f3afdd5676ef3a01223e7b2ea87166b65c50f1891dcf56430",
+    "file_count": 275,
+    "digest_definition": "Sorted git-visible non-evidence paths and contents, each followed by NUL"
+  },
+  "runtime_source_sha256": {
+    "crates/bomberman/src/app.rs": "d7abbe32af64c24d12fb6ac8f729c0ba0588dfd93916aa943bc7461f769c960d",
+    "crates/bomberman/src/app/menus.rs": "187fbe31e3b7098a620a6e0d87e20864d2af61e69fd75d7ed6f278d89f4283c7",
+    "crates/bomberman/src/app/network_ui.rs": "de1826d68f3c33ff6bb4f2e1007417d16f64ef8221c7cbc3d0f8f650fe9479e4"
+  }
+}

@@ -80,7 +80,7 @@ impl GameplayPacket {
     }
     pub fn encode_with_limit(&self, limit: usize) -> Result<Vec<u8>, NetError> {
         let limit = limit.min(MAX_DATAGRAM);
-        let mut out = b"ABG6".to_vec();
+        let mut out = b"ABG7".to_vec();
         out.push(match self {
             Self::Input { .. } => 0,
             Self::Frames { .. } => 1,
@@ -173,7 +173,7 @@ impl GameplayPacket {
             return Err(NetError::TooLarge);
         }
         let mut r = Reader(bytes);
-        if r.take(4)? != b"ABG6" {
+        if r.take(4)? != b"ABG7" {
             return Err(NetError::Protocol);
         }
         let kind = r.u8()?;
@@ -414,6 +414,67 @@ fn decode_frame(bytes: &[u8]) -> Result<InputFrame, NetError> {
         rejected_edges,
     })
 }
+/// Reliable recovery uses the same validated frame codec as gameplay. JSON
+/// field names repeated across ten seats otherwise exhaust the existing TLS
+/// byte budget during simultaneous gap repair. Protocol 7 carries base64 here.
+pub(crate) mod repair_frames {
+    use super::*;
+    use base64::{engine::general_purpose::STANDARD, Engine};
+    use serde::{Deserialize, Deserializer, Serializer};
+
+    const MAX_BYTES: usize = 2 + FRAME_HISTORY * (2 + MAX_DATAGRAM);
+    pub fn serialize<S: Serializer>(
+        frames: &[InputFrame],
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        if frames.is_empty() || frames.len() > FRAME_HISTORY {
+            return Err(serde::ser::Error::custom("invalid repair frame count"));
+        }
+        let mut bytes = Vec::new();
+        put16(&mut bytes, frames.len() as u16);
+        for frame in frames {
+            let encoded = encode_frame(frame).map_err(serde::ser::Error::custom)?;
+            if encoded.len() > MAX_DATAGRAM {
+                return Err(serde::ser::Error::custom("repair frame too large"));
+            }
+            put16(&mut bytes, encoded.len() as u16);
+            bytes.extend(encoded);
+        }
+        serializer.serialize_str(&STANDARD.encode(bytes))
+    }
+    pub fn deserialize<'de, D: Deserializer<'de>>(
+        deserializer: D,
+    ) -> Result<Vec<InputFrame>, D::Error> {
+        let encoded = String::deserialize(deserializer)?;
+        if encoded.len() > MAX_BYTES.div_ceil(3) * 4 {
+            return Err(serde::de::Error::custom("repair too large"));
+        }
+        let bytes = STANDARD
+            .decode(encoded)
+            .map_err(|_| serde::de::Error::custom("invalid repair encoding"))?;
+        let decode = || -> Result<Vec<InputFrame>, NetError> {
+            let mut reader = Reader(&bytes);
+            let count = reader.u16()? as usize;
+            if count == 0 || count > FRAME_HISTORY {
+                return Err(NetError::Protocol);
+            }
+            let mut frames = Vec::with_capacity(count);
+            for _ in 0..count {
+                let size = reader.u16()? as usize;
+                if size > MAX_DATAGRAM {
+                    return Err(NetError::TooLarge);
+                }
+                frames.push(decode_frame(reader.take(size)?)?);
+            }
+            if !reader.0.is_empty() {
+                return Err(NetError::Protocol);
+            }
+            Ok(frames)
+        };
+        decode().map_err(serde::de::Error::custom)
+    }
+}
+
 fn encode_input(input: PlayerInput) -> Result<u16, NetError> {
     if input.direction_mask > 15 {
         return Err(NetError::Protocol);
@@ -468,23 +529,21 @@ fn encode_sample(out: &mut Vec<u8>, sample: &OwnerSample) -> Result<(), NetError
     put16(out, encode_input(sample.input)?);
     out.extend(sample.motion.position.x.to_le_bytes());
     out.extend(sample.motion.position.y.to_le_bytes());
-    put16(
-        out,
-        encode_input(PlayerInput {
-            direction: Some(sample.motion.facing),
-            ..Default::default()
-        })?,
-    );
-    out.push(u8::from(sample.motion.moving));
+    let facing = encode_input(PlayerInput {
+        direction: Some(sample.motion.facing),
+        ..Default::default()
+    })? as u8;
+    let ice = encode_input(PlayerInput {
+        direction: sample.motion.ice_direction,
+        ..Default::default()
+    })? as u8;
+    // Protocol 7 packs the two directions and moving flag into one byte,
+    // leaving room for both logical and captured native animation counters.
+    out.push(facing | (u8::from(sample.motion.moving) << 3) | (ice << 4));
     out.extend(sample.motion.remainder.to_le_bytes());
-    put16(
-        out,
-        encode_input(PlayerInput {
-            direction: sample.motion.ice_direction,
-            ..Default::default()
-        })?,
-    );
     out.extend(sample.motion.ice_remaining_ms.to_le_bytes());
+    put16(out, sample.motion.walk_pixels);
+    put16(out, sample.motion.render_walk_frame);
     Ok(())
 }
 fn decode_sample(r: &mut Reader<'_>) -> Result<OwnerSample, NetError> {
@@ -503,17 +562,19 @@ fn decode_sample(r: &mut Reader<'_>) -> Result<OwnerSample, NetError> {
         x: r.i32()?,
         y: r.i32()?,
     };
-    let facing = decode_input(r.u16()?)?
+    let flags = r.u8()?;
+    if flags & 0x80 != 0 {
+        return Err(NetError::Protocol);
+    }
+    let facing = decode_input(u16::from(flags & 7))?
         .direction
         .ok_or(NetError::Protocol)?;
-    let moving = match r.u8()? {
-        0 => false,
-        1 => true,
-        _ => return Err(NetError::Protocol),
-    };
+    let moving = flags & 8 != 0;
+    let ice_direction = decode_input(u16::from((flags >> 4) & 7))?.direction;
     let remainder = r.i32()?;
-    let ice_direction = decode_input(r.u16()?)?.direction;
     let ice_remaining_ms = r.i32()? as u32;
+    let walk_pixels = r.u16()?;
+    let render_walk_frame = r.u16()?;
     let sample = OwnerSample {
         seat,
         tick,
@@ -529,6 +590,8 @@ fn decode_sample(r: &mut Reader<'_>) -> Result<OwnerSample, NetError> {
             remainder,
             ice_direction,
             ice_remaining_ms,
+            walk_pixels,
+            render_walk_frame,
         },
     };
     if !sample.valid() {

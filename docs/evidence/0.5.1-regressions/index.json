@@ -1,0 +1,42 @@
+{
+  "scope": "Bounded failure traces captured before the fixes; these are regression inputs, not passing acceptance reports.",
+  "traces": [
+    {
+      "artifact": "captured-new-round-motion.json",
+      "classification": "prediction bug",
+      "resolution": "Retain motion already captured for the current canonical round.",
+      "regression": "new_round_confirmation_keeps_current_round_motion_and_ignores_old_motion_conflicts"
+    },
+    {
+      "artifact": "released-input-clock-catchup.json",
+      "classification": "prediction bug",
+      "resolution": "Use observed released direction during owner clock catch-up.",
+      "regression": "clock_catchup_uses_the_observed_release_instead_of_stale_confirmed_movement"
+    },
+    {
+      "artifact": "stalled-consumer-release.json",
+      "classification": "session ordering bug",
+      "resolution": "Capture elapsed local inputs before applying queued canonical frames.",
+      "regression": "real_lan_coordinator_multiple_devices_frames_pause_rematch_and_disconnect"
+    },
+    {
+      "artifact": "native-conveyor-centering.json",
+      "classification": "detector false positive",
+      "resolution": "Independently verify conveyor wall-center snaps with the effective belt direction and blocked neighbor.",
+      "regression": "idle_conveyor_wall_snap_has_the_same_independent_collision_proof"
+    },
+    {
+      "artifact": "simultaneous-recovery-control-limit.json",
+      "diagnostics": "simultaneous-recovery-control-limit.relay.jsonl.gz",
+      "classification": "recovery overhead under serial-generator overload",
+      "resolution": "Protocol 7 uses compact reliable frame repairs and the load runner gives each room an independent process; control limits are preserved.",
+      "regression": "reliable_repair_uses_bounded_compact_frames_and_rejects_corrupt_encodings"
+    },
+    {
+      "artifact": "predicted-round-released-input.json",
+      "classification": "prediction bug under delayed round confirmation",
+      "resolution": "Select replay inputs and motions from the round being replayed, even while the canonical baseline remains in the preceding round.",
+      "regression": "predicted_new_round_uses_its_own_released_inputs_while_canonical_is_still_in_old_round"
+    }
+  ]
+}

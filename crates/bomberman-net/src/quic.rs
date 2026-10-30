@@ -1,4 +1,5 @@
 //! Authenticated, bounded datagram gameplay beside the reliable room connection.
+use crate::diagnostics::{log_record, GameplayDiagnostics, ReceiveGap, TransportSnapshot};
 use crate::{
     broker::{Broker, RateLimit},
     invitation::random_token,
@@ -22,7 +23,7 @@ use subtle::ConstantTimeEq;
 use tokio::sync::{Notify, Semaphore};
 
 pub const LAN_GAMEPLAY_PORT: u16 = 1998;
-const ALPN: &[u8] = b"atomic-bomberman/6";
+const ALPN: &[u8] = b"atomic-bomberman/7";
 const ENVELOPE: usize = 5;
 const MAX_PACKET: usize = 1000;
 const PROBE: u8 = 0;
@@ -36,6 +37,10 @@ pub struct GameplayOffer {
     pub port: u16,
     pub fingerprint: [u8; 32],
     pub token: String,
+    #[serde(default)]
+    pub room_tag: String,
+    #[serde(default)]
+    pub peer: PeerId,
 }
 impl std::fmt::Debug for GameplayOffer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -48,6 +53,7 @@ struct Binding {
     token: Option<String>,
     connection: Option<quinn::Connection>,
     ready: bool,
+    diagnostics: Arc<Mutex<GameplayDiagnostics>>,
 }
 #[derive(Default)]
 struct ServerState {
@@ -61,6 +67,7 @@ pub struct GameplayServer {
     public_port: Arc<AtomicUsize>,
     fingerprint: [u8; 32],
     state: Arc<Mutex<ServerState>>,
+    diagnostic_salt: [u8; 32],
 }
 impl GameplayServer {
     pub fn ephemeral(address: SocketAddr, broker: &Arc<Mutex<Broker>>) -> Result<Self, NetError> {
@@ -103,6 +110,7 @@ impl GameplayServer {
             public_port: Default::default(),
             fingerprint,
             state: Default::default(),
+            diagnostic_salt: rand::random(),
         };
         let acceptor = server.clone();
         let weak = Arc::downgrade(broker);
@@ -131,10 +139,19 @@ impl GameplayServer {
     }
     pub(crate) fn offer(&self, code: &str, peer: PeerId) -> GameplayOffer {
         let token = random_token();
+        let mut digest = Sha256::new();
+        digest.update(self.diagnostic_salt);
+        digest.update(code.as_bytes());
+        let room_tag = format!("{:x}", digest.finalize())[..16].to_owned();
         self.state.lock().unwrap().bindings.insert(
             (code.to_owned(), peer),
             Binding {
                 token: Some(token.clone()),
+                diagnostics: Arc::new(Mutex::new(GameplayDiagnostics {
+                    room_tag: room_tag.clone(),
+                    peer,
+                    ..Default::default()
+                })),
                 ..Default::default()
             },
         );
@@ -149,7 +166,19 @@ impl GameplayServer {
             },
             fingerprint: self.fingerprint,
             token,
+            room_tag,
+            peer,
         }
+    }
+    pub(crate) fn diagnostic_context(&self, code: &str, peer: PeerId) -> Option<(String, u64)> {
+        let state = self.state.lock().unwrap();
+        let d = state
+            .bindings
+            .get(&(code.to_owned(), peer))?
+            .diagnostics
+            .lock()
+            .unwrap();
+        Some((d.room_tag.clone(), d.generation))
     }
     pub(crate) fn revoke(&self, code: &str, peer: PeerId) {
         if let Some(binding) = self
@@ -243,7 +272,40 @@ impl GameplayServer {
         };
         let mut probe = None;
         let mut budget = RateLimit::gameplay();
-        while let Ok(bytes) = connection.read_datagram().await {
+        let Some(diagnostics) = self
+            .state
+            .lock()
+            .unwrap()
+            .bindings
+            .get(&(code.clone(), peer))
+            .map(|binding| binding.diagnostics.clone())
+        else {
+            connection.close(0u32.into(), b"control closed");
+            return;
+        };
+        let mut gap = ReceiveGap::default();
+        let mut monitor = tokio::time::interval(Duration::from_millis(50));
+        let mut summary_at = Instant::now();
+        let mut summary_unix_ms = crate::diagnostics::unix_ms();
+        loop {
+            let bytes = tokio::select! {
+                bytes = connection.read_datagram() => match bytes { Ok(bytes) => bytes, Err(_) => break },
+                _ = monitor.tick() => {
+                    let playing = broker.upgrade().is_some_and(|b| b.lock().unwrap().room_playing(&code));
+                    if playing {
+                        if let Some(gap_ms) = gap.check(Instant::now()) {
+                            let d = diagnostics.lock().unwrap();
+                            log_record(&serde_json::json!({"event":"gameplay_receive_gap", "side":"relay", "room_tag":d.room_tag,"peer":peer,"generation":d.generation,"gap_ms":gap_ms}));
+                        }
+                        if summary_at.elapsed() >= Duration::from_secs(10) {
+                            relay_summary(&diagnostics, &connection, "interval", &mut summary_unix_ms);
+                            summary_at = Instant::now();
+                        }
+                    } else { gap = ReceiveGap::default(); }
+                    continue;
+                }
+            };
+            let received_at = Instant::now();
             if bytes.is_empty()
                 || bytes.len() > MAX_PACKET + ENVELOPE
                 || !budget.accept(bytes.len())
@@ -290,6 +352,17 @@ impl GameplayServer {
                     let Ok(packet) = GameplayPacket::decode(&bytes[5..]) else {
                         break;
                     };
+                    {
+                        let mut d = diagnostics.lock().unwrap();
+                        d.generation = packet.generation();
+                        d.traffic.received_packets += 1;
+                        d.traffic.received_bytes += bytes.len() as u64;
+                        if let Some(gap_ms) = gap.received(received_at) {
+                            log_record(
+                                &serde_json::json!({"event":"gameplay_receive_recovered","side":"relay","room_tag":d.room_tag,"peer":peer,"generation":d.generation,"gap_ms":gap_ms}),
+                            );
+                        }
+                    }
                     let Some(broker) = broker.upgrade() else {
                         break;
                     };
@@ -306,19 +379,37 @@ impl GameplayServer {
                     delivery[1..5].copy_from_slice(&peer.to_le_bytes());
                     let state = self.state.lock().unwrap();
                     for target in targets {
-                        if let Some(out) = state
+                        if let Some(binding) = state
                             .bindings
                             .get(&(code.clone(), target))
                             .filter(|b| b.ready)
-                            .and_then(|b| b.connection.as_ref())
                         {
-                            let _ = out.send_datagram(delivery.clone().into());
+                            if let Some(out) = binding.connection.as_ref() {
+                                let pressure = out.datagram_send_buffer_space() < delivery.len();
+                                let result = out.send_datagram(delivery.clone().into());
+                                let mut d = binding.diagnostics.lock().unwrap();
+                                d.generation = packet.generation();
+                                d.traffic.send_buffer_pressure += u64::from(pressure);
+                                if result.is_err() {
+                                    d.traffic.send_failures += 1;
+                                } else {
+                                    d.traffic.sent_packets += 1;
+                                    d.traffic.sent_bytes += delivery.len() as u64;
+                                }
+                                d.forwarding.record(received_at.elapsed());
+                            }
                         }
                     }
                 }
                 _ => break,
             }
         }
+        relay_summary(
+            &diagnostics,
+            &connection,
+            "disconnect",
+            &mut summary_unix_ms,
+        );
         connection.close(0u32.into(), b"gameplay closed");
         if let Some(broker) = broker.upgrade() {
             broker.lock().unwrap().gameplay_failed(&code, peer);
@@ -326,10 +417,55 @@ impl GameplayServer {
     }
 }
 
+fn relay_summary(
+    diagnostics: &Mutex<GameplayDiagnostics>,
+    connection: &quinn::Connection,
+    reason: &str,
+    interval_start_unix_ms: &mut u64,
+) {
+    let mut d = diagnostics.lock().unwrap();
+    d.transport = TransportSnapshot::of(connection);
+    let now = crate::diagnostics::unix_ms();
+    log_record(
+        &serde_json::json!({"event":"relay_gameplay_summary", "reason":reason,"interval_start_unix_ms":*interval_start_unix_ms,"interval_end_unix_ms":now,"diagnostics":*d}),
+    );
+    *interval_start_unix_ms = now;
+    d.forwarding = Default::default();
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use tokio::sync::mpsc;
+
+    #[test]
+    fn queue_diagnostics_distinguish_supersession_eviction_and_rejection() {
+        let io = GameplayIo::default();
+        io.ready.store(true, Ordering::Release);
+        io.limit.store(MAX_PACKET, Ordering::Release);
+        let packet = GameplayPacket::Probe {
+            generation: 7,
+            nonce: 123,
+        };
+        io.send(Some(HOST), &packet).unwrap();
+        io.send(Some(HOST), &packet).unwrap();
+        for _ in 0..65 {
+            io.receive(HOST, packet.clone());
+        }
+        let d = io.diagnostics();
+        assert_eq!(d.traffic.superseded_packets, 1);
+        assert_eq!(d.traffic.queue_evictions, 1);
+        assert_eq!(d.traffic.incoming_high_water, 64);
+        for target in 2..=40 {
+            io.send(Some(target), &packet).unwrap();
+        }
+        assert_eq!(io.send(Some(41), &packet), Err(NetError::TooLarge));
+        assert_eq!(io.diagnostics().traffic.queue_rejections, 1);
+        let encoded = serde_json::to_string(&io.diagnostics()).unwrap();
+        for secret in ["nonce", "payload", "endpoint", "token"] {
+            assert!(!encoded.contains(secret));
+        }
+    }
 
     async fn open(
         broker: &Arc<Mutex<Broker>>,
@@ -612,9 +748,18 @@ pub(crate) struct GameplayIo {
     outgoing: Mutex<LatestPackets>,
     incoming: Mutex<VecDeque<(PeerId, GameplayPacket)>>,
     wake: Notify,
+    diagnostics: Mutex<GameplayDiagnostics>,
+    connection: Mutex<Option<quinn::Connection>>,
 }
 type LatestPackets = BTreeMap<(Option<PeerId>, u8, usize), Vec<u8>>;
 impl GameplayIo {
+    pub(crate) fn diagnostics(&self) -> GameplayDiagnostics {
+        let mut d = self.diagnostics.lock().unwrap().clone();
+        if let Some(connection) = self.connection.lock().unwrap().as_ref() {
+            d.transport = TransportSnapshot::of(connection);
+        }
+        d
+    }
     pub(crate) fn ready(&self) -> bool {
         self.ready.load(Ordering::Acquire)
     }
@@ -641,9 +786,16 @@ impl GameplayIo {
         };
         let key = (to, kind, seat);
         if outgoing.len() >= MAX_PLAYERS * 4 && !outgoing.contains_key(&key) {
+            self.diagnostics.lock().unwrap().traffic.queue_rejections += 1;
             return Err(NetError::TooLarge);
         }
-        outgoing.insert(key, bytes);
+        let superseded = outgoing.insert(key, bytes).is_some();
+        {
+            let mut d = self.diagnostics.lock().unwrap();
+            d.generation = packet.generation();
+            d.traffic.superseded_packets += u64::from(superseded);
+            d.traffic.outgoing_high_water = d.traffic.outgoing_high_water.max(outgoing.len());
+        }
         drop(outgoing);
         self.wake.notify_one();
         Ok(())
@@ -655,8 +807,11 @@ impl GameplayIo {
         let mut incoming = self.incoming.lock().unwrap();
         if incoming.len() == 64 {
             incoming.pop_front();
+            self.diagnostics.lock().unwrap().traffic.queue_evictions += 1;
         }
         incoming.push_back((from, packet));
+        let mut d = self.diagnostics.lock().unwrap();
+        d.traffic.incoming_high_water = d.traffic.incoming_high_water.max(incoming.len());
     }
 }
 
@@ -666,6 +821,12 @@ pub(crate) async fn client(
     io: Arc<GameplayIo>,
 ) -> Result<(), NetError> {
     let result = run_client(address, offer, &io).await;
+    if let Err(error) = result {
+        let d = io.diagnostics();
+        log_record(
+            &serde_json::json!({"event":"gameplay_connection_closed","room_tag":d.room_tag,"peer":d.peer,"generation":d.generation,"cause":format!("{error:?}")}),
+        );
+    }
     io.ready.store(false, Ordering::Release);
     result
 }
@@ -674,6 +835,11 @@ async fn run_client(
     offer: GameplayOffer,
     io: &GameplayIo,
 ) -> Result<(), NetError> {
+    {
+        let mut d = io.diagnostics.lock().unwrap();
+        d.room_tag.clone_from(&offer.room_tag);
+        d.peer = offer.peer;
+    }
     let bind = match address {
         SocketAddr::V4(_) => SocketAddr::from((Ipv4Addr::UNSPECIFIED, 0)),
         SocketAddr::V6(_) => SocketAddr::from((Ipv6Addr::UNSPECIFIED, 0)),
@@ -747,6 +913,8 @@ async fn run_client(
         }
     }
     io.ready.store(true, Ordering::Release);
+    *io.connection.lock().unwrap() = Some(connection.clone());
+    let _summary = ClientSummary(io);
     loop {
         tokio::select! {
             _ = io.wake.notified() => {
@@ -754,7 +922,15 @@ async fn run_client(
                 for ((target, _, _), payload) in outgoing {
                     let mut bytes = Vec::with_capacity(payload.len() + ENVELOPE);
                     bytes.push(DATA); bytes.extend_from_slice(&target.unwrap_or(0).to_le_bytes()); bytes.extend_from_slice(&payload);
-                    connection.send_datagram(bytes.into()).map_err(|_| NetError::UdpUnavailable)?;
+                    let mut d = io.diagnostics.lock().unwrap();
+                    d.traffic.send_buffer_pressure += u64::from(connection.datagram_send_buffer_space() < bytes.len());
+                    let len = bytes.len();
+                    if connection.send_datagram(bytes.into()).is_err() {
+                        d.traffic.send_failures += 1;
+                        return Err(NetError::UdpUnavailable);
+                    }
+                    d.traffic.sent_packets += 1;
+                    d.traffic.sent_bytes += len as u64;
                 }
             }
             bytes = connection.read_datagram() => {
@@ -762,8 +938,22 @@ async fn run_client(
                 if bytes.first() == Some(&READY) || bytes.first() == Some(&ECHO) { continue; }
                 if bytes.len() <= ENVELOPE || bytes.len() > MAX_PACKET + ENVELOPE || bytes[0] != DATA { return Err(NetError::Protocol); }
                 let peer = u32::from_le_bytes(bytes[1..5].try_into().unwrap());
+                {
+                    let mut d = io.diagnostics.lock().unwrap();
+                    d.traffic.received_packets += 1;
+                    d.traffic.received_bytes += bytes.len() as u64;
+                }
                 io.receive(peer, GameplayPacket::decode(&bytes[5..])?);
             }
         }
+    }
+}
+
+struct ClientSummary<'a>(&'a GameplayIo);
+impl Drop for ClientSummary<'_> {
+    fn drop(&mut self) {
+        log_record(
+            &serde_json::json!({"event":"client_gameplay_summary","reason":"disconnect","diagnostics":self.0.diagnostics()}),
+        );
     }
 }

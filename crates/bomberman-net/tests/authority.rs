@@ -93,7 +93,7 @@ fn ten_seats_and_six_motion_samples_fit_and_reject_truncated_or_old_packets() {
         bytes
     );
     let mut old = bytes;
-    old[3] = b'5';
+    old[3] = b'6';
     assert!(GameplayPacket::decode(&old).is_err());
     let history = (2..=7)
         .map(|tick| sample(&replay, 1, tick, tick - 1, PlayerInput::default()))
@@ -659,34 +659,75 @@ fn a_rejected_press_cannot_reappear_in_prediction_or_change_its_wire_identity() 
 fn seeded_matches_converge_with_two_and_ten_players_over_impaired_links() {
     // Virtual transport uses the actual packet codecs, host ledger and client
     // prediction. Hardware timing is measured separately by compare_authority.
-    for players in [2, 10] {
-        for (rtt, jitter, loss, up_bias) in [
-            (0, 0, 0, 0),
-            (10, 0, 0, 0),
-            (20, 0, 0, 0),
-            (40, 0, 0, 0),
-            (80, 0, 0, 0),
-            (160, 0, 0, 0),
-            (80, 20, 5, 0),
-            (80, 10, 5, 20),
-        ] {
-            for seed in 0..30u64 {
-                virtual_match(players, seed, rtt, jitter, loss, up_bias);
+    let report = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../target/network-validation/matrix.json");
+    std::fs::create_dir_all(report.parent().unwrap()).unwrap();
+    std::fs::write(&report, b"{\"passed\":false,\"complete\":false}\n").unwrap();
+    let mut matching_ticks = 0;
+    let mut render_samples = 0;
+    for arena in bomberman_core::Arena::ALL {
+        for players in [2, 10] {
+            for (rtt, jitter, loss, up_bias) in [
+                (0, 0, 0, 0),
+                (10, 0, 0, 0),
+                (20, 0, 0, 0),
+                (40, 0, 0, 0),
+                (80, 0, 0, 0),
+                (160, 0, 0, 0),
+                (80, 20, 5, 0),
+                (80, 10, 5, 20),
+            ] {
+                for seed in 0..6u64 {
+                    let (ticks, renders) =
+                        virtual_match_in_arena(players, seed, rtt, jitter, loss, up_bias, arena);
+                    matching_ticks += ticks;
+                    render_samples += renders;
+                }
             }
         }
+        eprintln!("Continuous matrix arena passed: {arena:?}");
     }
+    let result = serde_json::json!({"passed":true,"complete":true,"version":APP_VERSION,"protocol":PROTOCOL_VERSION,
+        "games":1056,"arenas":11,"seeds":6,"players":[2,10],"profiles":8,"ticks_per_game":250,
+        "matching_committed_ticks":matching_ticks,"owner_render_samples":render_samples,
+        "layout_rotation":["open","corridor","bricks"],"canonical_hash_and_shared_events_checked_at_each_matching_tick":true,
+        "detector_fault_fixtures":"consistency::oracles_detect_backward_jump_stale_pose_state_drift_and_duplicate_action"});
+    std::fs::write(&report, serde_json::to_vec_pretty(&result).unwrap()).unwrap();
     eprintln!(
-        "480 seeded matches passed: 30 seeds, 2/10 players, 8 delay/loss/asymmetric profiles"
+        "1056 seeded games passed: 11 arenas, 6 seeds, 2/10 players, 8 delay/loss/asymmetric profiles; every matching committed tick checked"
     );
 }
 
 #[test]
 fn seeded_matches_converge_with_reordering_and_delays_beyond_the_grace_window() {
-    for players in [2, 10] {
-        for seed in 0..6 {
-            virtual_match(players, seed, 80, 250, 10, 80);
+    for arena in bomberman_core::Arena::ALL {
+        for players in [2, 10] {
+            for seed in 0..6 {
+                virtual_match_in_arena(players, seed, 80, 250, 10, 80, arena);
+            }
         }
     }
+}
+
+#[test]
+#[ignore = "Set ATOMIC_MATRIX_REPRO to a saved failure trace"]
+fn reproduce_saved_game() {
+    let path = std::path::PathBuf::from(
+        std::env::var("ATOMIC_MATRIX_REPRO").expect("failure trace path required"),
+    );
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let trace: bomberman_net::verification::FailureTrace =
+        serde_json::from_slice(&std::fs::read(root.join(path)).unwrap()).unwrap();
+    let scenario = &trace.scenario;
+    virtual_match_in_arena(
+        scenario["players"].as_u64().unwrap() as usize,
+        trace.seed,
+        scenario["rtt_ms"].as_u64().unwrap(),
+        scenario["jitter_ms"].as_u64().unwrap(),
+        scenario["loss_percent"].as_u64().unwrap(),
+        scenario["up_bias_ms"].as_u64().unwrap(),
+        serde_json::from_value(scenario["arena"].clone()).unwrap(),
+    );
 }
 
 #[test]
@@ -854,8 +895,53 @@ fn recorded_motion_preserves_native_world_events_and_rng_across_all_arenas() {
     }
 }
 
-fn virtual_match(players: usize, seed: u64, rtt: u64, jitter: u64, loss: u64, up_bias: u64) {
-    let initial = initial(players, seed + 1997);
+#[allow(clippy::too_many_arguments)]
+fn virtual_match_in_arena(
+    players: usize,
+    seed: u64,
+    rtt: u64,
+    jitter: u64,
+    loss: u64,
+    up_bias: u64,
+    arena: bomberman_core::Arena,
+) -> (u64, u64) {
+    use bomberman_net::verification::{compare_replays, FailureTrace, OutcomeLedger, RenderGuard};
+    use std::collections::BTreeMap;
+    let mut config = initial(players, seed + 1997).simulation.config;
+    config.arena = arena;
+    match seed % 3 {
+        1 => {
+            for y in (2..9).step_by(2) {
+                config.scheme.rows[y] = "#.#.#.#.#.#.#.#".into();
+            }
+        }
+        2 => {
+            config.scheme.brick_density = 35;
+        }
+        _ => {}
+    }
+    let mut initial = Replay::new(Simulation::new(config, seed + 1997).unwrap());
+    initial
+        .advance(vec![PlayerInput::default(); players], vec![])
+        .unwrap();
+    let mut trace = FailureTrace::new(
+        seed,
+        serde_json::json!({"players":players,"arena":arena,"rtt_ms":rtt,"jitter_ms":jitter,"loss_percent":loss,"up_bias_ms":up_bias,"layout":seed%3,"schedule":"virtual_match_in_arena; LCG seed+17"}),
+    );
+    let mut expected = BTreeMap::<u64, (Replay, Vec<bomberman_core::GameEvent>)>::new();
+    let mut ledgers = [OutcomeLedger::default(), OutcomeLedger::default()];
+    let check = |result: Result<(), String>, trace: &mut FailureTrace| {
+        if let Err(error) = result {
+            let diagnostic = trace
+                .first_invariant
+                .clone()
+                .unwrap_or_else(|| error.clone());
+            trace.fail(error);
+            let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!("../../target/network-failures/{arena:?}-{players}-{seed}-{rtt}-{jitter}-{loss}-{up_bias}.json"));
+            trace.save(&path).unwrap();
+            panic!("{diagnostic}\nFailure trace: {}", path.display());
+        }
+    };
     let half = players / 2;
     let mut host = AuthorityTimeline::new(
         initial.clone(),
@@ -868,6 +954,18 @@ fn virtual_match(players: usize, seed: u64, rtt: u64, jitter: u64, loss: u64, up
     let mut predictions = [
         ClientPrediction::new_owner_at(owned[0].clone(), &initial, 0),
         ClientPrediction::new_owner_at(owned[1].clone(), &initial, 0),
+    ];
+    let mut render_guards = [
+        (0..owned[0].len())
+            .map(|_| RenderGuard::default())
+            .collect::<Vec<_>>(),
+        (0..owned[1].len())
+            .map(|_| RenderGuard::default())
+            .collect::<Vec<_>>(),
+    ];
+    let mut last_controls = [
+        vec![PlayerInput::default(); owned[0].len()],
+        vec![PlayerInput::default(); owned[1].len()],
     ];
     predictions[1].seed_rtt(rtt);
     let mut frames = FrameHistory::default();
@@ -908,6 +1006,20 @@ fn virtual_match(players: usize, seed: u64, rtt: u64, jitter: u64, loss: u64, up
         }
         while let Some(frame) = window.pop_next(now) {
             let events = canonical[1].apply(&frame).unwrap();
+            let (expected_state, expected_events) = &expected[&frame.tick];
+            check(compare_replays(expected_state, &canonical[1]), &mut trace);
+            check(
+                if *expected_events == events {
+                    Ok(())
+                } else {
+                    Err(format!("events differ at tick {}", frame.tick))
+                },
+                &mut trace,
+            );
+            check(
+                ledgers[1].observe_frame(1, &canonical[1], &frame, &events),
+                &mut trace,
+            );
             confirmations += events
                 .iter()
                 .filter(|event| matches!(event, bomberman_core::GameEvent::BombPlaced { .. }))
@@ -918,6 +1030,27 @@ fn virtual_match(players: usize, seed: u64, rtt: u64, jitter: u64, loss: u64, up
         }
         predictions[0].refresh_at(&canonical[0], now).unwrap();
         predictions[1].refresh_at(&canonical[1], now).unwrap();
+        for peer in 0..2 {
+            let display = predictions[peer].display(now);
+            for (local, &seat) in owned[peer].iter().enumerate() {
+                let result = render_guards[peer][local].observe(
+                    1,
+                    predictions[peer].replay(),
+                    &display,
+                    seat,
+                    last_controls[peer][local],
+                    predictions[peer].seat_reconciliation_serial(seat),
+                );
+                if result.is_err() {
+                    trace.push(serde_json::json!({"failure_at_ms":now,"peer":peer,"seat":seat,"canonical_tick":canonical[peer].tick,"predicted_tick":predictions[peer].replay().tick,"reconciliation_serial":predictions[peer].seat_reconciliation_serial(seat),"player":display.players[seat],"predicted_player":predictions[peer].replay().simulation.players[seat]}));
+                }
+                check(
+                    result.map_err(|e| format!("peer={peer} seat={seat} now={now}: {e}")),
+                    &mut trace,
+                );
+            }
+        }
+        trace.push(serde_json::json!({"at_ms":now,"step":step,"canonical_ticks":[canonical[0].tick,canonical[1].tick],"prediction_ticks":[predictions[0].replay().tick,predictions[1].replay().tick],"owner":predictions.iter().map(|p|p.latest_owned()).collect::<Vec<_>>(),"canonical":canonical.iter().map(|r|r.simulation.players.iter().map(|p|p.position).collect::<Vec<_>>()).collect::<Vec<_>>(),"render":predictions.iter().map(|p|p.display(now).players.iter().map(|p|p.presentation.render_position).collect::<Vec<_>>()).collect::<Vec<_>>(),"upstream_due_ms":upstream.iter().map(|(at,_)|at).collect::<Vec<_>>(),"downstream_due_ms":downstream.iter().map(|(at,_)|at).collect::<Vec<_>>()}));
         for peer in 0..2 {
             if peer == 1 && now < rtt / 2 {
                 continue;
@@ -941,6 +1074,7 @@ fn virtual_match(players: usize, seed: u64, rtt: u64, jitter: u64, loss: u64, up
                 })
                 .collect::<Vec<_>>();
             predictions[peer].capture_at(&inputs, now).unwrap();
+            last_controls[peer].clone_from(&inputs);
             if peer == 0 {
                 host.receive(1, &predictions[0].latest_owned()).unwrap_or_else(|error| panic!("host {players} seed={seed} step={step} RTT={rtt} wall={} committed={}: {error:?} {:?}", host.wall_tick, host.committed.tick, predictions[0].latest_owned()));
             } else {
@@ -984,11 +1118,17 @@ fn virtual_match(players: usize, seed: u64, rtt: u64, jitter: u64, loss: u64, up
                 .filter(|event| matches!(event, bomberman_core::GameEvent::BombPlaced { .. }))
                 .count();
             canonical[0].apply(&frame).unwrap();
+            check(
+                ledgers[0].observe_frame(1, &canonical[0], &frame, &events),
+                &mut trace,
+            );
+            expected.insert(frame.tick, (canonical[0].clone(), events));
             predictions[0]
                 .record_acknowledgment(&canonical[0], &frame, now)
                 .unwrap();
             frames.push(frame);
         }
+        check(compare_replays(&host.committed, &canonical[0]), &mut trace);
         let recent = frames.recent();
         if !recent.is_empty() && random() % 100 >= loss {
             let extra = if jitter == 0 {
@@ -1013,6 +1153,20 @@ fn virtual_match(players: usize, seed: u64, rtt: u64, jitter: u64, loss: u64, up
         .unwrap_or_default()
     {
         let events = canonical[1].apply(&frame).unwrap();
+        let (expected_state, expected_events) = &expected[&frame.tick];
+        check(compare_replays(expected_state, &canonical[1]), &mut trace);
+        check(
+            if *expected_events == events {
+                Ok(())
+            } else {
+                Err(format!("events differ at tick {}", frame.tick))
+            },
+            &mut trace,
+        );
+        check(
+            ledgers[1].observe_frame(1, &canonical[1], &frame, &events),
+            &mut trace,
+        );
         confirmations += events
             .iter()
             .filter(|event| matches!(event, bomberman_core::GameEvent::BombPlaced { .. }))
@@ -1034,4 +1188,12 @@ fn virtual_match(players: usize, seed: u64, rtt: u64, jitter: u64, loss: u64, up
         Replay::from_checkpoint(&checkpoint).unwrap().hash(),
         host.committed.hash()
     );
+    (
+        host.committed.tick - initial.tick,
+        render_guards
+            .iter()
+            .flat_map(|guards| guards.iter())
+            .map(|guard| guard.frames)
+            .sum(),
+    )
 }

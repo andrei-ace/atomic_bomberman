@@ -69,6 +69,14 @@ pub struct Session {
     clock_ms: u64,
     peer_gameplay_ms: BTreeMap<PeerId, u64>,
     repair_ms: BTreeMap<PeerId, u64>,
+    audit: Option<std::collections::VecDeque<bomberman_net::verification::AuditSample>>,
+    diagnostic_progress: (u64, u64),
+    diagnostic_progress_ms: u64,
+    diagnostic_stalled: bool,
+    diagnostic_summary_ms: u64,
+    diagnostic_gap: bool,
+    diagnostic_gap_start_ms: u64,
+    diagnostic_gap_warning_ms: u64,
 }
 impl Session {
     pub fn new(
@@ -115,7 +123,53 @@ impl Session {
             clock_ms: 0,
             peer_gameplay_ms: BTreeMap::new(),
             repair_ms: BTreeMap::new(),
+            audit: None,
+            diagnostic_progress: (0, 0),
+            diagnostic_progress_ms: 0,
+            diagnostic_stalled: false,
+            diagnostic_summary_ms: 0,
+            diagnostic_gap: false,
+            diagnostic_gap_start_ms: 0,
+            diagnostic_gap_warning_ms: 0,
         })
+    }
+    #[allow(dead_code)] // Opt-in headless verification; absent in normal play.
+    pub fn enable_audit(&mut self) {
+        self.audit = Some(Default::default());
+    }
+    #[allow(dead_code)]
+    pub fn take_audit(&mut self) -> Vec<bomberman_net::verification::AuditSample> {
+        self.audit
+            .as_mut()
+            .map(|audit| audit.drain(..).collect())
+            .unwrap_or_default()
+    }
+    #[allow(dead_code)]
+    pub fn prediction_audit(&self, seat: usize) -> Option<(&Replay, u64)> {
+        self.prediction
+            .as_ref()
+            .map(|p| (p.replay(), p.seat_reconciliation_serial(seat)))
+    }
+    #[allow(dead_code)]
+    pub fn take_confirmation_latencies(&mut self) -> Vec<u64> {
+        self.prediction
+            .as_mut()
+            .map(|p| p.take_confirmation_latencies())
+            .unwrap_or_default()
+    }
+    #[allow(dead_code)]
+    pub fn retransmit_committed(&self) -> Result<(), NetError> {
+        let frames = self.history.recent();
+        if self.host && !frames.is_empty() {
+            self.connection.send_gameplay(
+                None,
+                &GameplayPacket::Frames {
+                    generation: self.start_generation,
+                    frames,
+                },
+            )?;
+        }
+        Ok(())
     }
     fn broadcast_lobby(&self) -> Result<(), NetError> {
         self.connection.message(
@@ -536,14 +590,24 @@ impl Session {
                             {
                                 self.warning = Some(error.to_string())
                             }
-                            GameMessage::Error(error) => return Err(error),
+                            GameMessage::Error(error) => {
+                                bomberman_net::diagnostics::log_record(
+                                    &serde_json::json!({"event":"session_rejected","peer":self.id,"generation":self.start_generation,"cause":format!("{error:?}"),"source":"host_control"}),
+                                );
+                                return Err(error);
+                            }
                             _ => return Err(NetError::Protocol),
                         }
                     } else {
                         return Err(NetError::Ownership);
                     }
                 }
-                Event::Error(error) => return Err(error),
+                Event::Error(error) => {
+                    bomberman_net::diagnostics::log_record(
+                        &serde_json::json!({"event":"session_rejected","peer":self.id,"generation":self.start_generation,"cause":format!("{error:?}"),"source":"transport"}),
+                    );
+                    return Err(error);
+                }
                 Event::Pong | Event::GameplayOffer(_) => {}
                 _ => return Err(NetError::Protocol),
             }
@@ -593,30 +657,6 @@ impl Session {
         if self.replay.is_none() {
             return Ok(events);
         }
-        if !self.host {
-            self.apply_frames(now_ms, &mut events)?;
-            let since_datagram = now_ms.saturating_sub(self.last_gameplay_ms);
-            if since_datagram >= 5000 {
-                return Err(NetError::UdpUnavailable);
-            }
-            // Repair isolated losses only while the datagram path is alive.
-            if since_datagram < 500 {
-                if let Some((first, last)) = self
-                    .window
-                    .as_mut()
-                    .and_then(|window| window.repair_request(now_ms))
-                {
-                    self.connection.message(
-                        Some(HOST),
-                        GameMessage::FrameRange {
-                            generation: self.start_generation,
-                            first,
-                            last,
-                        },
-                    )?;
-                }
-            }
-        }
         if let Some(prediction) = &mut self.prediction {
             prediction.observe(&inputs)?;
         }
@@ -651,6 +691,34 @@ impl Session {
                 // restored UDP path recovers without fabricating fresh input.
                 for packet in prediction.packets(self.start_generation) {
                     self.connection.send_gameplay(Some(HOST), &packet)?;
+                }
+            }
+        }
+        // Capture elapsed local movement before rebasing on queued host frames.
+        // During a consumer stall the host may forecast an old held direction
+        // past the last local capture. Rebuilding first would overwrite the
+        // owner's released position before its catch-up samples can preserve it.
+        if !self.host {
+            self.apply_frames(now_ms, &mut events)?;
+            let since_datagram = now_ms.saturating_sub(self.last_gameplay_ms);
+            if since_datagram >= 5000 {
+                return Err(NetError::UdpUnavailable);
+            }
+            // Repair isolated losses only while the datagram path is alive.
+            if since_datagram < 500 {
+                if let Some((first, last)) = self
+                    .window
+                    .as_mut()
+                    .and_then(|window| window.repair_request(now_ms))
+                {
+                    self.connection.message(
+                        Some(HOST),
+                        GameMessage::FrameRange {
+                            generation: self.start_generation,
+                            first,
+                            last,
+                        },
+                    )?;
                 }
             }
         }
@@ -690,7 +758,21 @@ impl Session {
                 let committed = authority.settle()?;
                 for (frame, _) in committed {
                     let replay = self.replay.as_mut().unwrap();
-                    let mut frame_events = replay.apply(&frame)?;
+                    let mut frame_events = replay.apply(&frame).inspect_err(|error| {
+                        bomberman_net::diagnostics::log_record(&serde_json::json!({"event":"frame_rejected","room_tag":self.connection.gameplay_diagnostics().room_tag,"peer":self.id,"generation":self.start_generation,"tick":frame.tick,"replay_tick":replay.tick,"cause":format!("{error:?}")}));
+                    })?;
+                    if let Some(audit) = &mut self.audit {
+                        if audit.len() >= 128 {
+                            return Err(NetError::TooLarge);
+                        }
+                        audit.push_back(bomberman_net::verification::AuditSample {
+                            generation: self.start_generation,
+                            replay: replay.clone(),
+                            frame: frame.clone(),
+                            events: frame_events.clone(),
+                            observed_ms: now_ms,
+                        });
+                    }
                     let prediction = self.prediction.as_mut().unwrap();
                     prediction.filter_confirmed_events(replay, &frame, &mut frame_events);
                     prediction.record_acknowledgment(replay, &frame, now_ms)?;
@@ -730,7 +812,68 @@ impl Session {
             self.predicted = Some(prediction.display(now_ms));
             events.extend(prediction.take_feedback());
         }
+        self.log_diagnostics(now_ms);
         Ok(events)
+    }
+    fn log_diagnostics(&mut self, now_ms: u64) {
+        let Some(replay) = &self.replay else {
+            return;
+        };
+        if self.preparation.is_some() {
+            return;
+        }
+        let identity = self.connection.gameplay_diagnostics();
+        let progress = (self.start_generation, replay.tick);
+        if self.diagnostic_progress != progress {
+            if self.diagnostic_stalled {
+                bomberman_net::diagnostics::log_record(
+                    &serde_json::json!({"event":"canonical_progress_recovered","room_tag":identity.room_tag,"peer":self.id,"generation":self.start_generation,"tick":replay.tick,"stall_ms":now_ms.saturating_sub(self.diagnostic_progress_ms)}),
+                );
+            }
+            self.diagnostic_progress = progress;
+            self.diagnostic_progress_ms = now_ms;
+            self.diagnostic_stalled = false;
+        } else if now_ms.saturating_sub(self.diagnostic_progress_ms) >= 500
+            && !self.diagnostic_stalled
+        {
+            self.diagnostic_stalled = true;
+            bomberman_net::diagnostics::log_record(
+                &serde_json::json!({"event":"canonical_progress_stall","room_tag":identity.room_tag,"peer":self.id,"generation":self.start_generation,"tick":replay.tick,"stall_ms":now_ms.saturating_sub(self.diagnostic_progress_ms),"cause":"no_committed_tick"}),
+            );
+        }
+        let last_received_ms = if self.host {
+            self.peer_gameplay_ms
+                .values()
+                .copied()
+                .max()
+                .unwrap_or(self.last_gameplay_ms)
+        } else {
+            self.last_gameplay_ms
+        };
+        let gap_ms = now_ms.saturating_sub(last_received_ms);
+        let gap = gap_ms > 250;
+        if gap
+            && !self.diagnostic_gap
+            && now_ms.saturating_sub(self.diagnostic_gap_warning_ms) >= 1000
+        {
+            self.diagnostic_gap = true;
+            self.diagnostic_gap_start_ms = last_received_ms;
+            self.diagnostic_gap_warning_ms = now_ms;
+            bomberman_net::diagnostics::log_record(
+                &serde_json::json!({"event":"gameplay_receive_gap","side":"client","room_tag":identity.room_tag,"peer":self.id,"generation":self.start_generation,"gap_ms":gap_ms}),
+            );
+        } else if !gap && self.diagnostic_gap {
+            self.diagnostic_gap = false;
+            bomberman_net::diagnostics::log_record(
+                &serde_json::json!({"event":"gameplay_receive_recovered","side":"client","room_tag":identity.room_tag,"peer":self.id,"generation":self.start_generation,"gap_ms":now_ms.saturating_sub(self.diagnostic_gap_start_ms)}),
+            );
+        }
+        if now_ms.saturating_sub(self.diagnostic_summary_ms) >= 10_000 {
+            self.diagnostic_summary_ms = now_ms;
+            bomberman_net::diagnostics::log_record(
+                &serde_json::json!({"event":"client_gameplay_summary","reason":"interval","diagnostics":identity}),
+            );
+        }
     }
     fn reset_prediction(&mut self) -> Result<(), NetError> {
         let owned = self
@@ -742,6 +885,11 @@ impl Session {
             owned,
             self.replay.as_ref().ok_or(NetError::Protocol)?,
             self.clock_ms,
+        );
+        prediction.set_diagnostic_context(
+            self.connection.gameplay_diagnostics().room_tag,
+            self.id,
+            self.start_generation,
         );
         if !self.host {
             if let Some(rtt_ms) = self.gameplay_rtt_ms {
@@ -755,8 +903,13 @@ impl Session {
                 self.replay.as_ref().unwrap().clone(),
                 self.lobby.as_ref().unwrap().owners.clone(),
             ));
+            self.authority.as_mut().unwrap().set_diagnostic_context(
+                self.connection.gameplay_diagnostics().room_tag,
+                self.start_generation,
+            );
         }
         self.prediction = Some(prediction);
+        self.diagnostic_gap = false;
         self.predicted = None;
         self.input_accumulator = 0;
         Ok(())
@@ -884,7 +1037,12 @@ impl Session {
                             .insert(generation, frame, now_ms)?;
                     }
                 }
-                _ => return Err(NetError::Ownership),
+                _ => {
+                    bomberman_net::diagnostics::log_record(
+                        &serde_json::json!({"event":"session_rejected","peer":self.id,"generation":self.start_generation,"source":"gameplay_packet_role"}),
+                    );
+                    return Err(NetError::Ownership);
+                }
             }
         }
         Ok(())
@@ -896,7 +1054,21 @@ impl Session {
             .and_then(|window| window.pop_next(now_ms))
         {
             let replay = self.replay.as_mut().ok_or(NetError::Protocol)?;
-            let mut frame_events = replay.apply(&frame)?;
+            let mut frame_events = replay.apply(&frame).inspect_err(|error| {
+                        bomberman_net::diagnostics::log_record(&serde_json::json!({"event":"frame_rejected","room_tag":self.connection.gameplay_diagnostics().room_tag,"peer":self.id,"generation":self.start_generation,"tick":frame.tick,"replay_tick":replay.tick,"cause":format!("{error:?}")}));
+                    })?;
+            if let Some(audit) = &mut self.audit {
+                if audit.len() >= 128 {
+                    return Err(NetError::TooLarge);
+                }
+                audit.push_back(bomberman_net::verification::AuditSample {
+                    generation: self.start_generation,
+                    replay: replay.clone(),
+                    frame: frame.clone(),
+                    events: frame_events.clone(),
+                    observed_ms: now_ms,
+                });
+            }
             if let Some(prediction) = &mut self.prediction {
                 prediction.filter_confirmed_events(replay, &frame, &mut frame_events);
                 prediction.record_acknowledgment(replay, &frame, now_ms)?;
@@ -1045,13 +1217,21 @@ mod tests {
     fn real_lan_coordinator_multiple_devices_frames_pause_rematch_and_disconnect() {
         let compatibility = Compatibility::new("a".repeat(64));
         let address = SocketAddr::from((Ipv4Addr::LOCALHOST, PORT));
+        let mut config = GameConfig {
+            countdown_ms: 0,
+            random_starts: false,
+            enclosement_depth: 0,
+            ..Default::default()
+        };
+        config.scheme.brick_density = 0;
+        config.scheme.rows.fill("...............".into());
         let mut host = Session::new(
             Destination::Lan {
                 address,
                 host: true,
             },
             compatibility.clone(),
-            Some(GameConfig::default()),
+            Some(config),
             vec![Device::Keyboard1, Device::Keyboard2],
         )
         .unwrap();
@@ -1219,6 +1399,35 @@ mod tests {
                 .map(|sample| sample.tick)
                 .collect::<Vec<_>>(),
             vec![1, 2, 3, 4, 5]
+        );
+        // Let both clients settle, then release between captures and stall
+        // this consumer while the host forecasts the old held direction.
+        let moving = PlayerInput {
+            direction: Some(bomberman_core::Direction::Left),
+            ..Default::default()
+        };
+        for _ in 0..20 {
+            now += 20;
+            host.pump(20, now, vec![PlayerInput::default(); 2]).unwrap();
+            client.pump(20, now, vec![moving; 2]).unwrap();
+            thread::sleep(Duration::from_millis(20));
+        }
+        client
+            .pump(0, now, vec![PlayerInput::default(); 2])
+            .unwrap();
+        let released = client.predicted.as_ref().unwrap().players[2].position;
+        for _ in 0..10 {
+            now += 20;
+            host.pump(20, now, vec![PlayerInput::default(); 2]).unwrap();
+            thread::sleep(Duration::from_millis(20));
+        }
+        client
+            .pump(200, now, vec![PlayerInput::default(); 2])
+            .unwrap();
+        assert_eq!(
+            client.predicted.as_ref().unwrap().players[2].position,
+            released,
+            "queued fallback frames replaced the released owner position"
         );
         let mut hashes = BTreeMap::new();
         let mut verified = host.replay.as_ref().unwrap().clone();

@@ -1,0 +1,33 @@
+{
+  "passed": true,
+  "version": "0.5.1",
+  "transport": "LAN TCP/QUIC",
+  "main_footer": "Arrow keys + Enter  /  F1 help  /  F11 fullscreen  /  v0.5.1",
+  "host_pause_actions": [
+    "Resume",
+    "Help",
+    "Restart",
+    "Leave"
+  ],
+  "client_pause_actions": [
+    "Resume",
+    "Help",
+    "Leave"
+  ],
+  "host_results_actions": [
+    "Rematch",
+    "Configure",
+    "Leave"
+  ],
+  "client_results_actions": [
+    "Leave"
+  ],
+  "game_sha256": "0e043cae516edf327575dee8a1f16418a5b7c9ba265bb2df642ba7a45da15f65",
+  "checks": [
+    "Version shown on main screen",
+    "Host-only restart and results actions hidden for client",
+    "Client Help and Resume work",
+    "Client Leave routes to leaving rather than restart",
+    "Host retains full pause menu"
+  ]
+}

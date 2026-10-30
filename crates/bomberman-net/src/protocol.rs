@@ -4,10 +4,10 @@ use std::{collections::BTreeSet, fmt};
 
 pub type PeerId = u32;
 pub const HOST: PeerId = 1;
-pub const PROTOCOL_VERSION: u32 = 6;
+pub const PROTOCOL_VERSION: u32 = 7;
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Owner motion and bounded host commitment require the same simulation family.
-pub const COMPATIBLE_APP_VERSION: &str = "0.5.0";
+pub const COMPATIBLE_APP_VERSION: &str = "0.5.1";
 pub const PORT: u16 = 1997;
 pub const STEP_MS: u32 = 20;
 pub const MAX_PLAYERS: usize = 10;
@@ -216,6 +216,7 @@ pub enum GameMessage {
     },
     Repair {
         generation: u64,
+        #[serde(with = "crate::gameplay::repair_frames")]
         frames: Vec<InputFrame>,
     },
     Checkpoint(Box<Checkpoint>),

@@ -1,0 +1,370 @@
+{
+  "achieved_committed_ticks_per_second": 50.0,
+  "application_rtt_ms": {
+    "max": 15,
+    "p50": 14,
+    "p95": 15,
+    "p99": 15,
+    "samples": 8661
+  },
+  "canonical_ticks_compared": 3498,
+  "client_diagnostics": [
+    {
+      "forwarding": {
+        "buckets": [],
+        "max_us": 0,
+        "samples": 0
+      },
+      "generation": 2,
+      "peer": 1,
+      "room_tag": "3dcd389ddb77b78c",
+      "traffic": {
+        "incoming_high_water": 2,
+        "outgoing_high_water": 3,
+        "queue_evictions": 0,
+        "queue_rejections": 0,
+        "received_bytes": 1177791,
+        "received_packets": 3568,
+        "send_buffer_pressure": 0,
+        "send_failures": 0,
+        "sent_bytes": 2365036,
+        "sent_packets": 7065,
+        "superseded_packets": 0
+      },
+      "transport": {
+        "congestion_events": 0,
+        "congestion_window": 12000,
+        "rtt_us": 148,
+        "send_buffer_free": 4064,
+        "sender_lost_packets": 0,
+        "sender_sent_packets": 3684,
+        "udp_rx_bytes": 1325745,
+        "udp_rx_packets": 3662,
+        "udp_tx_bytes": 2528498,
+        "udp_tx_packets": 3683
+      }
+    },
+    {
+      "forwarding": {
+        "buckets": [],
+        "max_us": 0,
+        "samples": 0
+      },
+      "generation": 2,
+      "peer": 2,
+      "room_tag": "3dcd389ddb77b78c",
+      "traffic": {
+        "incoming_high_water": 3,
+        "outgoing_high_water": 2,
+        "queue_evictions": 0,
+        "queue_rejections": 0,
+        "received_bytes": 2364362,
+        "received_packets": 7063,
+        "send_buffer_pressure": 0,
+        "send_failures": 0,
+        "sent_bytes": 1178128,
+        "sent_packets": 3569,
+        "superseded_packets": 0
+      },
+      "transport": {
+        "congestion_events": 0,
+        "congestion_window": 12000,
+        "rtt_us": 148,
+        "send_buffer_free": 4064,
+        "sender_lost_packets": 0,
+        "sender_sent_packets": 3699,
+        "udp_rx_bytes": 2531374,
+        "udp_rx_packets": 3963,
+        "udp_tx_bytes": 1331965,
+        "udp_tx_packets": 3698
+      }
+    }
+  ],
+  "explained_render_boundaries": 3825,
+  "failure_trace": null,
+  "first_failure": null,
+  "generator_scheduling_delay_ms": {
+    "max": 7,
+    "p50": 2,
+    "p95": 3,
+    "p99": 3,
+    "samples": 8661
+  },
+  "host_commit_to_client_apply_ms": {
+    "max": 15,
+    "p50": 7,
+    "p95": 8,
+    "p99": 8,
+    "samples": 2997
+  },
+  "intentional_supersessions": 0,
+  "latency_distributions": {
+    "application_rtt_ms": {
+      "buckets": [
+        [
+          5,
+          144
+        ],
+        [
+          7,
+          441
+        ],
+        [
+          12,
+          870
+        ],
+        [
+          13,
+          1300
+        ],
+        [
+          14,
+          3310
+        ],
+        [
+          15,
+          2596
+        ]
+      ],
+      "max": 15,
+      "samples": 8661
+    },
+    "generator_scheduling_delay_ms": {
+      "buckets": [
+        [
+          0,
+          504
+        ],
+        [
+          1,
+          1447
+        ],
+        [
+          2,
+          4888
+        ],
+        [
+          3,
+          1818
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          7,
+          1
+        ]
+      ],
+      "max": 7,
+      "samples": 8661
+    },
+    "host_commit_to_client_apply_ms": {
+      "buckets": [
+        [
+          0,
+          2
+        ],
+        [
+          5,
+          259
+        ],
+        [
+          6,
+          589
+        ],
+        [
+          7,
+          1506
+        ],
+        [
+          8,
+          640
+        ],
+        [
+          15,
+          1
+        ]
+      ],
+      "max": 15,
+      "samples": 2997
+    },
+    "owner_sample_to_confirmation_ms": {
+      "buckets": [
+        [
+          20,
+          371
+        ],
+        [
+          21,
+          360
+        ],
+        [
+          22,
+          423
+        ],
+        [
+          23,
+          460
+        ],
+        [
+          24,
+          431
+        ],
+        [
+          25,
+          445
+        ],
+        [
+          26,
+          434
+        ],
+        [
+          27,
+          440
+        ],
+        [
+          28,
+          448
+        ],
+        [
+          29,
+          440
+        ],
+        [
+          30,
+          426
+        ],
+        [
+          31,
+          437
+        ],
+        [
+          32,
+          410
+        ],
+        [
+          33,
+          294
+        ],
+        [
+          34,
+          174
+        ],
+        [
+          40,
+          1
+        ]
+      ],
+      "max": 40,
+      "samples": 5994
+    }
+  },
+  "lifetime_application_failures": 0,
+  "limitations": [
+    "Headless production session display state; physical display and audio are outside this measurement.",
+    "Latency histograms cover the full measurement at 1ms resolution; RTT samples are cached application-probe observations. Forwarding uses separate relay timestamps."
+  ],
+  "measurement_end_unix_ms": 1793322430019,
+  "measurement_seconds": 60,
+  "measurement_start_unix_ms": 1793322370016,
+  "owner_sample_to_confirmation_ms": {
+    "max": 40,
+    "p50": 27,
+    "p95": 33,
+    "p99": 34,
+    "samples": 5994
+  },
+  "passed": true,
+  "players_per_room": 2,
+  "protocol": 7,
+  "queue_evictions": 0,
+  "received_packets_per_second": 151.83333333333334,
+  "rematches": 1,
+  "render_frames_checked": 20224,
+  "rooms": 1,
+  "sampled_render_frames": 20224,
+  "seed": 1999,
+  "send_failures_and_queue_rejections": 0,
+  "sent_packets_per_second": 151.88333333333333,
+  "shared_outcomes": {
+    "bomb_placements": 42,
+    "deaths": 4,
+    "detonations": 38,
+    "match_results": 1,
+    "round_results": 4
+  },
+  "version": "0.5.1",
+  "warmup_seconds": 10,
+  "impairment": {
+    "rtt_ms": 0,
+    "jitter_ms": 0,
+    "loss_percent": 0,
+    "udp_forwarded": null,
+    "udp_dropped": null
+  },
+  "generator_exit_codes": [
+    0
+  ],
+  "generator_exit_code": 0,
+  "resource_scope": "measurement interval; CPU from process-time deltas (100 percent = one core)",
+  "relay_cpu_percent": {
+    "samples": 220,
+    "p50": 0.0,
+    "p95": 3.7386953665465423,
+    "p99": 3.7938412889080277,
+    "max": 10.915957900873432
+  },
+  "relay_memory_kib": {
+    "samples": 221,
+    "p50": 7040,
+    "p95": 7232,
+    "p99": 7232,
+    "max": 7232
+  },
+  "generator_cpu_percent": {
+    "samples": 220,
+    "p50": 7.548253680541885,
+    "p95": 11.342762414205039,
+    "p99": 14.682789492799287,
+    "max": 14.916461953598384
+  },
+  "generator_memory_kib": {
+    "samples": 221,
+    "p50": 9952,
+    "p95": 10240,
+    "p99": 10240,
+    "max": 10240
+  },
+  "relay": {
+    "summary_records": 14,
+    "measured_intervals": 8,
+    "connections": 2,
+    "forwarding_ms": {
+      "samples": 6107,
+      "p50": 0.1,
+      "p95": 0.1,
+      "p99": 0.1,
+      "max": 5.552
+    },
+    "forwarding_failures": 0,
+    "send_buffer_pressure": 0,
+    "sender_loss_estimate": 0,
+    "congestion_events": 0
+  },
+  "relay_forwarding_scope": "complete ten-second intervals inside measurement; partial boundary intervals excluded",
+  "gates": {
+    "gameplay_correct": true,
+    "zero_application_evictions": true,
+    "zero_send_failures": true,
+    "zero_forwarding_failures": true,
+    "forwarding_p99_below_20_ms": true,
+    "all_relay_connections_observed": true
+  },
+  "relay_diagnostics_artifact": "0.5.1-relay-load-1x2-r3.relay.jsonl.gz",
+  "relay_diagnostics_sha256": "6811ec9a3037a4b3ac19e8fbf5e384b63d5d15a32abd15d12a4765232739633e"
+}

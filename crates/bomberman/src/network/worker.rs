@@ -30,6 +30,7 @@ struct Controls {
 #[derive(Default)]
 struct Published {
     id: PeerId,
+    generation: u64,
     room: String,
     lobby: Option<Lobby>,
     replay: Option<Replay>,
@@ -46,6 +47,7 @@ struct Published {
 pub struct Network {
     pub host: bool,
     pub id: PeerId,
+    pub generation: u64,
     pub room: String,
     pub lobby: Option<Lobby>,
     pub replay: Option<Replay>,
@@ -92,6 +94,7 @@ impl Network {
         Ok(Self {
             host,
             id: 0,
+            generation: 0,
             room: String::new(),
             lobby,
             replay: None,
@@ -206,6 +209,7 @@ impl Network {
             return Err(error);
         }
         self.id = state.id;
+        self.generation = state.generation;
         self.room.clone_from(&state.room);
         if state.lobby.is_some() {
             self.lobby.clone_from(&state.lobby);
@@ -265,6 +269,15 @@ fn run(
     let mut previous_ms = 0;
     while !stopped.load(Ordering::Acquire) {
         let now_ms = started.elapsed().as_millis() as u64;
+        if now_ms.saturating_sub(previous_ms) > 100
+            && session.replay.is_some()
+            && !session.is_starting()
+        {
+            let identity = session.connection.gameplay_diagnostics();
+            bomberman_net::diagnostics::log_record(
+                &serde_json::json!({"event":"simulation_stall","room_tag":identity.room_tag,"peer":session.id,"generation":session.start_generation,"elapsed_ms":now_ms.saturating_sub(previous_ms),"cause":"worker_scheduling"}),
+            );
+        }
         let elapsed_ms = now_ms.saturating_sub(previous_ms).min(250) as u32;
         previous_ms = now_ms;
         let outcome = (|| {
@@ -304,6 +317,7 @@ fn run(
                 }
                 state.events.extend(events);
                 state.id = session.id;
+                state.generation = session.start_generation;
                 state.room.clone_from(&session.room);
                 state.lobby.clone_from(&session.lobby);
                 state.replay.clone_from(&session.replay);

@@ -1,0 +1,17 @@
+{
+  "deployed": true,
+  "version": "0.5.1",
+  "protocol": 7,
+  "architecture": "aarch64",
+  "previous_pid": 428086,
+  "main_pid": 439064,
+  "previous_sha256": "fef28886b2fd7e2bc91f36a945de0f199ffeeab00ec9c9f75e2e2779e875c323",
+  "running_sha256": "20dd4fae5dfba312c821ee2125079a4af7b70829dd90fa96b14fdb1db2b31f73",
+  "backup_binary": "/usr/local/lib/bomberman-relay/bomberman-relay-0.5.0-fef28886b2fd",
+  "private_files_unchanged": true,
+  "saved_invitation_unchanged": true,
+  "tls_certificate_unchanged": true,
+  "tcp_tls_ready": true,
+  "udp_socket_owned_by_service": true,
+  "deployed_at_utc": "2026-10-30T07:34:25.358925+00:00"
+}

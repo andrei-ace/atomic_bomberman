@@ -190,7 +190,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "anyhow",
  "bomberman-assets",
@@ -208,7 +208,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-assets"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "anyhow",
  "png",
@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-core"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -227,7 +227,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-net"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "anyhow",
  "base64",
@@ -249,7 +249,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-relay"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "anyhow",
  "axum",

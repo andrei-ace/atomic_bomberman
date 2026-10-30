@@ -1,0 +1,124 @@
+{
+  "version": "0.5.1",
+  "protocol": 7,
+  "local_acceptance_complete": true,
+  "published": false,
+  "deployed": true,
+  "build_manifest": "0.5.1-build-manifest.json",
+  "checks": {
+    "full_workspace": {
+      "command": "cargo test --locked --release --workspace",
+      "result": {
+        "passed": 269,
+        "failed": 0,
+        "ignored": 4
+      },
+      "ignored_scope": "Three optional native comparison fixtures and the opt-in saved-failure replay.",
+      "artifact": "0.5.1-workspace-tests.txt.gz",
+      "artifact_sha256": "19852bda3a4fa979ec349eebc0b8241b3c6d9dc230e00b18d9d17336780802f0"
+    },
+    "matrix": {
+      "artifact": "0.5.1-correctness-matrix.json",
+      "games": 1056,
+      "passed": true,
+      "matching_committed_ticks": 261591,
+      "owner_render_samples": 1584000
+    },
+    "additional_reordering_matrix": {
+      "games": 132,
+      "passed": true
+    },
+    "audio": {
+      "command": "cargo test -p quad-snd --lib",
+      "passed": 24,
+      "failed": 0
+    },
+    "formatting": {
+      "command": "cargo fmt --all -- --check",
+      "passed": true
+    },
+    "clippy": {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "passed": true,
+      "note": "Existing dependency warnings from vendored miniquad remain."
+    },
+    "rendered_gui": {
+      "artifact": "0.5.1-rendered-playability.json",
+      "passed": true,
+      "checked_render_frames": 422,
+      "matching_tick_hash_samples": 2270,
+      "missed_actions": 0,
+      "first_failure": null,
+      "failures": []
+    },
+    "relay_load": {
+      "artifact": "0.5.1-relay-load.json",
+      "complete": true,
+      "passed": true,
+      "release_gate_passed": true,
+      "cases": 9,
+      "warmup_seconds": 10,
+      "measurement_seconds": 60,
+      "repetitions": 3,
+      "canonical_ticks_compared": 62979,
+      "render_samples_checked": 1709073,
+      "queue_evictions": 0,
+      "forwarding_failures": 0,
+      "max_forwarding_p99_ms": 0.1
+    },
+    "injected_network": {
+      "artifact": "0.5.1-relay-impaired.json",
+      "passed": true,
+      "rtt_ms": 80,
+      "jitter_ms": 20,
+      "loss_percent": 5,
+      "warmup_seconds": 2,
+      "measurement_seconds": 20
+    },
+    "ui_follow_up": {
+      "app_tests_passed": 12,
+      "lan_menu_check": "0.5.1-ui-lan-menus.json",
+      "wan_transport_menu_check": "0.5.1-ui-wan-menus.json",
+      "formatting_passed": true,
+      "clippy_passed": true,
+      "macos_launcher_passed": true,
+      "workflow_yaml_parsed": true,
+      "intel_runner_removed": true
+    }
+  },
+  "reproductions": "0.5.1-regressions/index.json",
+  "wan": {
+    "candidate_acceptance": "Passed actual WAN checks with matching 0.5.1 clients and the deployed relay: two and ten clients, one room at a time.",
+    "protocol6_baseline": "relay-protocol6-baseline.json",
+    "two_client_baseline": "passed",
+    "ten_client_baseline": "failed before completing measurement on both attempts",
+    "pre_deployment_relay_verification": {
+      "main_pid": 428086,
+      "same_process_as_baseline": true,
+      "binary_sha256": "fef28886b2fd7e2bc91f36a945de0f199ffeeab00ec9c9f75e2e2779e875c323",
+      "same_binary_as_baseline": true,
+      "private_file_count": 5,
+      "private_files_predate_task": true
+    },
+    "deployment_record": "0.5.1-relay-deployment.json",
+    "acceptance_record": "0.5.1-deployed-wan.json"
+  },
+  "code_fixes": [
+    "Bound long owner-motion collision walks by validated board size.",
+    "Preserve logical and captured walking-animation phase.",
+    "Use observed release during catch-up and capture inputs before applying queued fallback frames.",
+    "Retain current-round motion and select inputs using the round being replayed when canonical confirmation is delayed.",
+    "Suppress active off-board facts while native new-round spawning is deferred.",
+    "Encode reliable repairs compactly inside unchanged control budgets."
+  ],
+  "verified_at_utc": "2026-10-30T01:12:32.734636+00:00",
+  "evidence_verification": {
+    "source_and_binary_hashes_match": true,
+    "relay_diagnostic_and_gui_trace_hashes_match": true,
+    "credential_link_and_endpoint_scan_passed": true,
+    "head_unchanged": true,
+    "staged_changes": false
+  },
+  "source_committed_during_network_measurements": false,
+  "build_manifest_scope": "Frozen network acceptance binaries before the subsequent UI and CI follow-up."
+}

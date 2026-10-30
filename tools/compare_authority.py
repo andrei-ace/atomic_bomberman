@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import json
 import platform
+import re
 import statistics
 import tempfile
 from pathlib import Path
@@ -16,6 +17,8 @@ from types import SimpleNamespace
 from verify_datagram import ImpairmentProxy, local_case, run_pair
 
 ROOT = Path(__file__).resolve().parents[1]
+APP_VERSION = re.search(r'version = "([^"\n]+)"', (ROOT / "Cargo.toml").read_text())[1]
+PROTOCOL = int(re.search(r"PROTOCOL_VERSION: u32 = (\d+)", (ROOT / "crates/bomberman-net/src/protocol.rs").read_text())[1])
 PROFILES = [
     ("lan-0", "lan", 0, 0, 0),
     ("lan-10", "lan", 10, 0, 0),
@@ -108,7 +111,7 @@ def main():
                       f"post-release={case['movement_continuity']['max_last_movement_after_release_ms']:.2f}ms", flush=True)
         before, after = metrics(entry["baseline"]), metrics(entry["candidate"])
         assert all(c["build"]["version"] == "0.4.1" and c["build"]["protocol"] == 5 for c in entry["baseline"])
-        assert all(c["build"]["version"] == "0.5.0" and c["build"]["protocol"] == 6 for c in entry["candidate"])
+        assert all(c["build"]["version"] == APP_VERSION and c["build"]["protocol"] == PROTOCOL for c in entry["candidate"])
         assert {c["build"]["fixture_sha256"] for c in entry["baseline"] + entry["candidate"]} == {entry["baseline"][0]["build"]["fixture_sha256"]}, "Fixtures differ between builds"
         entry["baseline_metrics"], entry["candidate_metrics"] = before, after
         entry["gates"] = {

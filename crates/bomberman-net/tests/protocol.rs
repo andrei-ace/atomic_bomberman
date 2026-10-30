@@ -35,6 +35,18 @@ fn owner_authority_rejects_the_protocol_five_handshake() {
         Err(NetError::Version)
     );
 }
+#[test]
+fn protocol_seven_rejects_the_deployed_protocol_six_handshake() {
+    let mut old = compatibility();
+    old.protocol = 6;
+    old.application = "0.5.0".into();
+    assert_eq!(compatibility().check(&old), Err(NetError::Version));
+    assert_eq!(
+        Broker::new(None).authenticate("", &old),
+        Err(NetError::Version)
+    );
+}
+
 fn profile() -> ServerProfile {
     ServerProfile {
         endpoint: "wss://127.0.0.1:443/v1/ws".into(),

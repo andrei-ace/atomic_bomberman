@@ -65,6 +65,9 @@ impl Broker {
     pub fn rooms(&self) -> usize {
         self.rooms.len()
     }
+    pub(crate) fn room_playing(&self, code: &str) -> bool {
+        self.rooms.get(code).is_some_and(|room| room.playing)
+    }
     pub fn set_gameplay(&mut self, gameplay: crate::quic::GameplayServer) {
         self.gameplay = Some(gameplay);
     }
@@ -191,6 +194,9 @@ impl Broker {
             }
         }
         Ok((code, id))
+    }
+    pub fn diagnostic_context(&self, code: &str, peer: PeerId) -> Option<(String, u64)> {
+        self.gameplay.as_ref()?.diagnostic_context(code, peer)
     }
     pub(crate) fn gameplay_targets(
         &self,
@@ -360,6 +366,9 @@ impl RateLimit {
             message_limit: MAX_PLAYERS as u32 * 60 + 120,
             ..Self::default()
         }
+    }
+    pub fn usage(&self) -> (u32, usize) {
+        (self.messages, self.bytes)
     }
     pub fn accept(&mut self, bytes: usize) -> bool {
         if self.since.elapsed() >= Duration::from_secs(1) {

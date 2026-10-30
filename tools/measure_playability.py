@@ -119,7 +119,9 @@ def run(host,client,focus,key,press,snapshot,lobby_action,repetitions=10,single_
     action_required=('action_to_local_flame_ms','action_to_local_flame_draw_ready_ms','action_to_confirmed_flame_ms')+(() if single_play else ('action_to_peer_flame_ms',))
     missed=sum(any(r.get(k) is None for k in required) for r in rows)
     missed+=sum(any(r.get(k) is None for k in action_required) for r in bombs)
-    return dict(passed=missed==0 and all(r['owner_alive_after_dodge'] for r in bombs),version=local[0]['version'],protocol=local[0]['protocol'],
+    from render_gates import inspect
+    correctness = inspect(local, remote, commands, seat)
+    return dict(passed=missed==0 and all(r['owner_alive_after_dodge'] for r in bombs) and correctness['passed'],correctness=correctness,version=local[0]['version'],protocol=local[0]['protocol'],
         mode='single-play' if single_play else 'network',
         environment='Actual offline game window; XTest OS key events; Xvfb and Mesa' if single_play else 'Actual game windows; XTest OS key events; Xvfb and Mesa; real Internet relay',
         measurement='OS key issuance to app observation, draw submission and next-frame resumption bounds, canonical effect and peer frame',

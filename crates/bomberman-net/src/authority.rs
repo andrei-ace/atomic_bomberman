@@ -54,6 +54,7 @@ pub struct AuthorityTimeline {
     fallback: Vec<PlayerInput>,
     fallback_round: u32,
     refreshed: Vec<u64>,
+    diagnostic_context: (String, u64),
 }
 impl AuthorityTimeline {
     pub fn new(replay: Replay, owners: Vec<Option<PeerId>>) -> Self {
@@ -74,7 +75,12 @@ impl AuthorityTimeline {
             fallback: vec![PlayerInput::default(); n],
             fallback_round: round,
             refreshed: vec![0; n],
+            diagnostic_context: (String::new(), 0),
         }
+    }
+
+    pub fn set_diagnostic_context(&mut self, room_tag: String, generation: u64) {
+        self.diagnostic_context = (room_tag, generation);
     }
 
     /// Validate the entire datagram before admitting any fact. A repeated fact
@@ -113,6 +119,34 @@ impl AuthorityTimeline {
                                 != crate::session::button_bits(sample.input)
                     })
             {
+                let cause = if !sample.valid() {
+                    "invalid_fact"
+                } else if self.owners.get(sample.seat) != Some(&Some(peer)) {
+                    "owner"
+                } else if sample.tick > self.wall_tick.saturating_add(25) {
+                    "future_tick"
+                } else if self
+                    .samples
+                    .get(&(sample.tick, sample.seat))
+                    .is_some_and(|old| old != sample)
+                {
+                    "mutated_fact"
+                } else if self.late_motion[sample.seat]
+                    .is_some_and(|old| old.tick == sample.tick && old != *sample)
+                {
+                    "mutated_late_fact"
+                } else if sample
+                    .edge
+                    .saturating_sub(self.acknowledgments[sample.seat].edge)
+                    > MAX_BUTTON_EDGES as u64
+                {
+                    "edge_window"
+                } else {
+                    "edge_or_packet_conflict"
+                };
+                crate::diagnostics::log_record(
+                    &serde_json::json!({"event":"owner_fact_rejected","room_tag":self.diagnostic_context.0,"generation":self.diagnostic_context.1,"cause":cause,"peer":peer,"seat":sample.seat,"tick":sample.tick,"sequence":sample.sequence,"round":sample.round,"wall_tick":self.wall_tick,"committed_tick":self.committed.tick}),
+                );
                 return Err(NetError::Ownership);
             }
         }

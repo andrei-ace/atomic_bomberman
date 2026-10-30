@@ -48,6 +48,15 @@ impl Simulation {
             0 | 3..=5 => u32::from(p.presentation.walk_pixels / 3),
             _ => i32::from(p.presentation.frame as i16) as u32,
         };
+        if special == 0 {
+            if let Some((_, motion)) = self
+                .network_motions
+                .iter()
+                .find(|(seat, motion)| *seat == player && motion.position == p.position)
+            {
+                p.presentation.render_frame = u32::from(motion.render_walk_frame);
+            }
+        }
         p.presentation.palette = if special != 5 && p.disease_elapsed_ms & 8 != 0 {
             p.presentation.personal_palette = false;
             self.rng.range(10) as u8

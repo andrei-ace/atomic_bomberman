@@ -1145,23 +1145,20 @@ impl App {
         let action = match self.screen {
             Screen::Battle if pause => Some(Action::Pause(!self.paused)),
             Screen::Battle if self.paused => {
-                self.navigation(4);
-                let click = self.hover_rows(190., 190., 260., 36., 4);
+                let actions = pause_actions(Some(host));
+                self.navigation(actions.len());
+                let click = self.hover_rows(190., 190., 260., 36., actions.len());
                 if self.confirm() || click {
-                    match self.selection {
-                        0 => Some(Action::Pause(false)),
-                        1 => {
+                    match actions[self.selection] {
+                        PauseAction::Resume => Some(Action::Pause(false)),
+                        PauseAction::Help => {
                             self.previous = Screen::Battle;
-                            self.previous_selection = 1;
+                            self.previous_selection = self.selection;
                             self.change_screen(Screen::Help);
                             None
                         }
-                        2 if host => Some(Action::Rematch),
-                        2 => {
-                            self.notify("The host starts rematches.");
-                            None
-                        }
-                        _ => {
+                        PauseAction::Restart => Some(Action::Rematch),
+                        PauseAction::Leave => {
                             self.leave_network();
                             None
                         }
@@ -1171,25 +1168,22 @@ impl App {
                 }
             }
             Screen::Results => {
-                self.navigation(3);
-                let click = self.hover_rows(160., 360., 320., 29., 3);
+                let actions = results_actions(Some(host));
+                self.navigation(actions.len());
+                let click = self.hover_rows(160., 360., 320., 29., actions.len());
                 if self.back() {
                     self.leave_network();
                     None
                 } else if self.confirm() || click {
-                    match self.selection {
-                        0 if host => Some(Action::Rematch),
-                        1 if host => {
+                    match actions[self.selection] {
+                        ResultsAction::Rematch => Some(Action::Rematch),
+                        ResultsAction::Configure => {
                             if let Some(n) = &mut self.network {
                                 let _ = n.return_to_lobby();
                             }
                             None
                         }
-                        0 | 1 => {
-                            self.notify("Waiting for the host to start the next match or return to the lobby.");
-                            None
-                        }
-                        _ => {
+                        ResultsAction::Leave => {
                             self.leave_network();
                             None
                         }

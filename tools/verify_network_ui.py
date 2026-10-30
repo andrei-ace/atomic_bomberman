@@ -33,11 +33,14 @@ def main():
     parser.add_argument('--live-invite-stdin', action='store_true', help='Use the deployed server link on stdin instead of starting a local relay')
     parser.add_argument('--playability', action='store_true', help='Measure OS-key-to-frame timing with opt-in traces')
     parser.add_argument('--single-play', action='store_true', help='Measure the offline local battle with the same key sequence')
+    parser.add_argument('--lan-menu', action='store_true', help='Verify role-aware menus through two actual LAN windows')
     parser.add_argument('--expected-version', help='Reject an incorrectly copied game binary before connecting')
     args = parser.parse_args()
     if args.single_play:
         if args.live_invite_stdin:parser.error('Single play does not use a relay invitation')
         args.playability=True
+    if args.lan_menu and (args.single_play or args.playability or args.live_invite_stdin or any((args.latency_ms,args.jitter_ms,args.loss_percent,args.spike_ms))):
+        parser.error('LAN menu verification uses the direct local LAN transport')
     if min(args.latency_ms,args.jitter_ms,args.loss_percent,args.spike_ms,args.spike_duration_ms) < 0 or args.loss_percent > 100:
         parser.error('Delays must be nonnegative and loss must be between 0 and 100 percent')
     if args.spike_period_ms <= 0 or args.spike_duration_ms > args.spike_period_ms:
@@ -113,7 +116,11 @@ def main():
             time.sleep(.2); press('F12')
         state = json.loads(probe.read_text())
         counts = {'Main':7,'Multiplayer':3,'Internet':len(state['browser']['rooms'])+5,'Online':3,'NetworkDevices':13,'NetworkRules':12,'Battle':4,'Lan':len(state['lan']['games'])+4}
-        if state['screen'] == 'NetworkLobby':
+        if state['screen'] == 'Battle':
+            count = len(state.get('pause_actions', range(4)))
+        elif state['screen'] == 'Results':
+            count = len(state.get('results_actions', range(3)))
+        elif state['screen'] == 'NetworkLobby':
             count = len(state['network']['actions'])
         elif state['screen'] == 'NetworkColors':
             network = state['network']
@@ -140,7 +147,7 @@ def main():
 
     with tempfile.TemporaryDirectory(prefix='atomic online ui ') as temporary:
         base = Path(temporary); processes = []; logs = []
-        if args.single_play:
+        if args.single_play or args.lan_menu:
             invitation='';proxy=None
         elif args.live_invite_stdin:
             if args.latency_ms or args.jitter_ms or args.loss_percent or args.spike_ms: parser.error('Latency proxy is only available for the disposable local relay')
@@ -278,6 +285,45 @@ def main():
             host=launch('host'); initial=snapshot(host,'Main')
             if args.expected_version:
                 assert initial.get('version')==args.expected_version, 'Game binary version does not match the requested baseline/candidate'
+            # Historical comparison binaries predate the version footer/probes.
+            if tuple(map(int, initial['version'].split('.'))) >= (0, 5, 1):
+                assert initial['main_footer'].endswith('v'+initial['version'])
+                assert 'Native Rust' not in initial['main_footer']
+            if args.lan_menu:
+                select(1); snapshot(host,'Multiplayer'); select(0); snapshot(host,'Lan'); select(0)
+                assert snapshot(host,'NetworkLobby')['network']['host']
+                friend=launch('friend'); snapshot(friend,'Main')
+                select(1); snapshot(friend,'Multiplayer'); select(0); snapshot(friend,'Lan')
+                select(1); paste('127.0.0.1'); select(0)
+                assert not snapshot(friend,'NetworkLobby')['network']['host']
+                lobby_action(host,'Start')
+                snapshot(host,'Battle'); snapshot(friend,'Battle')
+                focus(friend[0]); press('p'); time.sleep(.4)
+                paused_host=snapshot(host,'Battle'); paused_friend=snapshot(friend,'Battle')
+                assert paused_host['paused'] and paused_friend['paused']
+                assert paused_host['pause_actions']==['Resume','Help','Restart','Leave']
+                assert paused_friend['pause_actions']==['Resume','Help','Leave']
+                assert paused_host['results_actions']==['Rematch','Configure','Leave']
+                assert paused_friend['results_actions']==['Leave']
+                focus(friend[0]); select(1); snapshot(friend,'Help')
+                press('Escape'); assert snapshot(friend,'Battle')['paused']
+                select(0); time.sleep(.3)
+                assert not snapshot(host,'Battle')['paused']
+                assert not snapshot(friend,'Battle')['paused']
+                focus(friend[0]); press('p'); time.sleep(.3)
+                assert snapshot(friend,'Battle')['paused']
+                select(2); assert snapshot(friend)['network'] is None
+                assert snapshot(host,'Battle')['network']['host']
+                select(3); assert snapshot(host)['network'] is None
+                import hashlib
+                report=dict(passed=True,version=initial['version'],transport='LAN TCP/QUIC',
+                    main_footer=initial['main_footer'],host_pause_actions=paused_host['pause_actions'],
+                    client_pause_actions=paused_friend['pause_actions'],host_results_actions=paused_host['results_actions'],
+                    client_results_actions=paused_friend['results_actions'],game_sha256=hashlib.sha256(args.game.read_bytes()).hexdigest(),
+                    checks=['Version shown on main screen','Host-only restart and results actions hidden for client',
+                            'Client Help and Resume work','Client Leave routes to leaving rather than restart','Host retains full pause menu'])
+                args.report.parent.mkdir(parents=True,exist_ok=True);args.report.write_text(json.dumps(report,indent=2)+'\n')
+                print(json.dumps(report,indent=2));return
             if args.single_play:
                 select(0);snapshot(host,'Battle')
                 from measure_playability import run
@@ -398,6 +444,19 @@ def main():
             assert paused_host['paused'] and paused_friend['paused']
             # Once paused, the authoritative game state must be byte-for-byte equal.
             assert paused_host['simulation']==paused_friend['simulation']
+            assert paused_host['pause_actions']==['Resume','Help','Restart','Leave']
+            assert paused_friend['pause_actions']==['Resume','Help','Leave']
+            assert paused_host['results_actions']==['Rematch','Configure','Leave']
+            assert paused_friend['results_actions']==['Leave']
+            focus(friend[0]); select(1); snapshot(friend,'Help')
+            press('Escape'); assert snapshot(friend,'Battle')['paused']
+            # The first remaining client row still resumes the shared game.
+            select(0); time.sleep(.3)
+            assert not snapshot(host,'Battle')['paused']
+            assert not snapshot(friend,'Battle')['paused']
+            # Pause again so the original host controls remain available.
+            press('p'); time.sleep(.3)
+            assert snapshot(host,'Battle')['paused']
             # Host returns to lobby after unpausing and ending/restarting through UI.
             focus(host[0]); press('Return'); time.sleep(.2)
             focus(friend[0]); press('Escape'); time.sleep(.3)
@@ -411,13 +470,19 @@ def main():
             open_online(host); join_discovered(host,code)
             assert snapshot(host,'NetworkLobby')['network']['id']==2
             assert snapshot(friend,'NetworkLobby')['network']['host']
+            lobby_action(friend,'Start'); snapshot(friend,'Battle'); snapshot(host,'Battle')
+            focus(host[0]); press('p'); time.sleep(.4)
+            assert snapshot(host,'Battle')['pause_actions']==['Resume','Help','Leave']
+            select(2); assert snapshot(host)['network'] is None
+            assert snapshot(friend,'Battle')['network']['host']
+            select(3); assert snapshot(friend)['network'] is None
             for log in logs: log.flush()
             for file in base.rglob('*.log'):
                 text=file.read_text()
                 assert invitation not in text
             report={'passed':True,'platform':'Ubuntu 24.04 x86-64, isolated Xvfb, Mesa software rendering',
                     'injected_gameplay_round_trip_ms':args.latency_ms,'movement_response_ms':response_ms,'movement_visible_before_confirmation':before_confirmation,'relay_environment':'deployed server, external TCP and UDP 443' if args.live_invite_stdin else 'disposable local TLS relay',
-                    'checks':['Multiplayer directly below Start local battle','simple LAN browser and back navigation','Paste server link button reads the OS clipboard','Ctrl-V reads the OS clipboard','Copy server link updates the OS clipboard',
+                    'checks':['Main screen displays the compiled game version','Network client pause menu retains Resume, Help and Leave','Network client results retain Leave and hide host-only actions','Client Help, Resume and Leave still route to the correct actions','Multiplayer directly below Start local battle','simple LAN browser and back navigation','Paste server link button reads the OS clipboard','Ctrl-V reads the OS clipboard','Copy server link updates the OS clipboard',
                               'Backspace and Delete clear the whole private link','Invalid and empty pastes clear stale input','Typing cannot silently change a hidden private link','A link copied by one game authenticates another game',
                               'create room','private profile mode 0600',
                               'LAN and game lobbies have no Copy Invite','friend joins through automatic discovery',

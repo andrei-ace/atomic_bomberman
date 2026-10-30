@@ -10,6 +10,10 @@ pub struct AvatarMotion {
     pub remainder: i32,
     pub ice_direction: Option<Direction>,
     pub ice_remaining_ms: u32,
+    /// Native wrapping walking-animation counter, independent of arrival time.
+    pub walk_pixels: u16,
+    /// The captured normal pose can precede a pickup/carry counter reset.
+    pub render_walk_frame: u16,
 }
 
 impl AvatarMotion {
@@ -24,6 +28,7 @@ impl AvatarMotion {
             // it is not restricted to a fractional pixel.
             && self.remainder <= 100_000
             && self.ice_remaining_ms <= 60_000
+            && self.render_walk_frame <= u16::MAX / 3
     }
 }
 
@@ -37,6 +42,11 @@ impl Simulation {
             remainder: self.player_motion_remainder(seat),
             ice_direction: player.ice_direction,
             ice_remaining_ms: player.ice_remaining_ms,
+            walk_pixels: player.presentation.walk_pixels,
+            render_walk_frame: player
+                .presentation
+                .render_frame
+                .min(u32::from(u16::MAX / 3)) as u16,
         }
     }
 
@@ -89,9 +99,13 @@ impl Simulation {
         let from = self.players[seat].position;
         let distance = (i64::from(from.x) - i64::from(motion.position.x)).abs()
             + (i64::from(from.y) - i64::from(motion.position.y)).abs();
-        // Bound work for gaps and transit, rather than trusting an arbitrary
-        // coordinate jump as an unobstructed teleport.
-        if distance > i64::from(TILE_WIDTH.max(TILE_HEIGHT) * 200) {
+        // Both endpoints must be on the validated fixed-size board. A delayed
+        // owner can legitimately walk more than two tiles; distance is not a
+        // reason to fall back to held-input forecasting. Bound CPU work by the
+        // board's pixel dimensions and sweep through native collision/hazards.
+        if !(0..BOARD_WIDTH * TILE_WIDTH * 100).contains(&from.x)
+            || !(0..BOARD_HEIGHT * TILE_HEIGHT * 100).contains(&from.y)
+        {
             return false;
         }
         // The ordinary path must retain even interactions that do not change
@@ -101,6 +115,9 @@ impl Simulation {
         let mut native = self.clone();
         native.move_player_native_tail(seat, direction);
         if native.players[seat].position == motion.position {
+            if native.players[seat].presentation.special == 0 {
+                native.players[seat].presentation.walk_pixels = motion.walk_pixels;
+            }
             *self = native;
             return true;
         }
@@ -121,7 +138,8 @@ impl Simulation {
         if distance != 0 {
             // A native corner iteration can change both axes. A Manhattan
             // distance used as a motion budget would run that turn twice.
-            for _ in 0..=distance / 100 {
+            let board_steps = i64::from(BOARD_WIDTH * TILE_WIDTH + BOARD_HEIGHT * TILE_HEIGHT);
+            for _ in 0..=distance.div_euclid(100).min(board_steps) {
                 let previous = self.players[seat].position;
                 // A fresh endpoint can be behind a held-state forecast. Sweep
                 // toward that endpoint; its facing describes the owner's last
@@ -161,6 +179,9 @@ impl Simulation {
             player.moving = motion.moving;
             player.ice_direction = motion.ice_direction;
             player.ice_remaining_ms = motion.ice_remaining_ms;
+            if player.presentation.special == 0 {
+                player.presentation.walk_pixels = motion.walk_pixels;
+            }
         }
         for bomb in &mut self.bombs {
             if bomb.tile() != self.players[seat].tile() {
