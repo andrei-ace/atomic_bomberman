@@ -345,6 +345,15 @@ async fn real_tls_invitation_flow_isolation_pin_auth_version_and_host_departure(
         open(&mut late, &full, compatibility()).await,
         Event::Error(NetError::InProgress)
     ));
+    // These raw test clients do not have production's continuous reader. Drain
+    // the initial heartbeat and confirm its reply reached the relay before
+    // asking it to close the room. An unread Pong can turn a close into a TCP
+    // reset on Windows. The second FIFO barrier also covers a heartbeat read
+    // while waiting for the first Pong.
+    for _ in 0..2 {
+        send(&mut friend, Request::Ping).await;
+        assert!(matches!(receive(&mut friend).await, Event::Pong));
+    }
     send(&mut host, Request::Leave).await;
     assert!(matches!(
         receive(&mut friend).await,

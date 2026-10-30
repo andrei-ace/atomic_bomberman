@@ -148,12 +148,17 @@ pub fn require_not_cancelled(cancelled: bool) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    static NEXT_TEMP: AtomicUsize = AtomicUsize::new(0);
+
     struct Temp(PathBuf);
     impl Temp {
         fn new() -> Self {
             let path = std::env::temp_dir().join(format!(
-                "atomic windows cache spaces-{}-{}",
+                "atomic windows cache spaces-{}-{}-{}",
                 std::process::id(),
+                NEXT_TEMP.fetch_add(1, Ordering::Relaxed),
                 SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .unwrap()
