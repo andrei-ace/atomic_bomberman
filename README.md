@@ -6,6 +6,8 @@ and private Internet battles for 2–10 players and bots. It includes all 11 are
 The Rust game runs directly on Windows, Linux and macOS. REA and Ghidra are used during
 development.
 
+[![Watch the Atomic Bomberman video on YouTube](https://img.youtube.com/vi/H-EKMKbGctk/hqdefault.jpg)](https://www.youtube.com/watch?v=H-EKMKbGctk)
+
 **You need your original Atomic Bomberman game data.** Release downloads contain
 the application and importer; original graphics, sounds, and other game assets
 are imported locally from your copy of the game.
