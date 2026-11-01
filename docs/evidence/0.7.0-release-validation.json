@@ -1,0 +1,91 @@
+{
+  "passed": true,
+  "checked_at_utc": "2026-11-01T11:45:37.907919+00:00",
+  "release": "https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.0",
+  "source_commit": "e718967845a82e12f45ba486b70540b3f5761355",
+  "source_digest": "0fcb14acfe9f52af6ef1420f161bf1c3a0107996a549dc505e26ebf1f70f4e2f",
+  "assets_verified": 15,
+  "packages": {
+    "atomic-bomberman-0.7.0-linux-x86_64": "x86_64-unknown-linux-gnu",
+    "atomic-bomberman-0.7.0-macos-arm64": "aarch64-apple-darwin",
+    "atomic-bomberman-0.7.0-windows-x86_64": "x86_64-pc-windows-msvc",
+    "atomic-bomberman-0.7.0-relay-linux-arm64": "aarch64-unknown-linux-gnu",
+    "atomic-bomberman-0.7.0-relay-linux-x86_64": "x86_64-unknown-linux-gnu"
+  },
+  "assets": {
+    "atomic-bomberman-0.7.0-linux-x86_64.AppImage": {
+      "sha256": "f1cdbb4c7c528de3a74a7b27980d193c6605d1e26297b6aad6e05c481ebd41b8",
+      "size_bytes": 35423376
+    },
+    "atomic-bomberman-0.7.0-linux-x86_64.AppImage.sha256": {
+      "sha256": "eea3d0f58a902c6503ca29b5ebada38557465926f1f59dfd945062ad17b917b0",
+      "size_bytes": 111
+    },
+    "atomic-bomberman-0.7.0-linux-x86_64.build.json": {
+      "sha256": "80ad868e097e0f68b8d784c98961fa710ea74640008efe412111fceb323d7bd6",
+      "size_bytes": 44428
+    },
+    "atomic-bomberman-0.7.0-macos-arm64.build.json": {
+      "sha256": "e7d2d88827ef77cf17e728fd03004be676f1e9af20603b905d3200c956f5f817",
+      "size_bytes": 33721
+    },
+    "atomic-bomberman-0.7.0-macos-arm64.zip": {
+      "sha256": "e3e6306e3485d40cae5b9735fc57d638650356ad099dd18b92cfbfc840d05c9d",
+      "size_bytes": 5754569
+    },
+    "atomic-bomberman-0.7.0-macos-arm64.zip.sha256": {
+      "sha256": "0c349e3f0fd124525ac8f1269126e09085ca2e6c98171a5afa9c777bc15b992a",
+      "size_bytes": 105
+    },
+    "atomic-bomberman-0.7.0-relay-linux-arm64.build.json": {
+      "sha256": "6108cd4a93093f247aa91dfc578d9fd7baf0597d15e334e9c5949bb3842652e7",
+      "size_bytes": 33194
+    },
+    "atomic-bomberman-0.7.0-relay-linux-arm64.tar.gz": {
+      "sha256": "f9a4da21bbf00a11bf2e66a413659347ae66b5c193c853060d8ab5e9e941e4fb",
+      "size_bytes": 2921499
+    },
+    "atomic-bomberman-0.7.0-relay-linux-arm64.tar.gz.sha256": {
+      "sha256": "f82bd1b80b94442cf460344f4bf54826a257832dca198cb53e3d82feb1923209",
+      "size_bytes": 114
+    },
+    "atomic-bomberman-0.7.0-relay-linux-x86_64.build.json": {
+      "sha256": "5f7ba5362b4b48676a1ecff52db8d8313c1fe3522301d3254172827b78a22add",
+      "size_bytes": 33357
+    },
+    "atomic-bomberman-0.7.0-relay-linux-x86_64.tar.gz": {
+      "sha256": "35ab7fac9e34b14ea30cf5b12572ca582ac4ed49f40f67e44505cc39e23a631a",
+      "size_bytes": 3018200
+    },
+    "atomic-bomberman-0.7.0-relay-linux-x86_64.tar.gz.sha256": {
+      "sha256": "8c6d63cfc970d4cc2402da5ccaa37f53e2b7c51cff447d84782420a81d88af66",
+      "size_bytes": 115
+    },
+    "atomic-bomberman-0.7.0-windows-x86_64.build.json": {
+      "sha256": "bbdf2989f257c22a1051d09a0cfda33a5031acd6afa1e44edf1a6c6744f8b435",
+      "size_bytes": 37896
+    },
+    "atomic-bomberman-0.7.0-windows-x86_64.zip": {
+      "sha256": "b76122a43f8dce07fcdf878e9716952ac6994c19eed22b44ca3907e73a9d2d6f",
+      "size_bytes": 5752660
+    },
+    "atomic-bomberman-0.7.0-windows-x86_64.zip.sha256": {
+      "sha256": "c93ab4df673fd02e15f196a06e76547d304f915ea0f4f8d66661b7ab69585c34",
+      "size_bytes": 109
+    }
+  },
+  "github_digests_and_sidecar_checksums_valid": true,
+  "source_digest_matches_local_tagged_source": true,
+  "macos_signature_and_relocated_launcher_verified": true,
+  "windows_and_relay_architecture_and_package_boundaries_verified": true,
+  "linux_native_appimage_verification": "Native tagged release job; downloaded digest matches GitHub asset digest",
+  "demo": "https://www.youtube.com/watch?v=kdETJWSwXpA",
+  "native_ci_passed": true,
+  "native_ci_report": "0.7.0-native-ci.json",
+  "linux_downloaded_appimage_verified_under_emulation": true,
+  "relay_deployed": true,
+  "relay_deployment_report": "0.7.0-relay-deployment.json",
+  "live_wan_passed": false,
+  "live_wan_failure": "room=0 peer=1 at=2137ms: render.speed: dx=0 dy=1100 ticks=1 budget=933",
+  "correction": "0.7.1 bounds owner captures to the existing 500 ms prediction window; protocol remains 8."
+}

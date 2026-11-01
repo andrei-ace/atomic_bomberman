@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "phase": "before patch publication; corrected client against deployed 0.7.0 relay",
+  "client_version": "0.7.1",
+  "relay_version": "0.7.0",
+  "protocol": 8,
+  "compatibility_family": "0.7.0",
+  "rooms": [
+    {
+      "peers": 2,
+      "report": "0.7.1-candidate-2-peers.json",
+      "canonical_ticks_compared": 3482,
+      "render_frames_checked": 23043,
+      "queue_evictions": 0,
+      "send_failures_and_queue_rejections": 0
+    },
+    {
+      "peers": 10,
+      "report": "0.7.1-candidate-10-peers.json",
+      "canonical_ticks_compared": 3504,
+      "render_frames_checked": 97674,
+      "queue_evictions": 0,
+      "send_failures_and_queue_rejections": 0
+    }
+  ],
+  "latency_report": "0.7.1-candidate-latency.json",
+  "p95_presentation_ms": 37.233208,
+  "environment": "Real deployed private relay; no injected impairment; production headless Session clients."
+}

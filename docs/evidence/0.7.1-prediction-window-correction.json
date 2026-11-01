@@ -1,0 +1,20 @@
+{
+  "phase": "pre-release focused regression validation; final full-suite and live checks recorded separately",
+  "version": "0.7.1",
+  "protocol": 8,
+  "compatibility_family": "0.7.0",
+  "original_wan_failure": "0.7.0-postdeployment-failed-2-peers.json",
+  "old_reproduction": "step=114 canonical=58 predicted=83 failure=render.speed: dx=-2900 dy=3700 ticks=1 budget=933",
+  "cause": "Owner captures advanced clock_ms beyond the 500 ms canonical window; refresh clamped the replay tick and compressed hidden simulation steps into a later visible step.",
+  "fix": "Bound the target before capturing. At the window limit, retain observed input edges and retransmit existing facts until canonical progress permits another real capture.",
+  "movement_guard_and_speed_bounds_unchanged": true,
+  "regression_tests": {
+    "owner_prediction_does_not_hide_captures_beyond_the_canonical_window": "passed",
+    "owner_prediction_retains_a_tap_while_the_canonical_window_is_full": "passed",
+    "canonical_catching_the_owner_clock_preserves_its_real_pose": "passed",
+    "retaining_an_overtaken_owner_still_respects_a_confirmed_obstruction": "passed",
+    "ordinary_confirmation_keeps_the_owner_on_the_offline_input_path": "passed"
+  },
+  "host_catch_up_failure": "0.7.1-first-candidate-10-peers.json",
+  "diagnostic_audit_capacity": "Matches FRAME_HISTORY (256); the production frame-window bound is unchanged."
+}

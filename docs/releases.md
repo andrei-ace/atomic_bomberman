@@ -1,6 +1,6 @@
 # Desktop and relay releases
 
-Version **0.7.0**, Rust **1.89.0**, one annotated Git tag for five packages:
+Version **0.7.1**, Rust **1.89.0**, one annotated Git tag for five packages:
 Windows x64 portable ZIP (Windows 10 22H2/11), Linux x86-64 AppImage (Ubuntu 24.04,
 X11/XWayland), Apple Silicon Mac ZIP, and Linux ARM64/amd64 relay archives
 (glibc 2.39 minimum; the existing ARM64 deployment runs Ubuntu 26).
@@ -17,6 +17,9 @@ Original game assets, imported caches, media, private relay state and invitation
 are excluded. Keep `dist/`, `build/` and private server state out of source commits.
 The [0.7.0 release notes](release-notes/0.7.0.md) describe the menu restoration,
 shared setup, asset mods, disconnect fixes and persistence across app windows.
+The [0.7.1 correction](release-notes/0.7.1.md) bounds the owner clock when
+canonical updates advance more slowly than local captures. Protocol and
+compatibility remain unchanged.
 
 The movement/consistency and relay-load acceptance gates are documented in
 [WAN consistency](wan-consistency.md). The private 0.5.1 relay deployment and
@@ -63,10 +66,10 @@ Review and commit the intended source, then build from that clean commit:
 ```sh
 # Ubuntu 24.04 x86-64:
 tools/package_linux.sh --release
-python3 tools/linux_release.py verify dist/github/atomic-bomberman-0.7.0-linux-x86_64.AppImage --release
+python3 tools/linux_release.py verify dist/github/atomic-bomberman-0.7.1-linux-x86_64.AppImage --release
 # Apple Silicon Mac:
 tools/package_macos.sh --release
-python3 tools/macos_release.py verify dist/github/atomic-bomberman-0.7.0-macos-arm64.zip --release
+python3 tools/macos_release.py verify dist/github/atomic-bomberman-0.7.1-macos-arm64.zip --release
 # Windows x64 (MSVC C++ tools and Python, PowerShell or Git Bash):
 python tools/windows_release.py build --release
 # Native Linux relay, choose the matching target:
@@ -75,7 +78,7 @@ python3 tools/package_relay.py --target aarch64-unknown-linux-gnu --release
 # Or, on native Linux amd64:
 python3 tools/package_relay.py --target x86_64-unknown-linux-gnu --release
 # Reverify either downloaded relay archive:
-python3 tools/package_relay.py --verify dist/github/atomic-bomberman-0.7.0-relay-linux-x86_64.tar.gz --release
+python3 tools/package_relay.py --verify dist/github/atomic-bomberman-0.7.1-relay-linux-x86_64.tar.gz --release
 ```
 
 The AppImage builder verifies its pinned official type-2 runtime SHA-256; the
@@ -100,7 +103,7 @@ ad-hoc signed, with no Developer ID signing/notarization setup.
 
 ## Coordinated release
 
-Create and push an annotated `v0.7.0` tag only after reviewing the commit and
+Create and push an annotated `v0.7.1` tag only after reviewing the commit and
 platform checks. Its push starts **Desktop and relay release**; the same workflow
 can also be dispatched manually for an existing annotated version tag. The
 workflow builds Linux x86-64 client, Mac ARM64 client, Windows x64 client,

@@ -35,6 +35,183 @@ fn initial() -> Replay {
 }
 
 #[test]
+fn owner_prediction_does_not_hide_captures_beyond_the_canonical_window() {
+    let mut canonical = initial();
+    let mut prediction = ClientPrediction::new_owner_at(vec![0], &canonical, 0);
+    prediction.seed_rtt(80);
+    let mut guard = RenderGuard::default();
+    for step in 1..=300 {
+        let now = step * u64::from(STEP_MS);
+        let input = PlayerInput {
+            direction: Some(if step < 80 {
+                Direction::Right
+            } else {
+                Direction::Down
+            }),
+            ..Default::default()
+        };
+        prediction.capture_at(&[input], now).unwrap();
+        // Canonical progress remains fresh while falling behind the owner's
+        // captures. This differs from a completely interrupted connection.
+        if step % 2 == 0 {
+            let mut frame = canonical
+                .advance(vec![PlayerInput::default(); 2], vec![])
+                .unwrap()
+                .0;
+            frame.acknowledgments = vec![InputAck::default(); 2];
+            prediction
+                .record_acknowledgment(&canonical, &frame, now)
+                .unwrap();
+        }
+        prediction.refresh_at(&canonical, now).unwrap();
+        let display = prediction.display(now);
+        guard
+            .observe(
+                1,
+                prediction.replay(),
+                &display,
+                0,
+                input,
+                prediction.seat_reconciliation_serial(0),
+            )
+            .unwrap_or_else(|error| panic!("capture {step}: {error}"));
+        assert!(prediction.replay().tick <= canonical.tick + 500 / u64::from(STEP_MS));
+    }
+}
+
+#[test]
+fn canonical_catching_the_owner_clock_preserves_its_real_pose() {
+    let mut canonical = initial();
+    let mut prediction = ClientPrediction::new_owner_at(vec![0], &canonical, 0);
+    let right = PlayerInput {
+        direction: Some(Direction::Right),
+        ..Default::default()
+    };
+    prediction.capture_at(&[right], 20).unwrap();
+    prediction
+        .capture_at(&[PlayerInput::default()], 40)
+        .unwrap();
+    prediction.refresh_at(&canonical, 40).unwrap();
+    let stopped = prediction.replay().simulation.players[0].position;
+    let fact = prediction.latest_owned()[0];
+    let mut guard = RenderGuard::default();
+    for step in 0..10 {
+        let now = 60 + step * u64::from(STEP_MS);
+        let mut frame = canonical
+            .advance(vec![right, PlayerInput::default()], vec![])
+            .unwrap()
+            .0;
+        frame.acknowledgments = vec![InputAck::default(); 2];
+        prediction
+            .record_acknowledgment(&canonical, &frame, now)
+            .unwrap();
+        prediction.refresh_at(&canonical, now).unwrap();
+        let display = prediction.display(now);
+        assert_eq!(display.players[0].position, stopped);
+        assert_eq!(prediction.latest_owned()[0], fact);
+        guard
+            .observe(
+                1,
+                prediction.replay(),
+                &display,
+                0,
+                PlayerInput::default(),
+                prediction.seat_reconciliation_serial(0),
+            )
+            .unwrap();
+    }
+    let down = PlayerInput {
+        direction: Some(Direction::Down),
+        ..Default::default()
+    };
+    let mut offline = prediction.replay().simulation.clone();
+    offline.step_owned(STEP_MS, &[down, PlayerInput::default()], &[], &[0]);
+    prediction.capture_at(&[down], 260).unwrap();
+    prediction.refresh_at(&canonical, 260).unwrap();
+    let after = prediction.replay().simulation.players[0].position;
+    assert_eq!(after, offline.players[0].position);
+    assert!((after.x - stopped.x).abs() <= 400);
+    assert!((1..=400).contains(&(after.y - stopped.y)));
+}
+
+#[test]
+fn retaining_an_overtaken_owner_still_respects_a_confirmed_obstruction() {
+    let mut canonical = initial();
+    let mut prediction = ClientPrediction::new_owner_at(vec![0], &canonical, 0);
+    let right = PlayerInput {
+        direction: Some(Direction::Right),
+        ..Default::default()
+    };
+    prediction.capture_at(&[right], 20).unwrap();
+    prediction.refresh_at(&canonical, 20).unwrap();
+    let original = prediction.replay().simulation.players[0].position;
+    let tile = TilePos::new(4, 2);
+    canonical.simulation.players[0].position = tile.center();
+    canonical
+        .simulation
+        .board
+        .get_mut(TilePos::new(3, 2))
+        .unwrap()
+        .terrain = bomberman_core::Terrain::Wall;
+    let mut frame = canonical
+        .advance(vec![PlayerInput::default(); 2], vec![])
+        .unwrap()
+        .0;
+    frame.acknowledgments = vec![InputAck::default(); 2];
+    prediction
+        .record_acknowledgment(&canonical, &frame, 40)
+        .unwrap();
+    prediction.refresh_at(&canonical, 40).unwrap();
+    let position = prediction.replay().simulation.players[0].position;
+    assert_ne!(position, original);
+    assert_eq!(position.tile(), tile);
+    assert_eq!(prediction.seat_reconciliation_serial(0), 1);
+}
+
+#[test]
+fn owner_prediction_retains_a_tap_while_the_canonical_window_is_full() {
+    let mut canonical = initial();
+    let mut prediction = ClientPrediction::new_owner_at(vec![0], &canonical, 0);
+    for step in 1..=30 {
+        prediction
+            .capture_at(&[PlayerInput::default()], step * u64::from(STEP_MS))
+            .unwrap();
+        prediction
+            .refresh_at(&canonical, step * u64::from(STEP_MS))
+            .unwrap();
+    }
+    let last = prediction.latest_owned()[0];
+    let press = PlayerInput {
+        bomb: true,
+        ..Default::default()
+    };
+    prediction.capture_at(&[press], 620).unwrap();
+    prediction
+        .capture_at(&[PlayerInput::default()], 640)
+        .unwrap();
+    assert_eq!(prediction.latest_owned()[0].sequence, last.sequence);
+    for (index, bomb) in [true, false].into_iter().enumerate() {
+        let now = 660 + index as u64 * u64::from(STEP_MS);
+        let mut frame = canonical
+            .advance(vec![PlayerInput::default(); 2], vec![])
+            .unwrap()
+            .0;
+        frame.acknowledgments = vec![InputAck::default(); 2];
+        prediction
+            .record_acknowledgment(&canonical, &frame, now)
+            .unwrap();
+        prediction.refresh_at(&canonical, now).unwrap();
+        prediction
+            .capture_at(&[PlayerInput::default()], now)
+            .unwrap();
+        let sample = prediction.latest_owned()[0];
+        assert_eq!(sample.input.bomb, bomb);
+        assert_eq!(sample.edge, index as u64 + 1);
+        assert_eq!(sample.sequence, last.sequence + index as u64 + 1);
+    }
+}
+
+#[test]
 fn oracles_detect_backward_jump_stale_pose_state_drift_and_duplicate_action() {
     let expected = initial();
     let mut broken = expected.clone();

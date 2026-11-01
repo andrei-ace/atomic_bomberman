@@ -1,0 +1,50 @@
+{
+  "version": "0.7.0",
+  "protocol": 8,
+  "source_sha256": "0fcb14acfe9f52af6ef1420f161bf1c3a0107996a549dc505e26ebf1f70f4e2f",
+  "source_commit": "e718967845a82e12f45ba486b70540b3f5761355",
+  "release": "https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.0",
+  "architecture": "aarch64",
+  "previous_pid": 470909,
+  "deployed_at_utc": "2026-11-01T11:47:13.834093+00:00",
+  "archive_sha256": "f9a4da21bbf00a11bf2e66a413659347ae66b5c193c853060d8ab5e9e941e4fb",
+  "previous_binary_sha256": "c2c54aa60d14ddbe46a9ae9a9e195fc7083e774647f678648f990438e6860c2e",
+  "new_binary_sha256": "9d866036278a529c4dc2f595a61f2b8447b6c57dba8b58bd15ee61a29ed8860c",
+  "backup": "/usr/local/lib/bomberman-relay/bomberman-relay.rollback-20261101T114713Z",
+  "private_state_file_count": 5,
+  "passed": true,
+  "service_active": true,
+  "running_pid": 472944,
+  "running_version": "bomberman-relay 0.7.0 (protocol 8)",
+  "private_state_unchanged": true,
+  "tls_certificate_unchanged": true,
+  "access_token_unchanged": true,
+  "tcp443": true,
+  "udp443": true,
+  "post_wan_health": {
+    "passed": true,
+    "checked_at_utc": "2026-11-01T12:01:23.890616+00:00",
+    "source_commit": "e718967845a82e12f45ba486b70540b3f5761355",
+    "running_pid": 472944,
+    "running_sha256": "9d866036278a529c4dc2f595a61f2b8447b6c57dba8b58bd15ee61a29ed8860c",
+    "service_active": true,
+    "private_state_unchanged": true,
+    "tls_certificate_unchanged": true,
+    "access_token_unchanged": true,
+    "relay_summary_records": 16,
+    "connection_close_causes": {
+      "control_receive_closed": 1,
+      "fatal_control_event": 1
+    },
+    "maximum_per_connection_failures": {
+      "send_failures": 0,
+      "queue_evictions": 0,
+      "queue_rejections": 0
+    },
+    "tcp443": true,
+    "udp443": true
+  },
+  "saved_invitation_unchanged": true,
+  "live_wan_verified": false,
+  "live_wan_report": "0.7.0-postdeployment-failed-2-peers.json"
+}

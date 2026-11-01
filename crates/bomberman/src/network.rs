@@ -4,7 +4,7 @@ use crate::settings::Device;
 use bomberman_core::{GameConfig, GameEvent, PlayerInput, Simulation};
 use bomberman_net::{
     authority::AuthorityTimeline,
-    gameplay::{FrameHistory, FrameWindow, GameplayPacket},
+    gameplay::{FrameHistory, FrameWindow, GameplayPacket, FRAME_HISTORY},
     prediction::ClientPrediction,
     session::{InputBuffer, Replay},
     transport::{Connection, Destination},
@@ -1081,7 +1081,7 @@ impl Session {
                         bomberman_net::diagnostics::log_record(&serde_json::json!({"event":"frame_rejected","room_tag":self.connection.gameplay_diagnostics().room_tag,"peer":self.id,"generation":self.start_generation,"tick":frame.tick,"replay_tick":replay.tick,"cause":format!("{error:?}")}));
                     })?;
                     if let Some(audit) = &mut self.audit {
-                        if audit.len() >= 128 {
+                        if audit.len() >= FRAME_HISTORY {
                             return Err(NetError::TooLarge);
                         }
                         audit.push_back(bomberman_net::verification::AuditSample {
@@ -1387,7 +1387,9 @@ impl Session {
                         bomberman_net::diagnostics::log_record(&serde_json::json!({"event":"frame_rejected","room_tag":self.connection.gameplay_diagnostics().room_tag,"peer":self.id,"generation":self.start_generation,"tick":frame.tick,"replay_tick":replay.tick,"cause":format!("{error:?}")}));
                     })?;
             if let Some(audit) = &mut self.audit {
-                if audit.len() >= 128 {
+                // A valid repair may drain the complete frame window in one
+                // pump. Diagnostic auditing must hold that same bounded burst.
+                if audit.len() >= FRAME_HISTORY {
                     return Err(NetError::TooLarge);
                 }
                 audit.push_back(bomberman_net::verification::AuditSample {

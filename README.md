@@ -18,15 +18,16 @@ locally from your copy of the game.
 
 ## Download and install
 
-Download the **0.7.0** package for your platform and its matching `.sha256` file
-from [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.0).
+Download the **0.7.1** package for your platform and its matching `.sha256` file
+from [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.1).
 The installation guides explain checksum verification and first-run setup.
 
 This release restores the original menu flow, simplifies LAN/Internet setup,
 adds remembered asset mods, and fixes client departures and shared-window
-settings saves. See the [release notes](docs/release-notes/0.7.0.md).
+settings saves. Version 0.7.1 also bounds prediction during delayed host updates
+to prevent bursts of movement. See the [release notes](docs/release-notes/0.7.1.md).
 
-**Multiplayer upgrade:** update every client and the relay to 0.7.0 or a compatible
+**Multiplayer upgrade:** update every client and the relay to 0.7.1 or a compatible
 protocol-8 build. Version 0.6.1 uses protocol 7 and cannot join these games.
 Existing private server links, settings and imported data remain valid.
 

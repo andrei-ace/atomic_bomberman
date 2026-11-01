@@ -178,14 +178,24 @@ impl ClientPrediction {
     ) -> Result<(), NetError> {
         self.observe(inputs)?;
         self.now_ms = self.now_ms.max(now_ms);
+        let maximum = self.baseline_tick.saturating_add(MAX_PREDICT_TICKS as u64);
+        let target = (self.clock_ms.saturating_add(u64::from(STEP_MS)) / u64::from(STEP_MS))
+            .max(self.predicted.tick.saturating_add(1))
+            .min(maximum);
+        if target <= self.predicted.tick {
+            // A slow but still advancing canonical stream can keep is_fresh
+            // true while using the entire prediction window. Preserve input
+            // edges for the next real capture instead of advancing a hidden
+            // owner clock that refresh_owned would immediately clamp back.
+            self.clock_ms = self.predicted.tick.saturating_mul(u64::from(STEP_MS));
+            return Ok(());
+        }
         self.phase_error_ms -= self.phase_error_ms.clamp(-2, 2);
         self.sequence = self.sequence.checked_add(1).ok_or(NetError::Protocol)?;
         if self.captured_at.len() == MAX_INPUT_HISTORY {
             self.captured_at.pop_front();
         }
         self.captured_at.push_back((self.sequence, now_ms));
-        self.clock_ms = self.clock_ms.saturating_add(u64::from(STEP_MS));
-        let target = (self.clock_ms / u64::from(STEP_MS)).max(self.predicted.tick + 1);
         // The initial half-RTT aligns the owner's fixed clock with the host,
         // without treating a coalesced sample acknowledgement as elapsed time.
         while self.predicted.tick + 1 < target {
@@ -341,10 +351,34 @@ impl ClientPrediction {
             self.dirty = false;
             return Ok(());
         }
-        let target = (self.clock_ms / u64::from(STEP_MS))
-            .clamp(canonical.tick, canonical.tick + MAX_PREDICT_TICKS as u64);
         let owner = self.owner.as_ref().unwrap();
         let previous_tick = self.predicted.tick;
+        let caught_up = previous_tick <= canonical.tick;
+        let retain_owner = caught_up
+            && self.owned.iter().enumerate().any(|(local, seat)| {
+                let canonical_player = &canonical.simulation.players[*seat];
+                canonical_player.alive
+                    && canonical_player.config.control == bomberman_core::ControlKind::Human
+                    && canonical_player.position
+                        != self.predicted.simulation.players[*seat].position
+                    && owner
+                        .samples
+                        .iter()
+                        .rev()
+                        .find(|sample| {
+                            sample.seat == *seat && sample.round == canonical.simulation.round
+                        })
+                        .is_some_and(|sample| {
+                            sample.active && sample.sequence > owner.invalid_through[local]
+                        })
+            });
+        // The host may forecast past the owner's last capture. Keep that
+        // owner's actual pose on the next provisional tick, validating its
+        // path against the new shared world just like a late owner fact.
+        // Receiving an ACK must not substitute the host's held-input pose.
+        let minimum = canonical.tick.saturating_add(u64::from(retain_owner));
+        let target = (self.clock_ms / u64::from(STEP_MS))
+            .clamp(minimum, canonical.tick + MAX_PREDICT_TICKS as u64);
         let previous_positions = self
             .owned
             .iter()
@@ -380,7 +414,8 @@ impl ClientPrediction {
                         held[seat].action = self.confirmed_inputs[seat].action;
                     }
                     if sample.active
-                        && sample.tick == tick
+                        && (sample.tick == tick
+                            || (retain_owner && tick == target && sample.tick <= canonical.tick))
                         && sample.sequence > owner.invalid_through[local]
                     {
                         motions.push((seat, sample.motion));
@@ -408,7 +443,7 @@ impl ClientPrediction {
         for (local, &seat) in self.owned.iter().enumerate() {
             let from = previous_positions[local];
             let to = replay.simulation.players[seat].position;
-            if previous_tick == replay.tick && from != to && conflicts[local] {
+            if (previous_tick == replay.tick || caught_up) && from != to && conflicts[local] {
                 // A confirmed collision can invalidate several future facts.
                 // Each rebuild inside that proven conflict window is a new
                 // reconciliation, even without a second conflicting ACK.

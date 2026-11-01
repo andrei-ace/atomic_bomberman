@@ -1,0 +1,17 @@
+{
+  "passed": false,
+  "phase": "candidate with only the initial owner-clock cap",
+  "version": "0.7.1",
+  "protocol": 8,
+  "peers": 10,
+  "seed": 1997,
+  "first_failure": "room=0 peer=1 at=2654ms: render.speed: dx=0 dy=-1500 ticks=0 budget=0",
+  "failure_trace": "0.7.1-first-candidate-10-peers-trace.json",
+  "later_abort": {
+    "at_ms": 57477,
+    "peer": 4,
+    "error": "NetError::TooLarge",
+    "scope": "Exact limit was not instrumented. The enabled audit capacity was 128 while the valid frame window is 256; the audit capacity now follows FRAME_HISTORY."
+  },
+  "correction": "When canonical progress catches the owner clock and its held-input forecast differs, retain the valid local pose through a native collision-checked late-motion step. Matching acknowledgments do not advance the owner clock."
+}
