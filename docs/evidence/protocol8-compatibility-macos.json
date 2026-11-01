@@ -1,0 +1,22 @@
+{
+  "game_binary_sha256": "60355fa9eacf5ddc8fa270082b6825a2663c9569ee9e5f89e77d85ef3f4b08c0",
+  "driver_sha256": "7ccbf46b77e52336a90c1369f5c348091d90dcfd9d50fbafb9765f33a90d5bf7",
+  "assets_manifest_sha256": "d3b83beeb76f9aecf0435468a94c2f7bda722e4e845c9f1af5a2da5b7aababbd",
+  "backend": "two native production game windows, process-local Cocoa NSEvents",
+  "limitations": [
+    "Local loopback transport validation; no deployed WAN or physical device claims.",
+    "Audio is muted; screenshots capture the production 640x480 game render target.",
+    "Splash timing is checked separately; this harness uses --skip-intro."
+  ],
+  "compatibility": {
+    "passed": true,
+    "checks": [
+      "protocol-8 client rejects the older relay before entering a lobby",
+      "compatibility error persists and blocks background Host input",
+      "Escape returns to the browser and preserves the private server profile",
+      "Refresh explicitly retries and shows the same compatibility error"
+    ]
+  },
+  "passed": true,
+  "scope": "Persistent incompatibility error, input blocking, dismissal, profile preservation and retry against protocol-7 relay."
+}

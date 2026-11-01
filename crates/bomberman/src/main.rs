@@ -8,6 +8,7 @@ mod controls;
 mod graphics_startup;
 mod headless;
 mod media;
+mod modding;
 mod network;
 mod presentation;
 mod settings;
@@ -30,11 +31,6 @@ fn launch() -> Result<()> {
     if let Some(exit_code) = graphics_startup::supervise(&cli)? {
         std::process::exit(exit_code);
     }
-    let manifest =
-        bomberman_assets::validate(&cli.assets).context("validate imported original assets")?;
-    if manifest.arenas.len() != 11 || manifest.schemes.is_empty() {
-        anyhow::bail!("asset cache must include all 11 battle arenas and at least one scheme; re-run the importer");
-    }
     let (mut settings, mut settings_warning) = match settings::Settings::load(&cli.settings) {
         Ok(settings) => (settings, None),
         Err(error) => (
@@ -42,6 +38,39 @@ fn launch() -> Result<()> {
             Some(format!("Settings could not be loaded: {error:#}")),
         ),
     };
+    let explicit_mod = cli.mod_path.is_some();
+    cli.mod_path = if cli.no_mod {
+        None
+    } else {
+        cli.mod_path.or_else(|| settings.asset_mod.clone())
+    };
+    if let Some(directory) = &cli.mod_path {
+        eprintln!("Preparing mod assets from {}...", directory.display());
+        let cache = settings::default_path()
+            .parent()
+            .context("configuration directory unavailable")?
+            .join("mod-cache");
+        match bomberman_assets::modded_cache(&cli.assets, directory, &cache)
+            .with_context(|| format!("load mod {}", directory.display()))
+        {
+            Ok(path) => cli.assets = path,
+            Err(error) if !explicit_mod => {
+                let warning = format!("Saved mod unavailable; using original assets. Choose Options > Mods. {error:#}");
+                eprintln!("Atomic Bomberman: {warning}");
+                settings_warning = Some(settings_warning.map_or_else(
+                    || warning.clone(),
+                    |existing| format!("{existing}; {warning}"),
+                ));
+                cli.mod_path = None;
+            }
+            Err(error) => return Err(error),
+        }
+    }
+    let manifest =
+        bomberman_assets::validate(&cli.assets).context("validate imported original assets")?;
+    if manifest.arenas.len() != 11 || manifest.schemes.is_empty() {
+        anyhow::bail!("asset cache must include all 11 battle arenas and at least one scheme; re-run the importer");
+    }
     if !cli.settings.exists() {
         settings.scheme = manifest
             .schemes

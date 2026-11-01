@@ -13,8 +13,9 @@ import package_relay
 import verify_release
 import windows_release
 import verify_replay_digest
+from macos_release import version
 
-VERSION = '0.6.1'
+VERSION = version()
 SOURCE = {'commit': '1' * 40, 'dirty': False, 'sha256': '2' * 64}
 
 

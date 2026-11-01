@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use bomberman_assets::{AnimationAsset, AnimationFrame, AnimationSequence, FontAsset, Manifest};
-use bomberman_core::{GameEvent, Player};
+use bomberman_core::{DeterministicRng, GameEvent, Player, SoundSelector};
 use macroquad::{
     audio::{load_sound, play_sound, set_sound_volume, stop_sound, PlaySoundParams, Sound},
     prelude::*,
@@ -27,10 +27,29 @@ pub struct Media {
     effect_limit: i32,
     prepared_battle: Option<usize>,
     prepared_music: Option<String>,
+    requested_music: Option<String>,
+    ui_sounds: SoundSelector,
+    ui_rng: DeterministicRng,
+    #[cfg(debug_assertions)]
+    ui_sound_groups: std::collections::BTreeMap<u32, u32>,
 }
 
 fn basename(id: &str) -> &str {
     id.rsplit('/').next().unwrap_or(id)
+}
+
+pub(crate) fn animation_index(manifest: &Manifest) -> Result<HashMap<String, (usize, usize)>> {
+    let sequences = crate::presentation::sequence_index(manifest);
+    for name in (1..=24)
+        .map(|number| format!("die green {number}"))
+        .chain((0..13).map(|number| format!("cornerhead {number}")))
+    {
+        anyhow::ensure!(
+            sequences.contains_key(&name),
+            "original animation sequence {name:?} is missing from MASTER.ALI"
+        );
+    }
+    Ok(sequences)
 }
 
 impl Media {
@@ -40,16 +59,14 @@ impl Media {
             .iter()
             .min_by_key(|font| font.line_height.abs_diff(16))
             .cloned();
-        let sequences = crate::presentation::sequence_index(&manifest);
-        for name in (1..=24)
-            .map(|number| format!("die green {number}"))
-            .chain((0..13).map(|number| format!("cornerhead {number}")))
-        {
-            anyhow::ensure!(
-                sequences.contains_key(&name),
-                "original animation sequence {name:?} is missing from MASTER.ALI"
-            );
-        }
+        let sequences = animation_index(&manifest)?;
+        let ui_sounds = SoundSelector::new(
+            manifest
+                .sound_mappings
+                .iter()
+                .map(|mapping| mapping.number)
+                .collect(),
+        );
         let effect_limit = manifest
             .resources
             .iter()
@@ -73,9 +90,20 @@ impl Media {
             effect_limit,
             prepared_battle: None,
             prepared_music: None,
+            requested_music: None,
+            ui_sounds,
+            ui_rng: DeterministicRng::new(
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_nanos() as u64,
+            ),
+            #[cfg(debug_assertions)]
+            ui_sound_groups: Default::default(),
         };
         let files: Vec<_> = this
-            .font
+            .manifest
+            .fonts
             .iter()
             .map(|f| f.texture.clone())
             .chain(this.manifest.textures.iter().map(|t| t.path.clone()))
@@ -112,7 +140,19 @@ impl Media {
         ];
         for (i, name) in animations.iter().enumerate() {
             this.ensure_animation(name).await?;
-            this.loading_progress(0.6 + 0.4 * (i + 1) as f32 / animations.len() as f32)
+            this.loading_progress(0.6 + 0.3 * (i + 1) as f32 / animations.len() as f32)
+                .await;
+        }
+        // Random Each Game mixes the original tile sets in its thumbnail.
+        let preview_tiles: Vec<_> = this
+            .manifest
+            .arenas
+            .iter()
+            .map(|arena| arena.tiles.clone())
+            .collect();
+        for (i, animation) in preview_tiles.iter().enumerate() {
+            this.ensure_animation(animation).await?;
+            this.loading_progress(0.9 + 0.1 * (i + 1) as f32 / preview_tiles.len() as f32)
                 .await;
         }
         Ok(this)
@@ -129,11 +169,27 @@ impl Media {
         // target, its camera must use a top-left origin before presentation.
         camera.zoom.y = -camera.zoom.y;
         set_camera(&camera);
-        clear_background(Color::new(0.015, 0.025, 0.06, 1.));
-        self.center_text("ATOMIC BOMBERMAN", 192., 24., GOLD);
-        self.center_text("Loading original artwork...", 238., 15., WHITE);
-        draw_rectangle(120., 279., 400., 5., Color::new(0.12, 0.2, 0.32, 1.));
-        draw_rectangle(120., 279., 400. * progress, 5., GOLD);
+        clear_background(BLACK);
+        draw_rectangle(151., 181., 338., 118., Color::new(0.02, 0.03, 0.23, 1.));
+        for (inset, color) in [(0., BLUE), (3., GRAY), (6., DARKBLUE)] {
+            draw_rectangle_lines(
+                151. + inset,
+                181. + inset,
+                338. - inset * 2.,
+                118. - inset * 2.,
+                2.,
+                color,
+            );
+        }
+        self.center_text("Loading data...", 204., 16., WHITE);
+        self.center_text(
+            &format!("{}%", (progress.clamp(0., 1.) * 100.).round() as u32),
+            231.,
+            16.,
+            YELLOW,
+        );
+        draw_rectangle(176., 264., 288., 15., DARKGRAY);
+        draw_rectangle(177., 265., 286. * progress.clamp(0., 1.), 13., LIGHTGRAY);
         set_default_camera();
     }
 
@@ -339,6 +395,35 @@ impl Media {
             draw_text(value, x, y + size, size, color);
             return;
         };
+        self.draw_font(font, value, x, y, size, color);
+    }
+
+    /// Original screens deliberately select different bitmap fonts.
+    pub fn font_text(&self, id: &str, value: &str, x: f32, y: f32, size: f32, color: Color) {
+        if let Some(font) = self
+            .manifest
+            .fonts
+            .iter()
+            .find(|font| font.id.eq_ignore_ascii_case(id))
+        {
+            self.draw_font(font, value, x, y, size, color);
+        } else {
+            self.text(value, x, y, size, color);
+        }
+    }
+
+    pub fn original_text(&self, value: &str, x: f32, y: f32, color: Color) {
+        self.font_text("FONT1.FON", value, x + 1., y + 1., 16., BLACK);
+        self.font_text("FONT1.FON", value, x, y, 16., color);
+    }
+
+    pub fn original_text_fit(&self, value: &str, x: f32, y: f32, width: f32, color: Color) {
+        let size = 16. * (width / self.text_width(value, 16.).max(1.)).min(1.);
+        self.font_text("FONT1.FON", value, x + 1., y + 1., size, BLACK);
+        self.font_text("FONT1.FON", value, x, y, size, color);
+    }
+
+    fn draw_font(&self, font: &FontAsset, value: &str, x: f32, y: f32, size: f32, color: Color) {
         let Some(texture) = self.textures.get(&font.texture) else {
             return;
         };
@@ -411,6 +496,15 @@ impl Media {
             size,
             color,
         );
+    }
+
+    pub fn stop_music(&mut self) {
+        self.requested_music = None;
+        if let Some(name) = self.music.take() {
+            if let Some(sound) = self.sounds.get(&name) {
+                stop_sound(sound);
+            }
+        }
     }
 
     fn draw_frame(
@@ -560,6 +654,26 @@ impl Media {
         )
     }
 
+    /// Menu thumbnails copy the selected CIMG from its top-left corner.
+    /// Gameplay instead subtracts its per-image ground origin through `state`.
+    pub fn state_top_left(&self, name: &str, frame: usize, x: f32, y: f32) -> bool {
+        let Some((animation, sequence)) = self.sequence(name) else {
+            return false;
+        };
+        let Some(frame) = crate::presentation::native_image(sequence, frame)
+            .and_then(|index| animation.frames.get(index as usize))
+        else {
+            return false;
+        };
+        self.draw_frame(
+            animation,
+            frame,
+            x + frame.origin_x as f32,
+            y + frame.origin_y as f32,
+            None,
+        )
+    }
+
     /// Original 0x41db41 exposes the two metadata words of the first FRAM.
     /// Flame placement uses both words to align cropped animation frames.
     pub fn state_metadata(&self, name: &str, frame: usize) -> [i32; 2] {
@@ -597,6 +711,7 @@ impl Media {
     }
 
     pub async fn music(&mut self, stem: &str) {
+        self.requested_music = Some(stem.to_owned());
         if self.music.as_ref().is_some_and(|id| {
             basename(id)
                 .split('.')
@@ -615,7 +730,7 @@ impl Media {
                 &self.sounds[&key],
                 PlaySoundParams {
                     looped: true,
-                    volume: self.volume * 0.55,
+                    volume: self.volume,
                 },
             );
             self.music = Some(key);
@@ -625,8 +740,23 @@ impl Media {
     pub fn set_volume(&mut self, volume: f32) {
         self.volume = volume;
         if let Some(sound) = self.music.as_ref().and_then(|id| self.sounds.get(id)) {
-            set_sound_volume(sound, volume * 0.55);
+            set_sound_volume(sound, volume);
         }
+    }
+
+    pub async fn interface_sound(&mut self, group: u32) {
+        #[cfg(debug_assertions)]
+        {
+            *self.ui_sound_groups.entry(group).or_default() += 1;
+        }
+        if let Some(number) = self.ui_sounds.choose(group, &mut self.ui_rng) {
+            self.events(&[GameEvent::Sound { number }]).await;
+        }
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn interface_audio_probe(&self) -> serde_json::Value {
+        serde_json::json!({"requested_music":self.requested_music,"requested_groups":self.ui_sound_groups,"output_muted":self.mute})
     }
 
     pub async fn events(&mut self, events: &[GameEvent]) {

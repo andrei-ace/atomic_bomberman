@@ -2,6 +2,8 @@
 mod archive;
 mod formats;
 mod manifest;
+mod mods;
+pub use mods::modded_cache;
 mod source;
 pub use manifest::*;
 
@@ -129,6 +131,7 @@ fn import_inner(source: &mut source::Source, output: &Path) -> Result<Manifest> 
         generated: vec![],
         warnings: vec![],
         palette: palette.rgb.clone(),
+        palette_lookup: palette.lookup.clone(),
         player_remaps: vec![],
         sound_mappings: vec![],
         animation_order: vec![],
@@ -150,117 +153,147 @@ fn import_inner(source: &mut source::Source, output: &Path) -> Result<Manifest> 
         manifest.player_remaps.push(remap);
         manifest.sources.push(source_record(&id, &data));
     }
-    let paths = source.paths();
-    for path in &paths {
+    for path in source.paths() {
         let ext = path.rsplit('.').next().unwrap_or_default();
-        let is_table = path.starts_with("DATA/RES/") && ext == "RES"
-            || path == "MESSAGES.TXT"
-            || path == "DATA/ANI/MASTER.ALI"
-            || ext == "BM";
-        if !matches!(ext, "ANI" | "PCX" | "FON" | "RSS" | "SCH") && !is_table {
+        if !matches!(ext, "ANI" | "PCX" | "FON" | "RSS" | "SCH") && !is_resource(&path) {
             continue;
         }
         let data = source
-            .read(path)
+            .read(&path)
             .with_context(|| format!("read source asset {path}"))?;
-        manifest.sources.push(source_record(path, &data));
-        match ext {
-            "ANI" => {
-                let decoded = match formats::animation(&data, &palette) {
-                    Ok(decoded) => decoded,
-                    Err(error) if !active_animations.contains(path) => {
-                        manifest.warnings.push(format!("{path}: unused by MASTER.ALI; preserved original because its animation metadata is invalid: {error:#}"));
-                        write_generated(
-                            output,
-                            &format!("unused/{path}"),
-                            &data,
-                            &mut manifest.generated,
-                        )?;
-                        continue;
-                    }
-                    Err(error) => {
-                        return Err(error)
-                            .with_context(|| format!("decode required battle animation {path}"))
-                    }
-                };
-                let colored = [
-                    "WALK", "STAND", "BOMBWALK", "BPICKUP", "KICK", "PUNCH", "PUP1", "PUP2",
-                    "PUP3", "PUP4", "BWALK1", "BWALK2", "BWALK3", "BWALK4", "PUNBOMB1", "PUNBOMB2",
-                    "PUNBOMB3", "PUNBOMB4",
-                ]
-                .iter()
-                .any(|stem| path.rsplit('/').next() == Some(format!("{stem}.ANI").as_str()))
-                    || path
-                        .rsplit('/')
-                        .next()
-                        .is_some_and(|n| n.starts_with("XPLODE"));
-                let a = write_animation(
-                    output,
-                    path,
-                    decoded,
-                    &palette,
-                    if colored {
-                        &manifest.player_remaps
-                    } else {
-                        &[]
-                    },
-                    &mut manifest.generated,
-                )?;
-                manifest.animations.push(a);
-            }
-            "PCX" => {
-                let decoded = formats::pcx(&data).with_context(|| format!("decode PCX {path}"))?;
-                let target = format!("images/{path}.png");
-                write_png(
-                    output,
-                    &target,
-                    decoded.width,
-                    decoded.height,
-                    png::ColorType::Rgba,
-                    &decoded.rgba,
-                    &mut manifest.generated,
-                )?;
-                manifest.textures.push(TextureAsset {
-                    id: path.clone(),
-                    path: target,
-                    width: decoded.width,
-                    height: decoded.height,
-                });
-            }
-            "FON" => {
-                let font = formats::font(&data).with_context(|| format!("decode font {path}"))?;
-                manifest
-                    .fonts
-                    .push(write_font(output, path, font, &mut manifest.generated)?);
-            }
-            "RSS" => {
-                let wav =
-                    formats::wav(&data).with_context(|| format!("decode raw audio {path}"))?;
-                if data.len() % 4 != 0 {
-                    manifest.warnings.push(format!("{path}: original contains a final left-channel sample; padded its missing right-channel sample with zero"));
-                }
-                let target = format!("sounds/{path}.wav");
-                write_generated(output, &target, &wav, &mut manifest.generated)?;
-                manifest.sounds.push(SoundAsset {
-                    id: path.clone(),
-                    path: target,
-                    sample_rate: 22050,
-                    channels: 2,
-                    samples_per_channel: data.len().div_ceil(4) as u64,
-                });
-            }
-            "SCH" => manifest.schemes.push(
-                formats::scheme(path, &data).with_context(|| format!("decode scheme {path}"))?,
-            ),
-            _ if is_table => {
-                let table = formats::resource(path, &data)?;
-                let target = format!("tables/{path}.txt");
-                write_generated(output, &target, &data, &mut manifest.generated)?;
-                manifest.resources.push(table);
-            }
-            _ => unreachable!(),
-        }
+        decode_asset(
+            &mut manifest,
+            &palette,
+            &active_animations,
+            &path,
+            &data,
+            output,
+        )?;
     }
+    finish_manifest(&mut manifest)?;
+    Ok(manifest)
+}
+
+fn decode_asset(
+    manifest: &mut Manifest,
+    palette: &formats::Palette,
+    active_animations: &BTreeSet<String>,
+    path: &str,
+    data: &[u8],
+    output: &Path,
+) -> Result<()> {
+    let ext = path.rsplit('.').next().unwrap_or_default();
+    let is_table = is_resource(path);
+    manifest.sources.push(source_record(path, data));
+    match ext {
+        "ANI" => {
+            let decoded = match formats::animation(data, palette) {
+                Ok(decoded) => decoded,
+                Err(error) if !active_animations.contains(path) => {
+                    manifest.warnings.push(format!("{path}: unused by MASTER.ALI; preserved original because its animation metadata is invalid: {error:#}"));
+                    write_generated(
+                        output,
+                        &format!("unused/{path}"),
+                        data,
+                        &mut manifest.generated,
+                    )?;
+                    return Ok(());
+                }
+                Err(error) => {
+                    return Err(error)
+                        .with_context(|| format!("decode required battle animation {path}"))
+                }
+            };
+            let colored = [
+                "WALK", "STAND", "BOMBWALK", "BPICKUP", "KICK", "PUNCH", "PUP1", "PUP2", "PUP3",
+                "PUP4", "BWALK1", "BWALK2", "BWALK3", "BWALK4", "PUNBOMB1", "PUNBOMB2", "PUNBOMB3",
+                "PUNBOMB4",
+            ]
+            .iter()
+            .any(|stem| path.rsplit('/').next() == Some(format!("{stem}.ANI").as_str()))
+                || path
+                    .rsplit('/')
+                    .next()
+                    .is_some_and(|n| n.starts_with("XPLODE"));
+            let a = write_animation(
+                output,
+                path,
+                decoded,
+                palette,
+                if colored {
+                    &manifest.player_remaps
+                } else {
+                    &[]
+                },
+                &mut manifest.generated,
+            )?;
+            manifest.animations.push(a);
+        }
+        "PCX" => {
+            let decoded = formats::pcx(data).with_context(|| format!("decode PCX {path}"))?;
+            let target = format!("images/{path}.png");
+            write_png(
+                output,
+                &target,
+                decoded.width,
+                decoded.height,
+                png::ColorType::Rgba,
+                &decoded.rgba,
+                &mut manifest.generated,
+            )?;
+            manifest.textures.push(TextureAsset {
+                id: path.to_owned(),
+                path: target,
+                width: decoded.width,
+                height: decoded.height,
+            });
+        }
+        "FON" => {
+            let font = formats::font(data).with_context(|| format!("decode font {path}"))?;
+            manifest
+                .fonts
+                .push(write_font(output, path, font, &mut manifest.generated)?);
+        }
+        "RSS" => {
+            let wav = formats::wav(data).with_context(|| format!("decode raw audio {path}"))?;
+            if !data.len().is_multiple_of(4) {
+                manifest.warnings.push(format!("{path}: original contains a final left-channel sample; padded its missing right-channel sample with zero"));
+            }
+            let target = format!("sounds/{path}.wav");
+            write_generated(output, &target, &wav, &mut manifest.generated)?;
+            manifest.sounds.push(SoundAsset {
+                id: path.to_owned(),
+                path: target,
+                sample_rate: 22050,
+                channels: 2,
+                samples_per_channel: data.len().div_ceil(4) as u64,
+            });
+        }
+        "SCH" => manifest
+            .schemes
+            .push(formats::scheme(path, data).with_context(|| format!("decode scheme {path}"))?),
+        _ if is_table => {
+            let table = formats::resource(path, data)?;
+            let target = format!("tables/{path}.txt");
+            write_generated(output, &target, data, &mut manifest.generated)?;
+            manifest.resources.push(table);
+        }
+        _ => unreachable!(),
+    }
+    Ok(())
+}
+
+fn is_resource(path: &str) -> bool {
+    (path.starts_with("DATA/RES/") && path.ends_with(".RES"))
+        || path == "MESSAGES.TXT"
+        || path == "DATA/ANI/MASTER.ALI"
+        || path.ends_with(".BM")
+}
+
+fn finish_manifest(manifest: &mut Manifest) -> Result<()> {
+    manifest.arenas.clear();
+    manifest.animation_order.clear();
+    manifest.sound_mappings.clear();
     ensure!(!manifest.schemes.is_empty(), "source has no battle schemes");
     let table = |name: &str| manifest.resources.iter().find(|t| t.id == name);
     if let Some(list) = table("DATA/ANI/MASTER.ALI") {
@@ -339,7 +372,7 @@ fn import_inner(source: &mut source::Source, output: &Path) -> Result<Manifest> 
         });
     }
     manifest.warnings.push("CLASSICS.ANI is an unused indexed-color alternative excluded by MASTER.ALI; its private colors are quantized through the game's global RGB555 lookup".to_owned());
-    Ok(manifest)
+    Ok(())
 }
 
 fn source_record(path: &str, data: &[u8]) -> SourceAsset {
@@ -710,6 +743,7 @@ fn check_manifest(m: &Manifest) -> Result<()> {
     );
     ensure!(
         m.palette.len() == 256
+            && (m.palette_lookup.is_empty() || m.palette_lookup.len() == 32768)
             && m.player_remaps.len() == 10
             && m.player_remaps.iter().all(|r| r.len() == 256),
         "invalid palette/remap lengths"
@@ -902,6 +936,197 @@ mod tests {
             "DATA/SOUND/EXPLODE.RSS",
             &[0, 128, 255, 127, 255, 255],
         );
+    }
+
+    #[test]
+    fn mod_overrides_preserve_base_fallback_silence_and_content_cache() {
+        let t = Temp::new();
+        let source = t.0.join("source");
+        game_fixture(&source);
+        let base = t.0.join("base");
+        let original = import(&source, &base).unwrap();
+        let before = fs::read(base.join("manifest.json")).unwrap();
+        let directory = t.0.join("mod with spaces");
+        save(&directory, "sound/explode.rss", &[]);
+        save(&directory, "NEW.RSS", &[1, 0, 2, 0]);
+        save(
+            &directory,
+            "DATA/RES/SOUNDLST.RES",
+            b"200,EXPLODE\n201,NEW\n",
+        );
+        save(&directory, "BM95.RES", b"unused Windows program data");
+        save(
+            &directory,
+            "AAA.SCH",
+            formats::tests::scheme_fixture().as_bytes(),
+        );
+        let root = t.0.join("mods");
+        let output = modded_cache(&base, &directory, &root).unwrap();
+        let merged = validate(&output).unwrap();
+        assert_eq!(merged.schemes[0].id, original.schemes[0].id);
+        assert_eq!(merged.schemes[1].id, "DATA/SCHEMES/AAA.SCH");
+        assert_eq!(
+            merged
+                .sound("DATA/SOUND/EXPLODE.RSS")
+                .unwrap()
+                .samples_per_channel,
+            0
+        );
+        assert_eq!(
+            merged
+                .sound("DATA/SOUND/NEW.RSS")
+                .unwrap()
+                .samples_per_channel,
+            1
+        );
+        assert_eq!(merged.sound_mappings.len(), 2);
+        assert_eq!(merged.animations.len(), original.animations.len());
+        assert_eq!(merged.textures[0].path, original.textures[0].path);
+        assert_eq!(
+            fs::read(output.join(&merged.textures[0].path)).unwrap(),
+            fs::read(base.join(&original.textures[0].path)).unwrap()
+        );
+        let published = fs::metadata(output.join("manifest.json"))
+            .unwrap()
+            .modified()
+            .unwrap();
+        assert_eq!(modded_cache(&base, &directory, &root).unwrap(), output);
+        assert_eq!(
+            fs::metadata(output.join("manifest.json"))
+                .unwrap()
+                .modified()
+                .unwrap(),
+            published
+        );
+        save(&directory, "sound/explode.rss", &[0, 0, 0, 0]);
+        let changed = modded_cache(&base, &directory, &root).unwrap();
+        assert_ne!(changed, output);
+        assert_eq!(
+            validate(&changed)
+                .unwrap()
+                .sound("DATA/SOUND/EXPLODE.RSS")
+                .unwrap()
+                .samples_per_channel,
+            1
+        );
+        assert_eq!(
+            validate(&output)
+                .unwrap()
+                .sound("DATA/SOUND/EXPLODE.RSS")
+                .unwrap()
+                .samples_per_channel,
+            0
+        );
+        assert_eq!(fs::read(base.join("manifest.json")).unwrap(), before);
+        assert_eq!(validate(&base).unwrap().sounds[0].samples_per_channel, 2);
+    }
+
+    #[test]
+    fn invalid_or_ambiguous_mod_never_replaces_base_or_publishes_partial_cache() {
+        let t = Temp::new();
+        let source = t.0.join("source");
+        game_fixture(&source);
+        let base = t.0.join("base");
+        import(&source, &base).unwrap();
+        let directory = t.0.join("mod");
+        save(&directory, "FIELD0.PCX", b"broken");
+        let root = t.0.join("mods");
+        assert!(modded_cache(&base, &directory, &root).is_err());
+        assert_eq!(fs::read_dir(&root).unwrap().count(), 0);
+        validate(&base).unwrap();
+        fs::remove_file(directory.join("FIELD0.PCX")).unwrap();
+        save(&directory, "EXPLODE.RSS", &[]);
+        save(&directory, "DATA/SOUND/EXPLODE.RSS", &[]);
+        assert!(modded_cache(&base, &directory, &root)
+            .unwrap_err()
+            .to_string()
+            .contains("duplicate mod override"));
+        assert!(modded_cache(&base, &directory, &base.join("mod-cache")).is_err());
+        assert!(!base.join("mod-cache").exists());
+    }
+
+    #[test]
+    fn raw_animation_mod_uses_original_lookup_and_handles_legacy_cache_explicitly() {
+        let t = Temp::new();
+        let source = t.0.join("source");
+        game_fixture(&source);
+        let base = t.0.join("base");
+        import(&source, &base).unwrap();
+        let directory = t.0.join("mod");
+        save(
+            &directory,
+            "EXTRA.ANI",
+            &formats::tests::animation_fixture(),
+        );
+        let root = t.0.join("mods");
+        let output = modded_cache(&base, &directory, &root).unwrap();
+        assert!(validate(&output)
+            .unwrap()
+            .animation("DATA/ANI/EXTRA.ANI")
+            .is_some());
+        let mut legacy = load_manifest(&base).unwrap();
+        legacy.palette_lookup.clear();
+        fs::write(
+            base.join("manifest.json"),
+            serde_json::to_vec(&legacy).unwrap(),
+        )
+        .unwrap();
+        assert!(modded_cache(&base, &directory, &root)
+            .unwrap_err()
+            .to_string()
+            .contains("COLOR.PAL"));
+        save(
+            &directory,
+            "COLOR.PAL",
+            &fs::read(source.join("COLOR.PAL")).unwrap(),
+        );
+        let restored = modded_cache(&base, &directory, &root).unwrap();
+        assert!(validate(&restored)
+            .unwrap()
+            .animation("DATA/ANI/EXTRA.ANI")
+            .is_some());
+    }
+
+    #[test]
+    fn player_remap_mod_rebuilds_variants_without_editing_base() {
+        let t = Temp::new();
+        let source = t.0.join("source");
+        game_fixture(&source);
+        let mut palette = fs::read(source.join("COLOR.PAL")).unwrap();
+        palette[3] = 63;
+        palette[7] = 63;
+        save(&source, "COLOR.PAL", &palette);
+        save(
+            &source,
+            "DATA/ANI/WALK.ANI",
+            &formats::tests::animation_fixture(),
+        );
+        let mut master = fs::read(source.join("DATA/ANI/MASTER.ALI")).unwrap();
+        master.extend_from_slice(b"-WALK.ANI\n");
+        save(&source, "DATA/ANI/MASTER.ALI", &master);
+        let base = t.0.join("base");
+        let original = import(&source, &base).unwrap();
+        let walk = original.animation("DATA/ANI/WALK.ANI").unwrap();
+        let first = fs::read(base.join(&walk.player_variants[0])).unwrap();
+        let second = fs::read(base.join(&walk.player_variants[1])).unwrap();
+        let directory = t.0.join("mod");
+        let mut remap = vec![0; 259];
+        remap[1] = 2;
+        save(&directory, "0.RMP", &remap);
+        let output = modded_cache(&base, &directory, &t.0.join("mods")).unwrap();
+        assert_ne!(
+            fs::read(output.join(&walk.player_variants[0])).unwrap(),
+            first
+        );
+        assert_eq!(
+            fs::read(output.join(&walk.player_variants[1])).unwrap(),
+            second
+        );
+        assert_eq!(
+            fs::read(base.join(&walk.player_variants[0])).unwrap(),
+            first
+        );
+        validate(&base).unwrap();
     }
     #[test]
     fn extracted_import_round_trip_checksums_and_corruption() {

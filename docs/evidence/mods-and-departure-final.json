@@ -1,0 +1,81 @@
+{
+  "passed": true,
+  "version": "0.7.0",
+  "protocol": 8,
+  "source_sha256": "05548e516317e2ab616dc0ddf003c0974e5e033471cdd516b56276aa5c3e858a",
+  "candidate_scope": "Local uncommitted development build; no release published.",
+  "macos_package": {
+    "path": "dist/github/atomic-bomberman-0.7.0-macos-arm64.zip",
+    "sha256": "cd2c45b28ab9a0b2438a75b46ca2d057a57589d0b17211cc78ebcba50ba5906d",
+    "binaries": {
+      "AtomicBomberman": "73085f97d0fcd9287265c1d7dab954288aff1c24676918ee0ae8c78ddb4c35bf",
+      "audio-probe": "54c0bba3ee4f2072b95cc1970ae41a612bc383422fb279a7ba80f990ea153068",
+      "bomberman": "235e57a5bf3f849361e440af8c8740cb850dd497f059b84066673c04f7c00ba6",
+      "bomberman-assets": "823cf8f7d8d3e25cd6fc555f5ccd6326435771609f70422e40c0628ba494bb59",
+      "hardware-check": "b593b91f587bd89a09f0096fc1f779e65fb23ac2e596f347989e825959803c88"
+    }
+  },
+  "relay_package": {
+    "path": "dist/github/atomic-bomberman-0.7.0-relay-linux-arm64.tar.gz",
+    "sha256": "fe4b56bc35bf542fcfa1c80f046ab9b0236b6db9e1f651e2a9f49e62fda1f06e",
+    "binaries": {
+      "bomberman-relay": "c2c54aa60d14ddbe46a9ae9a9e195fc7083e774647f678648f990438e6860c2e"
+    }
+  },
+  "deployed_relay": {
+    "service_active": true,
+    "binary_sha256": "c2c54aa60d14ddbe46a9ae9a9e195fc7083e774647f678648f990438e6860c2e",
+    "version": "bomberman-relay 0.7.0 (protocol 8)",
+    "tcp443": true,
+    "udp443": true
+  },
+  "relay_note": "The final relay binary matches the running deployment; later game-only Mods UI edits required no relay restart.",
+  "mods_ui": "mod-options-macos.json",
+  "mixed_mod_native_lan": "mixed-mod-lan-macos.json",
+  "mixed_mod_native_live_relay": "mixed-mod-live-macos.json",
+  "game_tests": {
+    "passed": 52,
+    "failed": 0
+  },
+  "clippy": "passed; existing vendored Miniquad dead-code warning remains",
+  "packaged_saved_mod_launch": {
+    "passed": true,
+    "explicit_mod_flag": false,
+    "frames": 60,
+    "window": [
+      960,
+      720
+    ],
+    "audio_muted": false,
+    "schemes": 69,
+    "headless_match": {
+      "seed": 1997,
+      "winner": 1,
+      "rounds": 1,
+      "elapsed_ms": 48288,
+      "scores": [
+        0,
+        1
+      ],
+      "kills": [
+        -1,
+        0
+      ],
+      "scoring": "round_wins",
+      "checksum": "efdf22460aaab98c"
+    },
+    "temporary_no_mod_matches_saved_mod_simulation": true,
+    "saved_selection_retained": true
+  },
+  "original_format_mod": {
+    "sounds": 2029,
+    "intentionally_silent_recordings": 1776,
+    "sound_mappings": 174,
+    "base_cache_unchanged": true
+  },
+  "limitations": [
+    "Folder choices in the UI automation use a debug-only fixture; the actual macOS sheet is separately opened and canceled.",
+    "The exact packaged release separately renders the real user-provided mod from a saved preference, without --mod.",
+    "No physical speaker-output claim."
+  ]
+}

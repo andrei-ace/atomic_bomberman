@@ -16,8 +16,16 @@ enum Command {
     Start(u64),
     Prepared,
     Action(Action),
+    #[allow(dead_code)] // Retained for historical UI/latency verification callers.
     Color(usize, u8),
     Lobby,
+    EnableSetup(String),
+    Slot(usize, SlotState),
+    SelectPlayer(usize, Option<usize>),
+    SetupPhase(SetupPhase),
+    Team(usize, u8),
+    RandomArena(bool),
+    SchemeFile(String),
 }
 
 struct Controls {
@@ -40,6 +48,9 @@ struct Published {
     events: VecDeque<GameEvent>,
     warning: Option<String>,
     error: Option<NetError>,
+    error_detail: Option<String>,
+    match_owners: Option<Vec<Option<PeerId>>>,
+    match_colors: [u8; MAX_PLAYERS],
 }
 
 /// Renderer-facing snapshot and command mailbox. I/O and simulation never wait
@@ -56,7 +67,10 @@ pub struct Network {
     pub devices: Vec<Device>,
     pub server: Option<ServerProfile>,
     pub warning: Option<String>,
+    pub error_detail: Option<String>,
     pub saved: bool,
+    match_owners: Option<Vec<Option<PeerId>>>,
+    match_colors: [u8; MAX_PLAYERS],
     starting: bool,
     commands: mpsc::SyncSender<Command>,
     controls: Arc<Mutex<Controls>>,
@@ -103,7 +117,10 @@ impl Network {
             devices,
             server,
             warning: None,
+            error_detail: None,
             saved: false,
+            match_owners: None,
+            match_colors: DEFAULT_COLORS,
             starting: false,
             commands,
             controls,
@@ -131,12 +148,134 @@ impl Network {
             .configure(config.clone())?;
         self.command(Command::Configure(config))
     }
+    pub fn enable_setup(&mut self, nickname: String) -> Result<(), NetError> {
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
+        if !valid_nickname(&nickname) {
+            return Err(NetError::Protocol);
+        }
+        self.command(Command::EnableSetup(nickname))
+    }
+    pub fn set_slot(&mut self, slot: usize, state: SlotState) -> Result<(), NetError> {
+        if !self.host {
+            return Err(NetError::Ownership);
+        }
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
+        self.lobby
+            .as_mut()
+            .ok_or(NetError::Protocol)?
+            .set_slot(slot, state)?;
+        self.command(Command::Slot(slot, state))
+    }
+    pub fn select_player(&mut self, slot: usize, device: Option<usize>) -> Result<(), NetError> {
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
+        if device.is_some_and(|device| device >= self.devices.len()) {
+            return Err(NetError::Ownership);
+        }
+        let device_id = device
+            .map(|device| u8::try_from(device).map_err(|_| NetError::Ownership))
+            .transpose()?;
+        let mut next = self.lobby.as_ref().ok_or(NetError::Protocol)?.clone();
+        next.select_player(self.id, slot, device_id)?;
+        self.command(Command::SelectPlayer(slot, device))?;
+        self.lobby = Some(next);
+        Ok(())
+    }
+    pub fn set_setup_phase(&mut self, phase: SetupPhase) -> Result<(), NetError> {
+        if !self.host {
+            return Err(NetError::Ownership);
+        }
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
+        self.lobby
+            .as_mut()
+            .ok_or(NetError::Protocol)?
+            .set_setup_phase(phase)?;
+        self.command(Command::SetupPhase(phase))
+    }
+    pub fn set_team(&mut self, slot: usize, team: u8) -> Result<(), NetError> {
+        if !self.host {
+            return Err(NetError::Ownership);
+        }
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
+        self.lobby
+            .as_mut()
+            .ok_or(NetError::Protocol)?
+            .set_team(slot, team)?;
+        self.command(Command::Team(slot, team))
+    }
+    pub fn set_random_arena(&mut self, random: bool) -> Result<(), NetError> {
+        if !self.host {
+            return Err(NetError::Ownership);
+        }
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
+        self.lobby
+            .as_mut()
+            .ok_or(NetError::Protocol)?
+            .set_random_arena(random)?;
+        self.command(Command::RandomArena(random))
+    }
+    pub fn set_scheme_file(&mut self, filename: String) -> Result<(), NetError> {
+        if !self.host {
+            return Err(NetError::Ownership);
+        }
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
+        let mut next = self.lobby.as_ref().ok_or(NetError::Protocol)?.clone();
+        next.set_scheme_file(filename.clone())?;
+        self.command(Command::SchemeFile(filename))?;
+        self.lobby = Some(next);
+        Ok(())
+    }
+    pub fn colors(&self) -> [u8; MAX_PLAYERS] {
+        if self.match_owners.is_some() {
+            self.match_colors
+        } else {
+            self.lobby
+                .as_ref()
+                .map_or(DEFAULT_COLORS, |lobby| lobby.colors)
+        }
+    }
+    pub fn owned_seats(&self) -> Vec<usize> {
+        self.match_owners
+            .as_ref()
+            .map(|owners| {
+                owners
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(seat, owner)| (*owner == Some(self.id)).then_some(seat))
+                    .collect()
+            })
+            .or_else(|| self.lobby.as_ref().map(|lobby| lobby.owned_seats(self.id)))
+            .unwrap_or_default()
+    }
     pub fn change_devices(&mut self, devices: Vec<Device>) -> Result<(), NetError> {
         if self.replay.is_some() {
             return Err(NetError::InProgress);
         }
+        if devices.len() > MAX_LOCAL_DEVICES {
+            return Err(NetError::Ownership);
+        }
+        let mut next = self.lobby.clone();
+        if let Some(lobby) = &mut next {
+            if self.id != 0 && lobby.setup.is_some() {
+                lobby.declare_devices(self.id, devices.len() as u8)?;
+            }
+        }
         self.command(Command::Devices(devices.clone()))?;
         self.devices = devices;
+        self.lobby = next;
         Ok(())
     }
     pub fn start(&mut self, seed: u64, _: u64) -> Result<(), NetError> {
@@ -169,6 +308,7 @@ impl Network {
         }
         self.command(Command::Action(action))
     }
+    #[allow(dead_code)] // Original row selection uses select_player instead.
     pub fn choose_color(&mut self, local_player: usize, color: u8) -> Result<(), NetError> {
         if self.replay.is_some() {
             return Err(NetError::InProgress);
@@ -206,6 +346,7 @@ impl Network {
         drop(controls);
         let mut state = self.published.lock().unwrap();
         if let Some(error) = state.error {
+            self.error_detail.clone_from(&state.error_detail);
             return Err(error);
         }
         self.id = state.id;
@@ -230,6 +371,8 @@ impl Network {
         }
         self.gameplay_rtt_ms = state.gameplay_rtt_ms;
         self.starting = state.starting;
+        self.match_owners.clone_from(&state.match_owners);
+        self.match_colors = state.match_colors;
         if let Some(warning) = state.warning.take() {
             self.warning = Some(warning);
         }
@@ -290,6 +433,13 @@ fn run(
                     Command::Action(action) => session.action(action)?,
                     Command::Color(player, color) => session.choose_color(player, color)?,
                     Command::Lobby => session.return_to_lobby()?,
+                    Command::EnableSetup(nickname) => session.enable_setup(nickname)?,
+                    Command::Slot(slot, state) => session.set_slot(slot, state)?,
+                    Command::SelectPlayer(slot, device) => session.select_player(slot, device)?,
+                    Command::SetupPhase(phase) => session.set_setup_phase(phase)?,
+                    Command::Team(slot, team) => session.set_team(slot, team)?,
+                    Command::RandomArena(random) => session.set_random_arena(random)?,
+                    Command::SchemeFile(filename) => session.set_scheme_file(filename)?,
                 }
             }
             let inputs = {
@@ -324,6 +474,8 @@ fn run(
                 state.predicted.clone_from(&session.predicted);
                 state.gameplay_rtt_ms = session.gameplay_rtt_ms;
                 state.starting = session.is_starting();
+                state.match_owners.clone_from(&session.match_owners);
+                state.match_colors = session.colors();
                 if let Some(warning) = session.warning.take() {
                     state.warning = Some(warning);
                 }
@@ -341,6 +493,7 @@ fn run(
             }
             Err(error) => {
                 state.error = Some(error);
+                state.error_detail = session.error_detail.take();
                 break;
             }
         }

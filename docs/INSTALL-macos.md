@@ -14,14 +14,14 @@ Playing requires no Rust, Homebrew, Python, Windows, or emulator.
 ## Download and install
 
 1. Open [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases)
-   and download `atomic-bomberman-0.6.1-macos-arm64.zip` and the matching
+   and download `atomic-bomberman-0.7.0-macos-arm64.zip` and the matching
    `.zip.sha256` file. Use the Mac ZIP asset; GitHub's automatic **Source code**
    archives contain source, rather than a built application.
 2. In Terminal, change to the download directory and verify the ZIP:
 
    ```bash
    cd ~/Downloads
-   shasum -a 256 -c atomic-bomberman-0.6.1-macos-arm64.zip.sha256
+   shasum -a 256 -c atomic-bomberman-0.7.0-macos-arm64.zip.sha256
    ```
 
    The result should be `OK`. Download the files again if the checksum fails.
@@ -95,21 +95,52 @@ documented in [the Mac development guide](https://github.com/andrei-ace/atomic_b
 ## Private online and LAN games
 
 Get the group's full private server link from the administrator or a friend.
-Open **Multiplayer → Internet → Paste server link**, press **Command-V**, and
+Open **Internet → Add server link** from the main menu, press **Command-V**, and
 select **Connect**. The link imports the access secret and certificate fingerprint
 together; no manual certificate installation is needed. The client saves it
-privately and opens **Friends' games** automatically on later visits. Select
+privately and reconnects automatically on later visits to **Internet**. Select
 **Host game** or join a listed game.
+
+Both the **LAN** and **Internet** browsers offer **Nickname** and **Local player
+controls** before joining. These choices save automatically. The first host
+screen shows game type, ten colored player rows and up to ten connected nodes.
+Arrows choose OFF, AI or local KEY/JOY controls; remote players show their node.
+Enter advances directly to arena/wins, then starts. Other rules and Scheme File
+are under optional **Options**. Hosted rules save separately
+from local-game rules; unused slots in a new room begin Open. Press **F1** for
+current connection, setup and saving instructions.
 
 The client needs outbound TCP 443 and UDP 443, and the relay needs both ports
 inbound. UDP gameplay is required; TCP 443 remains necessary for login, browsing,
-and control. Version 0.6.1 retains protocol 7 and the 0.5.1 compatibility family;
-compatible clients and relays interoperate. Version 0.5.0 and earlier is incompatible. Existing
+and control. Version 0.7.0 uses protocol 8 and the 0.7.0 compatibility family;
+the relay and every player must use a compatible build. Protocol-7 builds,
+including 0.6.1, display an incompatibility error. Existing
 private links and saved profiles remain valid after upgrading.
 
-**Multiplayer → LAN** discovers nearby games automatically and offers **Join by
+**LAN** on the main menu discovers nearby games automatically and offers **Join by
 IP** when discovery is unavailable. Permit TCP and UDP 1997 on the host; one UDP port handles both discovery
 and gameplay. Allow Local Network access when macOS asks;
 it can also be enabled under **System Settings → Privacy & Security → Local
 Network**. Manual IP joining still requires UDP 1997. See
 [multiplayer](online-play.md) for lobby options and troubleshooting.
+
+## Asset mods
+
+Open **Options → Mods → Choose mod folder** and select the mod's directory.
+Choose **Apply and restart**. The normal app remembers this choice, including
+when opened from the Dock or a Finder alias; no separate launcher is needed.
+Choose **Use original assets → Apply and restart** to reset it.
+
+For a temporary override, launch with `--mod <directory>`. For example, from this
+repository:
+
+```sh
+"dist/Atomic Bomberman.app/Contents/MacOS/AtomicBomberman" --mod "$HOME/Downloads/Atomic Bomberman"
+```
+
+Original-format assets can use the original `DATA` subdirectories or flat
+filenames. Missing files fall back to the base game; empty sound files remain
+silent. A separate cache is reused until mod contents change. `--no-mod` ignores
+the remembered choice for one launch. Modded and unmodded players can share a
+room; game versions must be compatible. See [the mod guide](../README.md#asset-mods)
+for original-palette requirements on animation overrides.

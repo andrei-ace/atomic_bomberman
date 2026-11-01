@@ -602,6 +602,10 @@ impl Arena {
 #[serde(default)]
 pub struct GameConfig {
     pub players: Vec<PlayerConfig>,
+    /// Original ten-slot identities for a compact roster. Empty keeps the
+    /// historical identity mapping and its serialized protocol-7 state.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub player_slots: Vec<usize>,
     pub arena: Arena,
     pub scheme: Scheme,
     pub round_time_ms: Option<u32>,
@@ -638,6 +642,7 @@ impl Default for GameConfig {
                     team: u8::from(i >= 5),
                 })
                 .collect(),
+            player_slots: Vec::new(),
             arena: Arena::default(),
             scheme: Scheme::default(),
             round_time_ms: Some(150_000),
@@ -664,6 +669,18 @@ impl GameConfig {
     pub fn validate(&self) -> Result<(), ConfigError> {
         if !(2..=MAX_PLAYERS).contains(&self.players.len()) {
             return Err(ConfigError("battle requires 2–10 participants".into()));
+        }
+        if !self.player_slots.is_empty()
+            && (self.player_slots.len() != self.players.len()
+                || self
+                    .player_slots
+                    .iter()
+                    .enumerate()
+                    .any(|(i, slot)| *slot >= MAX_PLAYERS || self.player_slots[..i].contains(slot)))
+        {
+            return Err(ConfigError(
+                "player slots must identify one distinct original slot per participant".into(),
+            ));
         }
         if self
             .players

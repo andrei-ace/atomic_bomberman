@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "version": "0.7.0",
+  "protocol": 8,
+  "phase": "pre-commit validation",
+  "source_sha256": "f4ba52eaef70528807c4f7727d21e5efcf9566a6c16f8cce6a8041694684db15",
+  "tests": {
+    "passed": 370,
+    "failed": 0,
+    "ignored": 4
+  },
+  "network_simulations": 1056,
+  "native_evidence": [
+    "shared-host-settings-lan-macos.json",
+    "shared-host-settings-live-macos.json",
+    "mod-options-macos.json",
+    "bot-avatar-lan-macos.json",
+    "bot-avatar-live-macos.json",
+    "mixed-mod-lan-macos.json",
+    "mixed-mod-live-macos.json",
+    "original-menu-reference.json"
+  ],
+  "checks": [
+    "cargo fmt",
+    "workspace clippy",
+    "workspace tests",
+    "audio mixer tests",
+    "release package boundary tests",
+    "macOS launcher acceptance"
+  ],
+  "demo": "https://www.youtube.com/watch?v=kdETJWSwXpA",
+  "limitations": [
+    "Native UI checks run on macOS. Windows/Linux distributions require their native CI builds.",
+    "Folder-selection fixture and diagnostic-build scope are recorded in each native evidence file."
+  ]
+}

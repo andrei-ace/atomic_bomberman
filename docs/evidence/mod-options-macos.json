@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "checks": [
+    "invalid mod cannot replace the saved selection",
+    "Back discards a prepared choice without changing the current pack",
+    "Apply saves the folder and restarts in place with the override active",
+    "normal relaunch restores the mod without --mod or an extra startup screen",
+    "canceling the folder chooser preserves the active and saved pack",
+    "Use original assets clears the selection and restarts with the base fingerprint",
+    "an unavailable remembered folder reports the error and leaves Options accessible",
+    "the real macOS folder sheet opens and cancels without blocking the game or changing assets",
+    "base assets and the intentionally empty source recording remain unchanged"
+  ],
+  "game_binary_sha256": "4f225d585dcd702fc2b4a11501fd81acc5fa0fb248e9bd347b1cb64d40fd542b",
+  "base_manifest_sha256": "d3b83beeb76f9aecf0435468a94c2f7bda722e4e845c9f1af5a2da5b7aababbd",
+  "limitations": [
+    "Folder selections use a debug-only fixture; opening/canceling the native sheet is checked separately.",
+    "Game menus, asset preparation, saves and exec restarts execute normally.",
+    "No physical input or physical audio claim."
+  ]
+}

@@ -80,7 +80,7 @@ impl GameplayPacket {
     }
     pub fn encode_with_limit(&self, limit: usize) -> Result<Vec<u8>, NetError> {
         let limit = limit.min(MAX_DATAGRAM);
-        let mut out = b"ABG7".to_vec();
+        let mut out = b"ABG8".to_vec();
         out.push(match self {
             Self::Input { .. } => 0,
             Self::Frames { .. } => 1,
@@ -173,7 +173,7 @@ impl GameplayPacket {
             return Err(NetError::TooLarge);
         }
         let mut r = Reader(bytes);
-        if r.take(4)? != b"ABG7" {
+        if r.take(4)? != b"ABG8" {
             return Err(NetError::Protocol);
         }
         let kind = r.u8()?;
@@ -416,7 +416,7 @@ fn decode_frame(bytes: &[u8]) -> Result<InputFrame, NetError> {
 }
 /// Reliable recovery uses the same validated frame codec as gameplay. JSON
 /// field names repeated across ten seats otherwise exhaust the existing TLS
-/// byte budget during simultaneous gap repair. Protocol 7 carries base64 here.
+/// byte budget during simultaneous gap repair. Protocol 8 carries base64 here.
 pub(crate) mod repair_frames {
     use super::*;
     use base64::{engine::general_purpose::STANDARD, Engine};
@@ -537,7 +537,7 @@ fn encode_sample(out: &mut Vec<u8>, sample: &OwnerSample) -> Result<(), NetError
         direction: sample.motion.ice_direction,
         ..Default::default()
     })? as u8;
-    // Protocol 7 packs the two directions and moving flag into one byte,
+    // Protocol 8 packs the two directions and moving flag into one byte,
     // leaving room for both logical and captured native animation counters.
     out.push(facing | (u8::from(sample.motion.moving) << 3) | (ice << 4));
     out.extend(sample.motion.remainder.to_le_bytes());

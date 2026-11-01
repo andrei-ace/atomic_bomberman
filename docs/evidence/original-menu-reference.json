@@ -1,0 +1,164 @@
+{
+  "artifact": {
+    "name": "BM95.EXE",
+    "sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+    "executed": false
+  },
+  "provider": {
+    "rea": "6.8.0",
+    "ghidra": "12.1.4",
+    "architecture": "macOS arm64 native decompiler"
+  },
+  "installation": {
+    "codex_registered": true,
+    "scoped_doctor_healthy": true,
+    "configured_mcp_tool_count": 229,
+    "fixture_decompilation_verified": true,
+    "original_source_unchanged": true,
+    "session_closed": true,
+    "note": "Ghidra 12.2 remains installed side by side; REA 6.8.0 supports the active 12.1.4 provider."
+  },
+  "references": [
+    {
+      "url": "https://www.youtube.com/watch?v=7-z4SF0pH24",
+      "seconds": 2248,
+      "one_second_frames": 2248,
+      "menu_subset_frames": 599,
+      "local_directory": "build/reference-videos/7-z4SF0pH24",
+      "key_seconds": {
+        "main": 15,
+        "manual_picker": 73,
+        "document": 84,
+        "credits": 246,
+        "options": 280,
+        "players": 311,
+        "arena": 325,
+        "round_scores": 459,
+        "victory": 656,
+        "gold_wheel": 664,
+        "gold_reward": 670,
+        "arena_return": 675
+      }
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=2CkFjEXS0nU",
+      "purpose": "main menu and Classic Green Acres reference"
+    },
+    {
+      "url": "https://github.com/andrei-ace/atomic_bomberman/issues/1",
+      "purpose": "host slots, mode, settings and global nicknames"
+    }
+  ],
+  "evidence": [
+    {
+      "finding": "main menu actions and navigation",
+      "evidence_id": "ev_d0e06e4e698830abe60033de35060dc602b368ef16a1a95d3c1655571e732952",
+      "operation": "procedure_pseudo_code",
+      "parameters": {
+        "procedure": "0x42b9ce"
+      }
+    },
+    {
+      "finding": "player selection and network authority",
+      "evidence_id": "ev_07415fbe9f66a4de5f7aa43862b9ee5cf24210ab03f64bb3f23245309a655c3e",
+      "operation": "procedure_pseudo_code",
+      "parameters": {
+        "procedure": "0x410f81"
+      }
+    },
+    {
+      "finding": "blinking head cursor",
+      "evidence_id": "ev_ddc6c0f8b2d97372f82106122df085f3b624d25814e59d3886971d7cf49cdfa5",
+      "operation": "procedure_pseudo_code",
+      "parameters": {
+        "procedure": "0x413bd6"
+      }
+    },
+    {
+      "finding": "original document viewer",
+      "evidence_id": "ev_a6c90f442f8d358df95069f79e1d66f8bd454b80bd3d261144fc059c0486824f",
+      "operation": "procedure_pseudo_code",
+      "parameters": {
+        "procedure": "0x41302d"
+      }
+    },
+    {
+      "finding": "arena menu loop and host authority",
+      "evidence_id": "ev_d7cea3fb4425e3abaf8cf61c27717999d515ff8cb86d5454e7bb026d11f1cd2d",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x42a3f6",
+          "0x406dde"
+        ]
+      }
+    },
+    {
+      "finding": "arena thumbnail construction",
+      "evidence_id": "ev_0f0ca1aac2443e2f8df99ee760ad19281e88a84023b67bfd3d0d60e81df4d31f",
+      "operation": "procedure_pseudo_code",
+      "parameters": {
+        "procedure": "0x406aa3"
+      }
+    },
+    {
+      "finding": "Gold bonus screen",
+      "evidence_id": "ev_3434985c5698d958a4dda54adcd268faa7c81638028b295f27d3cfb8054475c9",
+      "operation": "procedure_pseudo_code",
+      "parameters": {
+        "procedure": "0x4034bc"
+      }
+    },
+    {
+      "finding": "Gold positioning and powerup image",
+      "evidence_id": "ev_5d9558744cb90e24772897e05d87a51be21745449c8955f12040c5f449b5c285",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x403382",
+          "0x40341f",
+          "0x425c7f"
+        ]
+      }
+    }
+  ],
+  "preview": {
+    "white_backing": [
+      378,
+      80,
+      224,
+      202
+    ],
+    "background_destination": [
+      380,
+      82
+    ],
+    "background_source": [
+      0,
+      48,
+      220,
+      198
+    ],
+    "cell_top_left": [
+      400,
+      100
+    ],
+    "cell_size": [
+      40,
+      36
+    ],
+    "grid": [
+      5,
+      5
+    ],
+    "solid": "x odd and y odd",
+    "bricks": "outside upper-left2x2; rand()%5!=0",
+    "rng": "separate Watcom generator seeded from room and arena for matching peer previews"
+  },
+  "limitations": [
+    "Ghidra pseudocode is derived machine-code analysis, not recovered original source.",
+    "Original Windows application was not executed; videos and isolated reconstruction runtime provide visual checks.",
+    "Modern LAN/Internet discovery and requested first-screen host controls extend the original front end.",
+    "Current process was verified through the configured MCP command; the host agent tool catalogue requires a new session to discover its new REA entry."
+  ]
+}

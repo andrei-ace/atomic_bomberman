@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "transports": [
+    {
+      "transport": "relay",
+      "passed": true,
+      "checks": [
+        "two distinct native production game windows with isolated profiles",
+        "original network arrows: Left is OFF; host Right is AI then KEY0; client Right skips AI",
+        "two local controls occupy sparse original player rows 5 and 8",
+        "Escape pauses the shared match",
+        "host scheme/configuration and canonical simulation match on both clients",
+        "client leaves through the pause menu without closing the host session",
+        "host resumes and continues beyond the five-second AI handoff without an invalid-message error",
+        "departed player AI visibly moves and uses its walking animation instead of the last client pose",
+        "Escape returns or resumes and never quits from the main menu for either player"
+      ],
+      "modded_host": false,
+      "version": "0.7.0",
+      "protocol": 8,
+      "host_asset_fingerprint": "f6ad3e245f122b128f5c6d1f332f3315c4956ad6880247a7e22845fd87477591",
+      "client_asset_fingerprint": "f6ad3e245f122b128f5c6d1f332f3315c4956ad6880247a7e22845fd87477591",
+      "simulation_sha256": "839a053f3d6cdee57bba2e0dd5778472e498f971754b29cff7b385ded975ddad",
+      "ai_rendered_positions": 4
+    }
+  ],
+  "game_binary_sha256": "22e3d992380079def4fdc9aa63f5bc1c04aa82a6c3fdd3cc87f115d74acd0638",
+  "driver_sha256": "d7fa47bd91f631484de447d2ac705cc8cc6c88cbeca926ec76c6999937c3e2ca",
+  "assets_manifest_sha256": "d3b83beeb76f9aecf0435468a94c2f7bda722e4e845c9f1af5a2da5b7aababbd",
+  "backend": "two native production game windows, process-local Cocoa NSEvents",
+  "isolated_settings_and_saved_servers": true,
+  "clipboard_used": false,
+  "limitations": [
+    "Live private relay transport; no physical device or physical audio claims.",
+    "Audio is muted; screenshots capture the production 640x480 game render target.",
+    "Splash timing is checked separately; this harness uses --skip-intro."
+  ]
+}

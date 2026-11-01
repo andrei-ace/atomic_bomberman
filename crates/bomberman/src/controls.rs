@@ -265,10 +265,8 @@ impl Controllers {
 
     pub fn inputs(&self, settings: &Settings) -> Vec<PlayerInput> {
         settings
-            .participants
-            .iter()
-            .take(settings.participant_count)
-            .map(|participant| match participant.device {
+            .active_participants()
+            .map(|(_, participant)| match participant.device {
                 Device::Keyboard1 => keyboard(&settings.keyboard[0]),
                 Device::Keyboard2 => keyboard(&settings.keyboard[1]),
                 Device::Controller(slot) => self.pad_input(slot, settings),

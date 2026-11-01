@@ -29,6 +29,14 @@ async fn main() {
 async fn run() -> Result<()> {
     let mut args = std::env::args().skip(1);
     let command = args.next().unwrap_or_else(|| "--help".into());
+    if command == "--version" || command == "-V" {
+        println!(
+            "bomberman-relay {} (protocol {})",
+            env!("CARGO_PKG_VERSION"),
+            bomberman_net::PROTOCOL_VERSION
+        );
+        return Ok(());
+    }
     if command == "--help" || command == "-h" {
         println!("bomberman-relay {}\n\nCommands: init, serve, export-invite, rotate-token\n\n  --state <directory>    Private persistent state outside the checkout (required)\n  --advertise <host:port> Override automatic public-IP detection (init only)\n  --listen <ip:port>     Bind address (init only; default 0.0.0.0:443)\n\ninit generates persistent TLS keys, a secret, and a private server URL.\nexport-invite prints that URL again. Friends paste it once to browse and host games.\nrotate-token requires a service restart. No endpoint is built into this program.", env!("CARGO_PKG_VERSION"));
         return Ok(());

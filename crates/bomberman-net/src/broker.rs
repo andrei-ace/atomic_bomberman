@@ -42,6 +42,7 @@ pub struct Broker {
     pub max_connections: usize,
     pub ttl: Duration,
     lan: bool,
+    lobby_extensions: bool,
     budget: Arc<Semaphore>,
     gameplay: Option<crate::quic::GameplayServer>,
 }
@@ -55,12 +56,18 @@ impl Broker {
             max_connections: 128,
             ttl: Duration::from_secs(12 * 3600),
             lan,
+            lobby_extensions: true,
             budget: Arc::new(Semaphore::new(QUEUED_BYTES)),
             gameplay: None,
         }
     }
     pub fn connections(&self) -> usize {
         self.rooms.values().map(|r| r.peers.len()).sum()
+    }
+    /// Disable optional setup during a staged relay rollout. False omits the
+    /// Welcome field entirely and accepts only the classic control messages.
+    pub fn set_lobby_extensions(&mut self, enabled: bool) {
+        self.lobby_extensions = enabled;
     }
     pub fn rooms(&self) -> usize {
         self.rooms.len()
@@ -166,6 +173,7 @@ impl Broker {
                 id,
                 room: code.clone(),
                 host: id == HOST,
+                lobby_extensions: self.lobby_extensions,
             },
         ) {
             if id == HOST {
@@ -249,6 +257,9 @@ impl Broker {
             Request::Playing(playing) if peer == HOST => room.playing = playing,
             Request::Kick(target) if peer == HOST && target != HOST => self.close(code, target),
             Request::Send { to, message } => {
+                if !self.lobby_extensions && matches!(message, GameMessage::Profile { .. }) {
+                    return Err(NetError::Version);
+                }
                 if matches!(message, GameMessage::Input { .. } | GameMessage::Frame(_)) {
                     return Err(NetError::Protocol);
                 }

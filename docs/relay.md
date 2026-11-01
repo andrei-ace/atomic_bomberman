@@ -1,12 +1,13 @@
-# Native private relay — 0.6.1
+# Native private relay — 0.7.0
 
 Native Linux packages are available for ARM64 (`aarch64`) and amd64 (`x86_64`),
 with Ubuntu 24.04/glibc 2.39 or newer as the baseline. The existing ARM64 CAX11
 deployment runs Ubuntu 26. No Docker, domain, certificate authority, database or original
 game assets are required. The service forwards bounded traffic between outbound
-clients; the player's computer hosts simulation. Version 0.6.1 retains protocol 7
-and the 0.5.1 handshake family. Compatible 0.5.1-family clients and relays,
-including 0.6.0 and 0.6.1, interoperate; 0.5.0 and earlier are incompatible.
+clients; the player's computer hosts simulation. Version 0.7.0 uses protocol 8
+and the 0.7.0 handshake family. Update the relay and every player together.
+Protocol-7 builds, including 0.6.1, are incompatible. Shared player setup,
+slot controls and nicknames are required features of this client generation.
 
 The relay listens on the same port number for two transports: secure WebSockets
 over **TCP 443** for authentication, browsing, lobby, setup, and requested
@@ -25,7 +26,7 @@ The example below uses ARM64; substitute `x86_64` for an amd64 server. Check the
 extracting. Run the following from its extracted directory:
 
 ```sh
-sha256sum -c atomic-bomberman-0.6.1-relay-linux-arm64.tar.gz.sha256
+sha256sum -c atomic-bomberman-0.7.0-relay-linux-arm64.tar.gz.sha256
 sudo useradd --system --home-dir /var/lib/bomberman-relay \
   --shell /usr/sbin/nologin bomberman-relay
 sudo install -d -m755 /usr/local/lib/bomberman-relay
@@ -74,8 +75,8 @@ sudo -u bomberman-relay /usr/local/lib/bomberman-relay/bomberman-relay export-in
 From another computer, the same command can be run with
 `ssh root@your-server 'sudo -u bomberman-relay /usr/local/lib/bomberman-relay/bomberman-relay export-invite --state /var/lib/bomberman-relay/private'`.
 
-Copy the complete generated URL. On each client open **Multiplayer → Internet →
-Paste server link**, paste with **Ctrl-V** on Windows/Linux or **Command-V** on Mac, and
+Copy the complete generated URL. On each client open **Internet → Add server link**
+from the main menu, paste with **Ctrl-V** on Windows/Linux or **Command-V** on Mac, and
 select **Connect**. The link imports the access secret and certificate fingerprint
 together; no manual certificate installation is needed. Everyone can then host
 games and find the group's rooms in
@@ -94,7 +95,7 @@ Verify each new package's checksum and provenance. Install a new binary to a
 separate temporary filename, atomically rename it over the installed executable,
 and restart the service. Keep the previous binary for rollback. Keep the private
 state directory. Existing saved client profiles continue to work with the same
-certificate and token. Protocol 7 accepts the 0.5.1 compatibility family, including 0.6.1; 0.5.0 and earlier clients
+certificate and token. Protocol 8 accepts the 0.7.0 compatibility family; older clients
 receive a version error. Preserve `/var/lib/bomberman-relay/private` and do not
 run `init` again during an update.
 
@@ -171,7 +172,7 @@ python3 tools/package_relay.py --target aarch64-unknown-linux-gnu --release
 # On amd64, choose this target instead (the default remains ARM64):
 python3 tools/package_relay.py --target x86_64-unknown-linux-gnu --release
 # Verify a downloaded archive without starting the service:
-python3 tools/package_relay.py --verify /path/to/atomic-bomberman-0.6.1-relay-linux-x86_64.tar.gz --release
+python3 tools/package_relay.py --verify /path/to/atomic-bomberman-0.7.0-relay-linux-x86_64.tar.gz --release
 ```
 
 `--release` requires a clean committed checkout. The package includes the binary,

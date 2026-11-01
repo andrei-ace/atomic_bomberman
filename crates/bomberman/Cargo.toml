@@ -19,6 +19,14 @@ sha2.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc = { package = "objc-rs", version = "=0.2.8" }
+block = "=0.1.6"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 libc = "0.2"
+
+[dev-dependencies]
+bomberman-relay = { path = "../bomberman-relay" }
+tokio.workspace = true
+rustls.workspace = true
+rcgen.workspace = true
+axum-server = { version = "=0.7.3", default-features = false, features = ["tls-rustls-no-provider"] }

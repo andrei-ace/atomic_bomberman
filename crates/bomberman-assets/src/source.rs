@@ -33,6 +33,20 @@ impl Source {
             Ok(Self::Disc(Disc::open(path)?))
         }
     }
+    pub(crate) fn mod_directory(path: &Path) -> Result<Self> {
+        ensure!(
+            path.is_dir(),
+            "mod path must be a directory: {}",
+            path.display()
+        );
+        ensure!(
+            !fs::symlink_metadata(path)?.file_type().is_symlink(),
+            "mod directory must not be a symlink"
+        );
+        let mut files = BTreeMap::new();
+        walk(path, path, 0, &mut files)?;
+        Ok(Self::Directory { files })
+    }
     pub(crate) fn paths(&self) -> Vec<String> {
         match self {
             Self::Disc(d) => d.files.keys().cloned().collect(),

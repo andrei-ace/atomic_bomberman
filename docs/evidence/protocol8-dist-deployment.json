@@ -1,0 +1,55 @@
+{
+  "passed": true,
+  "version": "0.7.0",
+  "protocol": 8,
+  "source_sha256": "3b7e3dd073f854462a75452efd7b1d21ef7552a56bd9af15d221e83d38dd79e1",
+  "relay": {
+    "archive_sha256": "eb8902e40b83eca9357a80fd9cda1c90242ab439ed566c45a639cd68d38e1fc1",
+    "new_binary_sha256": "9b571ebcb443b7513072dbb3a94db2520ccb3678251ca840ee5f5ca409a5c4d4",
+    "service_active": true,
+    "running_version": "bomberman-relay 0.7.0 (protocol 8)",
+    "private_state_unchanged": true,
+    "tcp443": true,
+    "udp443": true
+  },
+  "macos": {
+    "path": "dist/github/atomic-bomberman-0.7.0-macos-arm64.zip",
+    "sha256": "452d4df43b877469000ee3f509f259789bec65062c296bac33ad06f7d344608a",
+    "binaries": {
+      "AtomicBomberman": "02056749a59da3799a3b7d0253a01b3fd45f5617656fddb9861d63681a5eef69",
+      "audio-probe": "d66932f36977a9d00794a49b226641ebf68cb204bb6a051cc2771a7f4c3181b7",
+      "bomberman": "47d908fe30fa773164983426e1298120e6965d87cb3c980a80814ed4ba5630ef",
+      "bomberman-assets": "09cc49f5112f4e4c7a90deb2a55fa52bcf91e90d67255740e3756c55d4189205",
+      "hardware-check": "d469b942345f40c95dfb0a4af8e0983e9054bf1b600886855ee371ce4494728e"
+    }
+  },
+  "native_main_menu_smoke": {
+    "passed": true,
+    "frames": 30,
+    "log": "build/protocol8-final-dist-main.log"
+  },
+  "headless_match": [
+    {
+      "seed": 1997,
+      "winner": 0,
+      "rounds": 1,
+      "elapsed_ms": 9648,
+      "scores": [
+        1,
+        0
+      ],
+      "kills": [
+        0,
+        0
+      ],
+      "scoring": "round_wins",
+      "checksum": "22e65a0f5dbe02dc"
+    }
+  ],
+  "native_final_lan": "protocol8-final-lan-macos.json",
+  "exact_filename_checks": "protocol8-scheme-checks.json",
+  "native_live_ui_scope": "Native diagnostic build from the same source; the release package disables F12 state probes. The exact packaged client passes separate launcher/render/headless checks.",
+  "package_scope": "Local development candidate with uncommitted source; no release was published.",
+  "native_live_ui": "protocol8-live-menu-macos.json",
+  "native_live_ui_passed": true
+}

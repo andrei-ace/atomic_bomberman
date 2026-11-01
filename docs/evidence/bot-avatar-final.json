@@ -1,0 +1,65 @@
+{
+  "passed": true,
+  "version": "0.7.0",
+  "protocol": 8,
+  "cause": "Cached human-owner motion kept overriding the AI render position, facing and walking state after disconnect.",
+  "fix": "Remote owner poses apply only while a seat remains human-controlled; host stops echoing its old pose at AI handoff.",
+  "source_sha256": "15522c7c1d6f24567930cc8e2dc6530bf9e513eecf19c14e7b5a010dcb3b44cc",
+  "game_binary_sha256": "adec2ab2db31b7e9b7cb8840ea9eab1d3b1a6e218fb4889a6fdc7f79c035de7e",
+  "package": {
+    "path": "dist/github/atomic-bomberman-0.7.0-macos-arm64.zip",
+    "sha256": "ab5b58feb9e35c94525f24652c1af114c2a1867f164381650fd35e26e2448e29"
+  },
+  "tests": {
+    "prediction": {
+      "passed": 16,
+      "failed": 0
+    },
+    "session": {
+      "passed": 52,
+      "failed": 0
+    },
+    "authority": {
+      "passed": 19,
+      "failed": 0
+    }
+  },
+  "impaired_match_matrix": {
+    "passed": true,
+    "games": 1056,
+    "players": [
+      2,
+      10
+    ],
+    "arenas": 11
+  },
+  "native": {
+    "lan": {
+      "evidence": "bot-avatar-lan-macos.json",
+      "passed": true,
+      "visible_walking_frames": 5,
+      "rendered_positions": 4
+    },
+    "live": {
+      "evidence": "bot-avatar-live-macos.json",
+      "passed": true,
+      "visible_walking_frames": 6,
+      "rendered_positions": 4
+    }
+  },
+  "packaged_saved_mod_render": {
+    "passed": true,
+    "frames": 60,
+    "window": [
+      960,
+      720
+    ],
+    "schemes": 69
+  },
+  "relay_update_required": false,
+  "candidate_scope": "Local uncommitted development build; no release published.",
+  "limitations": [
+    "Native movement checks use a diagnostic build from this source with F12 probes; the packaged release separately passes signature, provenance, relocation and render checks.",
+    "The 3-peer LAN/TLS-QUIC tests check AI render position, facing and moving state on every remaining peer; live WAN uses 2 peers before departure."
+  ]
+}

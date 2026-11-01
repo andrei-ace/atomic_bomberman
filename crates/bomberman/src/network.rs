@@ -17,6 +17,13 @@ use std::collections::{BTreeMap, BTreeSet};
 mod worker;
 pub use worker::Network;
 
+#[cfg(test)]
+#[path = "network/setup_tests.rs"]
+mod setup_tests;
+
+#[cfg(test)]
+static LAN_TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 struct Preparation {
     generation: u64,
     peers: BTreeSet<PeerId>,
@@ -51,6 +58,15 @@ pub struct Session {
     pub devices: Vec<Device>,
     pub server: Option<ServerProfile>,
     pub warning: Option<String>,
+    pub error_detail: Option<String>,
+    setup_nickname: Option<String>,
+    lobby_extensions: bool,
+    profile_sent: bool,
+    seats_sent: bool,
+    match_owners: Option<Vec<Option<PeerId>>>,
+    match_slots: Vec<usize>,
+    match_colors: [u8; MAX_PLAYERS],
+    arena_seed: u64,
     buffer: Option<InputBuffer>,
     authority: Option<AuthorityTimeline>,
     latest_motion: BTreeMap<usize, bomberman_net::authority::OwnerSample>,
@@ -85,9 +101,12 @@ impl Session {
         config: Option<GameConfig>,
         devices: Vec<Device>,
     ) -> Result<Self, NetError> {
+        if devices.len() > MAX_LOCAL_DEVICES {
+            return Err(NetError::Ownership);
+        }
         let host = config.is_some();
         let lobby = config
-            .map(|config| Lobby::new(config, devices.len() as u8))
+            .map(|config| Lobby::new(config, devices.len().min(MAX_PLAYERS) as u8))
             .transpose()?;
         let server = match &destination {
             Destination::Online(invite) => Some(invite.server.clone()),
@@ -105,6 +124,15 @@ impl Session {
             devices,
             server,
             warning: None,
+            error_detail: None,
+            setup_nickname: None,
+            lobby_extensions: false,
+            profile_sent: false,
+            seats_sent: false,
+            match_owners: None,
+            match_slots: vec![],
+            match_colors: DEFAULT_COLORS,
+            arena_seed: 0,
             buffer: None,
             authority: None,
             latest_motion: BTreeMap::new(),
@@ -190,20 +218,243 @@ impl Session {
             .configure(config)?;
         self.broadcast_lobby()
     }
+    pub fn enable_setup(&mut self, nickname: String) -> Result<(), NetError> {
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
+        if !valid_nickname(&nickname) {
+            return Err(NetError::Protocol);
+        }
+        self.setup_nickname = Some(nickname);
+        if self.id != 0 {
+            self.negotiate_setup()?;
+        }
+        Ok(())
+    }
+    fn negotiate_setup(&mut self) -> Result<(), NetError> {
+        let Some(nickname) = self.setup_nickname.clone() else {
+            return Ok(());
+        };
+        if !self.lobby_extensions {
+            self.error_detail = Some("The relay does not support shared player setup. Update the relay to protocol 8 (0.7.0 or a compatible release) for Open / Closed / AI, nicknames and the shared arena preview.".into());
+            return Err(NetError::Version);
+        } else if self.host {
+            self.lobby
+                .as_mut()
+                .ok_or(NetError::Protocol)?
+                .enable_setup(nickname)?;
+            self.lobby
+                .as_mut()
+                .unwrap()
+                .declare_devices(HOST, self.devices.len() as u8)?;
+            self.broadcast_lobby()?;
+        } else if self
+            .lobby
+            .as_ref()
+            .is_some_and(|lobby| lobby.setup.is_none())
+        {
+            self.error_detail = Some("The host's game does not support shared player setup. Ask the host to update to protocol 8 (0.7.0 or a compatible release).".into());
+            return Err(NetError::Version);
+        } else if !self.profile_sent && self.lobby.is_some() {
+            self.connection.message(
+                Some(HOST),
+                GameMessage::Profile {
+                    nickname,
+                    seats: self.devices.len() as u8,
+                },
+            )?;
+            self.profile_sent = true;
+        }
+        Ok(())
+    }
+    pub fn set_slot(&mut self, slot: usize, state: SlotState) -> Result<(), NetError> {
+        if !self.host {
+            return Err(NetError::Ownership);
+        }
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
+        self.lobby
+            .as_mut()
+            .ok_or(NetError::Protocol)?
+            .set_slot(slot, state)?;
+        self.broadcast_lobby()
+    }
+    pub fn select_player(&mut self, slot: usize, device: Option<usize>) -> Result<(), NetError> {
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
+        let device = device
+            .map(|device| {
+                if device >= self.devices.len() {
+                    Err(NetError::Ownership)
+                } else {
+                    u8::try_from(device).map_err(|_| NetError::Ownership)
+                }
+            })
+            .transpose()?;
+        let lobby = self.lobby.as_mut().ok_or(NetError::Protocol)?;
+        // Validate optimistically too, so normal UI failures never enter the
+        // worker's fatal-error path. The host repeats this check on receipt.
+        let mut next = lobby.clone();
+        next.select_player(self.id, slot, device)?;
+        if self.host {
+            *lobby = next;
+            self.broadcast_lobby()
+        } else {
+            self.connection
+                .message(Some(HOST), GameMessage::SelectPlayer { slot, device })?;
+            *lobby = next;
+            Ok(())
+        }
+    }
+    pub fn set_setup_phase(&mut self, phase: SetupPhase) -> Result<(), NetError> {
+        if !self.host {
+            return Err(NetError::Ownership);
+        }
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
+        self.lobby
+            .as_mut()
+            .ok_or(NetError::Protocol)?
+            .set_setup_phase(phase)?;
+        self.broadcast_lobby()
+    }
+    pub fn set_team(&mut self, slot: usize, team: u8) -> Result<(), NetError> {
+        if !self.host {
+            return Err(NetError::Ownership);
+        }
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
+        self.lobby
+            .as_mut()
+            .ok_or(NetError::Protocol)?
+            .set_team(slot, team)?;
+        self.broadcast_lobby()
+    }
+    pub fn set_random_arena(&mut self, random: bool) -> Result<(), NetError> {
+        if !self.host {
+            return Err(NetError::Ownership);
+        }
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
+        self.lobby
+            .as_mut()
+            .ok_or(NetError::Protocol)?
+            .set_random_arena(random)?;
+        self.broadcast_lobby()
+    }
+    pub fn set_scheme_file(&mut self, filename: String) -> Result<(), NetError> {
+        if !self.host {
+            return Err(NetError::Ownership);
+        }
+        if self.replay.is_some() {
+            return Err(NetError::InProgress);
+        }
+        self.lobby
+            .as_mut()
+            .ok_or(NetError::Protocol)?
+            .set_scheme_file(filename)?;
+        self.broadcast_lobby()
+    }
+    fn select_arena(&mut self) -> Result<bool, NetError> {
+        let lobby = self.lobby.as_mut().ok_or(NetError::Protocol)?;
+        if !lobby.setup.as_ref().is_some_and(|setup| setup.random_arena) {
+            return Ok(false);
+        }
+        // Keep menu selection independent of the original shared gameplay RNG.
+        let mut selector = Sha256::new();
+        selector.update(b"atomic-bomberman/menu-arena");
+        selector.update(self.arena_seed.to_le_bytes());
+        selector.update(self.start_generation.to_le_bytes());
+        let digest = selector.finalize();
+        let index = (u64::from_le_bytes(digest[..8].try_into().unwrap())
+            % bomberman_core::Arena::ALL.len() as u64) as usize;
+        lobby.config.arena = bomberman_core::Arena::ALL[index];
+        Ok(true)
+    }
+    pub fn owned_seats(&self) -> Vec<usize> {
+        self.match_owners
+            .as_ref()
+            .map(|owners| {
+                owners
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(seat, owner)| (*owner == Some(self.id)).then_some(seat))
+                    .collect()
+            })
+            .or_else(|| self.lobby.as_ref().map(|lobby| lobby.owned_seats(self.id)))
+            .unwrap_or_default()
+    }
+    pub fn colors(&self) -> [u8; MAX_PLAYERS] {
+        if self.match_owners.is_some() {
+            self.match_colors
+        } else {
+            self.lobby
+                .as_ref()
+                .map_or(DEFAULT_COLORS, |lobby| lobby.colors)
+        }
+    }
+    fn mapped_inputs(&self, inputs: &[PlayerInput]) -> Vec<PlayerInput> {
+        let Some(setup) = self.lobby.as_ref().and_then(|lobby| lobby.setup.as_ref()) else {
+            return inputs.to_vec();
+        };
+        self.owned_seats()
+            .into_iter()
+            .map(|seat| {
+                let slot = self.match_slots.get(seat).copied().unwrap_or(seat);
+                setup.devices[slot]
+                    .and_then(|device| inputs.get(device as usize))
+                    .copied()
+                    .unwrap_or_default()
+            })
+            .collect()
+    }
     pub fn change_devices(&mut self, devices: Vec<Device>) -> Result<(), NetError> {
         if self.replay.is_some() {
             return Err(NetError::InProgress);
         }
+        if devices.len() > MAX_LOCAL_DEVICES {
+            return Err(NetError::Ownership);
+        }
         if self.host {
-            self.lobby
-                .as_mut()
-                .ok_or(NetError::Protocol)?
-                .assign(HOST, devices.len() as u8)?;
+            let lobby = self.lobby.as_mut().ok_or(NetError::Protocol)?;
+            if lobby.setup.is_some() {
+                lobby.declare_devices(HOST, devices.len() as u8)?;
+            } else {
+                lobby.assign(HOST, devices.len() as u8)?;
+            }
             self.devices = devices;
             self.broadcast_lobby()
         } else {
-            self.connection
-                .message(Some(HOST), GameMessage::Seats(devices.len() as u8))?;
+            // A choice made while connecting is sent with the negotiated
+            // Profile/Seats handshake. Sending Seats before learning that a
+            // modern host requires Profile would wrongly reject this client.
+            if self.id == 0 || self.lobby_extensions && self.lobby.is_none() {
+                self.devices = devices;
+                return Ok(());
+            }
+            let message = if self.lobby_extensions
+                && self.lobby.as_ref().is_some_and(|l| l.setup.is_some())
+            {
+                self.lobby
+                    .as_mut()
+                    .unwrap()
+                    .declare_devices(self.id, devices.len() as u8)?;
+                GameMessage::Profile {
+                    nickname: self
+                        .setup_nickname
+                        .clone()
+                        .unwrap_or_else(|| "Player".into()),
+                    seats: devices.len() as u8,
+                }
+            } else {
+                GameMessage::Seats(devices.len() as u8)
+            };
+            self.connection.message(Some(HOST), message)?;
             self.devices = devices;
             Ok(())
         }
@@ -219,8 +470,15 @@ impl Session {
         if !lobby.can_start() {
             return Err(NetError::WaitingForPlayers);
         }
-        let simulation =
-            Simulation::new(lobby.config.clone(), seed).map_err(|_| NetError::Protocol)?;
+        self.arena_seed = seed;
+        if self.select_arena()? {
+            self.broadcast_lobby()?;
+        }
+        let roster = self.lobby.as_ref().unwrap().match_roster()?;
+        let simulation = Simulation::new(roster.config, seed).map_err(|_| NetError::Protocol)?;
+        self.match_owners = Some(roster.owners);
+        self.match_slots = roster.slots;
+        self.match_colors = roster.colors;
         self.prepare_simulation(simulation, now_ms)
     }
     fn prepare_simulation(
@@ -231,7 +489,15 @@ impl Session {
         let lobby = self.lobby.as_ref().ok_or(NetError::Protocol)?;
         // A departing peer releases lobby ownership immediately; a rematch
         // must initialize these seats as bots even within disconnect grace.
-        for (seat, owner) in lobby.owners.iter().enumerate() {
+        let owners = if lobby.setup.is_some() {
+            self.match_slots
+                .iter()
+                .map(|slot| lobby.owners[*slot])
+                .collect::<Vec<_>>()
+        } else {
+            lobby.owners.clone()
+        };
+        for (seat, owner) in owners.iter().enumerate() {
             let control = if owner.is_some() {
                 bomberman_core::ControlKind::Human
             } else {
@@ -240,6 +506,10 @@ impl Session {
             simulation.config.players[seat].control = control;
             simulation.players[seat].config.control = control;
         }
+        // Slot mapping has already been applied to the serialized ten starts.
+        // Contiguous rosters keep the compact identity mapping.
+        simulation.config.player_slots.clear();
+        self.match_owners = Some(owners.clone());
         self.actions.clear();
         let generation = self
             .start_generation
@@ -251,11 +521,11 @@ impl Session {
             GameMessage::Start {
                 generation,
                 simulation: Box::new(simulation.clone()),
-                owners: lobby.owners.clone(),
-                colors: lobby.colors,
+                owners: owners.clone(),
+                colors: self.match_colors,
             },
         )?;
-        self.buffer = Some(InputBuffer::new(lobby.owners.clone(), now_ms));
+        self.buffer = Some(InputBuffer::new(owners, now_ms));
         self.replay = Some(Replay::new(simulation));
         self.accumulator = 0;
         self.prediction = None;
@@ -316,12 +586,10 @@ impl Session {
                 generation: preparation.generation,
             },
         )?;
+        // The battle roster is compacted from the ten lobby rows. Disconnect
+        // handoffs must address those battle seats, including after loading.
         self.buffer = Some(InputBuffer::new(
-            self.lobby
-                .as_ref()
-                .ok_or(NetError::Protocol)?
-                .owners
-                .clone(),
+            self.match_owners.clone().ok_or(NetError::Protocol)?,
             now_ms,
         ));
         self.preparation = None;
@@ -356,6 +624,15 @@ impl Session {
                     .ok_or(NetError::Protocol)?
                     .simulation
                     .clone();
+                if self
+                    .lobby
+                    .as_ref()
+                    .is_some_and(|lobby| lobby.setup.is_some())
+                {
+                    simulation.config.player_slots = self.match_slots.clone();
+                }
+                self.select_arena()?;
+                simulation.config.arena = self.lobby.as_ref().unwrap().config.arena;
                 simulation.rematch();
                 return self.prepare_simulation(simulation, self.clock_ms);
             }
@@ -408,7 +685,12 @@ impl Session {
         self.actions.clear();
         self.expected_hashes.clear();
         self.preparation = None;
+        self.match_owners = None;
+        self.match_slots.clear();
         self.skip_elapsed = false;
+        if let Some(setup) = self.lobby.as_mut().and_then(|lobby| lobby.setup.as_mut()) {
+            setup.phase = SetupPhase::Lobby;
+        }
         self.connection.send(Request::Playing(false))?;
         self.broadcast_lobby()
     }
@@ -426,17 +708,29 @@ impl Session {
             };
             match event {
                 Event::Warning(error) => self.warning = Some(error.to_string()),
-                Event::Welcome { id, room, host } => {
+                Event::Welcome {
+                    id,
+                    room,
+                    host,
+                    lobby_extensions,
+                } => {
                     self.id = id;
                     self.room = room;
+                    self.lobby_extensions = lobby_extensions;
                     if host != self.host {
                         return Err(NetError::Protocol);
                     }
+                    if !lobby_extensions && self.setup_nickname.is_some() {
+                        self.negotiate_setup()?;
+                    }
                     if self.host {
+                        self.negotiate_setup()?;
                         self.broadcast_lobby()?;
-                    } else {
+                    } else if !lobby_extensions {
                         self.connection
                             .message(Some(HOST), GameMessage::Seats(self.devices.len() as u8))?;
+                        self.seats_sent = true;
+                        self.negotiate_setup()?;
                     }
                 }
                 Event::PeerJoined(peer) if self.host => {
@@ -491,11 +785,21 @@ impl Session {
                             GameMessage::Lobby(lobby) => {
                                 lobby.validate()?;
                                 self.lobby = Some(*lobby);
+                                self.match_owners = None;
+                                self.match_slots.clear();
                                 self.replay = None;
                                 self.preparation = None;
                                 self.prediction = None;
                                 self.predicted = None;
                                 self.window = None;
+                                self.negotiate_setup()?;
+                                if !self.seats_sent && !self.profile_sent {
+                                    self.connection.message(
+                                        Some(HOST),
+                                        GameMessage::Seats(self.devices.len() as u8),
+                                    )?;
+                                    self.seats_sent = true;
+                                }
                             }
                             GameMessage::Start {
                                 generation,
@@ -517,8 +821,17 @@ impl Session {
                                     return Err(NetError::Protocol);
                                 }
                                 let lobby = self.lobby.as_mut().ok_or(NetError::Protocol)?;
-                                lobby.owners = owners;
-                                lobby.colors = colors;
+                                lobby.config.arena = simulation.config.arena;
+                                self.match_slots = lobby.active_slots();
+                                if self.match_slots.len() != owners.len() {
+                                    return Err(NetError::Protocol);
+                                }
+                                self.match_owners = Some(owners.clone());
+                                self.match_colors = colors;
+                                if lobby.setup.is_none() {
+                                    lobby.owners = owners;
+                                    lobby.colors = colors;
+                                }
                                 self.start_generation = generation;
                                 self.preparation = Some(Preparation {
                                     generation,
@@ -657,6 +970,7 @@ impl Session {
         if self.replay.is_none() {
             return Ok(events);
         }
+        let inputs = self.mapped_inputs(&inputs);
         if let Some(prediction) = &mut self.prediction {
             prediction.observe(&inputs)?;
         }
@@ -751,9 +1065,14 @@ impl Session {
                 let authority = self.authority.as_mut().ok_or(NetError::Protocol)?;
                 if !bots.is_empty() {
                     authority.release(&bots);
+                    for seat in &bots {
+                        self.latest_motion.remove(seat);
+                    }
                     actions.push(Action::Bots(bots));
                 }
-                authority.receive(HOST, &local_samples)?;
+                if !local_samples.is_empty() {
+                    authority.receive(HOST, &local_samples)?;
+                }
                 authority.advance_wall(actions);
                 let committed = authority.settle()?;
                 for (frame, _) in committed {
@@ -793,14 +1112,16 @@ impl Session {
                         },
                     )?;
                 }
-                self.connection.send_gameplay(
-                    None,
-                    &GameplayPacket::MotionEcho {
-                        generation: self.start_generation,
-                        tick: authority.wall_tick,
-                        samples: self.latest_motion.values().copied().collect(),
-                    },
-                )?;
+                if !self.latest_motion.is_empty() {
+                    self.connection.send_gameplay(
+                        None,
+                        &GameplayPacket::MotionEcho {
+                            generation: self.start_generation,
+                            tick: authority.wall_tick,
+                            samples: self.latest_motion.values().copied().collect(),
+                        },
+                    )?;
+                }
                 self.prediction
                     .as_mut()
                     .unwrap()
@@ -876,11 +1197,7 @@ impl Session {
         }
     }
     fn reset_prediction(&mut self) -> Result<(), NetError> {
-        let owned = self
-            .lobby
-            .as_ref()
-            .ok_or(NetError::Protocol)?
-            .owned_seats(self.id);
+        let owned = self.owned_seats();
         let mut prediction = ClientPrediction::new_owner_at(
             owned,
             self.replay.as_ref().ok_or(NetError::Protocol)?,
@@ -901,7 +1218,7 @@ impl Session {
             self.latest_motion.clear();
             self.authority = Some(AuthorityTimeline::new(
                 self.replay.as_ref().unwrap().clone(),
-                self.lobby.as_ref().unwrap().owners.clone(),
+                self.match_owners.clone().ok_or(NetError::Protocol)?,
             ));
             self.authority.as_mut().unwrap().set_diagnostic_context(
                 self.connection.gameplay_diagnostics().room_tag,
@@ -915,8 +1232,9 @@ impl Session {
         Ok(())
     }
     pub fn observe_inputs(&mut self, inputs: &[PlayerInput]) -> Result<(), NetError> {
+        let inputs = self.mapped_inputs(inputs);
         if let Some(prediction) = &mut self.prediction {
-            prediction.observe(inputs)?;
+            prediction.observe(&inputs)?;
         }
         Ok(())
     }
@@ -947,6 +1265,17 @@ impl Session {
                                 .as_ref()
                                 .is_some_and(|lobby| lobby.peers.contains(&from))) =>
                 {
+                    // Spectators send no owner-motion packets. Their existing
+                    // clock probes still prove the bidirectional gameplay path.
+                    if self.host
+                        && !self.is_starting()
+                        && self
+                            .match_owners
+                            .as_ref()
+                            .is_some_and(|owners| !owners.contains(&Some(from)))
+                    {
+                        self.peer_gameplay_ms.insert(from, now_ms);
+                    }
                     let reply = if self.host && !self.is_starting() {
                         GameplayPacket::Clock {
                             generation,
@@ -1112,7 +1441,31 @@ impl Session {
                 }
             }
             GameMessage::Seats(count) if self.replay.is_none() => {
+                if self
+                    .lobby
+                    .as_ref()
+                    .is_some_and(|lobby| lobby.setup.is_some())
+                {
+                    self.warning = Some("An incompatible client was rejected. Ask that player to update to protocol 8 (0.7.0 or a compatible release).".into());
+                    return Err(NetError::Version);
+                }
                 self.lobby.as_mut().unwrap().assign(peer, count)?;
+                self.broadcast_lobby()?;
+            }
+            GameMessage::Profile { nickname, seats } if self.replay.is_none() => {
+                if !self.lobby_extensions {
+                    return Err(NetError::Version);
+                }
+                let lobby = self.lobby.as_mut().ok_or(NetError::Protocol)?;
+                lobby.set_profile(peer, nickname)?;
+                lobby.declare_devices(peer, seats)?;
+                self.broadcast_lobby()?;
+            }
+            GameMessage::SelectPlayer { slot, device } if self.replay.is_none() => {
+                self.lobby
+                    .as_mut()
+                    .ok_or(NetError::Protocol)?
+                    .select_player(peer, slot, device)?;
                 self.broadcast_lobby()?;
             }
             GameMessage::Color { seat, color } if self.replay.is_none() => {
@@ -1197,7 +1550,10 @@ impl Session {
                     return Err(NetError::Desync);
                 }
             }
-            GameMessage::Seats(_) | GameMessage::Color { .. } => return Err(NetError::InProgress),
+            GameMessage::Seats(_)
+            | GameMessage::Profile { .. }
+            | GameMessage::SelectPlayer { .. }
+            | GameMessage::Color { .. } => return Err(NetError::InProgress),
             _ => return Err(NetError::Protocol),
         }
         Ok(())
@@ -1215,6 +1571,7 @@ mod tests {
 
     #[test]
     fn real_lan_coordinator_multiple_devices_frames_pause_rematch_and_disconnect() {
+        let _lan = LAN_TEST_LOCK.lock().unwrap();
         let compatibility = Compatibility::new("a".repeat(64));
         let address = SocketAddr::from((Ipv4Addr::LOCALHOST, PORT));
         let mut config = GameConfig {

@@ -1,0 +1,75 @@
+{
+  "passed": true,
+  "scope": "Original splash automatic transitions and key skips; native diagnostic client, recorded in this session before player-row changes.",
+  "reports": {
+    "auto": {
+      "backend": "Cocoa NSEvents delivered to the production game view in its own process",
+      "passed": true,
+      "error": null,
+      "checks": [
+        "splash page advances automatically at original timing",
+        "splash page advances automatically at original timing",
+        "splash page advances automatically at original timing",
+        "all automatic splash transitions request the original sound effects",
+        "automatic opening reaches the main menu and MENU music"
+      ],
+      "physical_controller_verified": false,
+      "splash_timings": [
+        {
+          "observed_seconds": 8.01493295840919,
+          "page": "Interplay"
+        },
+        {
+          "observed_seconds": 7.999978833366185,
+          "page": "Hudson"
+        },
+        {
+          "observed_seconds": 7.988971583312377,
+          "page": "Title"
+        }
+      ],
+      "limitations": [
+        "Synthetic Cocoa events verify software input and window behavior; physical devices are recorded separately."
+      ],
+      "window_visible": true,
+      "application_active": true,
+      "physical_keyboard_verified": false
+    },
+    "skip": {
+      "backend": "Cocoa NSEvents delivered to the production game view in its own process",
+      "passed": true,
+      "error": null,
+      "checks": [
+        "Enter advances splash within 250 ms",
+        "Space advances splash within 250 ms",
+        "Escape advances splash within 250 ms"
+      ],
+      "physical_controller_verified": false,
+      "splash_timings": [
+        {
+          "key": "Enter",
+          "request_to_snapshot_ms": 67.02136993408203
+        },
+        {
+          "key": "Space",
+          "request_to_snapshot_ms": 69.38648223876953
+        },
+        {
+          "key": "Escape",
+          "request_to_snapshot_ms": 69.55170631408691
+        }
+      ],
+      "limitations": [
+        "Synthetic Cocoa events verify software input and window behavior; physical devices are recorded separately."
+      ],
+      "window_visible": true,
+      "application_active": true,
+      "physical_keyboard_verified": false
+    }
+  },
+  "reference": "splash-native-reference.json",
+  "limitations": [
+    "Audio output is muted for automation; original cue mappings and WAV identities are audited separately.",
+    "Separate CD movie is excluded."
+  ]
+}

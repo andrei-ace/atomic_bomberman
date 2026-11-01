@@ -41,6 +41,7 @@ separate: [release acceptance](evidence/macos-release.json),
 | Presentation | Native first-image animation lookup, CIMG origins, flame metadata alignment, insertion-layer order, all 24 death and 13 corner sequences, native action clocks, carrying, owner/team remaps, disease flicker, and Gold twinkles. | [1,792 native action/death/corner cases](evidence/player-presentation-parity.json), [257 native-vs-GPU cases / 78,950,400 pixels](evidence/presentation-pixels-parity.json), lookup comparisons, contact sheets, and Linux captures. |
 | Sound | Original numeric mappings and contiguous sound groups. Least-used selection, bounded rejection, wrapping play counts, exact playback frame stamps, three-frame Jelly bounce throttling, and every sound RNG draw use the simulation's shared generator. | [4,096 shuffle and 4,096 mixed exact/shuffle/throttled operations](evidence/behavior-parity.json); [3,081 native voice-admission operations](evidence/audio-voices-parity.json) and six real mixer lifecycle tests; [actual mixed original audio](evidence/linux-audio.json). |
 | Gold Bomberman | Six-sector counterrotation, sector-crossing deceleration, relative-angle rewards, next-match inventory, and the native 100-slot sparkle pool. | [28,673 roulette frames](evidence/roulette-parity.json); [4,096 sparkle updates](evidence/gold-particles-parity.json). |
+| Front end | Original startup, seven main actions, player and arena screens, Options, help/credits, scores, victory and Gold bonus/reward artwork. Protocol 8 requires shared LAN/Internet setup with slot controls, nicknames and arena/scheme selection. | [Reference and native analysis](original-menus.md), [native menu checks](evidence/transport-menu-local-macos.json), [two-window LAN/relay checks](evidence/transport-menu-network-macos.json). |
 | Linux/input | Original-art English menus, keyboard/controller remapping and hotplug, help, pause, results, settings, resize/letterbox, fullscreen switching, explicit windowed override, and clean shutdown. | [Linux input/window report](evidence/linux-ui.json), including simultaneous arrows/WASD and Space/Left Shift, plus one human against nine active bots; [real GNOME windowed/fullscreen startup](evidence/linux-desktop.json) and user-confirmed game audio. |
 
 ## Native AI
@@ -99,7 +100,7 @@ is retained only as a development diagnostic.
 
 ## Reproduction and environment
 
-Run `tools/check.sh` for formatting, strict Clippy, workspace tests and the six vendored mixer lifecycle tests. The
+Run `tools/check.sh` for formatting, strict Clippy, workspace tests and the seven vendored mixer lifecycle tests. The
 README lists importer, headless matrix, Linux archive, and native comparison
 commands. `tools/recover_ai.java` recovers missed callback functions in a
 temporary Ghidra project. Development exports and provider evidence are kept

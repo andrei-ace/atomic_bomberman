@@ -17,6 +17,9 @@ pub struct Manifest {
     pub warnings: Vec<String>,
     /// Expanded 8-bit RGB values. Index zero is transparent in animation images.
     pub palette: Vec<[u8; 3]>,
+    /// Original RGB555 quantization for importing raw animation overrides.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub palette_lookup: Vec<u8>,
     pub player_remaps: Vec<Vec<u8>>,
     pub sound_mappings: Vec<SoundMapping>,
     pub animation_order: Vec<String>,

@@ -96,8 +96,8 @@ func launcherTests() throws {
     try clean()
 
     let options = try Options(["--data-directory", root.path, "--assets", "/cache with spaces",
-        "--settings", "/settings.json", "--windowed"])
-    try require(options.gameArguments == ["--assets", "/cache with spaces", "--settings", "/settings.json", "--windowed"],
+        "--settings", "/settings.json", "--windowed", "--mod", "/mod with spaces"])
+    try require(options.gameArguments == ["--assets", "/cache with spaces", "--settings", "/settings.json", "--windowed", "--mod", "/mod with spaces"],
         "explicit game arguments preserved")
     print("Launcher acceptance passed: first import, atomic replacement, failure preservation, cancellation, corruption recovery, symlink refusal, argument forwarding.")
 }

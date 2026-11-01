@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "transports": [
+    {
+      "transport": "lan",
+      "passed": true,
+      "checks": [
+        "two distinct native production game windows with isolated profiles",
+        "two local controls occupy sparse original player rows 5 and 8",
+        "Escape pauses the shared match",
+        "client leaves through the pause menu without closing the host session",
+        "host resumes and continues beyond the five-second AI handoff without an invalid-message error",
+        "Escape returns or resumes and never quits from the main menu for either player"
+      ],
+      "version": "0.7.0",
+      "protocol": 8
+    }
+  ],
+  "game_binary_sha256": "0b19b3cc956ebb320398114546bab666330e4d30c8ebdb98176b3d53d9065db6",
+  "driver_sha256": "b6babe20a082e655ff26b4aaef54745e83339cf07d7df61b8f6a42e4fd96405d",
+  "assets_manifest_sha256": "d3b83beeb76f9aecf0435468a94c2f7bda722e4e845c9f1af5a2da5b7aababbd",
+  "backend": "two native production game windows, process-local Cocoa NSEvents",
+  "isolated_settings_and_saved_servers": true,
+  "clipboard_used": false,
+  "limitations": [
+    "Local loopback transport validation; no deployed WAN or physical device claims.",
+    "Audio is muted; screenshots capture the production 640x480 game render target.",
+    "Splash timing is checked separately; this harness uses --skip-intro."
+  ]
+}

@@ -391,6 +391,16 @@ impl Simulation {
             if self.config.random_starts {
                 setup::shuffle_start_coordinates(&mut self.start_positions, &mut self.rng);
             }
+            if !self.config.player_slots.is_empty() {
+                // Shuffle the same canonical TEN records before compacting.
+                // Reordering the scheme first would select different spawns
+                // for the same original slot and random seed.
+                let canonical = self.start_positions.clone();
+                let order = self.config.player_slots.iter().copied().chain(
+                    (0..MAX_PLAYERS).filter(|slot| !self.config.player_slots.contains(slot)),
+                );
+                self.start_positions = order.map(|slot| canonical[slot].clone()).collect();
+            }
         }
         if new_match {
             // 0x41117d calls 0x40a140 after the optional start shuffle. The

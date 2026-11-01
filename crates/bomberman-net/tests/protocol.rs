@@ -13,6 +13,19 @@ fn compatibility() -> Compatibility {
 }
 
 #[test]
+fn asset_mods_can_share_a_room_but_protocol_and_application_must_match() {
+    let base = compatibility();
+    let mut modded = Compatibility::new("b".repeat(64));
+    assert_eq!(base.check(&modded), Ok(()));
+    assert_eq!(modded.check(&base), Ok(()));
+    modded.protocol -= 1;
+    assert_eq!(base.check(&modded), Err(NetError::Version));
+    modded.protocol = base.protocol;
+    modded.application = "incompatible".into();
+    assert_eq!(base.check(&modded), Err(NetError::Version));
+}
+
+#[test]
 fn owner_authority_rejects_the_protocol_five_handshake() {
     let old: Compatibility = serde_json::from_str(&format!(
         "{{\"protocol\":5,\"application\":\"0.4.0\",\"assets\":\"{}\"}}",
@@ -36,15 +49,32 @@ fn owner_authority_rejects_the_protocol_five_handshake() {
     );
 }
 #[test]
-fn protocol_seven_rejects_the_deployed_protocol_six_handshake() {
-    let mut old = compatibility();
-    old.protocol = 6;
-    old.application = "0.5.0".into();
-    assert_eq!(compatibility().check(&old), Err(NetError::Version));
-    assert_eq!(
-        Broker::new(None).authenticate("", &old),
-        Err(NetError::Version)
-    );
+fn protocol_eight_rejects_previous_clients_before_room_creation() {
+    assert_eq!(PROTOCOL_VERSION, 8);
+    for (protocol, application) in [(6, "0.5.0"), (7, "0.5.1")] {
+        let old = Compatibility {
+            protocol,
+            application: application.into(),
+            assets: "a".repeat(64),
+        };
+        assert_eq!(compatibility().check(&old), Err(NetError::Version));
+        assert_eq!(old.check(&compatibility()), Err(NetError::Version));
+        let mut broker = Broker::new(None);
+        let (tx, _rx) = mpsc::channel(8);
+        assert_eq!(
+            broker.open(
+                Open {
+                    token: String::new(),
+                    room: None,
+                    compatibility: old
+                },
+                tx
+            ),
+            Err(NetError::Version)
+        );
+        assert!(broker.list_rooms().is_empty());
+        assert_eq!(broker.connections(), 0);
+    }
 }
 
 fn profile() -> ServerProfile {
@@ -320,10 +350,10 @@ fn relay_authentication_rooms_permissions_expiry_backpressure_and_limits() {
     ));
     let (tx, _) = mpsc::channel(1);
     let mut incompatible = open(&token, Some(other_room));
-    incompatible.compatibility.assets = "b".repeat(64);
+    incompatible.compatibility.protocol = PROTOCOL_VERSION - 1;
     assert!(matches!(
         broker.open(incompatible, tx),
-        Err(NetError::Assets)
+        Err(NetError::Version)
     ));
     broker.close(&room, HOST);
     assert!(matches!(

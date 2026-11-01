@@ -1,0 +1,67 @@
+{
+  "passed": true,
+  "transports": [
+    {
+      "transport": "relay",
+      "passed": true,
+      "checks": [
+        "two distinct native production game windows with isolated profiles",
+        "main entries open LAN and Internet directly with current browser help",
+        "global nicknames save and cancel correctly in the original-style form",
+        "independent network controls save and Done returns to the correct browser",
+        "unoccupied slots initially Open",
+        "host can turn its last player OFF and restore KEY0 without losing the room",
+        "optional Options saves one Scheme File and host rules; preview has only arena/wins",
+        "connected peer nicknames and shared ten-slot roster",
+        "host can set explicit AI and Closed slots without disconnecting users",
+        "client cannot alter host slot setup",
+        "host and client choose colors directly with KEY0 on the player rows; no color menu",
+        "client OFF and KEY0 reassignment preserve the node connection",
+        "host override releases a player without disconnecting its node",
+        "players advance directly to the two-row original arena preview without a controls wizard",
+        "host arena choice propagates with identical illustrative preview pixels",
+        "client follows the host preview and cannot change or start it",
+        "Escape returns directly from arena to players; one Enter proceeds again",
+        "host starts both windows through automatic media loading and ready barrier",
+        "full confirmed simulation and compact two-player configuration match",
+        "exact engine Replay hash matches at the same committed tick",
+        "current in-game guide opens and returns to the paused battle for both roles",
+        "network preferences preserve local-game rules and client hosting preferences",
+        "real process restart restores names, devices, colors and separate host rules",
+        "fresh room resets unused slots Open and reuses saved connection preferences",
+        "saved settings start a fresh room with two confirms: players, arena, battle"
+      ],
+      "version": "0.7.0",
+      "protocol": 8,
+      "opening_phases": [
+        {
+          "Countdown": {
+            "remaining_ms": 700
+          }
+        },
+        {
+          "Countdown": {
+            "remaining_ms": 980
+          }
+        }
+      ],
+      "simulation_sha256": "3faad66a1e7f56cdf1016d177e2c43aef085dc641a22df2ef8f3bc994feeeb6a",
+      "config_sha256": "82195f8627901a50f194fbd989d6ea3566d5b6e00df3d527c06275a2d4935999",
+      "arena": "ClassicGreenAcres",
+      "confirmed_tick": 110,
+      "engine_replay_hash": "dc180d462d262bc7f947db5e831a540600c7cddbf4fa0dd119c8da30cda347d2",
+      "restart_verified": true
+    }
+  ],
+  "game_binary_sha256": "0c2ce22f3bd7b1c1852ccb0b1fb55a13ef248387e09a382c8ec221507ec90f9f",
+  "driver_sha256": "74f1e7a11c4b0e69a3f199f3d5b6f683eafdc3b23d4f771a67d93c4c493c3a8a",
+  "assets_manifest_sha256": "d3b83beeb76f9aecf0435468a94c2f7bda722e4e845c9f1af5a2da5b7aababbd",
+  "backend": "two native production game windows, process-local Cocoa NSEvents",
+  "isolated_settings_and_saved_servers": true,
+  "clipboard_used": false,
+  "limitations": [
+    "Live private relay transport; no physical device or physical audio claims.",
+    "Audio is muted; screenshots capture the production 640x480 game render target.",
+    "Splash timing is checked separately; this harness uses --skip-intro."
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "command": "tools/check.sh",
+  "passed": true,
+  "formatting": "passed",
+  "clippy": "passed --locked --workspace --all-targets -- -D warnings",
+  "workspace_and_vendored_tests": {
+    "passed": 340,
+    "failed": 0,
+    "intentional_ignored": 4
+  },
+  "log": "original-menu-checks.txt.gz",
+  "log_sha256": "c0a4790c36aa627c397c0c80600b66e0e52a548c73736317f4e75a4fe449f7c7",
+  "network_coordinator_tests": 12,
+  "network_matrix": "2/10 players over LAN and local TLS/QUIC relay; legacy capability cases; sparse slots; disconnect/rematch",
+  "sudden_death": "Depth 3 closes all 165 cells and resolves the round; default depth 1 stops at two layers.",
+  "mixer": "empty looping and one-shot PCM remain silent; later real sound still plays",
+  "runtime_scope": "Local macOS native UI + loopback transports; no deployment or WAN timing claim",
+  "source_sha256": {
+    "Cargo.lock": "bc8707d543f620157912e97d3e078cf2daa2e7a2b5fed62a6e2d10c21c4de875",
+    "crates/bomberman-core/src/model.rs": "71ba52ef135d2b137af0d749314977509ae165cca8d55f0dc659f392f86afba5",
+    "crates/bomberman-core/src/simulation.rs": "7c3b86dad987d27e535636053018013bce15913af63be2c37c6ce993bdb9e691",
+    "crates/bomberman-core/src/tests.rs": "af782c9cf271d0a376c1b397e3129821b0e69221dce7bf3b0e4287069e7145e7",
+    "crates/bomberman-net/src/broker.rs": "3085e9c529ed5a4c51d43a2f71feb6b0b4d462b3ef8ef21cdbff068d1ff37028",
+    "crates/bomberman-net/src/lib.rs": "95d7e5a7bfb1d01a095398046cfb46214dae51d8e375a2788ea1a99dd5a579c3",
+    "crates/bomberman-net/src/protocol.rs": "3b6b3c0504029aa839f6fefa286273a9945e4b00e1b378cb3621263417f938f3",
+    "crates/bomberman-net/src/session.rs": "2f6c9e5b030aa87ec2a152e9c5ef015326b850003675d6792679253099558950",
+    "crates/bomberman-net/src/setup.rs": "f15e9b9183566dd751de07f96e395ba8421e292080e1bc9c1d7169f273eb0e62",
+    "crates/bomberman-net/tests/setup.rs": "44e1d55f2680dc4c3614ae59c4fee79e419bcee399cb975c9664e578b5c068ab",
+    "crates/bomberman-relay/tests/online.rs": "3bb422f0762e6dd8afeaad5b029a34b1f7816b9a0c3cf5c947735fd5b26906ea",
+    "crates/bomberman/Cargo.toml": "5ae9ce1d9d595efeba3751d074dac61196c9e456a99656f14613a0ac7477df45",
+    "crates/bomberman/src/app.rs": "36b3453a9fca2a858240b372464e8eb0652b0a9a7573bab4758605d8481508ae",
+    "crates/bomberman/src/app/documents.rs": "9f750f32510be0c5421604183fd0eab13239ec60982de6d8f4a929ce6d7170bf",
+    "crates/bomberman/src/app/frontend.rs": "5cbf5671d0b5f3c362c03d3313d07b01ae026396864129c2d10ae12691dc5ee5",
+    "crates/bomberman/src/app/network_frontend.rs": "7ca6880ba8430e9da8ea455fe56a33e17e4677cae4af0b1dfe1297d20625274d",
+    "crates/bomberman/src/app/network_ui.rs": "864fb9e7ea78ccd3d9bc20cbb59031e9d91c2402f3fc22246273c213693ba528",
+    "crates/bomberman/src/catalog.rs": "1b4dea9502ead86b11d2b2e0ccb470f83f56c7f7e7197ad62397316628d13181",
+    "crates/bomberman/src/cli.rs": "538eb70a74ab3fc33e67df8a98177d93a300c45a63c39ba670989ad41c7eeda2",
+    "crates/bomberman/src/controls.rs": "fa0329c0bcf27d1b5c180599681b79805bd83e7c7ac06eabde8cf871a9658062",
+    "crates/bomberman/src/media.rs": "87cca03450f77e9862aed258c2da7fc346cc87764f0f598bd148fb3acd4fb44f",
+    "crates/bomberman/src/network.rs": "40e077d23a1d466404dc319221ac822951c70cc92fbac1f75055f94a1dd9babd",
+    "crates/bomberman/src/network/setup_tests.rs": "cc5a25e9db886812e3bea26346dca9abf8230ba7dbbaa11092f037205c0a10fd",
+    "crates/bomberman/src/network/worker.rs": "ae260dd17f7f97935c8e7d50604faee68e09f7d72e0c28126a470f5ddb9e6120",
+    "crates/bomberman/src/settings.rs": "d738417a1b4dac3d3ccc335c5a7b0a55146f9a1efc3863b295a28a5fbcbda9ab",
+    "vendor/quad-snd/src/mixer.rs": "4169a05a6fd1d7fe673973206fb2bc5cc2becdb93d282b453a973abc53058e3b"
+  },
+  "x11_driver": {
+    "updated": true,
+    "python_compilation": "passed",
+    "modern_and_legacy_menu_counts": "passed",
+    "gui_execution": "not run on this macOS host"
+  }
+}

@@ -16,6 +16,31 @@ import base64
 import sys
 
 
+def selection_count(state):
+    """Read menu geometry from probes, including historical comparison builds."""
+    screen = state['screen']
+    if screen == 'Battle':
+        return len(state.get('pause_actions', range(4)))
+    if screen == 'Results':
+        return len(state.get('results_actions', range(3)))
+    if screen == 'NetworkLobby':
+        return len(state['network']['actions']) + (state.get('network_lobby_rows', 22) if state.get('frontend') else 0)
+    if screen == 'NetworkColors':
+        network = state['network']
+        return network['lobby']['owners'].count(network['id']) + 1
+    if screen == 'NetworkTeams':  # Historical rules screen.
+        return len(state['network']['lobby']['owners']) + 1
+    if screen == 'Internet':
+        return len(state['browser']['rooms']) + state['browser'].get('action_count', 5)
+    if screen == 'Lan':
+        return len(state['lan']['games']) + (len(state['lan']['actions']) if state.get('network_menu_layout', 0) >= 2 else 4)
+    return {
+        'Main': 7, 'Multiplayer': 3, 'Online': 3, 'Setup': 10, 'Arena': 2,
+        'NetworkDevices': 13, 'NetworkOptions': 10,
+        'NetworkRules': len(state.get('network_rule_actions', range(2))) if state.get('frontend') else 12,
+    }[screen]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--display', default=os.environ.get('DISPLAY'), required=not bool(os.environ.get('DISPLAY')))
@@ -108,29 +133,17 @@ def main():
     def press(name):
         key(name); time.sleep(.06); key(name,False); time.sleep(.12)
 
-    def select(index):
+    def select(index, activate=True):
         probe = active_probe[0]
         probe.unlink(missing_ok=True); press('F12')
         deadline=time.monotonic()+30
         while not probe.exists() and time.monotonic()<deadline:
             time.sleep(.2); press('F12')
         state = json.loads(probe.read_text())
-        counts = {'Main':7,'Multiplayer':3,'Internet':len(state['browser']['rooms'])+5,'Online':3,'NetworkDevices':13,'NetworkRules':12,'Battle':4,'Lan':len(state['lan']['games'])+4}
-        if state['screen'] == 'Battle':
-            count = len(state.get('pause_actions', range(4)))
-        elif state['screen'] == 'Results':
-            count = len(state.get('results_actions', range(3)))
-        elif state['screen'] == 'NetworkLobby':
-            count = len(state['network']['actions'])
-        elif state['screen'] == 'NetworkColors':
-            network = state['network']
-            count = network['lobby']['owners'].count(network['id'])+1
-        elif state['screen'] == 'NetworkTeams':
-            count = len(state['network']['lobby']['owners'])+1
-        else:
-            count = counts[state['screen']]
+        count = selection_count(state)
+        assert 0 <= index < count, (state['screen'], index, count)
         for _ in range((index-state['selection'])%count): press('Down')
-        press('Return')
+        if activate: press('Return')
 
     clipboard_jobs = []
     def set_clipboard(text):
@@ -198,16 +211,56 @@ def main():
                 time.sleep(.3); press('F12')
             assert probe.exists(), 'probe unavailable: '+(directory/'game.log').read_text()[-2000:]
             value=json.loads(probe.read_text())
+            if screen == 'Main' and value.get('frontend') and value['screen'] == 'Intro':
+                for _ in range(3):
+                    press('Return')
+                    value = snapshot(player)
+                    if value['screen'] != 'Intro': break
+            if screen == 'Battle' and value['screen'] == 'NetworkStarting':
+                deadline = time.monotonic() + 90
+                while value['screen'] == 'NetworkStarting' and time.monotonic() < deadline:
+                    time.sleep(.1)
+                    value = snapshot(player)
             if screen: assert value['screen']==screen, (screen,value['screen'],value.get('message'))
             return value
+
+        def open_lan(player, host=False):
+            state = snapshot(player, 'Main')
+            if state.get('network_menu_layout', 0) >= 2:
+                select(1)
+                state = snapshot(player, 'Lan')
+                if host:
+                    select(0)
+                    return snapshot(player, 'NetworkLobby')
+                return state
+            restored = bool(state.get('frontend'))
+            select(1 if host or not restored else 2)
+            snapshot(player, 'Multiplayer'); select(0)
+            if host:
+                if not restored:
+                    snapshot(player, 'Lan'); select(0)
+                return snapshot(player, 'NetworkLobby')
+            return snapshot(player, 'Lan')
 
         def open_online(player, paste_button=False, link=None, exercise_clear=False):
             link = invitation if link is None else link
             focus(player[0])
             state = snapshot(player)
-            if state['screen'] == 'Main': select(1); snapshot(player,'Multiplayer'); select(1)
+            if state.get('frontend') and state['screen'] == 'Multiplayer':
+                press('Escape'); state = snapshot(player, 'Main')
+            if state['screen'] == 'Main':
+                # Join intent leaves the directory open for copy-link/browser checks.
+                if state.get('network_menu_layout', 0) >= 2:
+                    select(2)
+                else:
+                    select(2 if state.get('frontend') else 1)
+                    snapshot(player,'Multiplayer'); select(1)
             elif state['screen'] == 'Multiplayer': select(1)
             state = snapshot(player)
+            if state.get('network_menu_layout', 0) >= 2 and state['screen'] == 'Internet':
+                if not state['browser']['ready'] or paste_button or exercise_clear:
+                    select(state['browser']['actions'].index('Server'))
+                    state = snapshot(player, 'Online')
             if state['screen'] == 'Online':
                 if paste_button:
                     set_clipboard(link); select(0)
@@ -250,13 +303,27 @@ def main():
                 state=snapshot(player,'Internet')
                 for i,room in enumerate(state['browser']['rooms']):
                     if room['code']==code:
-                        select(i+5); time.sleep(.5); return snapshot(player,'NetworkLobby')
+                        select(i + state['browser'].get('action_count', 5)); time.sleep(.5); return snapshot(player,'NetworkLobby')
                 time.sleep(.3)
             raise AssertionError('Hosted room not discovered')
 
         def lobby_action(player, action):
             state = snapshot(player, 'NetworkLobby')
-            select(state['network']['actions'].index(action))
+            restored = bool(state.get('frontend'))
+            select(state['network']['actions'].index(action) + (state.get('network_lobby_rows', 22) if restored else 0))
+            if restored and action == 'Start':
+                # Existing playability callers expect Start to reach the battle.
+                if state.get('network_menu_layout', 0) < 4:
+                    snapshot(player, 'NetworkDevices'); select(12)
+                snapshot(player, 'NetworkRules'); press('Return')
+                state = snapshot(player)
+                if state['screen'] == 'NetworkRules':
+                    # A rejected start (for example, one occupied Open slot) must
+                    # leave the helper ready for the next lobby operation.
+                    assert state.get('message'), 'Start did not advance or report an error'
+                    if state.get('network_menu_layout', 0) < 4:
+                        press('Escape'); snapshot(player, 'NetworkDevices')
+                    press('Escape'); snapshot(player, 'NetworkLobby')
 
         def save_playability(report):
             import gzip,hashlib
@@ -290,10 +357,9 @@ def main():
                 assert initial['main_footer'].endswith('v'+initial['version'])
                 assert 'Native Rust' not in initial['main_footer']
             if args.lan_menu:
-                select(1); snapshot(host,'Multiplayer'); select(0); snapshot(host,'Lan'); select(0)
-                assert snapshot(host,'NetworkLobby')['network']['host']
+                assert open_lan(host, host=True)['network']['host']
                 friend=launch('friend'); snapshot(friend,'Main')
-                select(1); snapshot(friend,'Multiplayer'); select(0); snapshot(friend,'Lan')
+                open_lan(friend)
                 select(1); paste('127.0.0.1'); select(0)
                 assert not snapshot(friend,'NetworkLobby')['network']['host']
                 lobby_action(host,'Start')
@@ -325,13 +391,20 @@ def main():
                 args.report.parent.mkdir(parents=True,exist_ok=True);args.report.write_text(json.dumps(report,indent=2)+'\n')
                 print(json.dumps(report,indent=2));return
             if args.single_play:
-                select(0);snapshot(host,'Battle')
+                select(0)
+                if initial.get('frontend'):
+                    snapshot(host, 'Setup'); press('Return')
+                    snapshot(host, 'Arena'); press('Return')
+                snapshot(host,'Battle')
                 from measure_playability import run
                 save_playability(run(host,host,focus,key,press,snapshot,lobby_action,single_play=True))
                 return
-            select(1); snapshot(host,'Multiplayer'); select(0); snapshot(host,'Lan')
+            open_lan(host)
             assert 'CopyInvite' not in snapshot(host)['lan']['actions']
-            press('Escape'); snapshot(host,'Multiplayer'); press('Escape'); snapshot(host,'Main')
+            press('Escape')
+            if initial.get('network_menu_layout', 0) < 2:
+                snapshot(host,'Multiplayer'); press('Escape')
+            snapshot(host,'Main')
             open_online(host, paste_button=True)
             set_clipboard('stale clipboard')
             select(2); copied=clipboard()
@@ -353,35 +426,86 @@ def main():
                 save_playability(report)
                 return
             assert not {'Start', 'Rules', 'Ready'} & set(state_friend['network']['actions'])
-            # A second keyboard is assigned locally through the actual lobby UI.
-            lobby_action(friend, 'Devices'); snapshot(friend,'NetworkDevices'); select(1); press('Escape'); time.sleep(.3)
-            focus(host[0]); state_host=snapshot(host,'NetworkLobby')
-            assert state_host['network']['lobby']['owners'].count(2)==2
-            # Edit both local players, preserving independent per-seat claims.
-            lobby_action(friend, 'Colors'); snapshot(friend, 'NetworkColors')
-            press('Right'); press('Down'); press('Right'); press('Escape'); time.sleep(.3)
-            lobby = snapshot(host, 'NetworkLobby')['network']['lobby']
-            assert lobby['colors'][1:3] == [3, 4], lobby['colors']
-            assert len(set(lobby['colors'])) == 10
-            lobby_action(host, 'Colors'); snapshot(host, 'NetworkColors')
-            press('Left'); press('Escape'); time.sleep(.3)
-            assert snapshot(friend, 'NetworkLobby')['network']['lobby']['colors'][0] == 9
+            if state_friend.get('network_menu_layout', 0) >= 4:
+                # OFF -> KEY0 -> KEY1 registers and assigns the second input
+                # directly on its fixed-color row, without a controls wizard.
+                focus(friend[0]); select(3, activate=False)
+                press('Right'); press('Right'); time.sleep(.3)
+                assert snapshot(friend, 'NetworkLobby')['network']['lobby']['owners'].count(2) == 2
+                select(5, activate=False); press('Right'); time.sleep(.3)
+                lobby = snapshot(host, 'NetworkLobby')['network']['lobby']
+                assert lobby['owners'][4] == 2 and lobby['owners'][2] is None
+                assert lobby['colors'] == list(range(10))
+                focus(host[0]); select(10, activate=False)
+                press('Right'); press('Right'); time.sleep(.3)
+                assert snapshot(friend, 'NetworkLobby')['network']['lobby']['owners'][9] == 1
+            else:
+                # A second keyboard is assigned locally through the actual lobby UI.
+                lobby_action(friend, 'Devices'); snapshot(friend,'NetworkDevices'); select(1); press('Escape'); time.sleep(.3)
+                focus(host[0]); state_host=snapshot(host,'NetworkLobby')
+                assert state_host['network']['lobby']['owners'].count(2)==2
+                # Edit both local players, preserving independent per-seat claims.
+                lobby_action(friend, 'Colors'); snapshot(friend, 'NetworkColors')
+                press('Right'); press('Down'); press('Right'); press('Escape'); time.sleep(.3)
+                lobby = snapshot(host, 'NetworkLobby')['network']['lobby']
+                assert lobby['colors'][1:3] == [3, 4], lobby['colors']
+                assert len(set(lobby['colors'])) == 10
+                lobby_action(host, 'Colors'); snapshot(host, 'NetworkColors')
+                press('Left'); press('Escape'); time.sleep(.3)
+                assert snapshot(friend, 'NetworkLobby')['network']['lobby']['colors'][0] == 9
             # The host changes shared modes/settings/teams without rewriting
             # either computer's saved local settings.
             settings_file = host[1]/'settings.json'
             saved_settings = settings_file.read_bytes() if settings_file.exists() else None
-            lobby_action(host, 'Rules'); snapshot(host, 'NetworkRules')
-            press('Right')
-            select(2); state=snapshot(host, 'NetworkRules')
-            assert state['network']['lobby']['config']['team_play']
-            select(10); snapshot(host, 'NetworkTeams'); select(0); press('Escape')
-            snapshot(host, 'NetworkRules'); select(2); press('Escape'); time.sleep(.3)
+            if state_host.get('network_menu_layout', 0) >= 4:
+                focus(host[0]); select(0, activate=False); press('Right')
+                assert snapshot(host, 'NetworkLobby')['network']['lobby']['config']['team_play']
+                select(1, activate=False); press('t')
+                select(0, activate=False); press('Right')
+                lobby_action(host, 'Options'); snapshot(host, 'NetworkOptions')
+                press('Escape'); snapshot(host, 'NetworkLobby')
+                # Enter on a player row advances to the original two-row page.
+                select(10, activate=False); press('Return')
+                state = snapshot(host, 'NetworkRules')
+                assert state['network_rule_actions'] == ['Arena', 'VictoryTarget']
+                snapshot(friend, 'NetworkRules')
+                focus(host[0]); press('Escape'); snapshot(host, 'NetworkLobby')
+                snapshot(friend, 'NetworkLobby')
+            elif state_host.get('frontend'):
+                state_host = snapshot(host, 'NetworkLobby')
+                shared_setup = state_host['network']['lobby'].get('setup') is not None
+                select(11, activate=False); press('Right')
+                select(0)
+                assert snapshot(host, 'NetworkLobby')['network']['lobby']['config']['team_play']
+                select(1, activate=False); press('t')
+                select(0)
+                lobby_action(host, 'Rules')
+                snapshot(host, 'NetworkRules')
+                if shared_setup: snapshot(friend, 'NetworkRules')
+                focus(host[0]); press('Escape'); snapshot(host, 'NetworkDevices')
+                if shared_setup: snapshot(friend, 'NetworkDevices')
+                focus(host[0]); press('Escape'); snapshot(host, 'NetworkLobby')
+            else:
+                lobby_action(host, 'Rules'); snapshot(host, 'NetworkRules')
+                press('Right')
+                select(2); state=snapshot(host, 'NetworkRules')
+                assert state['network']['lobby']['config']['team_play']
+                select(10); snapshot(host, 'NetworkTeams'); select(0); press('Escape')
+                snapshot(host, 'NetworkRules'); select(2); press('Escape')
+            time.sleep(.3)
             lobby = snapshot(friend, 'NetworkLobby')['network']['lobby']
             assert lobby['config']['arena'] == 'ClassicGreenAcres'
             assert not lobby['config']['team_play']
             assert lobby['config']['players'][0]['team'] == 1
             assert lobby['config']['network_play'] and not lobby['config']['gold_bomberman']
-            assert (settings_file.read_bytes() if settings_file.exists() else None) == saved_settings
+            if initial.get('network_menu_layout', 0) >= 2:
+                def local_options(value):
+                    return {key:item for key,item in value.items()
+                            if key not in ('nickname','network_devices','network_colors','hosting','lan_address')}
+                assert local_options(json.loads(settings_file.read_text())) == local_options(json.loads(saved_settings))
+                assert json.loads(settings_file.read_text())['hosting'] is not None
+            else:
+                assert (settings_file.read_bytes() if settings_file.exists() else None) == saved_settings
             assert snapshot(host,'NetworkLobby')['network']['battle_media_ready']
             assert snapshot(friend,'NetworkLobby')['network']['battle_media_ready']
             # Suspend the actual client renderer, as if cold loading takes time.
@@ -482,7 +606,7 @@ def main():
                 assert invitation not in text
             report={'passed':True,'platform':'Ubuntu 24.04 x86-64, isolated Xvfb, Mesa software rendering',
                     'injected_gameplay_round_trip_ms':args.latency_ms,'movement_response_ms':response_ms,'movement_visible_before_confirmation':before_confirmation,'relay_environment':'deployed server, external TCP and UDP 443' if args.live_invite_stdin else 'disposable local TLS relay',
-                    'checks':['Main screen displays the compiled game version','Network client pause menu retains Resume, Help and Leave','Network client results retain Leave and hide host-only actions','Client Help, Resume and Leave still route to the correct actions','Multiplayer directly below Start local battle','simple LAN browser and back navigation','Paste server link button reads the OS clipboard','Ctrl-V reads the OS clipboard','Copy server link updates the OS clipboard',
+                    'checks':['Main screen displays the compiled game version','Network client pause menu retains Resume, Help and Leave','Network client results retain Leave and hide host-only actions','Client Help, Resume and Leave still route to the correct actions','Main LAN/Internet entries open their browsers directly' if initial.get('network_menu_layout',0)>=2 else 'Main network entry opens the transport menu','simple LAN browser and back navigation','Paste server link button reads the OS clipboard','Ctrl-V reads the OS clipboard','Copy server link updates the OS clipboard',
                               'Backspace and Delete clear the whole private link','Invalid and empty pastes clear stale input','Typing cannot silently change a hidden private link','A link copied by one game authenticates another game',
                               'create room','private profile mode 0600',
                               'LAN and game lobbies have no Copy Invite','friend joins through automatic discovery',

@@ -79,6 +79,80 @@ fn rejects_invalid_configuration_and_scheme() {
 }
 
 #[test]
+fn compact_roster_rejects_ambiguous_original_slot_mappings() {
+    let mut config = GameConfig::default();
+    config.players.truncate(3);
+    for slots in [vec![0, 3], vec![0, 3, 3], vec![0, 3, MAX_PLAYERS]] {
+        config.player_slots = slots;
+        assert!(config.validate().is_err());
+    }
+    config.player_slots = vec![0, 3, 9];
+    assert!(config.validate().is_ok());
+    config.player_slots.clear();
+    let legacy = serde_json::to_value(&config).unwrap();
+    assert!(legacy.get("player_slots").is_none());
+    let restored: GameConfig = serde_json::from_value(legacy).unwrap();
+    assert!(restored.player_slots.is_empty());
+}
+
+#[test]
+fn compact_roster_preserves_canonical_spawns_and_random_consumption() {
+    let slots = [0, 3, 9];
+    for random_starts in [false, true] {
+        for seed in [0, 1, 1997, u32::MAX as u64] {
+            let full_config = GameConfig {
+                random_starts,
+                gold_bomberman: false,
+                ..GameConfig::default()
+            };
+            let mut compact_config = full_config.clone();
+            compact_config.players = slots
+                .iter()
+                .map(|slot| full_config.players[*slot].clone())
+                .collect();
+            compact_config.player_slots = slots.to_vec();
+            let mut full = Simulation::new(full_config, seed).unwrap();
+            let mut compact = Simulation::new(compact_config, seed).unwrap();
+            for (dense, slot) in slots.iter().enumerate() {
+                assert_eq!(
+                    compact.players[dense].position,
+                    full.players[*slot].position
+                );
+                assert_eq!(
+                    compact.players[dense].original_anchor,
+                    full.players[*slot].original_anchor
+                );
+            }
+            assert_eq!(compact.rng, full.rng);
+            assert_eq!(compact.board, full.board);
+
+            // A serialized initialized match keeps all ten ordered starts,
+            // even when a legacy reader ignores the optional roster mapping.
+            let mut serialized = serde_json::to_value(&compact).unwrap();
+            serialized["config"]
+                .as_object_mut()
+                .unwrap()
+                .remove("player_slots");
+            let mut legacy: Simulation = serde_json::from_value(serialized).unwrap();
+            compact.next_round().unwrap();
+            legacy.next_round().unwrap();
+            full.next_round().unwrap();
+            assert_eq!(legacy.players, compact.players);
+            assert_eq!(legacy.rng, compact.rng);
+            full.rematch();
+            compact.rematch();
+            for (dense, slot) in slots.iter().enumerate() {
+                assert_eq!(
+                    compact.players[dense].original_anchor,
+                    full.players[*slot].original_anchor
+                );
+            }
+            assert_eq!(compact.rng, full.rng);
+        }
+    }
+}
+
+#[test]
 fn scheme_parser_preserves_density_teams_and_power_overrides() {
     let mut text = String::from("-V,2\n-N,Arena, with a comma\n-B,47\n");
     for y in 0..BOARD_HEIGHT {
@@ -1038,6 +1112,102 @@ fn sudden_death_closes_in_spiral_and_can_stomp_bombs() {
         .iter()
         .any(|e| matches!(e, GameEvent::BombExploded { .. })));
     assert!(!sim.players[0].alive);
+}
+
+fn enclosure_completion_fixture(depth: u8) -> Simulation {
+    let mut config = empty_sim(2).config;
+    config.enclosement_depth = depth;
+    config.round_time_ms = Some(60_000);
+    // Both opponents survive until the final unfilled tile. This observes
+    // actual wall completion instead of ending the round at an outer wall.
+    for start in config
+        .scheme
+        .starts
+        .iter_mut()
+        .filter(|start| start.player < 2)
+    {
+        start.tile = TilePos::new(9, 5);
+    }
+    Simulation::new(config, 1997).unwrap()
+}
+
+#[test]
+fn sudden_death_all_the_way_closes_every_cell_and_resolves_the_round() {
+    let mut reference = None;
+    for step_ms in [20, 50] {
+        let mut sim = enclosure_completion_fixture(3);
+        let mut drops = Vec::new();
+        let mut completed = None;
+        let mut result = None;
+        for _ in 0..70_000 / step_ms {
+            for event in sim.step(step_ms, &[]) {
+                match event {
+                    GameEvent::WallClosed { tile } => drops.push(tile),
+                    GameEvent::RoundEnded { winner } => result = Some(winner),
+                    _ => {}
+                }
+            }
+            if completed.is_none()
+                && sim
+                    .board
+                    .iter()
+                    .all(|(_, cell)| cell.terrain == Terrain::Wall)
+            {
+                completed = Some(drops.clone());
+            }
+            if result.is_some() {
+                break;
+            }
+        }
+        assert_eq!(result, Some(None));
+        assert!(
+            sim.remaining_ms.unwrap() > 0,
+            "enclosure must finish before timeout"
+        );
+        assert!(sim
+            .board
+            .iter()
+            .all(|(_, cell)| cell.terrain == Terrain::Wall));
+        assert!(sim.players.iter().all(|player| !player.alive));
+        // Five complete rectangular rings, including native repeated corners,
+        // then the five remaining cells along the middle row. Further repeats
+        // during the native death-animation survivor window are harmless.
+        let drops = completed.expect("every cell must close before the draw");
+        assert_eq!(drops.len(), 185);
+        assert_eq!(drops.last(), Some(&TilePos::new(9, 5)));
+        let unique: std::collections::BTreeSet<_> =
+            drops.iter().map(|tile| (tile.x, tile.y)).collect();
+        assert_eq!(unique.len(), (BOARD_WIDTH * BOARD_HEIGHT) as usize);
+        if let Some(reference) = &reference {
+            assert_eq!(&drops, reference);
+        } else {
+            reference = Some(drops);
+        }
+    }
+}
+
+#[test]
+fn sudden_death_default_depth_stops_after_two_rows_with_opponents_alive() {
+    assert_eq!(GameConfig::default().enclosement_depth, 1);
+    let mut sim = enclosure_completion_fixture(1);
+    let mut drops = Vec::new();
+    for _ in 0..700 {
+        for event in sim.step(50, &[]) {
+            if let GameEvent::WallClosed { tile } = event {
+                drops.push(tile);
+            }
+        }
+    }
+    assert_eq!(drops.len(), 96);
+    assert_eq!(drops.last(), Some(&TilePos::new(1, 1)));
+    for (tile, cell) in sim.board.iter() {
+        let enclosed =
+            tile.x < 2 || tile.x >= BOARD_WIDTH - 2 || tile.y < 2 || tile.y >= BOARD_HEIGHT - 2;
+        assert_eq!(cell.terrain == Terrain::Wall, enclosed);
+    }
+    assert!(sim.players.iter().all(|player| player.alive));
+    assert!(matches!(sim.phase, RoundPhase::Playing));
+    assert_eq!(sim.remaining_ms, Some(25_000));
 }
 
 #[test]

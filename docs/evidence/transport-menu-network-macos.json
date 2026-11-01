@@ -1,0 +1,121 @@
+{
+  "passed": true,
+  "transports": [
+    {
+      "transport": "lan",
+      "passed": true,
+      "checks": [
+        "two distinct native production game windows with isolated profiles",
+        "main entries open LAN and Internet directly with current browser help",
+        "global nicknames save and cancel correctly in the original-style form",
+        "independent network controls save and Done returns to the correct browser",
+        "unoccupied slots initially Open",
+        "host wins, enclosure, team mode and own T team edit save separately",
+        "connected peer nicknames and shared ten-slot roster",
+        "successful manual LAN address saves",
+        "host can set explicit AI and Closed slots without disconnecting users",
+        "client cannot alter host slot setup",
+        "host Player colors has only local owned rows plus Back",
+        "host color change preserves the other peer and returns to shared lobby",
+        "client Player colors has only local owned rows plus Back",
+        "client color change preserves the other peer and returns to shared lobby",
+        "host Continue advances both windows to Players",
+        "client controls Back and independent Done preserve its connection",
+        "both peers show identical native arena preview pixels",
+        "host arena change and preview propagate to client",
+        "client arena controls are read only and cannot start",
+        "client arena Back preserves connection and host phases still advance both peers",
+        "host starts both windows through automatic media loading and ready barrier",
+        "full confirmed simulation and compact two-player configuration match",
+        "exact engine Replay hash matches at the same committed tick",
+        "current in-game guide opens and returns to the paused battle for both roles",
+        "network preferences preserve local-game rules and client hosting preferences",
+        "real process restart restores names, devices, colors and separate host rules",
+        "fresh room resets unused slots Open and reuses saved connection preferences"
+      ],
+      "version": "0.6.1",
+      "protocol": 7,
+      "opening_phases": [
+        {
+          "Countdown": {
+            "remaining_ms": 720
+          }
+        },
+        {
+          "Countdown": {
+            "remaining_ms": 720
+          }
+        }
+      ],
+      "simulation_sha256": "6a8da81b1e1d63441bba14c85f7c107bd16868fe503673b9b4f05a615709f085",
+      "config_sha256": "bac68e4a5091748c3029be309a613802a174601878df399dd48c7f5a2c56013f",
+      "arena": "ClassicGreenAcres",
+      "confirmed_tick": 96,
+      "engine_replay_hash": "d1de6f2ff1aadf4aa6cfc0d9a66ce8b871a298e1483502973ca9f4be79d849db",
+      "restart_verified": true
+    },
+    {
+      "transport": "relay",
+      "passed": true,
+      "checks": [
+        "two distinct native production game windows with isolated profiles",
+        "main entries open LAN and Internet directly with current browser help",
+        "global nicknames save and cancel correctly in the original-style form",
+        "independent network controls save and Done returns to the correct browser",
+        "unoccupied slots initially Open",
+        "host wins, enclosure, team mode and own T team edit save separately",
+        "connected peer nicknames and shared ten-slot roster",
+        "host can set explicit AI and Closed slots without disconnecting users",
+        "client cannot alter host slot setup",
+        "host Player colors has only local owned rows plus Back",
+        "host color change preserves the other peer and returns to shared lobby",
+        "client Player colors has only local owned rows plus Back",
+        "client color change preserves the other peer and returns to shared lobby",
+        "host Continue advances both windows to Players",
+        "client controls Back and independent Done preserve its connection",
+        "both peers show identical native arena preview pixels",
+        "host arena change and preview propagate to client",
+        "client arena controls are read only and cannot start",
+        "client arena Back preserves connection and host phases still advance both peers",
+        "host starts both windows through automatic media loading and ready barrier",
+        "full confirmed simulation and compact two-player configuration match",
+        "exact engine Replay hash matches at the same committed tick",
+        "current in-game guide opens and returns to the paused battle for both roles",
+        "network preferences preserve local-game rules and client hosting preferences",
+        "real process restart restores names, devices, colors and separate host rules",
+        "fresh room resets unused slots Open and reuses saved connection preferences"
+      ],
+      "version": "0.6.1",
+      "protocol": 7,
+      "opening_phases": [
+        {
+          "Countdown": {
+            "remaining_ms": 740
+          }
+        },
+        {
+          "Countdown": {
+            "remaining_ms": 740
+          }
+        }
+      ],
+      "simulation_sha256": "cef90d3e0fcd84c731021c76b1a8e7887cc7a6cee185b19698b0b70b8629649e",
+      "config_sha256": "bac68e4a5091748c3029be309a613802a174601878df399dd48c7f5a2c56013f",
+      "arena": "ClassicGreenAcres",
+      "confirmed_tick": 103,
+      "engine_replay_hash": "16db37bac8783e15ff81776bbfda60f29ed3970d3fd8bcf700c8dfb8d70d7d2c",
+      "restart_verified": true
+    }
+  ],
+  "game_binary_sha256": "cd608e76b1d91b1f0314c03932ade17b00a04484df2ade1354cceb3be20f25bb",
+  "driver_sha256": "786cc461ee342885f42a92cc8c6080ef2ba6459cb741ffc69287afc63ffe9088",
+  "assets_manifest_sha256": "d3b83beeb76f9aecf0435468a94c2f7bda722e4e845c9f1af5a2da5b7aababbd",
+  "backend": "two native production game windows, process-local Cocoa NSEvents",
+  "isolated_settings_and_saved_servers": true,
+  "clipboard_used": false,
+  "limitations": [
+    "Local loopback transport validation; no deployed WAN or physical device claims.",
+    "Audio is muted; screenshots capture the production 640x480 game render target.",
+    "Timed splash audio is outside the --skip-intro test path; the later LETTER audio-only correction does not change tested networking behavior."
+  ]
+}

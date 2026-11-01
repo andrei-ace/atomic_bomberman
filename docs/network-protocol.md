@@ -1,9 +1,32 @@
 # Multiplayer responsiveness
 
-The prepared **0.5.1** candidate uses protocol **7**, `ABG7`, QUIC ALPN
-`atomic-bomberman/7` and compatibility family `0.5.1`. Clients and relay must
-upgrade together; 0.5.0 and earlier are incompatible. Existing server links, certificates
+The prepared **0.7.0** candidate uses protocol **8**, `ABG8`, QUIC ALPN
+`atomic-bomberman/8` and compatibility family `0.7.0`. Clients and relay must
+upgrade together; protocol-7 builds, including 0.6.1, are incompatible.
+Existing server links, certificates
 and access tokens remain valid.
+
+Shared setup uses reliable-control metadata: `Welcome.lobby_extensions`
+advertises support, `Lobby.setup` carries slots, names, device counts, the exact
+scheme filename, random-arena choice and setup phase, and each peer declares its nickname and
+local control inventory with `Profile`. `SelectPlayer` assigns or releases one
+of those controls on a fixed-color row; a device can occupy only one row.
+Later inventory declarations do not reactivate intentionally OFF controls.
+Nodes can remain connected with no active controls, including the host; probe
+traffic retains spectator liveness. Ten nodes (host plus nine clients) share
+ten active player rows; each node may declare up to twelve local controls.
+The relay rejects older handshakes before creating or joining a room. A front-end
+session also rejects a relay or host that omits the required setup support,
+with a persistent compatibility dialog. It never silently falls back to a lobby
+without slot controls or names. Gameplay retains the prior packet layout and
+authority rules under the new magic and ALPN. Sparse slots are compacted once at match
+start, with their original spawn/color/device mapping retained; `player_slots`
+is cleared from the network simulation config to preserve existing hashes.
+
+Asset fingerprints remain useful metadata, while compatibility requires matching
+protocol/application families. Different cosmetic or localized packs can join
+the same room. The host sends the full scheme and simulation configuration,
+and canonical hashes still detect gameplay-state mismatches.
 
 Each computer advances its own avatars immediately. The host accepts owner
 motion and resolves shared interactions within a provisional tail bounded to
@@ -106,7 +129,7 @@ Exact discovery requests are answered outside QUIC; other datagrams retain
 Quinn's batching, offload and addressing metadata. Browsing omits loopback
 probes/replies so the same host is listed by its LAN address once. Manual
 joining to loopback remains supported. Existing clients use the UDP port in
-the host's gameplay offer, so this preserves protocol 7 compatibility.
+the host's gameplay offer; protocol 8 keeps the same LAN port arrangement.
 Every player must complete a bidirectional gameplay probe before the host begins.
 There is no TCP gameplay fallback.
 
@@ -129,7 +152,7 @@ gameplay RTT separately from measured round-trip and input-to-presentation
 latency. Headless presentation checks do not establish physical display or
 audio-device latency.
 
-Protocol 7 reliable `Repair.frames` is a bounded base64 string containing a
+Protocol 8 reliable `Repair.frames` is a bounded base64 string containing a
 little-endian u16 frame count, then a u16 byte length and the gameplay frame
 encoding for each frame. The limit remains 256 frames, each at most 1,000 bytes;
 normal host replies chunk at 32 frames. All frames must decode completely with

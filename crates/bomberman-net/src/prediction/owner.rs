@@ -440,7 +440,13 @@ impl ClientPrediction {
             let Some(player) = display.players.get(seat) else {
                 continue;
             };
-            if !player.alive || matches!(player.presentation.special, 5..=7) {
+            // Owner poses describe human-controlled avatars. Once a departure
+            // hands the seat to AI, its simulation supplies movement and gait;
+            // a cached or delayed MotionEcho must not pin it to the old pose.
+            if player.config.control != bomberman_core::ControlKind::Human
+                || !player.alive
+                || matches!(player.presentation.special, 5..=7)
+            {
                 continue;
             }
             let mut target = latest.motion.position;
@@ -471,6 +477,68 @@ impl ClientPrediction {
 mod tests {
     use super::*;
     use bomberman_core::{ControlKind, Direction, GameConfig, Simulation};
+
+    #[test]
+    fn disconnected_remote_avatar_follows_bot_movement_instead_of_its_last_owner_pose() {
+        let mut config = GameConfig {
+            countdown_ms: 0,
+            random_starts: false,
+            enclosement_depth: 0,
+            ..Default::default()
+        };
+        config.players.truncate(3);
+        config.scheme.rows.fill("...............".into());
+        config.scheme.brick_density = 0;
+        for player in &mut config.players {
+            player.control = ControlKind::Human;
+        }
+        let mut canonical = Replay::new(Simulation::new(config, 1997).unwrap());
+        canonical
+            .advance(vec![PlayerInput::default(); 3], vec![])
+            .unwrap();
+        let mut prediction = ClientPrediction::new_owner_at(vec![0], &canonical, 20);
+        let last_owner_pose = OwnerSample {
+            seat: 1,
+            tick: canonical.tick,
+            round: canonical.simulation.round,
+            active: true,
+            sequence: 1,
+            edge: 0,
+            input: PlayerInput::default(),
+            motion: canonical.simulation.avatar_motion(1),
+        };
+        prediction.receive_motion(&[last_owner_pose], 20);
+        let mut moving_frames = 0;
+        for tick in 0..100 {
+            let actions = if tick == 0 {
+                vec![Action::Bots(vec![1])]
+            } else {
+                vec![]
+            };
+            let (mut frame, _) = canonical
+                .advance(vec![PlayerInput::default(); 3], actions)
+                .unwrap();
+            frame.acknowledgments = vec![InputAck::default(); 3];
+            let now = canonical.tick * u64::from(STEP_MS);
+            prediction
+                .record_acknowledgment(&canonical, &frame, now)
+                .unwrap();
+            prediction.refresh_at(&canonical, now).unwrap();
+            // A final MotionEcho can cross the committed handoff frame.
+            prediction.receive_motion(&[last_owner_pose], now);
+            let display = prediction.display(now);
+            let actual = &display.players[1].presentation;
+            let expected = &prediction.replay().simulation.players[1].presentation;
+            assert_eq!(actual.render_position, expected.render_position);
+            assert_eq!(actual.render_facing, expected.render_facing);
+            assert_eq!(actual.render_moving, expected.render_moving);
+            moving_frames += usize::from(actual.render_moving);
+        }
+        assert!(
+            moving_frames > 10,
+            "fixture must exercise visible AI movement"
+        );
+    }
 
     #[test]
     fn deferred_new_round_spawn_never_advertises_an_off_board_death_pose_as_active() {

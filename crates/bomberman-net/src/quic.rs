@@ -23,7 +23,7 @@ use subtle::ConstantTimeEq;
 use tokio::sync::{Notify, Semaphore};
 
 pub const LAN_GAMEPLAY_PORT: u16 = PORT;
-const ALPN: &[u8] = b"atomic-bomberman/7";
+const ALPN: &[u8] = b"atomic-bomberman/8";
 const ENVELOPE: usize = 5;
 const MAX_PACKET: usize = 1000;
 const PROBE: u8 = 0;

@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "artifact": {
+    "name": "BM95.EXE",
+    "sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+    "executed": false
+  },
+  "provider": {
+    "rea": "6.8.0",
+    "ghidra": "12.1.4"
+  },
+  "native_evidence": [
+    {
+      "evidence_id": "ev_f21e4920eafcc3a34a3235b1f4c61f3d5af5692c33927b6df627c3de36c35bb9",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x4080dc",
+          "0x42b0ce",
+          "0x42b47d"
+        ]
+      },
+      "provider": {
+        "id": "rea-workflow",
+        "name": "REA composed investigation workflow",
+        "version": "1"
+      }
+    },
+    {
+      "evidence_id": "ev_a75dda7fbd7cd31929f01fe47f8260596519ddd0987dca8100aba211753d7c7e",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x407582",
+          "0x40fe88",
+          "0x411cf8"
+        ]
+      },
+      "provider": {
+        "id": "rea-workflow",
+        "name": "REA composed investigation workflow",
+        "version": "1"
+      }
+    },
+    {
+      "evidence_id": "ev_4d132b16df3d3b335dbdb28bf8950c7579057f483b4b064a35ac848546280c6c",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x411d17",
+          "0x412a3b",
+          "0x406dde"
+        ]
+      },
+      "provider": {
+        "id": "rea-workflow",
+        "name": "REA composed investigation workflow",
+        "version": "1"
+      }
+    },
+    {
+      "evidence_id": "ev_489abb8445cd26a06b43a58c369880dc4db0a3450886c43ea2d76775f1cb3df0",
+      "operation": "procedure_assembly",
+      "parameters": {
+        "procedure": "0x407582"
+      },
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      }
+    },
+    {
+      "evidence_id": "ev_245360c1dcbbcf7a0d7e3d9e4edaf1f2de54039ef5cd2f8e6103c7b17ad588c9",
+      "operation": "read_bytes",
+      "parameters": {
+        "address": "0x458b0b",
+        "length": 8
+      },
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      }
+    },
+    {
+      "evidence_id": "ev_859630c7b044cd80fb056206d1cf3534323ae0081860248a783304d37b448895",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x410262",
+          "0x4100b9",
+          "0x40f064",
+          "0x40f0d4"
+        ]
+      },
+      "provider": {
+        "id": "rea-workflow",
+        "name": "REA composed investigation workflow",
+        "version": "1"
+      }
+    },
+    {
+      "evidence_id": "ev_d754c5bef0a89b69a7b7d09462ed4a981927ee7e1eba3fc25919f6fa7d4bf450",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x421e80",
+          "0x422154",
+          "0x40ee16",
+          "0x421e33"
+        ]
+      },
+      "provider": {
+        "id": "rea-workflow",
+        "name": "REA composed investigation workflow",
+        "version": "1"
+      }
+    },
+    {
+      "evidence_id": "ev_19da1f9d47ab3674a3c3d1e7079350951544da79b23c37c448d28da7a676766f",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x422085",
+          "0x42223e"
+        ]
+      },
+      "provider": {
+        "id": "rea-workflow",
+        "name": "REA composed investigation workflow",
+        "version": "1"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "id": "host_flow",
+      "kind": "observed_static_and_original_manual",
+      "detail": "Main action1 enters0x42b0ce connected-computer screen. Successful confirm calls common0x42a3f6; player selection0x410f81 then invokes arena/wins0x406dde before battle. Original connected-client list has4entries."
+    },
+    {
+      "id": "join_flow",
+      "kind": "observed_static_and_original_manual",
+      "detail": "Main action2 enters0x42b47d discovery. Selecting a nonempty node attempts connection, waits for host, then enters common setup0x42a3f6. Joiners do not choose an independent scheme."
+    },
+    {
+      "id": "scheme_file",
+      "kind": "observed_static_and_original_resources",
+      "detail": "Options0x4080dc case8 invokes0x407582. Its assembly loads filter address0x458b0b, whose bytes are2a2e53434800 (*.SCH), uses message721 Available Scheme Files and updates current filename0x4648c4 only after a non-cancelled selection. Scheme is one optional Options choice."
+    },
+    {
+      "id": "arena",
+      "kind": "observed_static",
+      "detail": "0x406dde has two selectable rows (arena and victory target), no scheme step. Host sends choices; client follows them read-only. The illustrative5x5 sample is independent of scheme."
+    },
+    {
+      "id": "controls",
+      "kind": "observed_static_and_original_input_help",
+      "detail": "0x421e80 cycles OFF0->AI1->KEY2(index0/1)->JOY3->OFF; it skips AI for network clients.0x410f81 protects NET4 from ordinary Left/Right. Host o/O/0 bypasses that guard, updates player mode0, and retains the connected node."
+    },
+    {
+      "id": "off_and_start",
+      "kind": "observed_static",
+      "detail": "Left can turn an owned KEY/JOY row OFF without a last-host-human guard.0x422085 rejects duplicate KEY/JOY bindings;0x42223e counts active players/distinct teams and caller requires2. A host-human lock would be an invented restriction."
+    },
+    {
+      "id": "colors",
+      "kind": "original_resource_and_native_row_model",
+      "detail": "Personal color follows the selected Player1..10 row. Rows use white,black,red,blue,green,yellow,cyan,magenta,orange,purple. T changes team when Team Play is enabled; AI/team assignment is host-controlled. No separate personal-color wizard is documented."
+    }
+  ],
+  "implementation_model": {
+    "transport_screen": "LAN discovery or Internet server connection, nickname and controls preferences; host/join choice.",
+    "host": "One players/nodes page, optional Options, then arena/wins, then battle. No forced separate controls confirmation.",
+    "join": "Choose discovered game, select own KEY/JOY row if changing saved controls/color, follow host.",
+    "capacity": "One host plus9clients,10active player rows. This extends the original4-client computer limit.",
+    "scheme": "One optional Scheme File entry under Options; received host scheme remains session state on clients."
+  },
+  "resource_reports": [
+    "Ignored build/rea-network-flow/resources-findings.json",
+    "Ignored build/rea-network-flow/player-ownership-resources.json"
+  ],
+  "limitations": [
+    "Original Windows executable was not executed; native behavior is derived from Ghidra decompilation/assembly and corroborated with imported original help/video/user screenshots.",
+    "Watcom register calling conventions make some decompiled function parameters unreliable; assembly and literal bytes were used for the Scheme File dispatch/filter.",
+    "Modern transport configuration and nine-client limit are explicit additions."
+  ],
+  "native_session_closed": true
+}

@@ -12,6 +12,7 @@ pub mod prediction;
 pub mod protocol;
 pub mod quic;
 pub mod session;
+mod setup;
 pub mod transport;
 pub mod verification;
 #[cfg(windows)]
@@ -20,3 +21,4 @@ pub use gameplay::*;
 pub use invitation::{Invitation, ServerProfile};
 pub use protocol::*;
 pub use quic::GameplayOffer;
+pub use setup::MatchRoster;

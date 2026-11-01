@@ -84,24 +84,10 @@ def verify(directory, version, commit):
 
 
 def notes(version, commit):
-    return (f'Atomic Bomberman {version}, built from `{commit}`.\n\n'
-            'Download the Windows x64 ZIP, Linux x86-64 AppImage, or Apple Silicon Mac ZIP '
-            'and its checksum. Each imports your original game data on first launch. '
-            'The Windows package is portable and unsigned; the Mac app is ad-hoc signed '
-            'and not notarized. Original game data and private server endpoints are excluded.\n\n'
-            'Linux relay archives are available for ARM64 and amd64 (x86-64), with glibc '
-            '2.39 or newer. Each includes the service, systemd unit, configuration example, '
-            'instructions, licenses and provenance. Select the archive for your server CPU.\n\n'
-            'This patch fixes flame alignment by applying both original per-frame offsets '
-            'and the native vertical anchor. All ten colors and every flame frame were checked, '
-            'along with player, bomb, shadow, powerup, tile, destruction and hazard alignment. '
-            'LAN discovery and gameplay continue to share UDP 1997. Protocol 7 and the '
-            '0.5.1 compatibility family are retained: compatible 0.5.1-family clients and relays '
-            'can continue to interoperate. Version 0.5.0 and earlier is incompatible. '
-            'Saved server links, TLS identities, settings and imported data remain valid.\n\n'
-            'Internet play needs TCP and UDP 443. LAN hosting needs TCP/UDP 1997 only. '
-            'See the README for installation, original data import and private server access. '
-            'All five packages come from the same tagged source and include build metadata.\n')
+    prepared = Path(__file__).resolve().parents[1] / 'docs/release-notes' / f'{version}.md'
+    if not prepared.is_file():
+        raise ValueError(f'Missing prepared release notes: {prepared.name}')
+    return f'Atomic Bomberman {version}, built from `{commit}`.\n\n' + prepared.read_text(encoding='utf-8')
 
 
 def main():

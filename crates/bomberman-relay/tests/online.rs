@@ -201,7 +201,7 @@ async fn private_directory_discovers_any_host_without_creating_rooms_or_consumin
     assert_eq!(rooms[0].joinable(&compatibility()), Ok(()));
     let mut other_assets = compatibility();
     other_assets.assets = "b".repeat(64);
-    assert_eq!(rooms[0].joinable(&other_assets), Err(NetError::Assets));
+    assert_eq!(rooms[0].joinable(&other_assets), Ok(()));
     let mut full = rooms[0].clone();
     full.computers = MAX_PLAYERS;
     assert_eq!(full.joinable(&compatibility()), Err(NetError::Full));
@@ -252,6 +252,7 @@ async fn real_tls_invitation_flow_isolation_pin_auth_version_and_host_departure(
             id: 1,
             room,
             host: true,
+            lobby_extensions: true,
         } => room,
         _ => panic!("host welcome"),
     };
@@ -330,7 +331,7 @@ async fn real_tls_invitation_flow_isolation_pin_auth_version_and_host_departure(
         Event::Error(NetError::Version)
     ));
     let mut wrong_assets = compatibility();
-    wrong_assets.assets = "b".repeat(64);
+    wrong_assets.assets = "invalid metadata".into();
     let mut wrong = connect(&full).await.unwrap();
     assert!(matches!(
         open(&mut wrong, &full, wrong_assets).await,

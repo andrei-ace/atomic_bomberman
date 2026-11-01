@@ -1,16 +1,21 @@
 use bomberman_core::{GameConfig, PlayerInput, Simulation};
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeSet, fmt};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fmt,
+};
 
 pub type PeerId = u32;
 pub const HOST: PeerId = 1;
-pub const PROTOCOL_VERSION: u32 = 7;
+pub const PROTOCOL_VERSION: u32 = 8;
 pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
-/// Owner motion and bounded host commitment require the same simulation family.
-pub const COMPATIBLE_APP_VERSION: &str = "0.5.1";
+/// Shared player setup, nicknames and arena selection require matching peers.
+pub const COMPATIBLE_APP_VERSION: &str = "0.7.0";
 pub const PORT: u16 = 1997;
 pub const STEP_MS: u32 = 20;
 pub const MAX_PLAYERS: usize = 10;
+/// Two keyboards plus ten possible joysticks; at most ten rows can be active.
+pub const MAX_LOCAL_DEVICES: usize = 12;
 pub const COLOR_NAMES: [&str; MAX_PLAYERS] = [
     "White", "Black", "Red", "Blue", "Green", "Yellow", "Cyan", "Magenta", "Orange", "Purple",
 ];
@@ -40,9 +45,9 @@ impl Compatibility {
     pub fn check(&self, other: &Self) -> Result<(), NetError> {
         if self.protocol != other.protocol || self.application != other.application {
             Err(NetError::Version)
-        } else if self.assets != other.assets {
-            Err(NetError::Assets)
         } else {
+            // Art and audio are local. The host transmits the complete scheme
+            // and simulation configuration; canonical hashes detect rule drift.
             Ok(())
         }
     }
@@ -87,15 +92,15 @@ impl fmt::Display for NetError {
             }
             Self::RoomExpired => "This game has closed. Choose another game from the list.",
             Self::Full => "This game is full (ten players maximum).",
-            Self::ColorTaken => "That color is already assigned. Choose an available color.",
+            Self::ColorTaken => "That player color is unavailable. Choose another player row.",
             Self::Version => {
-                "Incompatible game or protocol version. Everyone must use compatible releases."
+                "Incompatible game or relay. Update the relay, host and joining players to protocol 8 (0.7.0 or a compatible release)."
             }
             Self::Assets => {
-                "Original game assets differ. Everyone must import the same game edition."
+                "The relay rejected the asset metadata. Update the relay or reimport the game data."
             }
             Self::Ownership => "Player assignment is not owned by this connection.",
-            Self::WaitingForPlayers => "Connect a client and assign its controls before starting. Team games need players on both teams.",
+            Self::WaitingForPlayers => "Select at least two active players (human or AI). Team games need players on both teams.",
             Self::InProgress => "This game has started. Join or change players in the lobby.",
             Self::RateLimit => "Connection limit reached. Please try again later.",
             Self::TooLarge => "Network message or queue exceeded its limit.",
@@ -167,6 +172,9 @@ pub enum Event {
         id: PeerId,
         room: String,
         host: bool,
+        /// Required by the protocol-8 front end. Missing means incompatible.
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        lobby_extensions: bool,
     },
     PeerJoined(PeerId),
     PeerLeft(PeerId),
@@ -183,10 +191,88 @@ pub struct Lobby {
     pub owners: Vec<Option<PeerId>>,
     pub peers: BTreeSet<PeerId>,
     pub colors: [u8; MAX_PLAYERS],
+    /// Shared setup is required by the protocol-8 front end.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub setup: Option<SetupLobby>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SlotState {
+    Open,
+    Closed,
+    Ai,
+    Human(PeerId),
+}
+impl SlotState {
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Open => "Open",
+            Self::Closed => "Closed",
+            Self::Ai => "AI",
+            Self::Human(_) => "Human",
+        }
+    }
+    pub fn active(self) -> bool {
+        matches!(self, Self::Ai | Self::Human(_))
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SetupPhase {
+    #[default]
+    Lobby,
+    Players,
+    Arena,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SetupLobby {
+    pub slots: [SlotState; MAX_PLAYERS],
+    /// A local device's identity survives releasing an earlier owned slot.
+    pub devices: [Option<u8>; MAX_PLAYERS],
+    /// Configured local controls stay available even while all rows are OFF.
+    #[serde(default)]
+    pub device_counts: BTreeMap<PeerId, u8>,
+    pub phase: SetupPhase,
+    /// The preview remains Random while Start carries the chosen concrete arena.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub random_arena: bool,
+    /// Exact imported basename: scheme display names and even bytes may alias.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scheme_file: Option<String>,
+    pub nicknames: BTreeMap<PeerId, String>,
+}
+
+pub fn valid_scheme_file(value: &str) -> bool {
+    value.len() <= 64
+        && value.rsplit_once('.').is_some_and(|(stem, extension)| {
+            !stem.is_empty()
+                && stem
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-'))
+                && extension.eq_ignore_ascii_case("SCH")
+        })
+}
+
+pub fn valid_nickname(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 24
+        && value.trim() == value
+        && value.bytes().all(|b| (b' '..=b'~').contains(&b))
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum GameMessage {
     Seats(u8),
+    /// Sent only after both the relay and the host advertise setup support.
+    Profile {
+        nickname: String,
+        seats: u8,
+    },
+    /// The sender may move one of its configured local controls to this row.
+    SelectPlayer {
+        slot: usize,
+        device: Option<u8>,
+    },
     Color {
         seat: usize,
         color: u8,

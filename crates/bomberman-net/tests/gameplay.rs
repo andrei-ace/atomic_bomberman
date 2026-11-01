@@ -110,8 +110,8 @@ fn compact_packets_fit_ten_seats_and_validate_every_truncation() {
 }
 
 #[test]
-fn protocol_seven_movement_datagram_has_its_own_magic() {
-    let bytes = b"ABG7\x00\x07\x00\x00\x00\x00\x00\x00\x00\x2a\x00\x00\x00\x00\x00\x00\x00\x01\x00\x02\x00\x00";
+fn protocol_eight_movement_datagram_rejects_older_packet_families() {
+    let bytes = b"ABG8\x00\x07\x00\x00\x00\x00\x00\x00\x00\x2a\x00\x00\x00\x00\x00\x00\x00\x01\x00\x02\x00\x00";
     let packet = GameplayPacket::Input {
         generation: 7,
         sequence: 42,
@@ -129,6 +129,14 @@ fn protocol_seven_movement_datagram_has_its_own_magic() {
         GameplayPacket::decode(bytes).unwrap().encode().unwrap(),
         bytes
     );
+    for older in [b'5', b'6', b'7'] {
+        let mut old = bytes.to_vec();
+        old[3] = older;
+        assert!(matches!(
+            GameplayPacket::decode(&old),
+            Err(NetError::Protocol)
+        ));
+    }
 }
 
 #[test]

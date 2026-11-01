@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "transports": [
+    {
+      "transport": "lan",
+      "passed": true,
+      "checks": [
+        "two distinct native production game windows with isolated profiles",
+        "modded host and unmodded client join despite different effective asset fingerprints",
+        "original network arrows: Left is OFF; host Right is AI then KEY0; client Right skips AI",
+        "two local controls occupy sparse original player rows 5 and 8",
+        "Escape pauses the shared match",
+        "host scheme/configuration and canonical simulation match on both clients",
+        "client leaves through the pause menu without closing the host session",
+        "host resumes and continues beyond the five-second AI handoff without an invalid-message error",
+        "Escape returns or resumes and never quits from the main menu for either player"
+      ],
+      "modded_host": true,
+      "version": "0.7.0",
+      "protocol": 8,
+      "host_asset_fingerprint": "b5d9f6cb98613ab66ce535fedbe431b063e062ae6136d18ae758a558823303e1",
+      "client_asset_fingerprint": "f6ad3e245f122b128f5c6d1f332f3315c4956ad6880247a7e22845fd87477591",
+      "simulation_sha256": "9814cad85ea1714858d475cc363aeae86cc772091a070d2d7de1bcaeb5301b25"
+    }
+  ],
+  "game_binary_sha256": "34c0e9c9e9615a8f5b19dc4158c9266ea4581cc2d9fa18d275b51171419c0c0d",
+  "driver_sha256": "a59ae1250beadd19b16026cef4dfde05b741be5aff6973c957574a14bc4fa342",
+  "assets_manifest_sha256": "d3b83beeb76f9aecf0435468a94c2f7bda722e4e845c9f1af5a2da5b7aababbd",
+  "backend": "two native production game windows, process-local Cocoa NSEvents",
+  "isolated_settings_and_saved_servers": true,
+  "clipboard_used": false,
+  "limitations": [
+    "Local loopback transport validation; no deployed WAN or physical device claims.",
+    "Audio is muted; screenshots capture the production 640x480 game render target.",
+    "Splash timing is checked separately; this harness uses --skip-intro."
+  ]
+}

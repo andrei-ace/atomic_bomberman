@@ -1,0 +1,595 @@
+{
+  "schema_version": 1,
+  "scope": {
+    "question": "Original splash startup sequence, timing, music, title announcement and adjacent menu audio.",
+    "excluded": "Separate CD intro movie; original executable execution; host mixer/device calibration; application source edits."
+  },
+  "artifact": {
+    "name": "BM95.EXE",
+    "sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+    "executed": false
+  },
+  "provider": {
+    "rea": "6.8.0",
+    "ghidra": "12.1.4",
+    "native_session_closed": true,
+    "configured_mcp_proxy_used": true
+  },
+  "native_findings": [
+    {
+      "id": "entry_sequence",
+      "confidence": "observed_static",
+      "finding": "0x42be22 initializes through0x41095a, calls splash startup0x42b060, then main menu0x42b9ce. Startup always calls title; a native skip flag can bypass only the two publisher logos.",
+      "evidence_ids": [
+        "ev_69e3c4d01c9da47a9cfd0742b459da732a449a2d3ea425751eea4b98f3441158",
+        "ev_b318338f293b1f82763f85ec4c94d7c0d3b0ce34085803bbcab9191e1e07d759"
+      ]
+    },
+    {
+      "id": "splash_order",
+      "confidence": "observed_static",
+      "finding": "IPLOGO then HSLOGO then TITLE, each through0x42a088 with waiting enabled. Native string bytes bind the first two names and title.",
+      "evidence_ids": [
+        "ev_b318338f293b1f82763f85ec4c94d7c0d3b0ce34085803bbcab9191e1e07d759",
+        "ev_f7467b885e3ba07a3869dc19c79e23827cf6e881480461c46b9a27479be2cc3a"
+      ]
+    },
+    {
+      "id": "title_music",
+      "confidence": "observed_static",
+      "finding": "Startup starts sound mapping1000/TITLE before the Interplay logo. The same looping music continues across Hudson and Title. There is no separate publisher-logo sound call in this startup path.",
+      "evidence_ids": [
+        "ev_b318338f293b1f82763f85ec4c94d7c0d3b0ce34085803bbcab9191e1e07d759",
+        "ev_e7c9d9bcfc0884260685f019c004b98bf4eaad20df7e3a44cb3556ae41ac97a7",
+        "ev_7c9feef747a0a775e4808e2fa156fbd9a063e96d78b999cb051d9008eba78d98",
+        "ev_613b1ee9d93d65223f35593bdad008010d81eedbcb4381594842a3a0e8b39db8"
+      ]
+    },
+    {
+      "id": "title_announcement",
+      "confidence": "observed_static",
+      "finding": "Immediately before displaying TITLE, startup chooses from contiguous sound group2800..2810 and starts one separate non-looping announcement.0x427bfb balances selection among least-used entries, with bounded random retries. The music remains playing.",
+      "evidence_ids": [
+        "ev_b318338f293b1f82763f85ec4c94d7c0d3b0ce34085803bbcab9191e1e07d759",
+        "ev_15ab78e73e2b14bd2e0ab516f39b35d07425aa6aa32edd6265d0eb0c8eb5783b",
+        "ev_8e1c5f54f5e8026931948057b299884abe252f8be89045c76435cd3bf4113224",
+        "ev_613b1ee9d93d65223f35593bdad008010d81eedbcb4381594842a3a0e8b39db8"
+      ]
+    },
+    {
+      "id": "splash_wait",
+      "confidence": "observed_static",
+      "finding": "Each splash starts its wait after rendering/input flush. Resource12 is7 seconds. The native whole-second local-time clock advances automatically when now>start+7, yielding approximately7\u20138 seconds without user input. Enter13, Escape27 or Space32 advances; other keys leave the page displayed.",
+      "evidence_ids": [
+        "ev_3bbcb56b3cab6077618af569924ecc360df9ee919b3f809b2938d12a5ea64506",
+        "ev_a63f32e1dd0ee8e3d1369a11dda3ffa3e05d17b748ad938684388e38c5d8a951",
+        "ev_582e930febf3c77fe86dc425c204d40faa2115d3ae94ecbc55bb206704bf13ce"
+      ]
+    },
+    {
+      "id": "hard_cut",
+      "confidence": "observed_static_and_recorded_video",
+      "finding": "The helper clears/presents black, loads the complete image and presents it. No animated fade or palette ramp is called in the traced splash path;0x429ff1 only sets an optional text-overlay flag. Reference video has direct changes and single black frames.",
+      "evidence_ids": [
+        "ev_3bbcb56b3cab6077618af569924ecc360df9ee919b3f809b2938d12a5ea64506",
+        "ev_dae2be5ccf1bc8445dd01fb3e93e1f235c6fe0e04801be13493a717cf850fad1",
+        "ev_613b1ee9d93d65223f35593bdad008010d81eedbcb4381594842a3a0e8b39db8",
+        "ev_327ca5fe55dd2b76967876ff83e98c384e8b02c854f9c650b5e934d1ae571eed"
+      ]
+    },
+    {
+      "id": "music_loop",
+      "confidence": "observed_static",
+      "finding": "0x4273a4 stops the old music handle, creates the new stream, sets loop value0xffff and plays.0x41a3c9 sets the loop flag;0x419d88 passes DirectSound Play flag1. Announcement helper0x427b36 instead clears looping with value0.",
+      "evidence_ids": [
+        "ev_7c9feef747a0a775e4808e2fa156fbd9a063e96d78b999cb051d9008eba78d98",
+        "ev_613b1ee9d93d65223f35593bdad008010d81eedbcb4381594842a3a0e8b39db8",
+        "ev_8e1c5f54f5e8026931948057b299884abe252f8be89045c76435cd3bf4113224"
+      ]
+    },
+    {
+      "id": "main_music",
+      "confidence": "observed_static",
+      "finding": "The main menu starts sound mapping1010/MENU on its first presented frame. Returning from a child screen re-enters this initialization and restarts MENU; the native helper does not deduplicate an identical track.",
+      "evidence_ids": [
+        "ev_bccdbd94a9b955052ed7cafff0758af8187bc54a70282423886ad4b5511bdc04",
+        "ev_7c9feef747a0a775e4808e2fa156fbd9a063e96d78b999cb051d9008eba78d98"
+      ]
+    },
+    {
+      "id": "menu_effects",
+      "confidence": "observed_static",
+      "finding": "Main menu and splash waits play sound group20(LETTER1/LETTER2) for a received input. Confirm/back/advance additionally plays sound10/MENUEXIT. Splash timeout is converted into Enter before these calls, so it triggers both sounds. No-input sentinel values-1/-2 do not play the key sound.",
+      "evidence_ids": [
+        "ev_3bbcb56b3cab6077618af569924ecc360df9ee919b3f809b2938d12a5ea64506",
+        "ev_bccdbd94a9b955052ed7cafff0758af8187bc54a70282423886ad4b5511bdc04",
+        "ev_15ab78e73e2b14bd2e0ab516f39b35d07425aa6aa32edd6265d0eb0c8eb5783b"
+      ]
+    },
+    {
+      "id": "adjacent_music",
+      "confidence": "observed_static",
+      "finding": "StartGame0x42a436 starts1020/WIN immediately before player selection. Network host0x42b116 and join0x42b4bb start1040/NETWORK. Arena selection does not start another track. The0x42a6d8 end-of-game block starts1130/DRAW before winner-state lookup0x4219b0.",
+      "evidence_ids": [
+        "ev_0dd59cb4cdd7e40bdbe1c798c6912c18ae8ac922f8822df8b29a0519592f607a",
+        "ev_73f967eaf858c06b1c436874b9b89a4b1171fd22421bd1b162641f456f6c4014",
+        "ev_f130bbdb24433467adaa531b7b2b1c8aff2c204a2b53a6fc577bbaaf09c9e36e"
+      ],
+      "additional_existing_evidence": [
+        "ev_d7cea3fb4425e3abaf8cf61c27717999d515ff8cb86d5454e7bb026d11f1cd2d"
+      ]
+    },
+    {
+      "id": "audio_format",
+      "confidence": "observed_static_and_local_resources",
+      "finding": "0x4272dd initializes22050Hz(0x5622). Music allocation0x28 and announcement allocation0x8 both select16bit PCM; each then sets format3, whose setter selects two channels. Imported WAVs match22050Hz stereo16bit. No sample-rate correction is justified.",
+      "evidence_ids": [
+        "ev_f6954a277a0d4772fc3f3a714c0b9c925e2230db889bebadca45cc95d868211c",
+        "ev_48d66f31381736b364736b68e58f3b3b9c9afd37892f308c414124186bab3484",
+        "ev_7c9feef747a0a775e4808e2fa156fbd9a063e96d78b999cb051d9008eba78d98",
+        "ev_8e1c5f54f5e8026931948057b299884abe252f8be89045c76435cd3bf4113224"
+      ]
+    },
+    {
+      "id": "audio_gain",
+      "confidence": "bounded_static_observation_and_recording_inference",
+      "finding": "The traced allocator initializes both music and one-shot gain to0x7fff. No0.55 music-only attenuation appears in this path. Short matching video excerpts have least-squares gains about0.98(TITLE) and0.92(MENU), which supports avoiding an added attenuation when matching this recording. This does not calibrate the original host master mixer or output device.",
+      "evidence_ids": [
+        "ev_613b1ee9d93d65223f35593bdad008010d81eedbcb4381594842a3a0e8b39db8"
+      ],
+      "recorded_video_excerpt_gains": {
+        "TITLE": 0.977168,
+        "MENU": 0.915513
+      }
+    }
+  ],
+  "resources": {
+    "value_list_source": {
+      "path": "DATA/RES/VALUELST.RES",
+      "bytes": 17248,
+      "sha256": "99b525920f801ba6c4092f6d4e6ad46963389f2d07f37eae1b9ae6314c69636d"
+    },
+    "sound_list_source": {
+      "path": "DATA/RES/SOUNDLST.RES",
+      "bytes": 16281,
+      "sha256": "36abf9a917fa88f886cb0c854fd3d4b0daa5f4aa97bd21fe14cc6066620a7a2f"
+    },
+    "default_splash_seconds": 7,
+    "clips": [
+      {
+        "event": 10,
+        "source": "DATA/SOUND/MENUEXIT.RSS",
+        "imported_wav": "sounds/DATA/SOUND/MENUEXIT.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 0.287347,
+        "imported_wav_sha256": "a7fc9b2f78935dd85be5d746223b24857ace48553598d57a75a662b090af6dcb"
+      },
+      {
+        "event": 20,
+        "source": "DATA/SOUND/LETTER1.RSS",
+        "imported_wav": "sounds/DATA/SOUND/LETTER1.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 0.095918,
+        "imported_wav_sha256": "a3e8f4dc975a6e9ece76aa57d393661cef5ec94a70f39b439b50d92c8b9b8c36"
+      },
+      {
+        "event": 21,
+        "source": "DATA/SOUND/LETTER2.RSS",
+        "imported_wav": "sounds/DATA/SOUND/LETTER2.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 0.12839,
+        "imported_wav_sha256": "1ab9f322c10cf39fc75cdfcb3c14c2a56670afc92a2a18eeff9124cd8e240abd"
+      },
+      {
+        "event": 1000,
+        "source": "DATA/SOUND/TITLE.RSS",
+        "imported_wav": "sounds/DATA/SOUND/TITLE.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 32.154104,
+        "imported_wav_sha256": "681dd9010993f4557fbd74d7cef9e779c4c95e6164aedd7b4dd5c3d3e78a6da0"
+      },
+      {
+        "event": 1010,
+        "source": "DATA/SOUND/MENU.RSS",
+        "imported_wav": "sounds/DATA/SOUND/MENU.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 30.695692,
+        "imported_wav_sha256": "2d4f9cea3325714ce73e7fd9174e78c0aac25836756dd34bc9f5389c41fdb600"
+      },
+      {
+        "event": 1020,
+        "source": "DATA/SOUND/WIN.RSS",
+        "imported_wav": "sounds/DATA/SOUND/WIN.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 13.037959,
+        "imported_wav_sha256": "5d0b1e9fde7e744701fbdb407de7d38f19254937625d6b541f9f4e3e9ba741b2"
+      },
+      {
+        "event": 1040,
+        "source": "DATA/SOUND/NETWORK.RSS",
+        "imported_wav": "sounds/DATA/SOUND/NETWORK.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 13.518005,
+        "imported_wav_sha256": "0a66f538cff685f2b520b230f3a4ab77e81d21e53e71fd017efc13ea9ba142e9"
+      },
+      {
+        "event": 1130,
+        "source": "DATA/SOUND/DRAW.RSS",
+        "imported_wav": "sounds/DATA/SOUND/DRAW.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 14.122222,
+        "imported_wav_sha256": "cb24d9298b8c643632cdbdf626d1d5c34772ead5d331442838efe0aa45b42681"
+      },
+      {
+        "event": 2800,
+        "source": "DATA/SOUND/GEN8A.RSS",
+        "imported_wav": "sounds/DATA/SOUND/GEN8A.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 2.369796,
+        "imported_wav_sha256": "e408919d7611f0c8eb6ea92da766ac8187d9da889e5e2bde4b3c1d7e20746751"
+      },
+      {
+        "event": 2801,
+        "source": "DATA/SOUND/GEN8B.RSS",
+        "imported_wav": "sounds/DATA/SOUND/GEN8B.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 2.391519,
+        "imported_wav_sha256": "7e50902d2786483af29b7e939122cb1791f0d3ca1c06a328e2ce114b4cc267eb"
+      },
+      {
+        "event": 2802,
+        "source": "DATA/SOUND/GEN8C.RSS",
+        "imported_wav": "sounds/DATA/SOUND/GEN8C.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 2.355329,
+        "imported_wav_sha256": "3f359271b042ca98d21203346ff220da54046b2c7a0043d4332e0f39e3446b64"
+      },
+      {
+        "event": 2803,
+        "source": "DATA/SOUND/GEN8C2.RSS",
+        "imported_wav": "sounds/DATA/SOUND/GEN8C2.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 2.348073,
+        "imported_wav_sha256": "062e1f30de55b148cabb7c87fe87a8ce080f6183d24bef20f4dbaea00ae2e081"
+      },
+      {
+        "event": 2804,
+        "source": "DATA/SOUND/ZAI08A.RSS",
+        "imported_wav": "sounds/DATA/SOUND/ZAI08A.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 4.024717,
+        "imported_wav_sha256": "4d7cf9b800ff5e269d1ab2b7e94d574279227a9ccca815e3a7a76b041b7393ea"
+      },
+      {
+        "event": 2805,
+        "source": "DATA/SOUND/ZAI08B.RSS",
+        "imported_wav": "sounds/DATA/SOUND/ZAI08B.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 2.407256,
+        "imported_wav_sha256": "0f79929cb0cdb9b35eceb964dddf93c71d44ed4a6c048842332cbb3526205283"
+      },
+      {
+        "event": 2806,
+        "source": "DATA/SOUND/ZAI08C.RSS",
+        "imported_wav": "sounds/DATA/SOUND/ZAI08C.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 2.721088,
+        "imported_wav_sha256": "4835c6fc708bd7d1dcc43e82a295be2b426685d9e835a7f2103afb7f235380d0"
+      },
+      {
+        "event": 2807,
+        "source": "DATA/SOUND/ZAI08D.RSS",
+        "imported_wav": "sounds/DATA/SOUND/ZAI08D.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 3.086667,
+        "imported_wav_sha256": "37ea5be6cb1cc73278e124c03e10f658c5ff7fb039fec00c854dca94a5c09ccc"
+      },
+      {
+        "event": 2808,
+        "source": "DATA/SOUND/ZAI08E.RSS",
+        "imported_wav": "sounds/DATA/SOUND/ZAI08E.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 3.110794,
+        "imported_wav_sha256": "8426808f8a4a14287a9998c5ef6643f48ed0f165e9747e4483f200579b8bf255"
+      },
+      {
+        "event": 2809,
+        "source": "DATA/SOUND/ZAI08F.RSS",
+        "imported_wav": "sounds/DATA/SOUND/ZAI08F.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 3.279773,
+        "imported_wav_sha256": "51a7124582958a7cdaaf8944116d98c3750dca9fa64803c2e75847ff176122ed"
+      },
+      {
+        "event": 2810,
+        "source": "DATA/SOUND/ZAI08G.RSS",
+        "imported_wav": "sounds/DATA/SOUND/ZAI08G.RSS.wav",
+        "sample_rate": 22050,
+        "channels": 2,
+        "duration_seconds": 3.807438,
+        "imported_wav_sha256": "f6506abf407ae85eb3e8ddcc5e67642377cf3b0c4645b5788d58df48f4164686"
+      }
+    ]
+  },
+  "recorded_video": {
+    "url": "https://www.youtube.com/watch?v=7-z4SF0pH24",
+    "local_file": "build/reference-videos/7-z4SF0pH24/video.mp4",
+    "sha256": "a3462e2c1e945ba91ca7da760bdec22a43800e32e7856034bb764159abacafd8",
+    "fps": 29,
+    "boundary_observations": [
+      {
+        "seconds": 5.241379,
+        "from": "IPLOGO",
+        "to": "HSLOGO",
+        "black_frame_seen": false
+      },
+      {
+        "seconds": 8.896552,
+        "from": "HSLOGO",
+        "black_frame_seconds": 8.896552,
+        "next_image_seconds": 8.931034,
+        "to": "TITLE"
+      },
+      {
+        "seconds": 12.482759,
+        "from": "TITLE",
+        "black_frame_seconds": 12.482759,
+        "next_image_seconds": 12.517241,
+        "to": "MAINMENU"
+      }
+    ],
+    "audio_excerpt_matches": [
+      {
+        "clip": "TITLE",
+        "template_excerpt_seconds": [
+          0.1,
+          1.1
+        ],
+        "reference_video_excerpt_seconds": [
+          1.729,
+          2.729
+        ],
+        "normalized_correlation": 0.982154
+      },
+      {
+        "clip": "MENU",
+        "template_excerpt_seconds": [
+          0.1,
+          1.1
+        ],
+        "reference_video_excerpt_seconds": [
+          16.535,
+          17.535
+        ],
+        "normalized_correlation": 0.926074
+      }
+    ],
+    "audio_match_limit": "Short repetitive musical excerpts establish clip presence in the displayed screen, not full-track onset times. Announcement identity could not be confirmed from the mixed recording."
+  },
+  "recommendations": [
+    "Use TITLE as the continuous looping music for all splash pages; switch to MENU upon entering Main.",
+    "Play one original2800-group announcement when entering TITLE, and allow it to finish independently of the music transition.",
+    "Keep publisher logo order and resource12 wait. Preserve hard cuts/brief black clearing; do not add animated fades.",
+    "Restore original LETTER1/LETTER2 input and MENUEXIT activation/back effects, with sensible mouse/controller equivalents as modern extensions.",
+    "Use WIN for player/arena setup and NETWORK for connection dialogs, consistently for LAN and Internet.",
+    "Restart MENU on each return to Main if exact original behavior is desired; a same-stem no-op prevents this.",
+    "Route the native1130/DRAW end-of-game block to the corresponding results/victory phase rather than inferring LOSE from filename comments.",
+    "Keep22050Hz stereo16bit imported audio. Reconsider the reconstruction music-only0.55 multiplier separately from the user-owned mod mixer edit."
+  ],
+  "evidence": [
+    {
+      "evidence_id": "ev_15ab78e73e2b14bd2e0ab516f39b35d07425aa6aa32edd6265d0eb0c8eb5783b",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x42b060",
+          "0x41095a",
+          "0x427961"
+        ]
+      },
+      "record": "build/rea-splash-audit/mcp-012-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_e7c9d9bcfc0884260685f019c004b98bf4eaad20df7e3a44cb3556ae41ac97a7",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x42a088",
+          "0x413d01",
+          "0x42741e",
+          "0x427bfb",
+          "0x415ce3"
+        ]
+      },
+      "record": "build/rea-splash-audit/mcp-014-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_b318338f293b1f82763f85ec4c94d7c0d3b0ce34085803bbcab9191e1e07d759",
+      "operation": "procedure_assembly",
+      "parameters": {
+        "procedure": "0x42b060"
+      },
+      "record": "build/rea-splash-audit/mcp-015-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_dae2be5ccf1bc8445dd01fb3e93e1f235c6fe0e04801be13493a717cf850fad1",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x429ff1",
+          "0x4273a4",
+          "0x427b36",
+          "0x4150bd",
+          "0x415c1f"
+        ]
+      },
+      "record": "build/rea-splash-audit/mcp-016-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_3bbcb56b3cab6077618af569924ecc360df9ee919b3f809b2938d12a5ea64506",
+      "operation": "procedure_assembly",
+      "parameters": {
+        "procedure": "0x42a088"
+      },
+      "record": "build/rea-splash-audit/mcp-017-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_bccdbd94a9b955052ed7cafff0758af8187bc54a70282423886ad4b5511bdc04",
+      "operation": "procedure_assembly",
+      "parameters": {
+        "procedure": "0x42b9ce"
+      },
+      "record": "build/rea-splash-audit/mcp-018-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_f7467b885e3ba07a3869dc19c79e23827cf6e881480461c46b9a27479be2cc3a",
+      "operation": "read_bytes",
+      "parameters": {
+        "address": "0x45a915",
+        "length": 20
+      },
+      "record": "build/rea-splash-audit/mcp-019-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_613b1ee9d93d65223f35593bdad008010d81eedbcb4381594842a3a0e8b39db8",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x429f1a",
+          "0x41a3c9",
+          "0x419d88",
+          "0x41986d",
+          "0x4195bc",
+          "0x427342"
+        ]
+      },
+      "record": "build/rea-splash-audit/mcp-020-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_7c9feef747a0a775e4808e2fa156fbd9a063e96d78b999cb051d9008eba78d98",
+      "operation": "procedure_assembly",
+      "parameters": {
+        "procedure": "0x4273a4"
+      },
+      "record": "build/rea-splash-audit/mcp-021-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_8e1c5f54f5e8026931948057b299884abe252f8be89045c76435cd3bf4113224",
+      "operation": "procedure_assembly",
+      "parameters": {
+        "procedure": "0x427b36"
+      },
+      "record": "build/rea-splash-audit/mcp-022-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_a63f32e1dd0ee8e3d1369a11dda3ffa3e05d17b748ad938684388e38c5d8a951",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x451e3e",
+          "0x41043c",
+          "0x4102b7"
+        ]
+      },
+      "record": "build/rea-splash-audit/mcp-023-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_69e3c4d01c9da47a9cfd0742b459da732a449a2d3ea425751eea4b98f3441158",
+      "operation": "procedure_assembly",
+      "parameters": {
+        "procedure": "0x42be22"
+      },
+      "record": "build/rea-splash-audit/mcp-024-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_582e930febf3c77fe86dc425c204d40faa2115d3ae94ecbc55bb206704bf13ce",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x40a140",
+          "0x4534d4",
+          "0x453539"
+        ]
+      },
+      "record": "build/rea-splash-audit/mcp-027-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_0dd59cb4cdd7e40bdbe1c798c6912c18ae8ac922f8822df8b29a0519592f607a",
+      "operation": "procedure_assembly",
+      "parameters": {
+        "procedure": "0x42a3f6"
+      },
+      "record": "build/rea-splash-audit/mcp-028-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_73f967eaf858c06b1c436874b9b89a4b1171fd22421bd1b162641f456f6c4014",
+      "operation": "procedure_assembly",
+      "parameters": {
+        "procedure": "0x42b0ce"
+      },
+      "record": "build/rea-splash-audit/mcp-029-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_f130bbdb24433467adaa531b7b2b1c8aff2c204a2b53a6fc577bbaaf09c9e36e",
+      "operation": "procedure_assembly",
+      "parameters": {
+        "procedure": "0x42b47d"
+      },
+      "record": "build/rea-splash-audit/mcp-030-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_327ca5fe55dd2b76967876ff83e98c384e8b02c854f9c650b5e934d1ae571eed",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x41522d",
+          "0x43d454"
+        ]
+      },
+      "record": "build/rea-splash-audit/mcp-031-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_48d66f31381736b364736b68e58f3b3b9c9afd37892f308c414124186bab3484",
+      "operation": "batch_decompile",
+      "parameters": {
+        "addresses": [
+          "0x418ff7",
+          "0x41a896"
+        ]
+      },
+      "record": "build/rea-splash-audit/mcp-036-tools-call.json"
+    },
+    {
+      "evidence_id": "ev_f6954a277a0d4772fc3f3a714c0b9c925e2230db889bebadca45cc95d868211c",
+      "operation": "procedure_assembly",
+      "parameters": {
+        "procedure": "0x4272dd"
+      },
+      "record": "build/rea-splash-audit/mcp-039-tools-call.json"
+    }
+  ],
+  "limitations": [
+    "REA/Ghidra output is static machine-code analysis, not recovered original source or an observation of original executable execution.",
+    "The supplied recording contains early user skips and compressed audio; it does not measure the unattended timeout or absolute mixer calibration.",
+    "No claim is made that every gameplay, help-dialog, window-control or operating-system audio event was audited.",
+    "Separate CD intro movie behavior remains excluded by the task scope."
+  ]
+}

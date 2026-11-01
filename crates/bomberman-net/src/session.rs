@@ -11,6 +11,7 @@ impl Lobby {
             config,
             peers: [HOST].into(),
             colors: DEFAULT_COLORS,
+            setup: None,
         };
         lobby.validate()?;
         lobby.assign(HOST, host_seats)?;
@@ -18,6 +19,9 @@ impl Lobby {
         Ok(lobby)
     }
     pub fn assign(&mut self, peer: PeerId, count: u8) -> Result<(), NetError> {
+        if self.setup.is_some() {
+            return self.assign_open(peer, count);
+        }
         if count == 0 || count as usize > MAX_PLAYERS || !self.peers.contains(&peer) {
             return Err(NetError::Ownership);
         }
@@ -95,21 +99,59 @@ impl Lobby {
         self.update_color_names();
         Ok(())
     }
-    fn update_color_names(&mut self) {
+    pub(crate) fn update_color_names(&mut self) {
         for (seat, player) in self.config.players.iter_mut().enumerate() {
-            player.name = COLOR_NAMES[self.colors[seat] as usize].into();
+            player.name = if let Some(setup) = &self.setup {
+                match setup.slots[seat] {
+                    SlotState::Human(peer) => {
+                        let nickname = setup.nicknames.get(&peer).map_or("Player", String::as_str);
+                        let count = setup
+                            .slots
+                            .iter()
+                            .filter(|s| **s == SlotState::Human(peer))
+                            .count();
+                        if count > 1 {
+                            format!("{} ({})", nickname, setup.devices[seat].unwrap_or(0) + 1)
+                        } else {
+                            nickname.into()
+                        }
+                    }
+                    SlotState::Ai => format!("{} AI", COLOR_NAMES[self.colors[seat] as usize]),
+                    _ => COLOR_NAMES[self.colors[seat] as usize].into(),
+                }
+            } else {
+                COLOR_NAMES[self.colors[seat] as usize].into()
+            };
         }
     }
     pub fn remove(&mut self, peer: PeerId) {
         self.peers.remove(&peer);
+        if let Some(setup) = &mut self.setup {
+            setup.nicknames.remove(&peer);
+            setup.device_counts.remove(&peer);
+            for (slot, state) in setup.slots.iter_mut().enumerate() {
+                if *state == SlotState::Human(peer) {
+                    *state = SlotState::Open;
+                    setup.devices[slot] = None;
+                }
+            }
+        }
         for (i, owner) in self.owners.iter_mut().enumerate() {
             if *owner == Some(peer) {
                 *owner = None;
                 self.config.players[i].control = ControlKind::Bot;
             }
         }
+        self.update_color_names();
     }
     pub fn can_start(&self) -> bool {
+        if self.setup.is_some() {
+            return self.setup.as_ref().is_some_and(|setup| {
+                self.peers.iter().all(|peer| {
+                    setup.nicknames.contains_key(peer) && setup.device_counts.contains_key(peer)
+                })
+            }) && self.match_roster().is_ok();
+        }
         // The original host advances after peers choose controls. There is no
         // extra per-computer Ready toggle (0x411b4b..0x411c69).
         self.peers.len() >= 2
@@ -152,6 +194,7 @@ impl Lobby {
         {
             return Err(NetError::Protocol);
         }
+        self.validate_setup()?;
         Ok(())
     }
     pub fn configure(&mut self, mut config: bomberman_core::GameConfig) -> Result<(), NetError> {
@@ -165,6 +208,9 @@ impl Lobby {
             return Err(NetError::Full);
         }
         let mut next = self.clone();
+        if next.setup.is_some() && config.players.len() != MAX_PLAYERS {
+            return Err(NetError::Protocol);
+        }
         next.owners.resize(config.players.len(), None);
         for (player, owner) in config.players.iter_mut().zip(&next.owners) {
             player.control = if owner.is_some() {

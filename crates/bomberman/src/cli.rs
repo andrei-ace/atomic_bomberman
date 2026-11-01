@@ -4,6 +4,9 @@ use std::path::PathBuf;
 #[derive(Debug)]
 pub struct Cli {
     pub assets: PathBuf,
+    pub base_assets: PathBuf,
+    pub mod_path: Option<PathBuf>,
+    pub no_mod: bool,
     pub settings: PathBuf,
     pub headless: bool,
     pub matches: usize,
@@ -11,6 +14,7 @@ pub struct Cli {
     pub smoke_frames: Option<u32>,
     pub screenshot: Option<PathBuf>,
     pub smoke_menu: bool,
+    pub skip_intro: bool,
     pub mute: bool,
     pub software_rendering: bool,
     /// None follows the saved preference; explicit flags override it in order.
@@ -19,12 +23,15 @@ pub struct Cli {
 
 pub const HELP: &str = "Atomic Bomberman — native Rust local, LAN and private online battle\n\n\
 Usage: bomberman --assets <cache-directory> [options]\n\n\
+  --mod <directory>      Override original assets with this mod directory\n\
+  --no-mod               Temporarily ignore the saved mod selection\n\
   --settings <file>       Settings JSON (default: platform configuration directory)\n\
   --seed <number>         Deterministic match seed (default: current time)\n\
   --headless             Run complete computer matches without graphics/audio\n\
   --matches <number>      Number of headless matches (default: 1)\n\
   --smoke-test <frames>   Start a battle, run a fixed number of GUI frames, exit\n\
   --smoke-menu           Keep the main menu during a GUI smoke test\n\
+  --skip-intro           Skip the opening logos and title\n\
   --screenshot <file>     Save the final 640 x 480 smoke-test frame as PNG\n\
   --mute                 Disable original disc audio\n\
   --software-rendering   Force Mesa software rendering (Linux)\n\
@@ -44,6 +51,8 @@ impl Cli {
 
     fn parse_from(arguments: impl IntoIterator<Item = String>) -> Result<Option<Self>> {
         let mut assets = None;
+        let mut mod_path = None;
+        let mut no_mod = false;
         let mut settings = crate::settings::default_path();
         let mut headless = false;
         let mut matches = 1;
@@ -54,6 +63,7 @@ impl Cli {
         let mut smoke_frames = None;
         let mut screenshot = None;
         let mut smoke_menu = false;
+        let mut skip_intro = false;
         let mut mute = false;
         let mut software_rendering = false;
         let mut fullscreen = None;
@@ -66,6 +76,8 @@ impl Cli {
             };
             match arg.as_str() {
                 "--assets" => assets = Some(PathBuf::from(value()?)),
+                "--mod" => mod_path = Some(PathBuf::from(value()?)),
+                "--no-mod" => no_mod = true,
                 "--settings" => settings = PathBuf::from(value()?),
                 "--headless" => headless = true,
                 "--matches" => {
@@ -87,6 +99,7 @@ impl Cli {
                 }
                 "--screenshot" => screenshot = Some(PathBuf::from(value()?)),
                 "--smoke-menu" => smoke_menu = true,
+                "--skip-intro" => skip_intro = true,
                 "--mute" => mute = true,
                 "--software-rendering" => software_rendering = true,
                 "--windowed" => fullscreen = Some(false),
@@ -117,7 +130,10 @@ impl Cli {
             bail!("--screenshot requires --smoke-test <frames>");
         }
         Ok(Some(Self {
+            base_assets: assets.clone(),
             assets,
+            mod_path,
+            no_mod,
             settings,
             headless,
             matches,
@@ -125,6 +141,7 @@ impl Cli {
             smoke_frames,
             screenshot,
             smoke_menu,
+            skip_intro,
             mute,
             software_rendering,
             fullscreen,

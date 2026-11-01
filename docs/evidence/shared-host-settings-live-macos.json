@@ -1,0 +1,58 @@
+{
+  "passed": true,
+  "transports": [
+    {
+      "transport": "relay",
+      "passed": true,
+      "checks": [
+        "two distinct native game windows sharing preferences with isolated test connections",
+        "two native host/client windows share one settings file loaded before host edits",
+        "scheme, time, wins, teams, arena, enclosure, random starts, conveyor and stomp choices save",
+        "client saves an unrelated preference and quits last without overwriting host rules",
+        "fresh host/client processes restore all match rules, exact scheme filename, teams and arena preview"
+      ],
+      "modded_host": false,
+      "version": "0.7.0",
+      "protocol": 8,
+      "saved_hosting": {
+        "arena": 0,
+        "conveyor_speed": 2,
+        "enclosement_depth": 3,
+        "random_arena": true,
+        "random_starts": true,
+        "round_seconds": 180,
+        "scheme": 22,
+        "slot_teams": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "stomped_bombs_detonate": false,
+        "teams": true,
+        "win_by_kills": false,
+        "wins": 5
+      },
+      "shared_settings_verified": true,
+      "restart_verified": true
+    }
+  ],
+  "game_binary_sha256": "3945411282f1c1b146fa60fc7bddcf1dc9172d54a1adb8573368033eae228519",
+  "driver_sha256": "8b8ae552bd57729ec1afb8d8120b681ef700bcad20554865d13b66aaccdb8ef5",
+  "assets_manifest_sha256": "d3b83beeb76f9aecf0435468a94c2f7bda722e4e845c9f1af5a2da5b7aababbd",
+  "backend": "two native production game windows, process-local Cocoa NSEvents",
+  "isolated_settings_and_saved_servers": true,
+  "clipboard_used": false,
+  "shared_settings_between_windows": true,
+  "limitations": [
+    "Live private relay transport; no physical device or physical audio claims.",
+    "Audio is muted; screenshots capture the production 640x480 game render target.",
+    "Splash timing is checked separately; this harness uses --skip-intro."
+  ]
+}

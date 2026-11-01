@@ -38,6 +38,8 @@ def main():
     parser.add_argument('--assets', type=Path, default=Path('local-assets'))
     parser.add_argument('--output', type=Path, default=Path('build/macos-ui'))
     parser.add_argument('--app', type=Path, help='also verify the packaged first-launch dialog')
+    parser.add_argument('--skip-fullscreen', action='store_true', help='omit fullscreen checks when the desktop will not activate the test app')
+    parser.add_argument('--splash-only', action='store_true', help='time all automatic splash pages and Enter/Space/Escape skipping')
     args = parser.parse_args()
     if sys.platform != 'darwin':
         parser.error('requires macOS')
@@ -53,6 +55,7 @@ def main():
         'participants': [{'device': 'Keyboard1', 'team': 0}, {'device': 'Keyboard2', 'team': 1}],
         'scheme': basic, 'random_starts': False, 'sudden_death': False,
         'round_seconds': 150, 'gold': False, 'fullscreen': False,
+        'lan_address': '192.0.2.42:1997',
     }))
     subprocess.run(['cargo', 'build', '--locked', '-p', 'bomberman'], cwd=root, check=True)
     driver = output / 'native-ui-driver.dylib'
@@ -75,21 +78,77 @@ def main():
     report.unlink(missing_ok=True)
     environment = {
         'DYLD_INSERT_LIBRARIES': str(driver),
+        'XDG_CONFIG_HOME': str(output / 'config'),
         'ATOMIC_BOMBERMAN_STATE_PROBE': str(output / 'state.json'),
         'ATOMIC_BOMBERMAN_MAC_UI_SETTINGS': str(settings),
         'ATOMIC_BOMBERMAN_MAC_UI_REPORT': str(report),
+        'ATOMIC_BOMBERMAN_INPUT_TRACE': '1',
+        'ATOMIC_BOMBERMAN_TEST_CONFIG': str(output / 'test-config.json'),
     }
     (output / 'state.json').unlink(missing_ok=True)
+    (output / 'game.log').unlink(missing_ok=True)
+    if args.skip_fullscreen:
+        environment['ATOMIC_BOMBERMAN_MAC_UI_SKIP_FULLSCREEN'] = '1'
     command = ['/usr/bin/open', '-W', '-n']
     for key, value in environment.items():
         command += ['--env', f'{key}={value}']
     command += ['--stdout', str(output / 'game.log'), '--stderr', str(output / 'game.log'),
                 '-a', str(app), '--args', '--assets', str(assets), '--settings', str(settings),
                 '--windowed', '--mute', '--seed', '1997']
-    subprocess.run(command, timeout=80, check=True)
+    if args.splash_only:
+        for mode in ['auto', 'skip']:
+            splash_report = output / f'{mode}-report.json'
+            splash_report.unlink(missing_ok=True)
+            splash_state = output / f'{mode}-state.json'
+            splash_state.unlink(missing_ok=True)
+            splash_environment = dict(
+                environment,
+                ATOMIC_BOMBERMAN_MAC_UI_SPLASH=mode,
+                ATOMIC_BOMBERMAN_MAC_UI_REPORT=str(splash_report),
+                ATOMIC_BOMBERMAN_STATE_PROBE=str(splash_state),
+            )
+            splash_command = ['/usr/bin/open', '-W', '-n']
+            for key, value in splash_environment.items():
+                splash_command += ['--env', f'{key}={value}']
+            splash_command += [
+                '--stdout', str(output / f'{mode}-game.log'),
+                '--stderr', str(output / f'{mode}-game.log'),
+                '-a', str(app), '--args', '--assets', str(assets),
+                '--settings', str(settings), '--windowed', '--mute',
+            ]
+            subprocess.run(splash_command, timeout=80, check=True)
+            result = json.loads(splash_report.read_text())
+            print(json.dumps(result, indent=2))
+            if not result['passed']:
+                raise SystemExit(1)
+        return
+    subprocess.run(command, timeout=180, check=True)
     result = json.loads(report.read_text())
     print(json.dumps(result, indent=2))
     if not result['passed']:
+        raise SystemExit(1)
+    reload_report = output / 'reload-report.json'
+    reload_report.unlink(missing_ok=True)
+    reload_environment = dict(
+        environment,
+        ATOMIC_BOMBERMAN_MAC_UI_RELOAD='1',
+        ATOMIC_BOMBERMAN_MAC_UI_REPORT=str(reload_report),
+        ATOMIC_BOMBERMAN_STATE_PROBE=str(output / 'reload-state.json'),
+    )
+    (output / 'reload-state.json').unlink(missing_ok=True)
+    reload_command = ['/usr/bin/open', '-W', '-n']
+    for key, value in reload_environment.items():
+        reload_command += ['--env', f'{key}={value}']
+    reload_command += [
+        '--stdout', str(output / 'reload-game.log'),
+        '--stderr', str(output / 'reload-game.log'),
+        '-a', str(app), '--args', '--assets', str(assets),
+        '--settings', str(settings), '--windowed', '--mute', '--skip-intro',
+    ]
+    subprocess.run(reload_command, timeout=80, check=True)
+    reloaded = json.loads(reload_report.read_text())
+    print(json.dumps(reloaded, indent=2))
+    if not reloaded['passed']:
         raise SystemExit(1)
     if args.app:
         verify_launcher(args.app.resolve(), driver, output)

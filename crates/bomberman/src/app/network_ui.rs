@@ -1,33 +1,85 @@
 use super::*;
 use bomberman_net::{
     discovery::FoundGame, invitation::profile_path, transport::Connection, transport::Destination,
-    Action, Event, Invitation, NetError, RoomSummary, ServerProfile, Stage, PORT,
+    Action, Event, Invitation, NetError, RoomSummary, ServerProfile, SetupPhase, Stage, PORT,
 };
 use std::{
     net::{Ipv4Addr, SocketAddr},
     sync::mpsc,
 };
 
+const ACTION_Y: f32 = 104.;
+const ROW_HEIGHT: f32 = 24.;
+const GAMES_Y: f32 = 304.;
+const VISIBLE_GAMES: usize = 5;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum BrowserAction {
+    Host,
+    JoinIp,
+    Controls,
+    Nickname,
+    Refresh,
+    Server,
+    CopyServer,
+    Back,
+}
+const LAN_ACTIONS: &[BrowserAction] = &[
+    BrowserAction::Host,
+    BrowserAction::JoinIp,
+    BrowserAction::Controls,
+    BrowserAction::Nickname,
+    BrowserAction::Refresh,
+    BrowserAction::Back,
+];
+const INTERNET_ACTIONS: &[BrowserAction] = &[
+    BrowserAction::Host,
+    BrowserAction::Server,
+    BrowserAction::CopyServer,
+    BrowserAction::Controls,
+    BrowserAction::Nickname,
+    BrowserAction::Refresh,
+    BrowserAction::Back,
+];
+impl BrowserAction {
+    fn label(self, nickname: &str, saved: bool) -> String {
+        match self {
+            Self::Host => "Host game".into(),
+            Self::JoinIp => "Join by IP".into(),
+            Self::Controls => "Local player controls".into(),
+            Self::Nickname => format!("Nickname: {nickname}"),
+            Self::Refresh => "Refresh games".into(),
+            Self::Server => if saved {
+                "Change server link"
+            } else {
+                "Add server link"
+            }
+            .into(),
+            Self::CopyServer => "Copy server link".into(),
+            Self::Back => "Main menu".into(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub(super) enum LobbyAction {
     Start,
-    Rules,
-    Colors,
-    Devices,
+    Options,
     Leave,
 }
+pub(super) const LOBBY_ROWS: usize = 11;
 pub(super) fn lobby_actions(host: bool) -> &'static [LobbyAction] {
     use LobbyAction::*;
     if host {
-        &[Start, Rules, Colors, Devices, Leave]
+        &[Start, Options, Leave]
     } else {
-        &[Colors, Devices, Leave]
+        &[Options, Leave]
     }
 }
 
 pub(super) struct NetworkUi {
     pub text: String,
-    devices: Vec<Device>,
+    pub(super) devices: Vec<Device>,
     saved: Option<ServerProfile>,
     directory: Option<Connection>,
     directory_profile: Option<ServerProfile>,
@@ -41,41 +93,49 @@ pub(super) struct NetworkUi {
     lan_error: bool,
     lan_manual: bool,
     lan_addresses: Vec<SocketAddr>,
+    initial_setup_applied: bool,
+    observed_phase: Option<SetupPhase>,
+    applied_colors: Vec<(usize, Device)>,
+    profile_warning: Option<String>,
+    pub(super) compatibility_error: Option<String>,
     scan: Option<mpsc::Receiver<std::io::Result<Vec<FoundGame>>>>,
     games: Vec<FoundGame>,
-    devices_return: Screen,
-    lobby_settings: Settings,
+    pub(super) devices_return: Screen,
+    pub(super) devices_shared: bool,
+    pub(super) lobby_settings: Settings,
 }
 impl NetworkUi {
     #[cfg(debug_assertions)]
     pub(super) fn browser_probe(&self) -> serde_json::Value {
         serde_json::json!({"ready":self.directory_ready,"rooms":self.rooms,
-            "text_present":!self.text.trim().is_empty(), "text_bytes":self.text.trim().len()})
+            "text_present":!self.text.trim().is_empty(), "text_bytes":self.text.trim().len(),
+            "saved":self.saved.is_some(), "action_count":INTERNET_ACTIONS.len(), "visible_games":VISIBLE_GAMES,
+            "actions":INTERNET_ACTIONS.iter().map(|action|format!("{action:?}")).collect::<Vec<_>>()})
     }
     #[cfg(debug_assertions)]
     pub(super) fn lan_probe(&self) -> serde_json::Value {
         serde_json::json!({"games":self.games.iter().map(|g| g.address.to_string()).collect::<Vec<_>>(),
-            "actions":["Host game","Join by IP","Local keyboards and controllers","Back"]})
+            "manual":self.lan_manual, "actions":LAN_ACTIONS.iter().map(|action|format!("{action:?}")).collect::<Vec<_>>(),
+            "address":if self.lan_manual {self.text.as_str()}else{""}, "devices":self.devices,
+            "visible_games":VISIBLE_GAMES})
     }
     pub(super) fn stop_directory(&mut self) {
         self.directory = None;
         self.directory_ready = false;
     }
     pub fn new(settings: &Settings) -> Self {
-        let mut devices: Vec<_> = settings
-            .participants
-            .iter()
-            .take(settings.participant_count)
-            .filter(|p| p.device != Device::Bot)
-            .map(|p| p.device.clone())
-            .collect();
-        if devices.is_empty() {
-            devices.push(Device::Keyboard1);
-        }
+        let devices = settings.local_network_devices();
+        let (saved, profile_warning) = match ServerProfile::load(&profile_path()) {
+            Ok(saved) => (saved, None),
+            Err(error) => (
+                None,
+                Some(format!("Saved server could not be loaded: {error}")),
+            ),
+        };
         Self {
             text: String::new(),
             devices,
-            saved: ServerProfile::load(&profile_path()).ok().flatten(),
+            saved,
             directory: None,
             directory_profile: None,
             directory_ready: false,
@@ -88,48 +148,80 @@ impl NetworkUi {
             lan_error: false,
             lan_manual: false,
             lan_addresses: vec![],
+            initial_setup_applied: false,
+            observed_phase: None,
+            applied_colors: Vec::new(),
+            profile_warning,
+            compatibility_error: None,
             scan: None,
             games: vec![],
             devices_return: Screen::Online,
-            lobby_settings: settings.clone(),
+            devices_shared: false,
+            lobby_settings: settings.host_settings(),
         }
     }
 }
 impl App {
-    pub(super) fn update_multiplayer_menu(&mut self, _internet: bool) {
-        self.navigation(3);
-        let clicked = self.hover_rows(30., 180., 580., 42., 3);
-        if self.back() || ((self.confirm() || clicked) && self.selection == 2) {
-            self.change_screen(Screen::Main);
-            self.selection = 1;
-        } else if self.confirm() || clicked {
-            self.network_ui.text.clear();
-            if self.selection == 0 {
-                self.network_ui.lan_manual = false;
-                self.refresh_lan();
-                self.change_screen(Screen::Lan);
-            } else {
-                self.open_internet();
-            }
-        }
+    pub(super) fn lan_address_text(&self) -> String {
+        self.network_ui
+            .lan_addresses
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join(" / ")
     }
-    fn open_internet(&mut self) {
+    pub(super) fn open_lan(&mut self) {
+        self.network_ui.stop_directory();
+        self.network_ui.directory_profile = None;
+        self.network_ui.text.clear();
+        self.network_ui.lan_manual = false;
+        self.refresh_lan();
+        self.change_screen(Screen::Lan);
+    }
+    pub(super) fn open_internet(&mut self) {
         self.network_ui.text.clear();
         self.network_ui.pending_room = None;
         if let Some(profile) = self.network_ui.saved.clone() {
             self.connect_directory(profile);
-            self.change_screen(Screen::Internet);
         } else {
-            self.change_screen(Screen::Online);
+            self.network_ui.directory = None;
+            self.network_ui.directory_profile = None;
+            self.network_ui.directory_ready = false;
+        }
+        self.change_screen(Screen::Internet);
+        if let Some(warning) = self.network_ui.profile_warning.take() {
+            self.notify(warning);
         }
     }
-    fn back_from_online(&mut self) {
-        self.network_ui.text.clear();
-        self.network_ui.directory = None;
+    fn open_server_link(&mut self) {
+        self.network_ui.stop_directory();
         self.network_ui.directory_profile = None;
+        self.network_ui.text.clear();
+        self.change_screen(Screen::Online);
+    }
+    fn back_from_online(&mut self) {
         self.open_internet();
-        if self.network_ui.saved.is_none() {
-            self.change_screen(Screen::Multiplayer);
+        self.selection = 1;
+    }
+    fn back_from_browser(&mut self, internet: bool) {
+        self.network_ui.stop_directory();
+        self.network_ui.directory_profile = None;
+        self.network_ui.text.clear();
+        self.change_screen(Screen::Main);
+        self.selection = if internet { 2 } else { 1 };
+    }
+    fn open_network_nickname(&mut self) {
+        self.frontend.nickname_return = self.screen;
+        self.frontend.nickname_selection = self.selection;
+        self.frontend.nickname_edit = Some(self.settings.nickname.clone());
+        self.change_screen(Screen::Nickname);
+    }
+    pub(super) fn maintain_browser_connection(&mut self) {
+        if !matches!(self.screen, Screen::Internet | Screen::Online)
+            && self.network.is_none()
+            && self.network_ui.directory_profile.is_some()
+        {
+            self.update_directory();
         }
     }
     fn connect_directory(&mut self, profile: ServerProfile) {
@@ -147,7 +239,9 @@ impl App {
         self.network_ui.directory = None;
         self.network_ui.directory_ready = false;
         self.network_ui.rooms.clear();
-        if self.network_ui.directory_error != Some(error) {
+        if error == NetError::Version {
+            self.network_ui.compatibility_error = Some(error.to_string());
+        } else if self.network_ui.directory_error != Some(error) {
             self.notify(error.to_string());
         }
         self.network_ui.directory_error = Some(error);
@@ -184,11 +278,14 @@ impl App {
             };
             match event {
                 Event::Rooms(rooms) => {
-                    let selected = self
-                        .selection
-                        .checked_sub(5)
-                        .and_then(|i| self.network_ui.rooms.get(i))
-                        .map(|r| r.code.clone());
+                    let selected = if self.screen == Screen::Internet {
+                        self.selection
+                            .checked_sub(INTERNET_ACTIONS.len())
+                            .and_then(|i| self.network_ui.rooms.get(i))
+                            .map(|room| room.code.clone())
+                    } else {
+                        None
+                    };
                     self.network_ui.rooms = rooms;
                     if let Some(code) = selected {
                         self.selection = self
@@ -196,13 +293,15 @@ impl App {
                             .rooms
                             .iter()
                             .position(|r| r.code == code)
-                            .map_or(0, |i| i + 5);
+                            .map_or(0, |i| i + INTERNET_ACTIONS.len());
                     }
                     if !self.network_ui.directory_ready {
                         if let Some(profile) = self.network_ui.directory_profile.clone() {
                             match profile.save(&profile_path()) {
                                 Ok(()) => self.network_ui.saved = Some(profile),
-                                Err(error) => self.notify(error.to_string()),
+                                Err(error) => self.notify(format!(
+                                    "Connected, but the server link could not be saved: {error}"
+                                )),
                             }
                         }
                     }
@@ -240,12 +339,19 @@ impl App {
                 }
             }
         }
-        self.navigation(5 + self.network_ui.rooms.len());
-        let clicked = self.hover_rows(30., 104., 580., 26., 5)
-            || self.click_game_list(5, self.network_ui.rooms.len());
-        if self.confirm() || clicked {
-            let result = match self.selection {
-                0 if self.network_ui.directory_ready => {
+        self.navigation(INTERNET_ACTIONS.len() + self.network_ui.rooms.len());
+        let clicked = self.hover_rows(35., ACTION_Y - 4., 590., ROW_HEIGHT, INTERNET_ACTIONS.len())
+            || self.click_game_list(INTERNET_ACTIONS.len(), self.network_ui.rooms.len());
+        if self.back() {
+            self.back_from_browser(true);
+            return;
+        }
+        if !(self.confirm() || clicked) {
+            return;
+        }
+        let result = if let Some(action) = INTERNET_ACTIONS.get(self.selection).copied() {
+            match action {
+                BrowserAction::Host if self.network_ui.directory_ready => {
                     let server = self
                         .network_ui
                         .directory_profile
@@ -253,83 +359,106 @@ impl App {
                         .expect("authenticated directory");
                     self.begin_network(Destination::Online(Invitation { server, room: None }), true)
                 }
-                0 => Err(NetError::Unavailable),
-                1 => {
-                    self.network_ui.directory = None;
-                    self.network_ui.directory_profile = None;
-                    self.network_ui.text.clear();
-                    self.change_screen(Screen::Online);
+                BrowserAction::Host => {
+                    self.notify(
+                        "Connect to a server before hosting. Use Add server link or Refresh games.",
+                    );
                     Ok(())
                 }
-                2 => {
-                    if let Some(server) = self
-                        .network_ui
-                        .directory_profile
-                        .as_ref()
-                        .or(self.network_ui.saved.as_ref())
-                    {
-                        match (Invitation {
-                            server: server.clone(),
-                            room: None,
-                        })
-                        .encode()
-                        {
-                            Ok(link) => {
-                                if crate::clipboard::set_text(&link) {
-                                    self.notify("Server link copied. Friends paste it once to find your games.");
-                                } else {
-                                    self.notify("Could not copy the server link. Try again.");
-                                }
-                                Ok(())
-                            }
-                            Err(error) => Err(error),
-                        }
-                    } else {
-                        Err(NetError::InvalidInvite)
-                    }
+                BrowserAction::Server => {
+                    self.open_server_link();
+                    Ok(())
                 }
-                3 => {
+                BrowserAction::CopyServer
+                    if self.network_ui.saved.is_none()
+                        && self.network_ui.directory_profile.is_none() =>
+                {
+                    self.notify("Add a server link before copying it.");
+                    Ok(())
+                }
+                BrowserAction::CopyServer => self.copy_server_link(),
+                BrowserAction::Controls => {
                     self.open_devices();
                     Ok(())
                 }
-                4 => {
-                    self.network_ui.directory = None;
-                    self.change_screen(Screen::Multiplayer);
+                BrowserAction::Nickname => {
+                    self.open_network_nickname();
                     Ok(())
                 }
-                i => {
-                    let room = self.network_ui.rooms[i - 5].clone();
-                    room.joinable(&crate::network::compatibility(&self.media.manifest))
-                        .and_then(|()| {
-                            let server = self
-                                .network_ui
-                                .directory_profile
-                                .clone()
-                                .ok_or(NetError::Unavailable)?;
-                            self.begin_network(
-                                Destination::Online(Invitation {
-                                    server,
-                                    room: Some(room.code),
-                                }),
-                                false,
-                            )
-                        })
+                BrowserAction::Refresh => {
+                    if let Some(profile) = self
+                        .network_ui
+                        .directory_profile
+                        .clone()
+                        .or_else(|| self.network_ui.saved.clone())
+                    {
+                        self.network_ui.retry_delay = 1.;
+                        self.connect_directory(profile);
+                    } else {
+                        self.notify("Add a server link before refreshing Internet games.");
+                    }
+                    Ok(())
                 }
-            };
-            if let Err(error) = result {
-                self.notify(error.to_string());
+                BrowserAction::Back => {
+                    self.back_from_browser(true);
+                    Ok(())
+                }
+                BrowserAction::JoinIp => unreachable!("LAN action in Internet menu"),
             }
+        } else {
+            let room = self.network_ui.rooms[self.selection - INTERNET_ACTIONS.len()].clone();
+            room.joinable(&crate::network::compatibility(&self.media.manifest))
+                .and_then(|()| {
+                    let server = self
+                        .network_ui
+                        .directory_profile
+                        .clone()
+                        .ok_or(NetError::Unavailable)?;
+                    self.begin_network(
+                        Destination::Online(Invitation {
+                            server,
+                            room: Some(room.code),
+                        }),
+                        false,
+                    )
+                })
+        };
+        if let Err(error) = result {
+            self.notify(error.to_string());
         }
-        if self.back() {
-            self.network_ui.directory = None;
-            self.change_screen(Screen::Multiplayer);
+    }
+    fn copy_server_link(&mut self) -> std::result::Result<(), NetError> {
+        let server = self
+            .network_ui
+            .directory_profile
+            .as_ref()
+            .or(self.network_ui.saved.as_ref())
+            .ok_or(NetError::InvalidInvite)?;
+        let link = Invitation {
+            server: server.clone(),
+            room: None,
         }
+        .encode()?;
+        self.notify(if crate::clipboard::set_text(&link) {
+            "Server link copied. Friends paste it once to find your games."
+        } else {
+            "Could not copy the server link. Try again."
+        });
+        Ok(())
     }
     fn click_game_list(&mut self, base: usize, len: usize) -> bool {
         let offset = list_offset(self.selection, base, len);
-        if self.clicked && Rect::new(30., 248., 580., 26. * len.min(7) as f32).contains(self.mouse)
+        if self.clicked
+            && Rect::new(
+                35.,
+                GAMES_Y - 4.,
+                590.,
+                ROW_HEIGHT * len.min(VISIBLE_GAMES) as f32,
+            )
+            .contains(self.mouse)
         {
-            self.selection = base + offset + ((self.mouse.y - 248.) / 26.) as usize;
+            self.selection =
+                base + offset + ((self.mouse.y - (GAMES_Y - 4.)) / ROW_HEIGHT) as usize;
             true
         } else {
             false
@@ -402,8 +531,9 @@ impl App {
             });
         }
     }
-    fn open_devices(&mut self) {
+    pub(super) fn open_devices(&mut self) {
         self.network_ui.devices_return = self.screen;
+        self.network_ui.devices_shared = false;
         self.change_screen(Screen::NetworkDevices);
     }
     fn begin_network(
@@ -419,10 +549,20 @@ impl App {
             } else {
                 vec![]
             };
-        self.network_ui.lobby_settings = self.settings.clone();
+        self.network_ui.lobby_settings = self.settings.host_settings();
+        self.network_ui.lobby_settings.scheme %= self.media.manifest.schemes.len();
+        self.network_ui.initial_setup_applied = false;
+        self.network_ui.observed_phase = None;
+        self.network_ui.applied_colors.clear();
         let config = if host {
+            // Empty network slots are Open metadata, not local disabled slots.
+            let mut hosted = self.network_ui.lobby_settings.clone();
+            hosted.participant_count = 10;
+            for participant in &mut hosted.participants {
+                participant.enabled = true;
+            }
             Some(
-                game_config(&self.media.manifest, &self.settings, false)
+                game_config(&self.media.manifest, &hosted, false)
                     .map_err(|_| NetError::Protocol)?,
             )
         } else {
@@ -434,9 +574,14 @@ impl App {
             config,
             self.network_ui.devices.clone(),
         )?);
+        self.network
+            .as_mut()
+            .expect("new network")
+            .enable_setup(self.settings.nickname.clone())?;
         self.network_ui.text.clear();
         self.simulation = None;
         self.change_screen(Screen::NetworkLobby);
+        self.selection = LOBBY_ROWS;
         Ok(())
     }
     pub(super) fn update_online(&mut self) {
@@ -450,7 +595,7 @@ impl App {
             }
         }
         self.navigation(3);
-        let clicked = self.hover_rows(30., 180., 580., 42., 3);
+        let clicked = self.hover_rows(75., 220., 490., 32., 3);
         if self.confirm() || clicked {
             match self.selection {
                 0 => self.paste_invitation(),
@@ -484,7 +629,7 @@ impl App {
         if self.network_ui.lan_manual {
             self.input_invitation();
             self.navigation(2);
-            let clicked = self.hover_rows(30., 180., 580., 42., 2);
+            let clicked = self.hover_rows(75., 220., 490., 32., 2);
             if self.confirm() || clicked {
                 if self.selection == 0 {
                     let text = self.network_ui.text.trim();
@@ -494,6 +639,8 @@ impl App {
                     });
                     match address {
                         Ok(address) => {
+                            self.settings.lan_address = address.to_string();
+                            self.save();
                             if let Err(error) = self.begin_network(
                                 Destination::Lan {
                                     address,
@@ -530,7 +677,7 @@ impl App {
                 Ok(games) => {
                     let selected = self
                         .selection
-                        .checked_sub(4)
+                        .checked_sub(LAN_ACTIONS.len())
                         .and_then(|i| self.network_ui.games.get(i))
                         .map(|g| g.address);
                     self.network_ui.games = games;
@@ -540,7 +687,7 @@ impl App {
                             .games
                             .iter()
                             .position(|g| g.address == address)
-                            .map_or(0, |i| i + 4);
+                            .map_or(0, |i| i + LAN_ACTIONS.len());
                     }
                     self.network_ui.lan_error = false;
                 }
@@ -556,55 +703,88 @@ impl App {
         if get_time() >= self.network_ui.next_scan {
             self.refresh_lan();
         }
-        self.navigation(4 + self.network_ui.games.len());
-        let clicked = self.hover_rows(30., 104., 580., 26., 4)
-            || self.click_game_list(4, self.network_ui.games.len());
-        if self.confirm() || clicked {
-            let destination = match self.selection {
-                0 => Some((SocketAddr::from((Ipv4Addr::LOCALHOST, PORT)), true)),
-                1 => {
+        self.navigation(LAN_ACTIONS.len() + self.network_ui.games.len());
+        let clicked = self.hover_rows(35., ACTION_Y - 4., 590., ROW_HEIGHT, LAN_ACTIONS.len())
+            || self.click_game_list(LAN_ACTIONS.len(), self.network_ui.games.len());
+        if self.back() {
+            self.back_from_browser(false);
+            return;
+        }
+        if !(self.confirm() || clicked) {
+            return;
+        }
+        let destination = if let Some(action) = LAN_ACTIONS.get(self.selection).copied() {
+            match action {
+                BrowserAction::Host => Some((SocketAddr::from((Ipv4Addr::LOCALHOST, PORT)), true)),
+                BrowserAction::JoinIp => {
                     self.network_ui.lan_manual = true;
-                    self.network_ui.text.clear();
+                    self.network_ui.text = self.settings.lan_address.clone();
                     self.selection = 0;
                     None
                 }
-                2 => {
+                BrowserAction::Controls => {
                     self.open_devices();
                     None
                 }
-                3 => {
-                    self.change_screen(Screen::Multiplayer);
+                BrowserAction::Nickname => {
+                    self.open_network_nickname();
                     None
                 }
-                i => {
-                    let game = &self.network_ui.games[i - 4];
-                    match crate::network::compatibility(&self.media.manifest)
-                        .check(&game.advertisement.compatibility)
-                    {
-                        Ok(()) => Some((game.address, false)),
-                        Err(error) => {
-                            self.notify(error.to_string());
-                            None
-                        }
-                    }
+                BrowserAction::Refresh => {
+                    self.network_ui.next_scan = 0.;
+                    self.refresh_lan();
+                    None
                 }
-            };
-            if let Some((address, host)) = destination {
-                if let Err(error) = self.begin_network(Destination::Lan { address, host }, host) {
+                BrowserAction::Back => {
+                    self.back_from_browser(false);
+                    None
+                }
+                _ => unreachable!("Internet action in LAN menu"),
+            }
+        } else {
+            let game = &self.network_ui.games[self.selection - LAN_ACTIONS.len()];
+            match crate::network::compatibility(&self.media.manifest)
+                .check(&game.advertisement.compatibility)
+            {
+                Ok(()) => Some((game.address, false)),
+                Err(error) => {
                     self.notify(error.to_string());
+                    None
                 }
             }
-        }
-        if self.back() {
-            self.change_screen(Screen::Multiplayer);
+        };
+        if let Some((address, host)) = destination {
+            if let Err(error) = self.begin_network(Destination::Lan { address, host }, host) {
+                self.notify(error.to_string());
+            }
         }
     }
     pub(super) fn update_network_devices(&mut self) {
         self.navigation(13);
-        let clicked = self.hover_rows(30., 70., 580., 26., 13);
-        if self.confirm() || clicked {
+        let mut clicked = self.hover_rows(310., 160., 315., 18., 12);
+        if self.clicked && Rect::new(35., 408., 560., 24.).contains(self.mouse) {
+            self.selection = 12;
+            clicked = true;
+        }
+        if self.confirm() || clicked || is_key_pressed(KeyCode::Space) {
             if self.selection == 12 {
-                self.change_screen(self.network_ui.devices_return);
+                if self.network.is_none() || !self.network_ui.devices_shared {
+                    self.change_screen(self.network_ui.devices_return);
+                } else if self.network.as_ref().is_some_and(|n| n.host) {
+                    if let Err(error) = self.advance_setup(SetupPhase::Arena) {
+                        self.notify(error.to_string());
+                    }
+                } else if self
+                    .network
+                    .as_ref()
+                    .and_then(|n| n.lobby.as_ref())
+                    .and_then(|l| l.setup.as_ref())
+                    .is_none()
+                {
+                    self.change_screen(self.network_ui.devices_return);
+                } else {
+                    self.change_screen(Screen::NetworkLobby);
+                }
                 return;
             }
             let device = match self.selection {
@@ -612,6 +792,13 @@ impl App {
                 1 => Device::Keyboard2,
                 n => Device::Controller((n - 2) as u8),
             };
+            if self.selection >= 2
+                && self.selection - 2 >= self.controllers.devices().len()
+                && !self.network_ui.devices.contains(&device)
+            {
+                self.notify("Connect this controller before selecting it.");
+                return;
+            }
             let mut devices = self.network_ui.devices.clone();
             if let Some(index) = devices.iter().position(|d| d == &device) {
                 if devices.len() == 1 {
@@ -627,386 +814,78 @@ impl App {
                 .as_mut()
                 .map_or(Ok(()), |network| network.change_devices(devices.clone()));
             match result {
-                Ok(()) => self.network_ui.devices = devices,
+                Ok(()) => {
+                    self.network_ui.devices = devices.clone();
+                    self.settings.network_devices = Some(devices);
+                    self.save();
+                }
                 Err(error) => self.notify(error.to_string()),
             }
         }
         if self.back() {
-            self.change_screen(self.network_ui.devices_return);
-        }
-    }
-
-    pub(super) fn update_network_rules(&mut self) {
-        if !self
-            .network
-            .as_ref()
-            .is_some_and(|n| n.host && n.replay.is_none())
-        {
-            self.change_screen(Screen::NetworkLobby);
-            return;
-        }
-        self.navigation(12);
-        let clicked = self.hover_rows(30., 70., 580., 27., 12);
-        let activate = self.confirm() || clicked;
-        if self.back() || (activate && self.selection == 11) {
-            self.change_screen(Screen::NetworkLobby);
-            return;
-        }
-        if activate && self.selection == 10 {
-            if self
+            if !self.network_ui.devices_shared {
+                self.change_screen(self.network_ui.devices_return);
+            } else if self.network.as_ref().is_some_and(|n| n.host) {
+                if let Err(error) = self.advance_setup(SetupPhase::Lobby) {
+                    self.notify(error.to_string());
+                }
+            } else if self
                 .network
                 .as_ref()
                 .and_then(|n| n.lobby.as_ref())
-                .is_some_and(|l| l.config.team_play)
+                .and_then(|l| l.setup.as_ref())
+                .is_some_and(|s| s.phase == SetupPhase::Players)
             {
-                self.change_screen(Screen::NetworkTeams);
+                self.change_screen(Screen::NetworkLobby);
             } else {
-                self.notify("Select Two teams to assign the red and white teams.");
+                self.change_screen(self.network_ui.devices_return);
             }
-            return;
-        }
-        let delta = self.delta();
-        if delta == 0 && !activate {
-            return;
-        }
-        let d = if delta == 0 { 1 } else { delta };
-        let mut settings = self.network_ui.lobby_settings.clone();
-        // Team edits and participant ownership belong to the network session.
-        if let Some(lobby) = self.network.as_ref().and_then(|n| n.lobby.as_ref()) {
-            for (participant, player) in settings.participants.iter_mut().zip(&lobby.config.players)
-            {
-                participant.team = player.team;
-            }
-        }
-        match self.selection {
-            0 => settings.arena = cycle(settings.arena, self.media.manifest.arenas.len(), d),
-            1 => settings.scheme = cycle(settings.scheme, self.media.manifest.schemes.len(), d),
-            2 => {
-                settings.teams = !settings.teams;
-                if settings.teams {
-                    settings.win_by_kills = false;
-                }
-            }
-            3 => settings.wins = (cycle((settings.wins - 1) as usize, 100, d) + 1) as u16,
-            4 if !settings.teams => settings.win_by_kills = !settings.win_by_kills,
-            4 => {
-                self.notify("Team battles are scored by round wins.");
-                return;
-            }
-            5 => {
-                let options = [60, 90, 120, 150, 180, 240, 300, 600, 0];
-                let current = options
-                    .iter()
-                    .position(|s| *s == settings.round_seconds)
-                    .unwrap_or(3);
-                settings.round_seconds = options[cycle(current, options.len(), d)];
-            }
-            6 => {
-                settings.enclosement_depth = cycle(settings.enclosement_depth as usize, 4, d) as u8;
-                settings.sudden_death = settings.enclosement_depth != 0;
-            }
-            7 => settings.random_starts = !settings.random_starts,
-            8 => settings.conveyor_speed = cycle(settings.conveyor_speed as usize, 3, d) as u8,
-            9 => settings.participant_count = cycle(settings.participant_count - 2, 9, d) + 2,
-            _ => return,
-        }
-        let result = game_config(&self.media.manifest, &settings, false)
-            .map_err(|_| NetError::Protocol)
-            .and_then(|config| {
-                self.network
-                    .as_mut()
-                    .ok_or(NetError::Unavailable)?
-                    .configure(config)
-            });
-        match result {
-            Ok(()) => self.network_ui.lobby_settings = settings,
-            Err(NetError::Full) => self.notify("Those player slots are occupied. Friends must remove their controls before reducing the total."),
-            Err(error) => self.notify(error.to_string()),
         }
     }
 
-    pub(super) fn draw_network_rules(&self) {
-        self.background("MAINMENU.PCX", 0.97);
-        self.heading("ARENA AND BATTLE RULES");
-        let Some(lobby) = self.network.as_ref().and_then(|n| n.lobby.as_ref()) else {
-            return;
-        };
-        let config = &lobby.config;
-        let settings = &self.network_ui.lobby_settings;
-        let scheme = &self.media.manifest.schemes[settings.scheme].id;
-        let rows = [
-            ("Arena", config.arena.name().to_string()),
-            ("Scheme", truncate(scheme, 27)),
-            (
-                "Battle mode",
-                if config.team_play {
-                    "Two teams"
-                } else {
-                    "Free-for-all"
-                }
-                .into(),
-            ),
-            ("Victory target", config.wins_to_match.to_string()),
-            (
-                "Scoring",
-                if config.win_by_kills {
-                    "Kills"
-                } else {
-                    "Round wins"
-                }
-                .into(),
-            ),
-            (
-                "Round time",
-                config
-                    .round_time_ms
-                    .map_or_else(|| "Infinite".into(), |ms| format!("{} seconds", ms / 1000)),
-            ),
-            ("Sudden death depth", config.enclosement_depth.to_string()),
-            (
-                "Random starts",
-                if config.random_starts { "Yes" } else { "No" }.into(),
-            ),
-            (
-                "Conveyors",
-                ["Slow", "Normal", "Fast"][config.conveyor_speed as usize].into(),
-            ),
-            (
-                "Players (unclaimed slots are bots)",
-                config.players.len().to_string(),
-            ),
-            ("Team assignments", "Enter".into()),
-            ("Back", "Enter".into()),
-        ];
-        for (i, (label, value)) in rows.iter().enumerate() {
-            self.row(label, value, i, 73. + i as f32 * 27., 13.);
+    pub(super) fn update_compatibility_error(&mut self) -> bool {
+        if self.network_ui.compatibility_error.is_none() {
+            return false;
         }
-        self.media.center_text(
-            "Original network rules: no Gold roulette, trampolines, Random or Swap.",
-            410.,
-            10.,
-            MUTED,
-        );
-        self.footer("Host settings apply to everyone. Left / right: change  |  Escape: back");
-    }
-
-    pub(super) fn update_network_teams(&mut self) {
-        let Some(network) = self
-            .network
-            .as_ref()
-            .filter(|n| n.host && n.replay.is_none())
-        else {
-            self.change_screen(Screen::NetworkLobby);
-            return;
-        };
-        let Some(lobby) = &network.lobby else {
-            return;
-        };
-        let count = lobby.config.players.len();
-        self.navigation(count + 1);
-        let clicked = self.hover_rows(30., 80., 580., 27., count + 1);
-        if self.back() || ((self.confirm() || clicked) && self.selection == count) {
-            self.change_screen(Screen::NetworkRules);
-            return;
-        }
-        if self.selection < count
-            && (self.delta() != 0
-                || self.confirm()
-                || clicked
-                || is_key_pressed(KeyCode::T)
-                || is_key_pressed(KeyCode::Tab))
+        if self.confirm()
+            || self.back()
+            || self.clicked && Rect::new(210., 325., 230., 36.).contains(self.mouse)
         {
-            let network = self.network.as_mut().expect("active host");
-            let mut config = network.lobby.as_ref().expect("active lobby").config.clone();
-            config.players[self.selection].team ^= 1;
-            if let Err(error) = network.configure(config) {
-                self.notify(error.to_string());
-            }
+            self.network_ui.compatibility_error = None;
         }
+        true
     }
 
-    pub(super) fn draw_network_teams(&self) {
-        self.background("MAINMENU.PCX", 0.97);
-        self.heading("TEAM ASSIGNMENTS");
-        let Some(lobby) = self.network.as_ref().and_then(|n| n.lobby.as_ref()) else {
+    pub(super) fn draw_compatibility_error(&self) {
+        let Some(message) = &self.network_ui.compatibility_error else {
             return;
         };
-        for (i, player) in lobby.config.players.iter().enumerate() {
-            self.row(
-                &format!(
-                    "Player {}: {}",
-                    i + 1,
-                    COLOR_NAMES[lobby.colors[i] as usize]
-                ),
-                if player.team == 0 {
-                    "White team"
-                } else {
-                    "Red team"
-                },
-                i,
-                83. + i as f32 * 27.,
-                14.,
-            );
+        documents::blue_panel(65., 105., 510., 280.);
+        self.media
+            .original_text("Incompatible game / relay", 95., 130., WHITE);
+        let mut lines = Vec::new();
+        let mut line = String::new();
+        for word in message.split_whitespace() {
+            if !line.is_empty() && line.len() + word.len() + 1 > 54 {
+                lines.push(std::mem::take(&mut line));
+            }
+            if !line.is_empty() {
+                line.push(' ');
+            }
+            line.push_str(word);
         }
-        let count = lobby.config.players.len();
-        self.row("Back", "Enter", count, 83. + count as f32 * 27., 14.);
-        self.footer(
-            "Enter / T / left / right: change team  |  Each team needs a player  |  Escape: back",
-        );
+        if !line.is_empty() {
+            lines.push(line);
+        }
+        for (index, line) in lines.iter().enumerate() {
+            self.media
+                .original_text_fit(line, 95., 175. + index as f32 * 23., 450., WHITE);
+        }
+        self.head_cursor(210., 350.);
+        self.media.original_text("Back to games", 235., 334., WHITE);
     }
 
-    pub(super) fn update_network_colors(&mut self) {
-        let seats = self
-            .network
-            .as_ref()
-            .and_then(|n| n.lobby.as_ref().map(|l| l.owned_seats(n.id)))
-            .unwrap_or_default();
-        self.navigation(seats.len() + 1);
-        let clicked = self.hover_rows(30., 80., 580., 26., seats.len() + 1);
-        if self.back() || ((self.confirm() || clicked) && self.selection == seats.len()) {
-            self.change_screen(Screen::NetworkLobby);
-            return;
-        }
-        let delta = self.delta();
-        if self.selection < seats.len() && (delta != 0 || self.confirm() || clicked) {
-            let network = self.network.as_mut().expect("active network");
-            let lobby = network.lobby.as_ref().expect("active lobby");
-            let seat = seats[self.selection];
-            let current = lobby.colors[seat];
-            let direction = if delta == 0 { 1 } else { delta };
-            let next = (1..10)
-                .map(|step| (i32::from(current) + direction * step).rem_euclid(10) as u8)
-                .find(|color| lobby.color_available(seat, *color));
-            let result = next.map_or(Err(NetError::ColorTaken), |color| {
-                network.choose_color(self.selection, color)
-            });
-            if let Err(error) = result {
-                self.notify(error.to_string());
-            }
-        }
-    }
-
-    pub(super) fn draw_network_colors(&self) {
-        self.background("MAINMENU.PCX", 0.97);
-        self.heading("PLAYER COLORS");
-        let Some(network) = &self.network else {
-            return;
-        };
-        let Some(lobby) = &network.lobby else {
-            return;
-        };
-        let seats = lobby.owned_seats(network.id);
-        for (local, seat) in seats.iter().copied().enumerate() {
-            let color = lobby.colors[seat] as usize;
-            let device = network
-                .devices
-                .get(local)
-                .map_or_else(|| format!("Player {}", local + 1), Device::name);
-            self.row(
-                &device,
-                &format!("< {} >", COLOR_NAMES[color]),
-                local,
-                83. + local as f32 * 26.,
-                14.,
-            );
-            draw_rectangle(
-                274.,
-                86. + local as f32 * 26.,
-                14.,
-                14.,
-                PLAYER_COLORS[color],
-            );
-        }
-        self.row(
-            "Back",
-            "Enter",
-            seats.len(),
-            83. + seats.len() as f32 * 26.,
-            14.,
-        );
-        for color in 0..10 {
-            let x = 34. + (color % 5) as f32 * 120.;
-            let y = 365. + (color / 5) as f32 * 32.;
-            let slot = lobby
-                .colors
-                .iter()
-                .position(|c| *c as usize == color)
-                .unwrap();
-            let owner = lobby.owners.get(slot).copied().flatten();
-            draw_rectangle(x, y, 10., 10., PLAYER_COLORS[color]);
-            self.media.text(
-                COLOR_NAMES[color],
-                x + 14.,
-                y,
-                11.,
-                if owner.is_some() { MUTED } else { LIGHT },
-            );
-            self.media.text(
-                if owner == Some(network.id) {
-                    "Yours"
-                } else if owner.is_some() {
-                    "Taken"
-                } else {
-                    "Available"
-                },
-                x + 14.,
-                y + 13.,
-                9.,
-                MUTED,
-            );
-        }
-        self.footer("Left / right: choose a free color  |  Enter: next color  |  Escape: back");
-    }
-
-    pub(super) fn update_network_lobby(&mut self) {
-        if self.network.as_ref().is_none_or(|network| network.id == 0) {
-            if self.back() {
-                self.leave_network();
-            }
-            return;
-        }
-        let actions = lobby_actions(self.network.as_ref().is_some_and(|n| n.host));
-        self.navigation(actions.len());
-        let clicked = self.hover_rows(30., 300., 580., 24., actions.len());
-        if self.confirm() || clicked {
-            let result = match actions[self.selection] {
-                LobbyAction::Start => {
-                    self.network
-                        .as_mut()
-                        .ok_or(NetError::Unavailable)
-                        .and_then(|n| {
-                            n.start(
-                                self.cli.seed.wrapping_add(self.ui_elapsed_ms),
-                                (get_time() * 1000.) as u64,
-                            )
-                        })
-                }
-                LobbyAction::Colors => {
-                    self.change_screen(Screen::NetworkColors);
-                    Ok(())
-                }
-                LobbyAction::Rules => {
-                    self.change_screen(Screen::NetworkRules);
-                    Ok(())
-                }
-                LobbyAction::Devices => {
-                    self.open_devices();
-                    Ok(())
-                }
-                LobbyAction::Leave => {
-                    self.leave_network();
-                    Ok(())
-                }
-            };
-            if let Err(error) = result {
-                self.notify(error.to_string());
-            }
-        }
-        if self.back() {
-            self.leave_network();
-        }
-    }
-    fn leave_network(&mut self) {
+    pub(super) fn leave_network(&mut self) {
         let online = self.network.as_ref().is_some_and(|n| n.server.is_some());
         self.network = None;
         self.simulation = None;
@@ -1026,21 +905,19 @@ impl App {
     }
     pub(super) fn draw_network_starting(&self) {
         self.draw_battle();
-        draw_rectangle(90., 175., 460., 125., Color::new(0.02, 0.04, 0.1, 0.96));
-        self.media.center_text("GET READY", 194., 24., GOLD);
-        self.media.center_text(
-            "Waiting for everyone to finish loading...",
-            237.,
-            13.,
-            LIGHT,
+        documents::blue_panel(90., 175., 460., 125.);
+        self.media
+            .original_text("Loading battle...", 125., 195., WHITE);
+        self.media
+            .original_text_fit("Waiting for all players to load.", 125., 236., 390., WHITE);
+        self.media.original_text_fit(
+            "The countdown starts automatically.",
+            125.,
+            267.,
+            390.,
+            WHITE,
         );
-        self.media.center_text(
-            "The countdown starts together automatically.",
-            266.,
-            12.,
-            MUTED,
-        );
-        self.footer("Escape: leave game");
+        self.original_footer();
     }
     pub(super) async fn update_network_session(&mut self, elapsed_ms: u32) -> Result<()> {
         let network = self.network.as_mut().expect("active network");
@@ -1056,8 +933,14 @@ impl App {
         let events = match result {
             Ok(events) => events,
             Err(error) => {
+                let detail = network.error_detail.take();
                 self.leave_network();
-                self.notify(error.to_string());
+                if error == NetError::Version {
+                    self.network_ui.compatibility_error =
+                        Some(detail.unwrap_or_else(|| error.to_string()));
+                } else {
+                    self.notify(error.to_string());
+                }
                 self.media.music("MENU").await;
                 return Ok(());
             }
@@ -1072,6 +955,61 @@ impl App {
             network.saved = true;
         }
         let warning = network.warning.take();
+        if !self.network_ui.initial_setup_applied
+            && network.host
+            && network
+                .lobby
+                .as_ref()
+                .is_some_and(|lobby| lobby.setup.is_some())
+        {
+            let id = &self.media.manifest.schemes[self.network_ui.lobby_settings.scheme].id;
+            network.set_scheme_file(id.rsplit('/').next().unwrap_or(id).to_owned())?;
+            if self.network_ui.lobby_settings.random_arena {
+                network.set_random_arena(true)?;
+            }
+            self.network_ui.initial_setup_applied = true;
+        }
+        if network.replay.is_none() && network.id != 0 {
+            for (local, seat) in network.owned_seats().into_iter().enumerate() {
+                let Some(lobby) = network.lobby.as_ref() else {
+                    continue;
+                };
+                let index = lobby
+                    .setup
+                    .as_ref()
+                    .and_then(|setup| setup.devices[seat])
+                    .map_or(local, usize::from);
+                let Some(device) = network.devices.get(index).cloned() else {
+                    continue;
+                };
+                if self
+                    .network_ui
+                    .applied_colors
+                    .iter()
+                    .any(|(_, applied)| *applied == device)
+                {
+                    continue;
+                }
+                self.network_ui.applied_colors.push((seat, device.clone()));
+                if let Some(preference) = self
+                    .settings
+                    .network_colors
+                    .iter()
+                    .find(|p| p.device == device)
+                {
+                    let target = preference.color as usize;
+                    if target != seat
+                        && lobby.setup.as_ref().is_some_and(|setup| {
+                            setup.slots[target] == bomberman_net::SlotState::Open
+                        })
+                    {
+                        if let Err(error) = network.select_player(target, Some(index)) {
+                            network.warning = Some(error.to_string());
+                        }
+                    }
+                }
+            }
+        }
         if let Some(lobby) = &network.lobby {
             // The host's arena can differ from this computer's saved arena.
             // Prepare it and its audio on lobby updates, before Start arrives.
@@ -1091,10 +1029,7 @@ impl App {
             self.paused = replay.simulation.paused;
             let arena = replay.simulation.config.arena.index();
             self.media.ensure_arena(arena).await?;
-            let colors = network
-                .lobby
-                .as_ref()
-                .map_or(bomberman_net::DEFAULT_COLORS, |lobby| lobby.colors);
+            let colors = network.colors();
             self.media
                 .ensure_players_with_colors(&replay.simulation.players, &colors)
                 .await?;
@@ -1113,22 +1048,56 @@ impl App {
                 }
             }
         } else {
-            Screen::NetworkLobby
+            match network
+                .lobby
+                .as_ref()
+                .and_then(|lobby| lobby.setup.as_ref())
+                .map(|setup| setup.phase)
+            {
+                Some(SetupPhase::Players) => Screen::NetworkDevices,
+                Some(SetupPhase::Arena) => Screen::NetworkRules,
+                _ => Screen::NetworkLobby,
+            }
         };
-        let editing_lobby = target == Screen::NetworkLobby
+        let phase = network
+            .lobby
+            .as_ref()
+            .and_then(|l| l.setup.as_ref())
+            .map(|s| s.phase);
+        let phase_changed = phase != self.network_ui.observed_phase;
+        self.network_ui.observed_phase = phase;
+        if phase_changed && target == Screen::NetworkDevices {
+            self.network_ui.devices_shared = true;
+            self.network_ui.devices_return = Screen::NetworkLobby;
+        }
+        let editing_lobby = !phase_changed
+            && matches!(
+                target,
+                Screen::NetworkLobby | Screen::NetworkDevices | Screen::NetworkRules
+            )
             && matches!(
                 self.screen,
-                Screen::NetworkDevices
-                    | Screen::NetworkColors
+                Screen::NetworkLobby
+                    | Screen::NetworkDevices
                     | Screen::NetworkRules
-                    | Screen::NetworkTeams
+                    | Screen::NetworkOptions
             );
-        if self.screen != Screen::Help && !editing_lobby && self.screen != target {
+        let victory = self.screen == Screen::Victory && target == Screen::Results;
+        let target = if target == Screen::Results && self.screen == Screen::Battle {
+            Screen::Victory
+        } else {
+            target
+        };
+        if self.screen != Screen::Help && !editing_lobby && !victory && self.screen != target {
             self.change_screen(target);
             if target == Screen::Battle {
                 let arena = self.simulation.as_ref().unwrap().config.arena.index();
-                self.media.music(MUSIC[arena]).await;
-            } else if target == Screen::Results {
+                if self.settings.disable_gameplay_music {
+                    self.media.stop_music();
+                } else {
+                    self.media.music(MUSIC[arena]).await;
+                }
+            } else if matches!(target, Screen::Victory | Screen::Results) {
                 self.media.music("LOSE").await;
             }
         }
@@ -1152,9 +1121,7 @@ impl App {
                     match actions[self.selection] {
                         PauseAction::Resume => Some(Action::Pause(false)),
                         PauseAction::Help => {
-                            self.previous = Screen::Battle;
-                            self.previous_selection = self.selection;
-                            self.change_screen(Screen::Help);
+                            self.open_document("MANUAL.BM");
                             None
                         }
                         PauseAction::Restart => Some(Action::Rematch),
@@ -1170,7 +1137,7 @@ impl App {
             Screen::Results => {
                 let actions = results_actions(Some(host));
                 self.navigation(actions.len());
-                let click = self.hover_rows(160., 360., 320., 29., actions.len());
+                let click = self.hover_rows(130., 410., 470., 21., actions.len());
                 if self.back() {
                     self.leave_network();
                     None
@@ -1202,354 +1169,288 @@ impl App {
             }
         }
     }
-    pub(super) fn draw_multiplayer_menu(&self, _internet: bool) {
-        self.background("MAINMENU.PCX", 0.97);
-        self.heading("MULTIPLAYER");
-        self.media.center_text(
-            "Play with nearby computers or your friends online.",
-            100.,
-            13.,
-            LIGHT,
+    fn browser_row(&self, label: &str, value: &str, index: usize, y: f32, enabled: bool) {
+        self.media
+            .original_text_fit(label, 55., y, 365., if enabled { WHITE } else { LIGHTGRAY });
+        self.media.original_text_fit(
+            value,
+            430.,
+            y,
+            195.,
+            if enabled { WHITE } else { LIGHTGRAY },
         );
-        for (i, label) in ["LAN", "Internet", "Back"].iter().enumerate() {
-            self.row(label, "Enter", i, 186. + i as f32 * 42., 16.);
+        if self.selection == index {
+            self.head_cursor(37., y + 16.);
         }
-        self.footer("Arrow keys + Enter  |  Escape: back");
+    }
+    fn browser_header(&self, title: &str, status: &str) {
+        self.original_background(5);
+        self.media.original_text(title, 55., 40., WHITE);
+        self.media.original_text_fit(status, 55., 72., 555., WHITE);
+    }
+    fn browser_footer(&self) {
+        self.original_footer();
+        self.media.font_text(
+            "FONT1.FON",
+            "Nickname, controls and hosting rules save automatically.",
+            55.,
+            465.,
+            12.,
+            WHITE,
+        );
+    }
+    pub(super) fn draw_nickname(&self) {
+        self.original_background(5);
+        documents::blue_panel(60., 130., 520., 200.);
+        self.media.original_text("Nickname", 90., 154., WHITE);
+        draw_rectangle_lines(89., 193., 462., 36., 1., WHITE);
+        let nickname = self
+            .frontend
+            .nickname_edit
+            .as_deref()
+            .unwrap_or(&self.settings.nickname);
+        self.media
+            .original_text(&format!("{nickname}_"), 100., 203., WHITE);
+        self.media
+            .original_text("Enter: save   Escape: cancel", 90., 256., WHITE);
+        self.media
+            .original_text("Up to 24 letters, numbers or symbols.", 90., 284., WHITE);
     }
     pub(super) fn draw_online(&self) {
-        self.background("MAINMENU.PCX", 0.97);
-        self.heading("CONNECT TO FRIENDS");
-        self.media.center_text(
-            "Paste the private server link once to find and host games.",
-            79.,
-            12.,
-            LIGHT,
+        self.original_background(5);
+        documents::blue_panel(60., 100., 520., 260.);
+        self.media
+            .original_text("Internet server link", 85., 122., WHITE);
+        self.media.original_text_fit(
+            "Get the group's full server link from a friend.",
+            85.,
+            155.,
+            470.,
+            WHITE,
         );
-        draw_rectangle(35., 111., 570., 37., Color::new(0.12, 0.2, 0.32, 1.));
-        self.media.text(
+        draw_rectangle_lines(84., 184., 472., 29., 1., WHITE);
+        self.media.original_text(
             if self.network_ui.text.is_empty() {
-                "Paste private server link"
+                "Paste server link here"
             } else {
                 "Private link ready"
             },
-            48.,
-            122.,
-            15.,
-            GOLD,
+            95.,
+            191.,
+            WHITE,
         );
-        self.media.center_text(
-            if self.network_ui.directory.is_some() {
-                "Connecting securely..."
-            } else {
-                "Ask a friend for the group's server link."
-            },
-            157.,
-            12.,
-            MUTED,
-        );
-        for (i, label) in ["Paste server link", "Connect", "Back"].iter().enumerate() {
-            self.row(label, "Enter", i, 186. + i as f32 * 42., 16.);
+        for (i, label) in ["Paste server link", "Connect", "Cancel"]
+            .iter()
+            .enumerate()
+        {
+            self.media
+                .original_text(label, 95., 226. + i as f32 * 32., WHITE);
+            if self.selection == i {
+                self.head_cursor(77., 242. + i as f32 * 32.);
+            }
         }
-        self.footer("Ctrl-V / Cmd-V: paste  |  Backspace / Delete: clear  |  Escape: back");
+        if self.network_ui.directory.is_some() {
+            self.media.original_text("Connecting...", 340., 258., WHITE);
+        }
+        self.original_footer();
+        self.media.font_text(
+            "FONT1.FON",
+            "Ctrl-V / Cmd-V: paste   Backspace / Delete: clear",
+            55.,
+            465.,
+            12.,
+            WHITE,
+        );
     }
     pub(super) fn draw_internet(&self) {
-        self.background("MAINMENU.PCX", 0.97);
-        self.heading("FRIENDS' GAMES");
-        self.media.center_text(
-            if self.network_ui.directory_ready {
-                "Host a game or join a friend. This list updates automatically."
+        let status = if self.network_ui.directory_ready {
+            "Host a game or choose one below. Games refresh automatically."
+        } else if self.network_ui.directory_error == Some(NetError::Version) {
+            "Incompatible server. Update the relay and game to protocol 8."
+        } else if self.network_ui.directory_error.is_some() {
+            "Server unavailable. Refresh or change the server link."
+        } else if self.network_ui.saved.is_some() || self.network_ui.directory_profile.is_some() {
+            "Connecting to the saved server..."
+        } else {
+            "Add a server link to find and host Internet games."
+        };
+        self.browser_header("Internet games", status);
+        for (i, action) in INTERNET_ACTIONS.iter().copied().enumerate() {
+            let enabled = match action {
+                BrowserAction::Host => self.network_ui.directory_ready,
+                BrowserAction::CopyServer | BrowserAction::Refresh => {
+                    self.network_ui.saved.is_some() || self.network_ui.directory_profile.is_some()
+                }
+                _ => true,
+            };
+            let value = if action == BrowserAction::Controls {
+                format!("{} player(s)", self.network_ui.devices.len())
             } else {
-                "Connecting to your saved private server..."
-            },
-            75.,
-            12.,
-            LIGHT,
-        );
-        for (i, label) in [
-            "Host game",
-            "Change server",
-            "Copy server link",
-            "Local keyboards and controllers",
-            "Back",
-        ]
-        .iter()
-        .enumerate()
-        {
-            self.row(
-                label,
-                if i == 0 && !self.network_ui.directory_ready {
-                    "Unavailable"
-                } else {
-                    "Enter"
-                },
+                String::new()
+            };
+            self.browser_row(
+                &action.label(
+                    &self.settings.nickname,
+                    self.network_ui.saved.is_some() || self.network_ui.directory_profile.is_some(),
+                ),
+                &value,
                 i,
-                107. + i as f32 * 26.,
-                13.,
+                ACTION_Y + i as f32 * ROW_HEIGHT,
+                enabled,
             );
         }
+        self.media
+            .original_text("Friends' games:", 55., 278., WHITE);
         let compatibility = crate::network::compatibility(&self.media.manifest);
-        let offset = list_offset(self.selection, 5, self.network_ui.rooms.len());
+        let offset = list_offset(
+            self.selection,
+            INTERNET_ACTIONS.len(),
+            self.network_ui.rooms.len(),
+        );
         for (i, room) in self
             .network_ui
             .rooms
             .iter()
             .enumerate()
             .skip(offset)
-            .take(7)
+            .take(VISIBLE_GAMES)
         {
-            let status = match room.joinable(&compatibility) {
-                Ok(()) => format!("{}/10 computers - Join", room.computers),
-                Err(NetError::Full) => "Full".into(),
-                Err(NetError::InProgress) => "Playing".into(),
-                Err(NetError::Assets) => "Different assets".into(),
-                _ => "Different version".into(),
+            let (status, enabled) = match room.joinable(&compatibility) {
+                Ok(()) => (format!("{}/10 computers - Join", room.computers), true),
+                Err(NetError::Full) => ("Full".into(), false),
+                Err(NetError::InProgress) => ("Playing".into(), false),
+                Err(NetError::Assets) => ("Different game data".into(), false),
+                _ => ("Different version".into(), false),
             };
-            self.row(
+            self.browser_row(
                 &format!("Game {}", room.code),
                 &status,
-                i + 5,
-                251. + (i - offset) as f32 * 26.,
-                13.,
+                i + INTERNET_ACTIONS.len(),
+                GAMES_Y + (i - offset) as f32 * ROW_HEIGHT,
+                enabled,
             );
         }
-        if self.network_ui.rooms.is_empty() && self.network_ui.directory_ready {
-            self.media.center_text(
-                "No games yet. Anyone in your group can host one.",
-                285.,
-                13.,
-                MUTED,
+        if self.network_ui.rooms.is_empty() {
+            self.media.original_text_fit(
+                if self.network_ui.directory_ready {
+                    "No games yet. Choose Host game to start one."
+                } else {
+                    "Connect to a server to see games."
+                },
+                55.,
+                GAMES_Y,
+                555.,
+                WHITE,
             );
         }
-        self.footer(if self.network_ui.directory_error.is_some() {
-            "Server unavailable. Check your connection or choose Change server."
-        } else {
-            "Friends using the same saved server appear here without new invitations."
-        });
+        self.browser_footer();
     }
     pub(super) fn draw_lan(&self) {
-        self.background("MAINMENU.PCX", 0.97);
         if self.network_ui.lan_manual {
-            self.heading("JOIN BY IP");
-            self.media.center_text(
-                "Enter the host's local IP address. The default port is 1997.",
-                79.,
+            self.original_background(5);
+            documents::blue_panel(60., 100., 520., 260.);
+            self.media
+                .original_text("Join LAN game by IP", 85., 122., WHITE);
+            self.media.original_text_fit(
+                "Enter the host address. The default port is 1997.",
+                85.,
+                155.,
+                470.,
+                WHITE,
+            );
+            draw_rectangle_lines(84., 184., 472., 29., 1., WHITE);
+            self.media.original_text_fit(
+                &format!("{}_", self.network_ui.text),
+                95.,
+                191.,
+                450.,
+                WHITE,
+            );
+            for (i, label) in ["Join game", "Cancel"].iter().enumerate() {
+                self.media
+                    .original_text(label, 95., 226. + i as f32 * 32., WHITE);
+                if self.selection == i {
+                    self.head_cursor(77., 242. + i as f32 * 32.);
+                }
+            }
+            self.original_footer();
+            self.media.font_text(
+                "FONT1.FON",
+                "Type or Ctrl-V / Cmd-V: paste   Escape: cancel",
+                55.,
+                465.,
                 12.,
-                LIGHT,
+                WHITE,
             );
-            draw_rectangle(35., 111., 570., 37., Color::new(0.12, 0.2, 0.32, 1.));
-            self.media.text(
-                &if self.network_ui.text.is_empty() {
-                    "Host IP address".into()
-                } else {
-                    truncate(&self.network_ui.text, 45)
-                },
-                48.,
-                122.,
-                15.,
-                GOLD,
-            );
-            self.row("Join game", "Enter", 0, 186., 16.);
-            self.row("Back", "Enter", 1, 228., 16.);
-            self.footer("Type or Ctrl-V / Cmd-V: paste address  |  Escape: back");
             return;
         }
-        self.heading("LAN GAMES");
-        self.media.center_text(
-            "Host a game or select a nearby computer. Games appear automatically.",
-            75.,
-            12.,
-            LIGHT,
+        self.browser_header(
+            "LAN games",
+            if self.network_ui.lan_error {
+                "Discovery unavailable. Use Join by IP or try Refresh games."
+            } else if self.network_ui.scan.is_some() {
+                "Searching the local network..."
+            } else {
+                "Host a game or choose a nearby game below."
+            },
         );
-        for (i, label) in [
-            "Host game",
-            "Join by IP",
-            "Local keyboards and controllers",
-            "Back",
-        ]
-        .iter()
-        .enumerate()
-        {
-            self.row(label, "Enter", i, 107. + i as f32 * 26., 13.);
+        for (i, action) in LAN_ACTIONS.iter().copied().enumerate() {
+            let value = if action == BrowserAction::Controls {
+                format!("{} player(s)", self.network_ui.devices.len())
+            } else {
+                String::new()
+            };
+            self.browser_row(
+                &action.label(&self.settings.nickname, false),
+                &value,
+                i,
+                ACTION_Y + i as f32 * ROW_HEIGHT,
+                true,
+            );
         }
+        self.media.original_text("Nearby games:", 55., 278., WHITE);
         let compatibility = crate::network::compatibility(&self.media.manifest);
-        let offset = list_offset(self.selection, 4, self.network_ui.games.len());
+        let offset = list_offset(
+            self.selection,
+            LAN_ACTIONS.len(),
+            self.network_ui.games.len(),
+        );
         for (i, game) in self
             .network_ui
             .games
             .iter()
             .enumerate()
             .skip(offset)
-            .take(7)
+            .take(VISIBLE_GAMES)
         {
-            let status = match compatibility.check(&game.advertisement.compatibility) {
-                Ok(()) => "Join",
-                Err(NetError::Assets) => "Different assets",
-                _ => "Different version",
+            let (status, enabled) = match compatibility.check(&game.advertisement.compatibility) {
+                Ok(()) => ("Join", true),
+                Err(NetError::Assets) => ("Different game data", false),
+                _ => ("Different version", false),
             };
-            self.row(
-                &format!("{}", game.address),
+            self.browser_row(
+                &game.address.to_string(),
                 status,
-                i + 4,
-                251. + (i - offset) as f32 * 26.,
-                13.,
+                i + LAN_ACTIONS.len(),
+                GAMES_Y + (i - offset) as f32 * ROW_HEIGHT,
+                enabled,
             );
         }
         if self.network_ui.games.is_empty() {
-            self.media.center_text(
-                if self.network_ui.lan_error {
-                    "Allow Local Network access and UDP 1997, or use Join by IP."
-                } else {
-                    "No nearby games yet. A friend can select Host game."
-                },
-                285.,
-                12.,
-                MUTED,
+            self.media.original_text_fit(
+                "No games found. Host one or use Join by IP.",
+                55.,
+                GAMES_Y,
+                555.,
+                WHITE,
             );
         }
-        self.footer(if self.network_ui.scan.is_some() {
-            "Searching your local networks..."
-        } else {
-            "Same local network required  |  Arrow keys + Enter: join  |  Escape: back"
-        });
-    }
-    pub(super) fn draw_network_devices(&self) {
-        self.background("MAINMENU.PCX", 0.97);
-        self.heading("LOCAL NETWORK PLAYERS");
-        for i in 0..12 {
-            let device = match i {
-                0 => Device::Keyboard1,
-                1 => Device::Keyboard2,
-                n => Device::Controller((n - 2) as u8),
-            };
-            self.row(
-                &device.name(),
-                if self.network_ui.devices.contains(&device) {
-                    "Playing"
-                } else {
-                    "Off"
-                },
-                i,
-                73. + i as f32 * 26.,
-                13.,
-            );
-        }
-        self.row("Back", "Enter", 12, 385., 14.);
-        self.footer("Choose 1-10 local devices. Assignments apply only to this network session.");
-    }
-    pub(super) fn draw_network_lobby(&self) {
-        self.background("MAINMENU.PCX", 0.97);
-        self.heading(
-            if self.network.as_ref().is_some_and(|n| n.server.is_some()) {
-                "FRIENDS' GAME LOBBY"
-            } else {
-                "LAN GAME LOBBY"
-            },
-        );
-        let Some(network) = &self.network else {
-            return;
-        };
-        if network.id == 0 {
-            self.media.center_text(
-                if network.server.is_some() {
-                    "Connecting securely..."
-                } else {
-                    "Connecting to LAN host..."
-                },
-                145.,
-                19.,
-                GOLD,
-            );
-            self.footer("Escape: cancel");
-            return;
-        }
-        self.media.center_text(
-            &format!(
-                "{}  /  {}",
-                if network.server.is_some() {
-                    format!("Game {}", network.room)
-                } else {
-                    "Local network game".into()
-                },
-                if network.host {
-                    "You are the host"
-                } else {
-                    "Connected"
-                }
-            ),
-            68.,
-            14.,
-            GOLD,
-        );
-        if let Some(lobby) = &network.lobby {
-            for (i, owner) in lobby.owners.iter().enumerate() {
-                let label = match owner {
-                    None => "Computer".into(),
-                    Some(id) if *id == network.id => "This computer".into(),
-                    Some(id) => format!("Friend {}", id),
-                };
-                self.media.text(
-                    &format!(
-                        "{}: {}  -  {}",
-                        i + 1,
-                        COLOR_NAMES[lobby.colors[i] as usize],
-                        label
-                    ),
-                    48.,
-                    94. + i as f32 * 18.,
-                    12.,
-                    LIGHT,
-                );
-            }
-            self.media.center_text(
-                &format!(
-                    "{}  /  {}  /  {} of 10 computers",
-                    lobby.config.arena.name(),
-                    if lobby.config.team_play {
-                        "Two teams"
-                    } else {
-                        "Free-for-all"
-                    },
-                    lobby.peers.len()
-                ),
-                282.,
-                12.,
-                GOLD,
-            );
-        }
-        for (i, action) in lobby_actions(network.host).iter().enumerate() {
-            let label = match action {
-                LobbyAction::Start => "Start game",
-                LobbyAction::Rules => "Arena and battle rules",
-                LobbyAction::Colors => "Player colors",
-                LobbyAction::Devices => "Local keyboards and controllers",
-                LobbyAction::Leave => "Leave game",
-            };
-            self.row(label, "Enter", i, 303. + i as f32 * 24., 13.);
-        }
-        if network.host && network.server.is_none() {
-            let addresses = self
-                .network_ui
-                .lan_addresses
-                .iter()
-                .map(ToString::to_string)
-                .collect::<Vec<_>>()
-                .join("  ");
-            self.footer(&format!(
-                "Friends can find this game automatically. Join by IP: {}",
-                truncate(&addresses, 55)
-            ));
-        } else {
-            self.footer(if network.host {
-                "Start when friends have selected their controls."
-            } else {
-                "Choose your controls and color, then wait for the host to start."
-            });
-        }
+        self.browser_footer();
     }
 }
 
 fn list_offset(selection: usize, base: usize, len: usize) -> usize {
     selection
-        .saturating_sub(base + 6)
-        .min(len.saturating_sub(7))
+        .saturating_sub(base + VISIBLE_GAMES - 1)
+        .min(len.saturating_sub(VISIBLE_GAMES))
 }

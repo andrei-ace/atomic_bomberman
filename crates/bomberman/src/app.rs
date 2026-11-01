@@ -9,21 +9,24 @@ use crate::{
 use anyhow::{Context, Result};
 use bomberman_assets::Manifest;
 use bomberman_core::{
-    BombKind, Direction, GameEvent, Hazard, Powerup, RoulettePhase, RouletteWheel, RoundPhase,
-    Simulation, Terrain, TilePos, TILE_HEIGHT, TILE_WIDTH,
+    BombKind, Direction, GameEvent, Hazard, Powerup, RouletteWheel, RoundPhase, Simulation,
+    Terrain, TilePos, TILE_HEIGHT, TILE_WIDTH,
 };
 use macroquad::prelude::*;
+mod documents;
+mod frontend;
+mod help;
 #[cfg(debug_assertions)]
 mod input_trace;
 mod menus;
+mod mods;
+mod network_frontend;
 mod network_ui;
+use frontend::Frontend;
 use menus::{pause_actions, results_actions, PauseAction, ResultsAction};
 use network_ui::NetworkUi;
 
-const MAIN_FOOTER: &str = concat!(
-    "Arrow keys + Enter  /  F1 help  /  F11 fullscreen  /  v",
-    env!("CARGO_PKG_VERSION")
-);
+const MAIN_FOOTER: &str = concat!("v", env!("CARGO_PKG_VERSION"));
 
 const GOLD: Color = Color::new(1., 0.87, 0.23, 1.);
 const LIGHT: Color = Color::new(0.91, 0.94, 1., 1.);
@@ -45,24 +48,28 @@ const PLAYER_COLORS: [Color; 10] = [
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Screen {
+    Intro,
     Main,
     Setup,
+    Arena,
+    Manual,
+    Victory,
     Settings,
+    Mods,
+    Nickname,
     Controls,
     Help,
     Battle,
     Results,
     Roulette,
-    Multiplayer,
     Internet,
     Online,
     Lan,
     NetworkLobby,
     NetworkStarting,
     NetworkDevices,
-    NetworkColors,
     NetworkRules,
-    NetworkTeams,
+    NetworkOptions,
 }
 
 pub struct App {
@@ -91,6 +98,8 @@ pub struct App {
     quit: bool,
     network: Option<crate::network::Network>,
     network_ui: NetworkUi,
+    frontend: Frontend,
+    mod_ui: mods::State,
 }
 
 impl App {
@@ -106,6 +115,11 @@ impl App {
         let target = render_target(640, 480);
         target.texture.set_filter(FilterMode::Nearest);
         let network_ui = NetworkUi::new(&settings);
+        let initial_screen = if cli.smoke_frames.is_none() && !cli.skip_intro {
+            Screen::Intro
+        } else {
+            Screen::Main
+        };
         let mut this = Self {
             #[cfg(debug_assertions)]
             input_trace: input_trace::InputTrace::new(),
@@ -114,7 +128,7 @@ impl App {
             media,
             controllers: Controllers::new(),
             target,
-            screen: Screen::Main,
+            screen: initial_screen,
             previous: Screen::Main,
             selection: 0,
             previous_selection: 0,
@@ -132,6 +146,8 @@ impl App {
             quit: false,
             network: None,
             network_ui,
+            frontend: Frontend::default(),
+            mod_ui: mods::State::default(),
         };
         // Invalid hand-edited bindings are recovered individually.
         let defaults = Settings::default();
@@ -152,7 +168,17 @@ impl App {
         if this.cli.smoke_frames.is_some() && !this.cli.smoke_menu {
             this.start_battle(true).await?;
         } else {
-            this.media.music("MENU").await;
+            this.media
+                .music(if initial_screen == Screen::Intro {
+                    "TITLE"
+                } else {
+                    "MENU"
+                })
+                .await;
+            if initial_screen == Screen::Intro {
+                clear_background(BLACK);
+                next_frame().await;
+            }
         }
         Ok(this)
     }
@@ -172,17 +198,27 @@ impl App {
         // keystrokes must not become invitation text when a form is opened.
         while get_char_pressed().is_some() {}
         self.screen = screen;
+        self.frontend.entered_ms = self.ui_elapsed_ms;
         self.selection = 0;
         self.capture = None;
     }
 
     async fn start_battle(&mut self, bots: bool) -> Result<()> {
         self.network = None;
+        if self.settings.random_arena {
+            self.settings.arena = ((self.cli.seed ^ self.ui_elapsed_ms)
+                % self.media.manifest.arenas.len() as u64)
+                as usize;
+        }
         let config = game_config(&self.media.manifest, &self.settings, bots)?;
         self.simulation =
             Some(Simulation::new(config, self.cli.seed).context("start local battle")?);
         self.media.ensure_arena(self.settings.arena).await?;
-        self.media.music(MUSIC[self.settings.arena]).await;
+        if self.settings.disable_gameplay_music {
+            self.media.stop_music();
+        } else {
+            self.media.music(MUSIC[self.settings.arena]).await;
+        }
         self.paused = false;
         self.round_banner = None;
         self.change_screen(Screen::Battle);
@@ -233,23 +269,99 @@ impl App {
                 set_fullscreen(self.settings.fullscreen);
                 self.save();
             }
-            if is_key_pressed(KeyCode::F1) && self.capture.is_none() {
+            if is_key_pressed(KeyCode::F1)
+                && self.capture.is_none()
+                && self.network_ui.compatibility_error.is_none()
+                && self.frontend.nickname_edit.is_none()
+                && self.screen != Screen::Intro
+            {
                 if self.screen == Screen::Help {
                     self.screen = self.previous;
                     self.selection = self.previous_selection;
                 } else {
-                    self.previous = self.screen;
-                    self.previous_selection = self.selection;
-                    self.change_screen(Screen::Help);
+                    let document = match self.screen {
+                        Screen::Setup | Screen::Controls | Screen::NetworkDevices => "INPUT.BM",
+                        Screen::Settings | Screen::Mods => "OPTIONS.BM",
+                        Screen::Roulette => "ROULETTE.BM",
+                        Screen::NetworkLobby
+                        | Screen::NetworkRules
+                        | Screen::NetworkOptions
+                        | Screen::Lan
+                        | Screen::Internet
+                        | Screen::Online => "NETWORK.BM",
+                        _ => "MANUAL.BM",
+                    };
+                    self.open_document(document);
                 }
             }
+            let menu_before = self.screen;
+            let intro_before = self.frontend.intro;
+            let menu_input = get_keys_pressed()
+                .iter()
+                .any(|key| !matches!(key, KeyCode::F12 | KeyCode::F9 | KeyCode::F10))
+                || self.controllers.up
+                || self.controllers.down
+                || self.controllers.left
+                || self.controllers.right
+                || self.controllers.confirm
+                || self.controllers.back
+                || self.clicked;
+            let menu_confirm = self.confirm()
+                || self.back()
+                || self.clicked
+                || is_key_pressed(KeyCode::Space)
+                    && matches!(
+                        menu_before,
+                        Screen::Intro
+                            | Screen::Main
+                            | Screen::Setup
+                            | Screen::Arena
+                            | Screen::Roulette
+                            | Screen::NetworkDevices
+                            | Screen::NetworkRules
+                    );
             self.update(elapsed_ms).await?;
-            if !matches!(self.screen, Screen::Online | Screen::Lan) {
+            let splash_advanced =
+                menu_before == Screen::Intro && self.frontend.intro != intro_before;
+            if !matches!(
+                menu_before,
+                Screen::Battle | Screen::NetworkStarting | Screen::Victory
+            ) {
+                if menu_input || splash_advanced {
+                    self.media.interface_sound(20).await;
+                }
+                if menu_input && menu_confirm || splash_advanced {
+                    self.media.interface_sound(10).await;
+                }
+            }
+            if splash_advanced && self.frontend.intro == 2 {
+                self.media.interface_sound(2800).await;
+            }
+            if menu_before != self.screen {
+                match self.screen {
+                    Screen::Main => {
+                        self.media.stop_music();
+                        self.media.music("MENU").await;
+                    }
+                    Screen::Setup | Screen::Arena => self.media.music("WIN").await,
+                    Screen::Settings => self.media.music("MENU").await,
+                    Screen::Lan
+                    | Screen::Internet
+                    | Screen::Online
+                    | Screen::NetworkLobby
+                    | Screen::NetworkDevices
+                    | Screen::NetworkRules => self.media.music("NETWORK").await,
+                    _ => {}
+                }
+            }
+            if !matches!(self.screen, Screen::Online | Screen::Lan)
+                && self.frontend.nickname_edit.is_none()
+            {
                 while get_char_pressed().is_some() {}
             }
+            self.draw();
             #[cfg(debug_assertions)]
             self.write_state_probe()?;
-            self.draw();
             #[cfg(debug_assertions)]
             if let Some(sample) = input_trace::sample(self, trace_input) {
                 self.input_trace.push(sample);
@@ -295,15 +407,28 @@ impl App {
                 let path = std::path::PathBuf::from(path);
                 let temporary = path.with_extension("json.tmp");
                 let state = serde_json::json!({
+                    "asset_fingerprint": crate::network::compatibility(&self.media.manifest).assets,
+                    "mods": self.mod_ui.probe(),
+                    "active_mod": self.cli.mod_path,
                     "frame": self.frame,
                     "version": bomberman_net::APP_VERSION,
                     "main_footer": MAIN_FOOTER,
+                    "main_actions": ["Start Game","LAN","Internet","Options","About Bomberman","Online Manual","Exit Bomberman"],
+                    "network_menu_layout": 4,
+                    "network_lobby_rows": network_ui::LOBBY_ROWS,
+                    "network_rule_actions": ["Arena", "VictoryTarget"],
+                    "compatibility_error": self.network_ui.compatibility_error,
+                    "interface_audio": self.media.interface_audio_probe(),
                     "pause_actions": pause_actions(self.network.as_ref().map(|n| n.host)).iter().map(|action| format!("{action:?}")).collect::<Vec<_>>(),
                     "results_actions": results_actions(self.network.as_ref().map(|n| n.host)).iter().map(|action| format!("{action:?}")).collect::<Vec<_>>(),
                     "protocol": bomberman_net::PROTOCOL_VERSION,
                     "input_trace": self.input_trace.frames(),
                     "screen": format!("{:?}", self.screen),
                     "selection": self.selection,
+                    "frontend": {"intro": self.frontend.intro, "document": self.frontend.document.name,
+                        "document_title":self.frontend.document.title(),
+                        "nickname": self.settings.nickname, "random_arena": self.settings.random_arena,
+                        "arena": self.settings.arena, "active_slots": self.settings.active_participants().map(|(slot,_)| slot).collect::<Vec<_>>()},
                     "paused": self.paused,
                     "message": self.message.as_ref().map(|m| &m.0),
                     "simulation": self.simulation,
@@ -315,11 +440,18 @@ impl App {
                         "starting": n.is_starting(),
                         "gameplay_rtt_ms": n.gameplay_rtt_ms,
                         "confirmed_simulation": n.replay.as_ref().map(|r| &r.simulation),
+                        "confirmed_hash": n.replay.as_ref().map(|r| r.hash().iter().map(|byte| format!("{byte:02x}")).collect::<String>()),
                         "lobby": n.lobby, "actions": network_ui::lobby_actions(n.host).iter().map(|action| format!("{action:?}")).collect::<Vec<_>>(), "tick": n.replay.as_ref().map(|r| r.tick),
                     })),
                 });
                 std::fs::write(&temporary, serde_json::to_vec(&state)?)?;
                 std::fs::rename(&temporary, &path)?;
+                if let Some(image) = std::env::var_os("ATOMIC_BOMBERMAN_SCREENSHOT_PROBE") {
+                    self.target
+                        .texture
+                        .get_texture_data()
+                        .export_png(&std::path::PathBuf::from(image).to_string_lossy());
+                }
             }
         }
         Ok(())
@@ -375,6 +507,9 @@ impl App {
     }
 
     async fn update(&mut self, elapsed_ms: u32) -> Result<()> {
+        if self.update_compatibility_error() {
+            return Ok(());
+        }
         #[cfg(debug_assertions)]
         if self.input_trace.enabled() {
             if let Some(network) = &mut self.network {
@@ -406,9 +541,7 @@ impl App {
                 self.rematch().await?;
             }
         }
-        if !matches!(self.screen, Screen::Internet | Screen::Online) {
-            self.network_ui.stop_directory();
-        }
+        self.maintain_browser_connection();
         if self.network.is_some() {
             self.update_network_session(elapsed_ms).await?;
             if self.network.is_none() {
@@ -425,47 +558,39 @@ impl App {
             }
         }
         match self.screen {
-            Screen::Main => {
-                self.navigation(7);
-                let click = self.hover_rows(330., 108., 295., 43., 7);
-                if self.confirm() || click {
-                    match self.selection {
-                        0 => {
-                            if let Err(error) = self.start_battle(false).await {
-                                self.notify(format!("Cannot start battle: {error:#}"));
-                            }
-                        }
-                        1 => self.change_screen(Screen::Multiplayer),
-                        2 => self.change_screen(Screen::Setup),
-                        3 => self.change_screen(Screen::Settings),
-                        4 => self.change_screen(Screen::Controls),
-                        5 => {
-                            self.previous = Screen::Main;
-                            self.previous_selection = self.selection;
-                            self.change_screen(Screen::Help);
-                        }
-                        _ => self.quit = true,
-                    }
-                }
-                if self.back() {
-                    self.quit = true;
+            Screen::Intro => self.update_intro(),
+            Screen::Main => self.update_main(),
+            Screen::Manual => self.update_manual(),
+            Screen::Arena => self.update_arena().await?,
+            Screen::Victory => {
+                if self.confirm()
+                    || self.back()
+                    || self.clicked
+                    || is_key_pressed(KeyCode::Space)
+                    || self.ui_elapsed_ms.saturating_sub(self.frontend.entered_ms) >= 4000
+                {
+                    self.change_screen(Screen::Results);
                 }
             }
             Screen::Setup => self.update_setup().await?,
             Screen::Settings => self.update_settings(),
+            Screen::Mods => self.update_mods(),
+            Screen::Nickname => self.update_settings(),
             Screen::Controls => self.update_controls(),
-            Screen::Multiplayer => self.update_multiplayer_menu(false),
             Screen::Internet => self.update_internet(),
             Screen::Online => self.update_online(),
             Screen::Lan => self.update_lan(),
             Screen::NetworkLobby => self.update_network_lobby(),
             Screen::NetworkStarting => self.update_network_starting(),
             Screen::NetworkDevices => self.update_network_devices(),
-            Screen::NetworkColors => self.update_network_colors(),
             Screen::NetworkRules => self.update_network_rules(),
-            Screen::NetworkTeams => self.update_network_teams(),
+            Screen::NetworkOptions => self.update_network_options(),
             Screen::Help => {
-                if self.back() || self.confirm() {
+                if self
+                    .frontend
+                    .document
+                    .update(&self.controllers, self.mouse, self.clicked)
+                {
                     self.screen = self.previous;
                     self.selection = self.previous_selection;
                 }
@@ -474,7 +599,7 @@ impl App {
             Screen::Results => {
                 let actions = results_actions(None);
                 self.navigation(actions.len());
-                let click = self.hover_rows(160., 360., 320., 29., actions.len());
+                let click = self.hover_rows(130., 410., 470., 21., actions.len());
                 if self.back() {
                     self.change_screen(Screen::Main);
                     self.media.music("MENU").await;
@@ -527,178 +652,6 @@ impl App {
             }
         }
         Ok(())
-    }
-
-    async fn update_setup(&mut self) -> Result<()> {
-        let count = self.settings.participant_count + 6;
-        self.navigation(count);
-        let click = self.hover_rows(30., 62., 580., 22., count);
-        let delta = self.delta();
-        let activate = self.confirm() || click;
-        let mut changed = false;
-        let increment = if delta == 0 { 1 } else { delta };
-        if delta != 0 || activate {
-            match self.selection {
-                0 => {
-                    self.settings.participant_count =
-                        cycle(self.settings.participant_count - 2, 9, increment) + 2;
-                    changed = true;
-                }
-                1 => {
-                    self.settings.arena = cycle(
-                        self.settings.arena,
-                        self.media.manifest.arenas.len(),
-                        increment,
-                    );
-                    self.media.ensure_arena(self.settings.arena).await?;
-                    changed = true;
-                }
-                2 => {
-                    self.settings.scheme = cycle(
-                        self.settings.scheme,
-                        self.media.manifest.schemes.len(),
-                        increment,
-                    );
-                    changed = true;
-                }
-                3 => {
-                    self.settings.teams = !self.settings.teams;
-                    if self.settings.teams {
-                        self.settings.win_by_kills = false;
-                    }
-                    changed = true;
-                }
-                selected if selected < self.settings.participant_count + 4 => {
-                    let player = selected - 4;
-                    let devices = [
-                        Device::Bot,
-                        Device::Keyboard1,
-                        Device::Keyboard2,
-                        Device::Controller(0),
-                        Device::Controller(1),
-                        Device::Controller(2),
-                        Device::Controller(3),
-                        Device::Controller(4),
-                        Device::Controller(5),
-                        Device::Controller(6),
-                        Device::Controller(7),
-                        Device::Controller(8),
-                        Device::Controller(9),
-                    ];
-                    let current = devices
-                        .iter()
-                        .position(|d| *d == self.settings.participants[player].device)
-                        .unwrap_or(0);
-                    self.settings.assign(
-                        player,
-                        devices[cycle(current, devices.len(), increment)].clone(),
-                    );
-                    changed = true;
-                }
-                selected if selected == self.settings.participant_count + 4 && activate => {
-                    self.save();
-                    if let Err(error) = self.start_battle(false).await {
-                        self.notify(format!("Cannot start battle: {error:#}"));
-                    }
-                }
-                _ if activate => {
-                    self.save();
-                    self.change_screen(Screen::Main);
-                }
-                _ => {}
-            }
-        }
-        if is_key_pressed(KeyCode::Tab)
-            && (4..self.settings.participant_count + 4).contains(&self.selection)
-        {
-            let player = self.selection - 4;
-            self.settings.participants[player].team =
-                (self.settings.participants[player].team + 1) % 5;
-            changed = true;
-        }
-        if changed {
-            self.save();
-        }
-        if self.back() {
-            self.save();
-            self.change_screen(Screen::Main);
-        }
-        Ok(())
-    }
-
-    fn update_settings(&mut self) {
-        self.navigation(12);
-        let click = self.hover_rows(38., 70., 564., 27., 12);
-        let delta = self.delta();
-        let activate = self.confirm() || click;
-        if delta != 0 || activate {
-            let d = if delta == 0 { 1 } else { delta };
-            match self.selection {
-                0 => {
-                    self.settings.wins =
-                        (cycle((self.settings.wins - 1) as usize, 10, d) + 1) as u16
-                }
-                1 => {
-                    if self.settings.teams {
-                        self.notify("Team battle uses round wins. Disable teams to select kills.");
-                    } else {
-                        self.settings.win_by_kills = !self.settings.win_by_kills;
-                    }
-                }
-                2 => {
-                    let options = [60, 90, 120, 150, 180, 240, 300, 600, 0];
-                    let selected = options
-                        .iter()
-                        .position(|v| *v == self.settings.round_seconds)
-                        .unwrap_or(3);
-                    self.settings.round_seconds = options[cycle(selected, options.len(), d)];
-                }
-                3 => {
-                    let current = if self.settings.sudden_death {
-                        self.settings.enclosement_depth
-                    } else {
-                        0
-                    };
-                    self.settings.enclosement_depth = cycle(current as usize, 4, d) as u8;
-                    self.settings.sudden_death = self.settings.enclosement_depth > 0;
-                }
-                4 => self.settings.gold = !self.settings.gold,
-                5 => self.settings.random_starts = !self.settings.random_starts,
-                6 => {
-                    self.settings.conveyor_speed =
-                        cycle(self.settings.conveyor_speed as usize, 3, d) as u8
-                }
-                7 => {
-                    self.settings.volume = (self.settings.volume + d as f32 * 0.05).clamp(0., 1.);
-                    self.media.set_volume(self.settings.volume);
-                }
-                8 => {
-                    self.settings.fullscreen = !self.settings.fullscreen;
-                    set_fullscreen(self.settings.fullscreen);
-                }
-                9 if activate => self.change_screen(Screen::Controls),
-                10 if activate => {
-                    self.settings = Settings::default();
-                    self.settings.scheme = self
-                        .media
-                        .manifest
-                        .schemes
-                        .iter()
-                        .position(|s| s.id.ends_with("BASIC.SCH"))
-                        .unwrap_or(0);
-                    self.media.set_volume(self.settings.volume);
-                    set_fullscreen(false);
-                    self.notify("Default battle settings and controls restored");
-                }
-                11 if activate => self.change_screen(Screen::Main),
-                _ => {}
-            }
-            self.save();
-        }
-        if self.back() {
-            self.save();
-            self.change_screen(Screen::Main);
-        }
     }
 
     fn update_controls(&mut self) {
@@ -777,13 +730,13 @@ impl App {
                 }
                 _ => {
                     self.save();
-                    self.change_screen(Screen::Main);
+                    self.change_screen(self.frontend.controls_return);
                 }
             }
         }
         if self.back() {
             self.save();
-            self.change_screen(Screen::Main);
+            self.change_screen(self.frontend.controls_return);
         }
     }
 
@@ -800,9 +753,7 @@ impl App {
                 match actions[self.selection] {
                     PauseAction::Resume => self.paused = false,
                     PauseAction::Help => {
-                        self.previous = Screen::Battle;
-                        self.previous_selection = self.selection;
-                        self.change_screen(Screen::Help);
+                        self.open_document("MANUAL.BM");
                     }
                     PauseAction::Restart => {
                         self.paused = false;
@@ -838,20 +789,31 @@ impl App {
         self.media.ensure_players(&simulation.players).await?;
         self.media.events(&events).await;
         if ended {
-            self.change_screen(Screen::Results);
+            self.change_screen(Screen::Victory);
             self.media.music("LOSE").await;
         }
         Ok(())
     }
 
     async fn rematch(&mut self) -> Result<()> {
+        if self.settings.random_arena {
+            self.settings.arena = ((self.cli.seed ^ self.ui_elapsed_ms)
+                % self.media.manifest.arenas.len() as u64)
+                as usize;
+        }
         if let Some(simulation) = &mut self.simulation {
+            simulation.config.arena = bomberman_core::Arena::ALL[self.settings.arena];
             simulation.rematch();
         }
+        self.media.ensure_arena(self.settings.arena).await?;
         self.paused = false;
         self.round_banner = None;
         self.change_screen(Screen::Battle);
-        self.media.music(MUSIC[self.settings.arena]).await;
+        if self.settings.disable_gameplay_music {
+            self.media.stop_music();
+        } else {
+            self.media.music(MUSIC[self.settings.arena]).await;
+        }
         Ok(())
     }
 
@@ -861,24 +823,28 @@ impl App {
         set_camera(&camera);
         clear_background(BLACK);
         match self.screen {
+            Screen::Intro => self.draw_intro(),
+            Screen::Arena => self.draw_arena(),
+            Screen::Manual => self.draw_manual(),
+            Screen::Victory => self.draw_victory(),
             Screen::Main => self.draw_main(),
             Screen::Setup => self.draw_setup(),
             Screen::Settings => self.draw_settings(),
+            Screen::Mods => self.draw_mods(),
+            Screen::Nickname => self.draw_nickname(),
             Screen::Controls => self.draw_controls(),
             Screen::Help => self.draw_help(),
             Screen::Battle => self.draw_battle(),
             Screen::Results => self.draw_results(),
             Screen::Roulette => self.draw_roulette(),
-            Screen::Multiplayer => self.draw_multiplayer_menu(false),
             Screen::Internet => self.draw_internet(),
             Screen::Online => self.draw_online(),
             Screen::Lan => self.draw_lan(),
             Screen::NetworkLobby => self.draw_network_lobby(),
             Screen::NetworkStarting => self.draw_network_starting(),
             Screen::NetworkDevices => self.draw_network_devices(),
-            Screen::NetworkColors => self.draw_network_colors(),
             Screen::NetworkRules => self.draw_network_rules(),
-            Screen::NetworkTeams => self.draw_network_teams(),
+            Screen::NetworkOptions => self.draw_network_options(),
         }
         if let Some((message, until)) = &self.message {
             if get_time() < *until {
@@ -887,6 +853,7 @@ impl App {
                     .text(&truncate(message, 87), 15., 456., 10., GOLD);
             }
         }
+        self.draw_compatibility_error();
         set_default_camera();
         clear_background(BLACK);
         let scale = (screen_width() / 640.).min(screen_height() / 480.);
@@ -901,15 +868,6 @@ impl App {
                 ..Default::default()
             },
         );
-    }
-
-    fn background(&self, name: &str, shade: f32) {
-        self.media.image(name, 0., 0., 640., 480.);
-        if name.eq_ignore_ascii_case("MAINMENU.PCX") {
-            // The shipped background contains its original menu words.
-            draw_rectangle(320., 65., 320., 365., Color::new(0.015, 0.025, 0.06, 1.));
-        }
-        draw_rectangle(0., 0., 640., 480., Color::new(0.015, 0.025, 0.06, shade));
     }
 
     fn heading(&self, title: &str) {
@@ -940,186 +898,9 @@ impl App {
             .text(value, 300., y, size, if selected { GOLD } else { LIGHT });
     }
 
-    fn draw_main(&self) {
-        self.media.image("MAINMENU.PCX", 0., 0., 640., 480.);
-        draw_rectangle(322., 76., 311., 341., Color::new(0.015, 0.025, 0.065, 1.));
-        self.media.text("ATOMIC BOMBERMAN", 335., 82., 20., GOLD);
-        let labels = [
-            "Start local battle",
-            "Multiplayer",
-            "Players and arena",
-            "Battle settings",
-            "Controls",
-            "Help",
-            "Exit",
-        ];
-        for (i, text) in labels.iter().enumerate() {
-            let y = 114. + i as f32 * 43.;
-            if self.selection == i {
-                draw_rectangle(328., y - 6., 297., 30., Color::new(0.13, 0.2, 0.3, 0.98));
-                self.media.text(">", 335., y, 17., GOLD);
-            }
-            self.media.text(
-                text,
-                354.,
-                y,
-                17.,
-                if self.selection == i { GOLD } else { LIGHT },
-            );
-        }
-        draw_rectangle(5., 428., 630., 44., Color::new(0.015, 0.025, 0.06, 0.92));
-        let arena = &self.media.manifest.arenas[self.settings.arena];
-        self.media.center_text(
-            &format!(
-                "{} players  /  {}  /  first to {}",
-                self.settings.participant_count, arena.name, self.settings.wins
-            ),
-            432.,
-            12.,
-            LIGHT,
-        );
-        self.footer(MAIN_FOOTER);
-    }
-
-    fn draw_setup(&self) {
-        self.background(
-            &self.media.manifest.arenas[self.settings.arena].background,
-            0.88,
-        );
-        self.heading("LOCAL BATTLE");
-        let arena = &self.media.manifest.arenas[self.settings.arena];
-        let scheme = &self.media.manifest.schemes[self.settings.scheme];
-        self.row(
-            "Participants",
-            &format!("< {} >", self.settings.participant_count),
-            0,
-            64.,
-            14.,
-        );
-        self.row("Arena", &format!("< {} >", arena.name), 1, 86., 14.);
-        self.row(
-            "Scheme",
-            &format!(
-                "< {} ({}/{}) >",
-                truncate(&scheme.name, 28),
-                self.settings.scheme + 1,
-                self.media.manifest.schemes.len()
-            ),
-            2,
-            108.,
-            14.,
-        );
-        self.row("Team battle", on_off(self.settings.teams), 3, 130., 14.);
-        for (i, participant) in self
-            .settings
-            .participants
-            .iter()
-            .take(self.settings.participant_count)
-            .enumerate()
-        {
-            let row = i + 4;
-            let y = 64. + row as f32 * 22.;
-            self.row(
-                &format!("{}: {}", i + 1, COLOR_NAMES[i]),
-                &format!("< {} >", participant.device.name()),
-                row,
-                y,
-                14.,
-            );
-            draw_rectangle(275., y + 3., 12., 12., PLAYER_COLORS[i]);
-            if self.settings.teams {
-                self.media.text(
-                    &format!("Team {}", participant.team + 1),
-                    523.,
-                    y,
-                    13.,
-                    LIGHT,
-                );
-            }
-        }
-        self.row(
-            "START BATTLE",
-            "Enter",
-            self.settings.participant_count + 4,
-            64. + (self.settings.participant_count + 4) as f32 * 22.,
-            14.,
-        );
-        self.row(
-            "Back",
-            "Escape",
-            self.settings.participant_count + 5,
-            64. + (self.settings.participant_count + 5) as f32 * 22.,
-            14.,
-        );
-        self.media.center_text(
-            "Left / right: change  |  Tab on a player: change team",
-            420.,
-            12.,
-            MUTED,
-        );
-        self.footer("Two keyboard layouts + up to ten controllers; a disconnected controller keeps its slot.");
-    }
-
-    fn draw_settings(&self) {
-        self.background("MAINMENU.PCX", 0.94);
-        self.heading("BATTLE SETTINGS");
-        let values = [
-            self.settings.wins.to_string(),
-            if self.settings.win_by_kills {
-                "Kills".into()
-            } else {
-                "Round wins".into()
-            },
-            if self.settings.round_seconds == 0 {
-                "Unlimited".into()
-            } else {
-                format!(
-                    "{}:{:02}",
-                    self.settings.round_seconds / 60,
-                    self.settings.round_seconds % 60
-                )
-            },
-            ["Off", "2 layers", "4 layers", "Complete enclosure"][if self.settings.sudden_death {
-                self.settings.enclosement_depth as usize
-            } else {
-                0
-            }]
-            .into(),
-            on_off(self.settings.gold).into(),
-            on_off(self.settings.random_starts).into(),
-            ["Slow", "Medium", "Fast"][self.settings.conveyor_speed as usize].into(),
-            if self.cli.mute {
-                "Muted by --mute".into()
-            } else {
-                format!("{}%", (self.settings.volume * 100.).round() as u32)
-            },
-            on_off(self.settings.fullscreen).into(),
-            "Enter".into(),
-            "Enter".into(),
-            "Escape".into(),
-        ];
-        let labels = [
-            "Wins per match",
-            "Match winner by",
-            "Round time",
-            "Sudden death",
-            "Gold Bomberman",
-            "Random starts",
-            "Conveyor speed",
-            "Audio volume",
-            "Fullscreen",
-            "Remap controls",
-            "Restore defaults",
-            "Back",
-        ];
-        for (i, (label, value)) in labels.iter().zip(values.iter()).enumerate() {
-            self.row(label, value, i, 74. + i as f32 * 27., 15.);
-        }
-        self.footer("Left / right: change setting  |  Changes save automatically");
-    }
-
     fn draw_controls(&self) {
-        self.background("MAINMENU.PCX", 0.96);
+        self.original_background(self.frontend.glue);
+        documents::blue_panel(20., 20., 600., 440.);
         self.heading("CONTROLS");
         self.media.text("Keyboard 1", 240., 73., 16., GOLD);
         self.media.text("Keyboard 2", 415., 73., 16., GOLD);
@@ -1207,69 +988,16 @@ impl App {
         });
     }
 
-    fn draw_help(&self) {
-        self.background("MAINMENU.PCX", 0.97);
-        self.heading("HOW TO PLAY");
-        let lines = [
-            (
-                "Be the last Bomberman standing",
-                "Break bricks, collect powerups, and avoid every flame.",
-            ),
-            (
-                "Bombs and movement",
-                "Hold a direction to move. Place bombs behind you and find a way out.",
-            ),
-            (
-                "Action button",
-                "Trigger remote bombs, throw a grabbed bomb, or punch a bomb in front.",
-            ),
-            (
-                "Powerups",
-                "Bombs, flame, skates, kick, punch, grab, spooge, trigger, jelly and gold.",
-            ),
-            (
-                "Diseases",
-                "Bad pickups can change speed, fuse, controls, positions or bomb laying.",
-            ),
-            (
-                "Arenas and teams",
-                "Watch ice, warps, arrows, conveyors and trampolines. Flames hurt teammates.",
-            ),
-            (
-                "Winning",
-                "Last player or team scores. Draws score nothing. Reach the match target.",
-            ),
-            (
-                "Sudden death and Gold Bomberman",
-                "Closing walls force a result. The match winner gets a roulette reward.",
-            ),
-        ];
-        for (i, (title, body)) in lines.iter().enumerate() {
-            let y = 74. + i as f32 * 43.;
-            self.media.text(title, 38., y, 14., GOLD);
-            self.media.text(body, 38., y + 20., 11., LIGHT);
-        }
-        self.media.center_text(
-            if cfg!(target_os = "macos") {
-                "Escape / P: pause   F1: help   Cmd-Ctrl-F / F11: fullscreen"
-            } else {
-                "Escape / P: pause    F1: help    F11: fullscreen"
-            },
-            426.,
-            12.,
-            GOLD,
-        );
-        self.footer(if self.network.is_some() {
-            "Enter / Escape: back. Online play continues; your controls are released while help is open."
-        } else { "Enter or Escape returns to the previous screen. Battle pauses while help is open." });
-    }
-
     fn palette_index(&self, original: usize) -> usize {
         self.network
             .as_ref()
-            .and_then(|network| network.lobby.as_ref())
-            .and_then(|lobby| lobby.colors.get(original))
-            .map_or(original, |color| *color as usize)
+            .map(|network| network.colors()[original] as usize)
+            .unwrap_or_else(|| {
+                self.simulation
+                    .as_ref()
+                    .and_then(|simulation| simulation.config.player_slots.get(original).copied())
+                    .unwrap_or(original)
+            })
     }
 
     fn battle_palette(&self, original: usize) -> usize {
@@ -1284,15 +1012,19 @@ impl App {
         let colors = self
             .network
             .as_ref()
-            .and_then(|n| n.lobby.as_ref())
-            .map_or(&bomberman_net::DEFAULT_COLORS, |l| &l.colors);
-        crate::presentation::player_palette(player, colors)
+            .map(|network| network.colors())
+            .unwrap_or_else(|| std::array::from_fn(|i| self.palette_index(i) as u8));
+        crate::presentation::player_palette(player, &colors)
     }
 
     fn draw_battle(&self) {
         let Some(simulation) = &self.simulation else {
             return;
         };
+        if matches!(simulation.phase, RoundPhase::RoundOver { .. }) && !self.paused {
+            self.draw_scoreboard(false);
+            return;
+        }
         let arena = &self.media.manifest.arenas[simulation.config.arena.index()];
         self.media.image(&arena.background, 0., 0., 640., 480.);
         // 0x415b22 keeps insertion order and appends translated color queues.
@@ -1464,30 +1196,17 @@ impl App {
         if self.paused {
             let network = self.network.as_ref().map(|n| n.host);
             let actions = pause_actions(network);
-            draw_rectangle(0., 0., 640., 480., Color::new(0., 0., 0., 0.75));
-            draw_rectangle(
-                175.,
-                136.,
-                290.,
-                85. + actions.len() as f32 * 36.,
-                Color::new(0.025, 0.04, 0.09, 0.98),
-            );
-            self.media.center_text("PAUSED", 151., 24., GOLD);
+            documents::blue_panel(175., 136., 290., 85. + actions.len() as f32 * 36.);
+            self.media.original_text("Game Paused", 240., 151., WHITE);
             for (i, action) in actions.iter().enumerate() {
                 if self.selection == i {
-                    draw_rectangle(
-                        187.,
-                        190. + i as f32 * 36.,
-                        266.,
-                        31.,
-                        Color::new(0.12, 0.2, 0.32, 1.),
-                    );
+                    self.head_cursor(205., 213. + i as f32 * 36.);
                 }
-                self.media.center_text(
+                self.media.original_text(
                     action.label(network.is_some()),
+                    223.,
                     197. + i as f32 * 36.,
-                    17.,
-                    if self.selection == i { GOLD } else { LIGHT },
+                    WHITE,
                 );
             }
         }
@@ -1601,158 +1320,10 @@ impl App {
             self.media.center_text(subtitle, 259., 12., LIGHT);
         }
     }
-
-    fn draw_results(&self) {
-        self.background("RESULTS.PCX", 0.94);
-        self.heading("MATCH RESULTS");
-        let Some(simulation) = &self.simulation else {
-            return;
-        };
-        if let RoundPhase::MatchOver { winner } = simulation.phase {
-            let text = if simulation.config.team_play {
-                format!(
-                    "Team {} wins the match!",
-                    simulation.players[winner].config.team + 1
-                )
-            } else {
-                format!(
-                    "{} wins the match!",
-                    COLOR_NAMES[self.palette_index(winner)]
-                )
-            };
-            self.media.center_text(&text, 70., 22., GOLD);
-        }
-        self.media.text("Player", 110., 111., 14., MUTED);
-        self.media.text("Wins", 325., 111., 14., MUTED);
-        self.media.text("Kills", 440., 111., 14., MUTED);
-        for (i, player) in simulation.players.iter().enumerate() {
-            let y = 140. + i as f32 * 20.;
-            draw_rectangle(89., y + 1., 11., 11., PLAYER_COLORS[self.palette_index(i)]);
-            self.media.text(
-                &format!(
-                    "{}{}",
-                    COLOR_NAMES[self.palette_index(i)],
-                    if player.config.control == bomberman_core::ControlKind::Bot {
-                        " (CPU)"
-                    } else {
-                        ""
-                    }
-                ),
-                110.,
-                y,
-                13.,
-                LIGHT,
-            );
-            self.media
-                .text(&player.wins.to_string(), 335., y, 13., GOLD);
-            self.media
-                .text(&player.kills.to_string(), 452., y, 13., LIGHT);
-        }
-        let network = self.network.as_ref().map(|n| n.host);
-        for (i, action) in results_actions(network).iter().enumerate() {
-            if self.selection == i {
-                draw_rectangle(
-                    145.,
-                    359. + i as f32 * 29.,
-                    350.,
-                    26.,
-                    Color::new(0.12, 0.2, 0.32, 1.),
-                );
-            }
-            self.media.center_text(
-                action.label(network.is_some(), simulation.config.gold_bomberman),
-                365. + i as f32 * 29.,
-                15.,
-                if self.selection == i { GOLD } else { LIGHT },
-            );
-        }
-        self.footer(match network {
-            Some(false) => "Waiting for the host  |  Enter / Escape: leave game",
-            Some(true) => "Enter: select  |  Escape: leave game",
-            None => "Enter: select  |  Escape: main menu",
-        });
-    }
-
-    fn draw_roulette(&self) {
-        self.background("ROULETTE.PCX", 0.72);
-        self.heading("GOLD BOMBERMAN ROULETTE");
-        let Some(simulation) = &self.simulation else {
-            return;
-        };
-        let Some(wheel) = &simulation.gold_wheel else {
-            return;
-        };
-        let RoundPhase::MatchOver { winner } = simulation.phase else {
-            return;
-        };
-        let angles = wheel.segment_angles();
-        for (i, powerup) in Powerup::GOLD_ROULETTE.iter().enumerate() {
-            let angle = angles[i] as f32 / RouletteWheel::REVOLUTION as f32 * std::f32::consts::TAU;
-            let x = 320. + angle.cos() * 200.;
-            let y = 240. + angle.sin() * 150.;
-            self.draw_powerup(*powerup, x, y, self.ui_elapsed_ms);
-        }
-        let pointer_angle =
-            wheel.pointer_angle as f32 / RouletteWheel::REVOLUTION as f32 * std::f32::consts::TAU;
-        let pointer = vec2(
-            320. + pointer_angle.cos() * 231.,
-            240. + pointer_angle.sin() * 176.,
-        );
-        let inward = (vec2(320., 240.) - pointer).normalize();
-        let tangent = vec2(-inward.y, inward.x);
-        draw_triangle(
-            pointer + inward * 13.,
-            pointer - inward * 6. + tangent * 9.,
-            pointer - inward * 6. - tangent * 9.,
-            GOLD,
-        );
-        self.media.animate(
-            "STAND.ANI",
-            &["stand south", "south"],
-            self.ui_elapsed_ms,
-            320.,
-            260.,
-            Some(self.palette_index(winner)),
-        );
-        self.media
-            .center_text(COLOR_NAMES[self.palette_index(winner)], 300., 20., GOLD);
-        if let Some(powerup) = wheel.reward() {
-            draw_rectangle(70., 402., 500., 39., Color::new(0.01, 0.025, 0.07, 0.96));
-            self.media.center_text(powerup.name(), 411., 20., GOLD);
-            self.footer(if self.network.is_some() {
-                "Host: Enter to start rematch with reward  |  Escape: leave game"
-            } else {
-                "Enter: start rematch with reward  |  Escape: match results"
-            });
-        } else {
-            self.media.center_text(
-                if wheel.phase == RoulettePhase::Spinning {
-                    if self.network.is_some() {
-                        "Winner or host: Enter / Space to stop"
-                    } else {
-                        "Enter or Space: stop the wheel"
-                    }
-                } else {
-                    "Slowing down..."
-                },
-                416.,
-                16.,
-                GOLD,
-            );
-            self.footer("The pointer and reward wheel turn in opposite directions.");
-        }
-    }
 }
 
 fn cycle(current: usize, length: usize, delta: i32) -> usize {
     (current as i32 + delta).rem_euclid(length.max(1) as i32) as usize
-}
-fn on_off(value: bool) -> &'static str {
-    if value {
-        "On"
-    } else {
-        "Off"
-    }
 }
 fn direction_name(direction: Direction) -> &'static str {
     match direction {

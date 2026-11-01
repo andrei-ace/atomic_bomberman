@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "protocol": 8,
+  "version": "0.7.0",
+  "focused_tests_passed": 3,
+  "clippy": "bomberman-net and bomberman --all-targets -- -D warnings passed",
+  "coverage": [
+    "Optional/missing scheme filename defaults to None.",
+    "Exact ASYLUM/CHICANE and CUTTER/CUTTHROT aliases survive JSON and real TLS/QUIC relay without changing GameConfig.",
+    "Network facade queues exact filename to worker and the other client.",
+    "Clients cannot set the host filename; mutation during play is rejected.",
+    "Safe .SCH basename validation, maximum 64 bytes, paths rejected."
+  ],
+  "log": "protocol8-scheme-checks.txt.gz",
+  "log_sha256": "0134465e2a4e9ad084da4b56ece404b124dfff41e9e281643601b864d1af6538",
+  "source_sha256": {
+    "crates/bomberman-net/src/protocol.rs": "56be935b24183037ee8ff9cdd461a8dfadf1c996708ff824b7f1aaf3efc90017",
+    "crates/bomberman-net/src/setup.rs": "a449f212cc0865abe67aedf58d309724a4c33dbcf897b88a8cee80169c7617fe",
+    "crates/bomberman-net/tests/setup.rs": "c49d08a975f4ee3123da396d2e335c89a6b65822846d7798061fcf788ab4fd61",
+    "crates/bomberman/src/network.rs": "9ca2c05561fbe5b7d77001dced65310f94b450a3ba44a0e5511b3048bf43a00a",
+    "crates/bomberman/src/network/worker.rs": "37bf61b4cffb2d5b4cf6127e0c824ca81b319e0502e102304ee8099721206293",
+    "crates/bomberman/src/network/setup_tests.rs": "20cc02ee0ee694d2ced2b68de7356fe66c782490b1eec988d71505a384fab84a",
+    "crates/bomberman/src/app/frontend.rs": "35d9029761eacd8656adf6d78a028c32adff6481bc58a371f47472666c050181",
+    "crates/bomberman/src/app/network_ui.rs": "360d9aff2e8c90be1abc0d937f530a45a649d519553c1b79e7a98e51165541c9",
+    "crates/bomberman/src/app/network_frontend.rs": "be2684c44f99d2754051093fdc942fb314930c202a3c1ce4c7b3bccbbade151b"
+  },
+  "baseline_full_suite": "protocol8-simple-checks.json"
+}

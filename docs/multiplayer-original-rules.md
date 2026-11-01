@@ -83,29 +83,28 @@ commands are in the [release procedure](releases.md#check-and-build).
 
 ## Modern implementation and requested extensions
 
-The lobby retains the observed host authority. **Start game** and **Arena and
-battle rules** are host-only; the host starts after at least one client has
-joined and every connected computer has selected controls. Clients wait for
-the host, with no separate Ready toggle. The host selects the arena, scheme,
-free-for-all or White/Red teams, wins/kills scoring (teams use round wins), a
-victory target of 1–100, round time, sudden
-death depth, random starts, conveyor speed, 2–10 total participants with bot
-fill, and assignments through the host-only **Team assignments** screen.
+The shared players page retains host authority over game type, AI, teams,
+options and starting. Ten fixed-color player rows show OFF, AI, local KEY/JOY
+or a remote NODE name. Clients edit their own controls; host O/0 can release a
+remote assignment without disconnecting its node. The host may also turn its
+own last player OFF. At least two active players, or two populated teams, are
+required. The host advances directly from players to arena/wins, then battle;
+Scheme File is optional under Options. See the
+[fresh native flow audit](evidence/original-network-flow.json) and
+[current lobby guide](online-play.md#lobby).
 
 These requirements extend the original game; they are not recovered original
 behavior:
 
 - LAN and Internet play with modern connections and invitations, while retaining
-  host authority over starting, AIs, teams, and match settings. Protocol **2**
-  requires rebuilding/upgrading the relay and every client from the same commit.
+  host authority over starting, AIs, teams, and match settings. Protocol **8**
+  requires compatible clients and relay (0.7.0 compatibility family).
 - One server plus nine clients, with ten total player slots. This explicitly
   replaces the original four-client computer limit.
-- **Player colors** lets everyone choose a free color for each local device.
-  Bots swap their placeholder colors; colors owned by other humans are reserved.
-  The original ten `.RMP` variants are named in
-  `VALUELST.RES` lines 249–288; their existence does not prove an original color
-  picker or color-uniqueness constraint. Canonical White/Red team remaps and
-  disease-driven random palettes remain part of presentation.
+- Preferred rows for each local control save and restore when available.
+  The original ten player colors follow their numbered rows; there is no
+  separate color wizard. Canonical White/Red team remaps and disease-driven
+  random palettes remain part of presentation.
 - The host clears a peer's stale controls after 250 ms without input and replaces
   that peer's owned players with bots five seconds after disconnection. Host
   departure ends the room. This failure policy is a modern requirement; its

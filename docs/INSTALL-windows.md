@@ -6,12 +6,12 @@ Atomic Bomberman game data.
 
 ## Download and launch
 
-Download `atomic-bomberman-0.6.1-windows-x86_64.zip` and its `.sha256` sidecar.
+Download `atomic-bomberman-0.7.0-windows-x86_64.zip` and its `.sha256` sidecar.
 In PowerShell, compare the displayed SHA-256 with the sidecar:
 
 ```powershell
-Get-FileHash .\atomic-bomberman-0.6.1-windows-x86_64.zip -Algorithm SHA256
-Get-Content .\atomic-bomberman-0.6.1-windows-x86_64.zip.sha256
+Get-FileHash .\atomic-bomberman-0.7.0-windows-x86_64.zip -Algorithm SHA256
+Get-Content .\atomic-bomberman-0.7.0-windows-x86_64.zip.sha256
 ```
 
 Choose **Extract All**, open the extracted directory, and double-click
@@ -49,15 +49,16 @@ Keyboard 1 uses arrows, Space, and Right Ctrl. Keyboard 2 uses WASD, Left Shift,
 and E. F11 toggles fullscreen. Controls and controllers can be configured in the
 game. Missing audio output permits silent play.
 
-For Internet play, open **Multiplayer → Internet → Paste server link**, paste
+For Internet play, open **Internet → Add server link**, paste
 with **Ctrl-V**, and connect. The client connects outbound on TCP and UDP 443.
 For LAN hosting, allow the application on Windows Firewall's **Private networks**
 when prompted. Hosting needs TCP/UDP 1997. **Join by IP** is available
 when automatic discovery is unavailable. See `docs/online-play.md`.
 
-Version 0.6.1 retains protocol 7 and the 0.5.1 compatibility family. Windows,
+Version 0.7.0 uses protocol 8 and the 0.7.0 compatibility family. Windows,
 Linux and Mac clients can play together with a compatible ARM64 or amd64 relay
-and matching original game data. Version 0.5.0 and earlier are incompatible.
+and their own original game data. Asset mods and localized audio can differ. Update the relay and every player together;
+protocol-7 builds, including 0.6.1, are incompatible.
 
 ## Repair and diagnostics
 
@@ -88,8 +89,17 @@ Build from source with Rust 1.89+ and Visual Studio's MSVC C++ build tools:
 
 ```powershell
 python tools/windows_release.py build
-python tools/windows_release.py verify dist/github/atomic-bomberman-0.6.1-windows-x86_64.zip
+python tools/windows_release.py verify dist/github/atomic-bomberman-0.7.0-windows-x86_64.zip
 ```
 
 Build-time Python is not required by the packaged application. Use `--release`
 only from a clean, committed checkout.
+
+## Asset mods
+
+Choose **Options → Mods → Choose mod folder**, then **Apply and restart**.
+The normal launcher remembers the selection, including when opened through an
+ordinary Windows shortcut. **Use original assets** switches back after applying.
+For a temporary override, pass `--mod 'C:\My Mod'`; `--no-mod` uses original
+assets for one launch. Modded and unmodded players can play together. See
+[the mod guide](../README.md#asset-mods).

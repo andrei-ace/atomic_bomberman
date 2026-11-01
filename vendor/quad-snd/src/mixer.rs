@@ -190,7 +190,9 @@ impl Mixer {
                     self.sounds.insert(id, data.into());
                 }
                 AudioMessage::Play(sound_id, play_id, looped, volume) => {
-                    if let Some(data) = self.sounds.get(&sound_id) {
+                    // Empty mod recordings intentionally produce silence. A
+                    // looping empty clip cannot advance the mixing cursor.
+                    if let Some(data) = self.sounds.get(&sound_id).filter(|data| !data.is_empty()) {
                         self.mixer_state.push(SoundState {
                             sound_id,
                             play_id,
@@ -418,6 +420,32 @@ mod native_voice_meter_tests {
         assert_eq!(count(&control), 0);
         drop(mixer);
         play(&control, 1, false);
+        assert_eq!(count(&control), 0);
+    }
+    #[test]
+    fn empty_recordings_stay_silent_without_blocking_other_sounds() {
+        let (mut mixer, control) = setup();
+        // A valid WAV containing no PCM frames, as imported from an empty RSS.
+        let wav = [
+            &b"RIFF\x24\x00\x00\x00WAVEfmt "[..],
+            &b"\x10\x00\x00\x00\x01\x00\x02\x00\x22\x56\x00\x00"[..],
+            &b"\x88\x58\x01\x00\x04\x00\x10\x00data\x00\x00\x00\x00"[..],
+        ]
+        .concat();
+        let empty = control.load(&wav);
+        play(&control, empty, true);
+        play(&control, empty, false);
+        assert_eq!(count(&control), 1);
+
+        let mut output = [1.; 8];
+        mixer.fill_audio_buffer(&mut output, 4);
+        assert_eq!(output, [0.; 8]);
+        assert_eq!(count(&control), 0);
+        assert!(mixer.mixer_state.is_empty());
+
+        play(&control, 1, false);
+        mixer.fill_audio_buffer(&mut output, 4);
+        assert_eq!(output, [0.25; 8]);
         assert_eq!(count(&control), 0);
     }
     #[test]
