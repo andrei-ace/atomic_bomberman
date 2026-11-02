@@ -12,60 +12,102 @@ pub struct Interface {
 
 #[cfg(unix)]
 pub fn interfaces() -> io::Result<Vec<Interface>> {
-    let mut head = std::ptr::null_mut();
-    // getifaddrs owns this list until freeifaddrs. Family checks precede every
-    // sockaddr cast, and no pointer escapes the traversal.
-    if unsafe { libc::getifaddrs(&mut head) } != 0 {
-        return Err(io::Error::last_os_error());
-    }
+    let list = UnixInterfaceList::new()?;
     let mut result = Vec::new();
-    let mut next = head;
-    // getifaddrs keeps every node alive until freeifaddrs below. Convert each
-    // nullable link to a reference before reading it, including the empty list.
-    while let Some(item) = unsafe { next.as_ref() } {
-        next = item.ifa_next;
-        if item.ifa_addr.is_null()
-            || item.ifa_flags & libc::IFF_UP as u32 == 0
-            || item.ifa_flags & (libc::IFF_LOOPBACK | libc::IFF_POINTOPOINT) as u32 != 0
-        {
+    for item in list.entries() {
+        // The list owns each entry and its family-specific address storage.
+        let Some(interface) = (unsafe { unix_interface(item) }) else {
             continue;
-        }
-        let family = unsafe { (*item.ifa_addr).sa_family as i32 };
-        let interface = match family {
-            libc::AF_INET => {
-                let ip = unsafe { &*item.ifa_addr.cast::<libc::sockaddr_in>() };
-                let address = Ipv4Addr::from(ip.sin_addr.s_addr.to_ne_bytes());
-                let broadcast = if !item.ifa_netmask.is_null()
-                    && item.ifa_flags & libc::IFF_BROADCAST as u32 != 0
-                {
-                    let mask = unsafe { &*item.ifa_netmask.cast::<libc::sockaddr_in>() };
-                    Some(subnet_broadcast(
-                        address,
-                        Ipv4Addr::from(mask.sin_addr.s_addr.to_ne_bytes()),
-                    ))
-                } else {
-                    None
-                };
-                Interface {
-                    address: address.into(),
-                    broadcast,
-                }
-            }
-            libc::AF_INET6 => {
-                let ip = unsafe { &*item.ifa_addr.cast::<libc::sockaddr_in6>() };
-                Interface {
-                    address: Ipv6Addr::from(ip.sin6_addr.s6_addr).into(),
-                    broadcast: None,
-                }
-            }
-            _ => continue,
         };
         if !result.contains(&interface) {
             result.push(interface);
         }
     }
-    unsafe { libc::freeifaddrs(head) };
     Ok(result)
+}
+
+#[cfg(unix)]
+struct UnixInterfaceList {
+    head: *mut libc::ifaddrs,
+}
+
+#[cfg(unix)]
+impl UnixInterfaceList {
+    fn new() -> io::Result<Self> {
+        let mut head = std::ptr::null_mut();
+        if unsafe { libc::getifaddrs(&mut head) } != 0 {
+            return Err(io::Error::last_os_error());
+        }
+        Ok(Self { head })
+    }
+
+    fn entries(&self) -> impl Iterator<Item = &libc::ifaddrs> + '_ {
+        let mut next = self.head;
+        std::iter::from_fn(move || {
+            // getifaddrs supplies live nodes. The iterator borrows the owner,
+            // so freeifaddrs cannot run while these references are in use.
+            let item = unsafe { next.as_ref() }?;
+            next = item.ifa_next;
+            Some(item)
+        })
+    }
+}
+
+#[cfg(unix)]
+impl Drop for UnixInterfaceList {
+    fn drop(&mut self) {
+        if !self.head.is_null() {
+            unsafe { libc::freeifaddrs(self.head) };
+        }
+    }
+}
+
+/// Decode one getifaddrs entry while its owning list is still alive.
+///
+/// # Safety
+/// Non-null address and mask pointers must reference live sockaddr structures
+/// of the size and alignment indicated by their address family.
+#[cfg(unix)]
+unsafe fn unix_interface(item: &libc::ifaddrs) -> Option<Interface> {
+    if item.ifa_flags & libc::IFF_UP as u32 == 0
+        || item.ifa_flags & (libc::IFF_LOOPBACK | libc::IFF_POINTOPOINT) as u32 != 0
+    {
+        return None;
+    }
+    let socket = unsafe { item.ifa_addr.as_ref() }?;
+    match i32::from(socket.sa_family) {
+        libc::AF_INET => {
+            let ip = unsafe { item.ifa_addr.cast::<libc::sockaddr_in>().as_ref() }?;
+            let address = Ipv4Addr::from(ip.sin_addr.s_addr.to_ne_bytes());
+            let mask = if item.ifa_flags & libc::IFF_BROADCAST as u32 != 0 {
+                unsafe { item.ifa_netmask.as_ref() }
+            } else {
+                None
+            };
+            let broadcast = match mask {
+                Some(mask) if i32::from(mask.sa_family) == libc::AF_INET => {
+                    let mask = unsafe { item.ifa_netmask.cast::<libc::sockaddr_in>().as_ref() }?;
+                    Some(subnet_broadcast(
+                        address,
+                        Ipv4Addr::from(mask.sin_addr.s_addr.to_ne_bytes()),
+                    ))
+                }
+                _ => None,
+            };
+            Some(Interface {
+                address: address.into(),
+                broadcast,
+            })
+        }
+        libc::AF_INET6 => {
+            let ip = unsafe { item.ifa_addr.cast::<libc::sockaddr_in6>().as_ref() }?;
+            Some(Interface {
+                address: Ipv6Addr::from(ip.sin6_addr.s6_addr).into(),
+                broadcast: None,
+            })
+        }
+        _ => None,
+    }
 }
 
 #[cfg(windows)]
@@ -230,6 +272,83 @@ fn public_v4(ip: Ipv4Addr) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn unix_os_snapshot_is_read_and_released_without_escaping_native_pointers() {
+        let empty = UnixInterfaceList {
+            head: std::ptr::null_mut(),
+        };
+        assert!(empty.entries().next().is_none());
+        let entries = interfaces().unwrap();
+        for (index, entry) in entries.iter().enumerate() {
+            assert!(!entries[..index].contains(entry));
+            if entry.address.is_ipv6() {
+                assert!(entry.broadcast.is_none());
+            }
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn unix_entries_allow_missing_addresses_and_masks_and_reject_wrong_mask_families() {
+        // Zero is valid for these C structs; the backing values stay alive
+        // across every call and typed addresses provide the required alignment.
+        let mut item: libc::ifaddrs = unsafe { std::mem::zeroed() };
+        item.ifa_flags = (libc::IFF_UP | libc::IFF_BROADCAST) as u32;
+        assert_eq!(unsafe { unix_interface(&item) }, None);
+        let mut ip: libc::sockaddr_in = unsafe { std::mem::zeroed() };
+        ip.sin_family = libc::AF_INET as _;
+        ip.sin_addr.s_addr = u32::from_ne_bytes([10, 2, 3, 218]);
+        item.ifa_addr = (&mut ip as *mut libc::sockaddr_in).cast();
+        let expected = Interface {
+            address: Ipv4Addr::new(10, 2, 3, 218).into(),
+            broadcast: None,
+        };
+        assert_eq!(unsafe { unix_interface(&item) }, Some(expected.clone()));
+        let mut wrong_mask: libc::sockaddr_in6 = unsafe { std::mem::zeroed() };
+        wrong_mask.sin6_family = libc::AF_INET6 as _;
+        item.ifa_netmask = (&mut wrong_mask as *mut libc::sockaddr_in6).cast();
+        assert_eq!(unsafe { unix_interface(&item) }, Some(expected));
+        item.ifa_flags |= libc::IFF_LOOPBACK as u32;
+        assert_eq!(unsafe { unix_interface(&item) }, None);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn unix_entries_decode_ipv4_broadcast_and_ipv6_without_a_mask() {
+        let mut item: libc::ifaddrs = unsafe { std::mem::zeroed() };
+        item.ifa_flags = (libc::IFF_UP | libc::IFF_BROADCAST) as u32;
+        let mut ip: libc::sockaddr_in = unsafe { std::mem::zeroed() };
+        ip.sin_family = libc::AF_INET as _;
+        ip.sin_addr.s_addr = u32::from_ne_bytes([10, 2, 3, 218]);
+        let mut mask: libc::sockaddr_in = unsafe { std::mem::zeroed() };
+        mask.sin_family = libc::AF_INET as _;
+        mask.sin_addr.s_addr = u32::from_ne_bytes([255, 255, 252, 0]);
+        item.ifa_addr = (&mut ip as *mut libc::sockaddr_in).cast();
+        item.ifa_netmask = (&mut mask as *mut libc::sockaddr_in).cast();
+        assert_eq!(
+            unsafe { unix_interface(&item) },
+            Some(Interface {
+                address: Ipv4Addr::new(10, 2, 3, 218).into(),
+                broadcast: Some(Ipv4Addr::new(10, 2, 3, 255)),
+            })
+        );
+        let mut ip6: libc::sockaddr_in6 = unsafe { std::mem::zeroed() };
+        ip6.sin6_family = libc::AF_INET6 as _;
+        let address = "2001:4860::1".parse::<Ipv6Addr>().unwrap();
+        ip6.sin6_addr.s6_addr = address.octets();
+        item.ifa_addr = (&mut ip6 as *mut libc::sockaddr_in6).cast();
+        item.ifa_netmask = std::ptr::null_mut();
+        assert_eq!(
+            unsafe { unix_interface(&item) },
+            Some(Interface {
+                address: address.into(),
+                broadcast: None,
+            })
+        );
+    }
+
     #[test]
     fn broadcast_uses_actual_subnet_and_public_detection_rejects_nat_and_ambiguity() {
         assert_eq!(
