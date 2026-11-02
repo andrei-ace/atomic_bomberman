@@ -1,0 +1,4 @@
+name: First-party code
+
+paths-ignore:
+  - vendor/**

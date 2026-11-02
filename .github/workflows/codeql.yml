@@ -1,0 +1,75 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '27 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: actions
+            runner: ubuntu-24.04
+            build-mode: none
+          - language: c-cpp
+            runner: ubuntu-24.04
+            build-mode: none
+          - language: java-kotlin
+            runner: ubuntu-24.04
+            build-mode: none
+          - language: python
+            runner: ubuntu-24.04
+            build-mode: none
+          - language: rust
+            runner: ubuntu-24.04
+            build-mode: none
+          - language: swift
+            runner: macos-15
+            build-mode: manual
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          config-file: ./.github/codeql/config.yml
+      - name: Build standalone Swift tools
+        if: matrix.language == 'swift'
+        run: |
+          mkdir -p build/codeql-swift-cache
+          xcrun swiftc -swift-version 5 -parse-as-library -O -target arm64-apple-macosx11.0 \
+            -module-cache-path "$PWD/build/codeql-swift-cache" \
+            tools/macos-launcher.swift -o build/codeql-launcher
+          xcrun swiftc -swift-version 5 -target arm64-apple-macosx11.0 \
+            -module-cache-path "$PWD/build/codeql-swift-cache" \
+            tools/macos-icon.swift -o build/codeql-icon
+          xcrun swiftc -swift-version 5 -parse-as-library -D LAUNCHER_TESTS \
+            -module-cache-path "$PWD/build/codeql-swift-cache" \
+            tools/macos-launcher.swift tools/macos-launcher-tests.swift -o build/codeql-launcher-tests
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          category: /language:${{ matrix.language }}

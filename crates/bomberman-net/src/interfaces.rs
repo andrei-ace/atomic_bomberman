@@ -20,8 +20,9 @@ pub fn interfaces() -> io::Result<Vec<Interface>> {
     }
     let mut result = Vec::new();
     let mut next = head;
-    while !next.is_null() {
-        let item = unsafe { &*next };
+    // getifaddrs keeps every node alive until freeifaddrs below. Convert each
+    // nullable link to a reference before reading it, including the empty list.
+    while let Some(item) = unsafe { next.as_ref() } {
         next = item.ifa_next;
         if item.ifa_addr.is_null()
             || item.ifa_flags & libc::IFF_UP as u32 == 0
