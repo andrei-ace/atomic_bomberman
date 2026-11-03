@@ -15,6 +15,7 @@ use bomberman_core::{
 use macroquad::prelude::*;
 mod documents;
 mod frontend;
+mod graphics;
 mod help;
 #[cfg(debug_assertions)]
 mod input_trace;
@@ -55,6 +56,7 @@ enum Screen {
     Manual,
     Victory,
     Settings,
+    Graphics,
     Mods,
     Nickname,
     Controls,
@@ -80,6 +82,7 @@ pub struct App {
     media: Media,
     controllers: Controllers,
     target: RenderTarget,
+    classic_target: RenderTarget,
     screen: Screen,
     previous: Screen,
     selection: usize,
@@ -100,6 +103,7 @@ pub struct App {
     network_ui: NetworkUi,
     frontend: Frontend,
     mod_ui: mods::State,
+    graphics_ui: graphics::State,
 }
 
 impl App {
@@ -127,6 +131,7 @@ impl App {
             settings,
             media,
             controllers: Controllers::new(),
+            classic_target: target.clone(),
             target,
             screen: initial_screen,
             previous: Screen::Main,
@@ -148,6 +153,7 @@ impl App {
             network_ui,
             frontend: Frontend::default(),
             mod_ui: mods::State::default(),
+            graphics_ui: graphics::State::default(),
         };
         // Invalid hand-edited bindings are recovered individually.
         let defaults = Settings::default();
@@ -179,6 +185,9 @@ impl App {
                 clear_background(BLACK);
                 next_frame().await;
             }
+        }
+        if this.settings.graphics == crate::settings::GraphicsMode::Hd {
+            this.start_hd_job(false, false);
         }
         Ok(this)
     }
@@ -281,7 +290,7 @@ impl App {
                 } else {
                     let document = match self.screen {
                         Screen::Setup | Screen::Controls | Screen::NetworkDevices => "INPUT.BM",
-                        Screen::Settings | Screen::Mods => "OPTIONS.BM",
+                        Screen::Settings | Screen::Mods | Screen::Graphics => "OPTIONS.BM",
                         Screen::Roulette => "ROULETTE.BM",
                         Screen::NetworkLobby
                         | Screen::NetworkRules
@@ -359,7 +368,12 @@ impl App {
             {
                 while get_char_pressed().is_some() {}
             }
+            self.prepare_graphics_frame();
             self.draw();
+            self.finish_graphics_frame().await;
+            if self.screen == Screen::Main {
+                self.frontend.main_cursor_frame = self.frontend.main_cursor_frame.wrapping_add(1);
+            }
             #[cfg(debug_assertions)]
             self.write_state_probe()?;
             #[cfg(debug_assertions)]
@@ -410,9 +424,11 @@ impl App {
                     "asset_fingerprint": crate::network::compatibility(&self.media.manifest).assets,
                     "mods": self.mod_ui.probe(),
                     "active_mod": self.cli.mod_path,
+                    "graphics": {"requested": self.settings.graphics, "hd_active": self.media.hd_enabled(), "source_key":bomberman_assets::hd::source_key(&self.media.manifest).ok(), "texture_bytes": self.media.hd_bytes(), "target_width":self.target.texture.width(), "target_height":self.target.texture.height(),"job":self.graphics_ui.probe()},
                     "frame": self.frame,
                     "version": bomberman_net::APP_VERSION,
                     "main_footer": MAIN_FOOTER,
+                    "main_cursor": {"sequence":"bomb trigger green","frame":self.frontend.main_cursor_frame.saturating_sub(1),"variant":serde_json::Value::Null},
                     "main_actions": ["Start Game","LAN","Internet","Options","About Bomberman","Online Manual","Exit Bomberman"],
                     "network_menu_layout": 4,
                     "network_lobby_rows": network_ui::LOBBY_ROWS,
@@ -507,6 +523,7 @@ impl App {
     }
 
     async fn update(&mut self, elapsed_ms: u32) -> Result<()> {
+        self.poll_graphics();
         if self.update_compatibility_error() {
             return Ok(());
         }
@@ -574,6 +591,7 @@ impl App {
             }
             Screen::Setup => self.update_setup().await?,
             Screen::Settings => self.update_settings(),
+            Screen::Graphics => self.update_graphics(),
             Screen::Mods => self.update_mods(),
             Screen::Nickname => self.update_settings(),
             Screen::Controls => self.update_controls(),
@@ -830,6 +848,7 @@ impl App {
             Screen::Main => self.draw_main(),
             Screen::Setup => self.draw_setup(),
             Screen::Settings => self.draw_settings(),
+            Screen::Graphics => self.draw_graphics(),
             Screen::Mods => self.draw_mods(),
             Screen::Nickname => self.draw_nickname(),
             Screen::Controls => self.draw_controls(),
@@ -1234,18 +1253,41 @@ impl App {
     }
 
     fn draw_hud(&self, simulation: &Simulation) {
+        // HUD outcomes use the confirmed snapshot. Predicting an avatar must not
+        // prematurely cross out its counters or publish speculative kills.
+        let simulation = self
+            .network
+            .as_ref()
+            .and_then(|n| n.replay.as_ref())
+            .map_or(simulation, |r| &r.simulation);
+        draw_rectangle(0., 0., 640., 48., Color::new(0.68, 0.68, 0.66, 1.));
         for (i, player) in simulation.players.iter().enumerate() {
-            let x = 11. + (i % 5) as f32 * 100.;
-            let y = 6. + (i / 5) as f32 * 20.;
-            draw_rectangle(x, y + 2., 7., 10., PLAYER_COLORS[self.palette_index(i)]);
-            let label = format!("{} {}", COLOR_NAMES[self.palette_index(i)], player.wins);
-            self.media.text(
-                &label,
-                x + 11.,
-                y,
-                11.,
-                if player.alive { LIGHT } else { MUTED },
+            let x = 10. + (i / 2) as f32 * 100.;
+            let y = 5. + (i % 2) as f32 * 20.;
+            let color = PLAYER_COLORS[self.palette_index(i)];
+            self.hud_text(
+                &format!("S:{}", player.wins),
+                vec2(x, y),
+                16.,
+                32.,
+                color,
+                BLACK,
             );
+            self.hud_text(
+                &format!("K:{}", player.kills),
+                vec2(x + 35., y),
+                16.,
+                56.,
+                color,
+                BLACK,
+            );
+            if !player.alive {
+                let red = Color::new(0.95, 0.28, 0.24, 1.);
+                for offset in [-7., 28.] {
+                    draw_line(x + offset, y - 2., x + offset + 35., y + 17., 1., red);
+                    draw_line(x + offset, y + 17., x + offset + 35., y - 2., 1., red);
+                }
+            }
         }
         let timer = simulation.remaining_ms.map_or_else(
             || "--:--".into(),
@@ -1254,22 +1296,41 @@ impl App {
                 format!("{}:{:02}", seconds / 60, seconds % 60)
             },
         );
-        self.media.text(&timer, 525., 12., 20., GOLD);
-        self.media.text(
-            &format!(
-                "{} {}",
-                if simulation.config.win_by_kills {
-                    "Kill target"
-                } else {
-                    "First to"
-                },
-                simulation.config.wins_to_match
-            ),
-            522.,
-            34.,
-            9.,
-            LIGHT,
+        self.hud_text(
+            &timer,
+            vec2(516., 8.),
+            30.,
+            113.,
+            Color::new(0.37, 0.7, 0.68, 1.),
+            Color::new(0.45, 0.23, 0.09, 1.),
         );
+    }
+
+    fn hud_text(
+        &self,
+        text: &str,
+        position: Vec2,
+        size: f32,
+        width: f32,
+        color: Color,
+        outline: Color,
+    ) {
+        let (x, y) = (position.x, position.y);
+        let size = size * (width / self.media.text_width(text, size).max(1.)).min(1.);
+        for (dx, dy) in [
+            (-1., -1.),
+            (0., -1.),
+            (1., -1.),
+            (-1., 0.),
+            (1., 0.),
+            (-1., 1.),
+            (0., 1.),
+            (1., 1.),
+        ] {
+            self.media
+                .font_text("FONT1.FON", text, x + dx, y + dy, size, outline);
+        }
+        self.media.font_text("FONT1.FON", text, x, y, size, color);
     }
 
     fn draw_hazard(&self, hazard: Hazard, x: f32, y: f32, frame: usize) {
@@ -1298,11 +1359,12 @@ impl App {
             return;
         }
         if let Some(texture) = self.media.texture(file) {
-            draw_texture(
-                texture,
+            self.media.image(
+                file,
                 x - texture.width() * 0.5,
                 y - texture.height() * 0.5,
-                WHITE,
+                texture.width(),
+                texture.height(),
             );
         }
     }

@@ -13,6 +13,7 @@ pub(super) struct Frontend {
     pub settings_return: Screen,
     pub nickname_return: Screen,
     pub nickname_selection: usize,
+    pub main_cursor_frame: usize,
 }
 
 impl Default for Frontend {
@@ -27,6 +28,7 @@ impl Default for Frontend {
             settings_return: Screen::Main,
             nickname_return: Screen::Settings,
             nickname_selection: 0,
+            main_cursor_frame: 0,
         }
     }
 }
@@ -136,14 +138,14 @@ impl App {
 
     pub(super) fn draw_main(&self) {
         self.draw_main_backdrop();
-        // Resource700 anchors the original animated green selection bomb.
-        self.media.animate(
-            "BOMBS.ANI",
-            &["bomb regular green"],
-            self.ui_elapsed_ms,
+        // Native 0x42baa8 selects the striped trigger bomb. 0x42bab5 advances
+        // once per menu frame; 0x415920 queues an unmodified, unremapped image.
+        self.media.state(
+            "bomb trigger green",
+            self.frontend.main_cursor_frame,
             332.,
             140. + self.selection as f32 * 38.,
-            Some(4),
+            None,
         );
     }
 
@@ -151,19 +153,12 @@ impl App {
         self.media.image("MAINMENU.PCX", 0., 0., 640., 480.);
         // Reuse the illustration's clear starfield behind editable labels.
         // Drawing it as texture preserves the original grain and stars.
-        if let Some(texture) = self.media.texture("MAINMENU.PCX") {
-            for (y, height) in [(108., 94.), (202., 94.), (296., 83.)] {
-                draw_texture_ex(
-                    texture,
-                    350.,
-                    y,
-                    WHITE,
-                    DrawTextureParams {
-                        source: Some(Rect::new(350., 0., 290., height)),
-                        ..Default::default()
-                    },
-                );
-            }
+        for (y, height) in [(108., 94.), (202., 94.), (296., 83.)] {
+            self.media.image_region(
+                "MAINMENU.PCX",
+                Rect::new(350., 0., 290., height),
+                Rect::new(350., y, 290., height),
+            );
         }
         for (i, label) in [
             "Start Game",
@@ -459,18 +454,11 @@ impl App {
         };
         let asset = &self.media.manifest.arenas[background_arena];
         draw_rectangle(378., 80., 224., 202., WHITE);
-        if let Some(texture) = self.media.texture(&asset.background) {
-            draw_texture_ex(
-                texture,
-                380.,
-                82.,
-                WHITE,
-                DrawTextureParams {
-                    source: Some(Rect::new(0., 48., 220., 198.)),
-                    ..Default::default()
-                },
-            );
-        }
+        self.media.image_region(
+            &asset.background,
+            Rect::new(0., 48., 220., 198.),
+            Rect::new(380., 82., 220., 198.),
+        );
         // Native 0x406aa3: 5x5 cells, odd/odd pillars, a clear upper-left
         // 2x2 entry, and four-in-five bricks elsewhere. Random Each Game also
         // mixes the tile sets inside this sample, as the original menu does.
@@ -613,8 +601,7 @@ impl App {
                 self.open_devices();
             }
             17 => {
-                self.settings.fullscreen = !self.settings.fullscreen;
-                set_fullscreen(self.settings.fullscreen);
+                self.open_graphics();
             }
             18 => {
                 self.open_mods();
@@ -702,7 +689,7 @@ impl App {
             ),
             "Define keyboard layouts".into(),
             "Network player controls".into(),
-            format!("Fullscreen: {}", yes_no(self.settings.fullscreen)),
+            "Graphics...".into(),
             "Mods...".into(),
         ];
         for (i, text) in rows.iter().enumerate() {

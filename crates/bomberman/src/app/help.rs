@@ -272,7 +272,15 @@ Audio Volume: controls the game's music and effects.
 Define Keyboard Layouts: remap keyboard/controller keys.
 Network Player Controls: choose this computer's devices
 for LAN and Internet. This does not create a room.
-Fullscreen: change window mode and save the preference.
+Graphics: choose Classic or optional HD. Classic is the
+default. First HD use downloads tools and prepares the
+artwork locally with progress and cancellation. If HD
+is unavailable, Classic stays playable; Graphics shows
+the reason and Retry. Classic keeps completed HD files.
+Use existing HD folder: import matching HD artwork from
+another computer. Export HD artwork: save a portable
+folder to copy to another computer. Fullscreen is also
+in Graphics.
 Mods: choose a folder, then Apply and restart. The
 normal app remembers it. Use original assets, then
 Apply and restart, switches back. Missing mod files

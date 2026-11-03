@@ -32,7 +32,7 @@ Usage: bomberman --assets <cache-directory> [options]\n\n\
   --smoke-test <frames>   Start a battle, run a fixed number of GUI frames, exit\n\
   --smoke-menu           Keep the main menu during a GUI smoke test\n\
   --skip-intro           Skip the opening logos and title\n\
-  --screenshot <file>     Save the final 640 x 480 smoke-test frame as PNG\n\
+  --screenshot <file>     Save the final game frame as PNG (Classic: 640 x 480)\n\
   --mute                 Disable original disc audio\n\
   --software-rendering   Force Mesa software rendering (Linux)\n\
   --windowed             Start in a resizable window, overriding saved fullscreen\n\

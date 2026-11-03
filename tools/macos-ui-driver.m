@@ -12,6 +12,7 @@ static BOOL finished;
 static BOOL launcherMode;
 static BOOL reloadMode;
 static NSString *splashMode;
+static NSString *graphicsMode;
 static NSMutableArray *splashTimings;
 static NSTimeInterval splashObservedAt, skipRequestedAt;
 static NSInteger splashObservedStage = -1;
@@ -47,6 +48,7 @@ static void Finish(BOOL passed, NSString *error) {
         @"physical_keyboard_verified": @NO, @"physical_controller_verified": @NO,
         @"fullscreen_checks_included": @(getenv("ATOMIC_BOMBERMAN_MAC_UI_SKIP_FULLSCREEN") == NULL),
         @"splash_timings": splashTimings ?: @[],
+        @"graphics_case": graphicsMode ?: [NSNull null],
         @"limitations": @[@"Synthetic Cocoa events verify software input and window behavior; physical devices are recorded separately."]
     };
     [[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted error:NULL]
@@ -113,6 +115,64 @@ static void Add(void (^block)(void)) { [steps addObject:[block copy]]; }
 static NSDictionary *Positions(void) {
     NSArray *players = State()[@"simulation"][@"players"];
     return players.count >= 2 ? @{@"first": players[0][@"position"], @"second": players[1][@"position"]} : @{};
+}
+static void BuildGraphicsSteps(void) {
+    steps=[NSMutableArray array];checks=[NSMutableArray array];
+    Add(^{[NSApp activateIgnoringOtherApps:YES];[window makeKeyAndOrderFront:nil];CaptureNamed(@"main-cursor");});
+    Add(^{Check([State()[@"main_cursor"][@"sequence"] isEqual:@"bomb trigger green"] && State()[@"main_cursor"][@"variant"]==NSNull.null,@"original striped trigger-bomb menu cursor without recoloring");});
+    if([graphicsMode isEqual:@"enabled"]) {
+        Add(^{
+            NSDictionary *graphics=State()[@"graphics"];
+            if([graphics[@"job"][@"preparing"] boolValue]){Capture();--indexInSteps;return;}
+            if(!Check([graphics[@"hd_active"] boolValue] && [graphics[@"texture_bytes"] unsignedLongLongValue]>0 && [graphics[@"target_width"] intValue]>640,@"validated HD cache loads at physical viewport resolution"))return;
+            CaptureNamed(@"hd-main");
+        });
+    }else{
+        Add(^{
+            if([State()[@"graphics"][@"job"][@"preparing"] boolValue]){Capture();--indexInSteps;return;}
+            Check(![State()[@"graphics"][@"hd_active"] boolValue],@"Classic remains playable when HD is unavailable or unselected");
+        });
+    }
+    Add(^{Tap(125);});Add(^{Tap(125);});Add(^{Tap(125);});
+    Add(^{Tap(36);Capture();});
+    Add(^{if(!Check([State()[@"screen"] isEqual:@"Settings"],@"Options opens normally"))return;Tap(126);});
+    Add(^{Tap(126);});
+    Add(^{Tap(36);CaptureNamed(@"graphics-options");});
+    Add(^{Check([State()[@"screen"] isEqual:@"Graphics"],@"Graphics submenu opens from Options");});
+    if([graphicsMode isEqual:@"cancel"]) {
+        Add(^{Tap(36);Capture();});
+        Add(^{
+            NSDictionary *job=State()[@"graphics"][@"job"];
+            if(![job[@"preparing"] boolValue]){Finish(NO,[NSString stringWithFormat:@"HD preparation did not start: %@",job]);return;}
+            if(![job[@"message"] hasPrefix:@"Enhancing "]){Capture();--indexInSteps;return;}
+            Check(YES,@"in-game preparation downloads and verifies helper/model and starts enhancement");
+            Tap(53);CaptureNamed(@"hd-cancelling");
+        });
+        Add(^{
+            if([State()[@"graphics"][@"job"][@"preparing"] boolValue]){Capture();--indexInSteps;return;}
+            Check(![State()[@"graphics"][@"hd_active"] boolValue] && [ReadJSON(settingsPath)[@"graphics"] isEqual:@"Classic"],@"cancellation keeps Classic active and preserves the saved preference");
+            CaptureNamed(@"hd-cancelled");
+        });
+    }else if([graphicsMode isEqual:@"fallback"]) {
+        Add(^{
+            NSDictionary *graphics=State()[@"graphics"];
+            Check([graphics[@"requested"] isEqual:@"Hd"] && ![graphics[@"hd_active"] boolValue] && graphics[@"job"][@"error"]!=NSNull.null,@"missing HD cache falls back once and reports the reason");
+            Check([ReadJSON(settingsPath)[@"nickname"] isEqual:@"HD Fallback Tester"],@"HD failure preserves unrelated profile settings");
+            CaptureNamed(@"hd-fallback");Tap(36);Capture();
+        });
+        Add(^{Check([ReadJSON(settingsPath)[@"graphics"] isEqual:@"Classic"],@"Classic can be selected and saved after HD fallback");});
+    }else{
+        Add(^{CaptureNamed(@"hd-options");Tap(53);});
+        Add(^{Tap(53);Capture();});
+        Add(^{Tap(126);});Add(^{Tap(126);});Add(^{Tap(126);});
+        Add(^{Tap(36);Capture();});
+        Add(^{if(!Check([State()[@"screen"] isEqual:@"Setup"],@"HD player setup opens"))return;Tap(36);Capture();});
+        Add(^{if(!Check([State()[@"screen"] isEqual:@"Arena"],@"HD arena preview opens"))return;Tap(36);delay=16;Capture();});
+        Add(^{CaptureNamed(@"hd-battle");});
+        Add(^{Check([State()[@"screen"] isEqual:@"Battle"] && [State()[@"graphics"][@"hd_active"] boolValue],@"ten-player battle renders with HD active");[window setContentSize:NSMakeSize(1100,600)];CaptureNamed(@"hd-resized");});
+        Add(^{Check(fabs([State()[@"graphics"][@"target_height"] doubleValue]-600*window.backingScaleFactor)<2,@"HD render target follows physical window resizing");});
+    }
+    Add(^{Finish(YES,nil);});
 }
 static void BuildSteps(void) {
     steps = [NSMutableArray array]; checks = [NSMutableArray array];
@@ -310,6 +370,8 @@ __attribute__((constructor)) static void InstallDriver(void) {
     reloadMode = getenv("ATOMIC_BOMBERMAN_MAC_UI_RELOAD") != NULL;
     const char *splash=getenv("ATOMIC_BOMBERMAN_MAC_UI_SPLASH");
     if(splash) { splashMode=[NSString stringWithUTF8String:splash];splashTimings=[NSMutableArray array]; }
+    const char *graphics=getenv("ATOMIC_BOMBERMAN_MAC_UI_GRAPHICS");
+    if(graphics)graphicsMode=[NSString stringWithUTF8String:graphics];
     if (!launcherMode) {
         probePath = [NSString stringWithUTF8String:getenv("ATOMIC_BOMBERMAN_STATE_PROBE")];
         settingsPath = [NSString stringWithUTF8String:getenv("ATOMIC_BOMBERMAN_MAC_UI_SETTINGS")];
@@ -348,8 +410,9 @@ __attribute__((constructor)) static void InstallDriver(void) {
                 ObserveAutomaticSplash();return;
             }
             if (!steps) {
-                if (![State()[@"screen"] isEqual:reloadMode?@"Main":@"Intro"]) { Capture(); return; }
-                if([splashMode isEqual:@"skip"]) BuildSkipSplashSteps();
+                if (![State()[@"screen"] isEqual:(reloadMode||graphicsMode)?@"Main":@"Intro"]) { Capture(); return; }
+                if(graphicsMode) BuildGraphicsSteps();
+                else if([splashMode isEqual:@"skip"]) BuildSkipSplashSteps();
                 else if (reloadMode) BuildReloadSteps(); else BuildSteps();
             }
             if (delay) { --delay; return; }

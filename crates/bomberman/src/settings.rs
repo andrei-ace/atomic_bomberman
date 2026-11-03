@@ -76,6 +76,15 @@ pub struct HostingSettings {
     pub slot_teams: [u8; 10],
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum GraphicsMode {
+    #[serde(alias = "HD", alias = "hd")]
+    Hd,
+    #[default]
+    #[serde(other)]
+    Classic,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
@@ -101,6 +110,7 @@ pub struct Settings {
     pub disable_gameplay_music: bool,
     pub assign_keyboard_player: bool,
     pub fullscreen: bool,
+    pub graphics: GraphicsMode,
     pub volume: f32,
     pub keyboard: [KeyLayout; 2],
     /// Standard gamepad buttons; selectable in the Controls screen.
@@ -150,6 +160,7 @@ impl Default for Settings {
             disable_gameplay_music: false,
             assign_keyboard_player: true,
             fullscreen: false,
+            graphics: GraphicsMode::Classic,
             volume: 0.65,
             keyboard: [
                 KeyLayout {
@@ -461,6 +472,24 @@ pub fn default_path() -> PathBuf {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn old_or_unknown_graphics_preferences_preserve_the_rest_of_the_profile() {
+        for graphics in [None, Some("FutureMode")] {
+            let mut value =
+                serde_json::json!({"nickname":"Kept Player","volume":0.35,"fullscreen":true});
+            if let Some(mode) = graphics {
+                value["graphics"] = mode.into();
+            }
+            let settings: super::Settings = serde_json::from_value(value).unwrap();
+            assert_eq!(settings.graphics, super::GraphicsMode::Classic);
+            assert_eq!(settings.nickname, "Kept Player");
+            assert_eq!(settings.volume, 0.35);
+            assert!(settings.fullscreen);
+        }
+        let hd: super::Settings =
+            serde_json::from_value(serde_json::json!({"graphics":"HD"})).unwrap();
+        assert_eq!(hd.graphics, super::GraphicsMode::Hd);
+    }
     use super::*;
 
     #[test]

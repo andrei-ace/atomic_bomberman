@@ -20,6 +20,7 @@ BINARIES = {'Atomic Bomberman.exe', 'bin/bomberman.exe', 'bin/bomberman-assets.e
             'bin/hardware-check.exe', 'bin/audio-probe.exe'}
 DOCUMENTS = {'README.txt', 'LICENSE', 'BUILD-INFO.json', 'docs/online-play.md',
              'docs/relay.md', 'licenses/THIRD-PARTY-NOTICES.txt',
+             'docs/hd-graphics.md', 'docs/third-party-hd-notices.txt',
              'licenses/quad-snd-NOTICE.md', 'licenses/quad-snd-LICENSE-APACHE',
              'licenses/miniquad-NOTICE.md'}
 SYSTEM_DLLS = set('advapi32 bcrypt bcryptprimitives cfgmgr32 combase comctl32 comdlg32 crypt32 dbghelp dinput8 '
@@ -185,7 +186,7 @@ def assemble(binary_dir, info, require_clean=False):
             copy(binary_dir / source, package / 'bin' / target)
         copy(ROOT / 'docs/INSTALL-windows.md', package / 'README.txt')
         copy(ROOT / 'LICENSE', package / 'LICENSE')
-        for document in ['online-play.md', 'relay.md']:
+        for document in ['online-play.md', 'relay.md', 'hd-graphics.md', 'third-party-hd-notices.txt']:
             copy(ROOT / 'docs' / document, package / 'docs' / document)
         for source, target in [('quad-snd/NOTICE.md', 'quad-snd-NOTICE.md'), ('quad-snd/LICENSE-APACHE', 'quad-snd-LICENSE-APACHE'),
                                ('miniquad/NOTICE.md', 'miniquad-NOTICE.md')]:

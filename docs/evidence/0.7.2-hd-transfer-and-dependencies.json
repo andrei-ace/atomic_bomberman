@@ -1,0 +1,108 @@
+{
+  "format_version": 1,
+  "recorded_at_utc": "2026-11-03T13:21:16Z",
+  "version": "0.7.2",
+  "release_status": "unreleased",
+  "source": {
+    "base_commit": "e5961b60df5d37b29819ff8dd706b020aaee0313",
+    "dirty": true,
+    "sha256": "31fdeef42f9d41c094052db47e48a459e5b3e43fde03a049b16eab37f4e7a75d",
+    "digest_definition": "Sorted git-visible non-evidence paths and contents, each followed by NUL"
+  },
+  "stock_hd": {
+    "source_key": "3352e69a890ef554663a8bfc34cbad39132a96963daa9f63a9aac98d0e8b3506",
+    "frames": 16183,
+    "asset_groups": 698,
+    "pages": 1174,
+    "page_bytes": 1352440883,
+    "coverage": "All prepared stock artwork retained; no unused-asset pruning",
+    "cache_format_changed_by_transfer": false
+  },
+  "native_transfer": {
+    "passed": true,
+    "command": "python3 tools/verify_macos_hd_transfer.py --game target/debug/bomberman --hd-cache-root build/hd-cache",
+    "local_report": "build/hd-native-transfer/run-ew802316/report.json",
+    "game_binary_sha256": "d1b0dc300a83533b578565a6d60b3ea8d84e18ed4df679fc6e9332cbbccb522a",
+    "checks": [
+      "Real native import/export folder sheets cancel without changing graphics mode",
+      "Full HD cache exports while Classic is active without changing the local cache",
+      "Incompatible imported artwork preserves Classic and the saved preference",
+      "Matching HD imports into an independent local cache without enhancement tools",
+      "Disconnecting the source and switching HD/Classic/HD reuses every imported page"
+    ],
+    "cache_toggle": {
+      "mode_sequence": ["HD", "Classic", "HD"],
+      "pages_preserved": 1174,
+      "metadata_unchanged": true,
+      "all_page_sizes_mtimes_and_inodes_unchanged": true
+    },
+    "limitations": [
+      "Synthetic process-local Cocoa events; no physical input or audio claim",
+      "Selection paths use a debug fixture after real native folder-sheet cancellation checks",
+      "Windows and Linux GPU execution was not exercised"
+    ]
+  },
+  "checks": {
+    "workspace": {
+      "command": "RUSTUP_TOOLCHAIN=1.89.0 bash tools/check.sh",
+      "passed": true,
+      "format": true,
+      "clippy_all_targets_deny_warnings": true,
+      "tests_passed_including_audio_backend": 397,
+      "tests_ignored": 6,
+      "local_log": "build/hd-transfer-final-checks.log"
+    },
+    "portable_transfer_unit_tests": {
+      "passed": 4,
+      "coverage": [
+        "Independent exported/imported copy and cache reuse",
+        "Cancellation preserves the working cache",
+        "Source mismatch and corruption preserve the working cache",
+        "Unrelated destinations and original asset directories are protected"
+      ]
+    },
+    "official_helper_archives": {
+      "passed": true,
+      "test": "official_archives_parse_and_match_every_pinned_member",
+      "platforms": ["linux", "macos", "windows"],
+      "pinned_members_checked": 10,
+      "zip_version": "9.0.0",
+      "local_log": "build/hd-patched-zip-archives.log",
+      "scope": "Archive parsing and SHA-256 checks; no cross-platform GPU execution claim"
+    },
+    "release_packaging_unit_tests": 6,
+    "python_verification_scripts_compile": true
+  },
+  "dependency_audit": {
+    "patched_versions": {
+      "rustls": "0.23.46",
+      "time": "0.3.47",
+      "rand_0_8": "0.8.6",
+      "tokio": "1.51.6",
+      "zip": "9.0.0"
+    },
+    "github_alert_numbers_patched_locally": [1, 2, 3, 4, 5, 6, 7],
+    "remote_status_at_recording": "Unchanged; commit and push blocked by automatic approval review",
+    "advisories_dismissed_or_suppressed": false,
+    "cargo_audit_version": "0.22.2",
+    "rustsec_database_commit": "6c5fedf8ff03c485ed674d8f941e0180f3f72d70",
+    "vulnerabilities": 0,
+    "remaining_upstream_notices": [
+      {"package": "rustls-pemfile", "version": "2.2.0", "kind": "unmaintained", "advisory": "RUSTSEC-2025-0134"},
+      {"package": "ttf-parser", "version": "0.25.1", "kind": "unmaintained", "advisory": "RUSTSEC-2026-0192"},
+      {"package": "macroquad", "version": "0.4.16", "kind": "unsound", "advisory": "RUSTSEC-2025-0035", "fixed_upstream_version_available": false}
+    ],
+    "local_report": "build/dependabot-audit-patched.json",
+    "required_remote_followup": "After an authorized push, verify the exact remote commit, CI, and Dependabot alert state"
+  },
+  "local_macos_package": {
+    "verified": true,
+    "target": "aarch64-apple-darwin",
+    "archive": "dist/github/atomic-bomberman-0.7.2-macos-arm64.zip",
+    "sha256": "24efd434ffc88a4b0df8b0c2547bde67e61419aa09ae151931407b4605bf4b13",
+    "source_digest_matches_current_tree": true,
+    "rustc": "1.93.1",
+    "checks": ["signature", "checksums", "provenance", "licenses", "relocation", "help", "original and generated asset exclusion"],
+    "published": false
+  }
+}

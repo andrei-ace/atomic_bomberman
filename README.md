@@ -18,16 +18,15 @@ locally from your copy of the game.
 
 ## Download and install
 
-Download the **0.7.1** package for your platform and its matching `.sha256` file
-from [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.1).
+Download the **0.7.2** package for your platform and its matching `.sha256` file
+from [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.2).
 The installation guides explain checksum verification and first-run setup.
 
-This release restores the original menu flow, simplifies LAN/Internet setup,
-adds remembered asset mods, and fixes client departures and shared-window
-settings saves. Version 0.7.1 also bounds prediction during delayed host updates
-to prevent bursts of movement. See the [release notes](docs/release-notes/0.7.1.md).
+Version 0.7.2 adds optional HD graphics, portable HD import/export, the original
+score bar and menu cursor, and dependency security fixes. It includes the earlier
+menus, mods and movement corrections. See the [release notes](docs/release-notes/0.7.2.md).
 
-**Multiplayer upgrade:** update every client and the relay to 0.7.1 or a compatible
+**Multiplayer upgrade:** update every client and the relay to 0.7.2 or a compatible
 protocol-8 build. Version 0.6.1 uses protocol 7 and cannot join these games.
 Existing private server links, settings and imported data remain valid.
 
@@ -65,6 +64,54 @@ Controls can be remapped in the game.
 | Pause | Escape / P | | Start |
 | Help | F1 | | |
 | Fullscreen | F11; Command-Control-F on Mac | | |
+
+## Graphics
+
+Version **0.7.2** offers optional HD graphics.
+**Classic is the default.**
+Choose **Options → Graphics → HD** for a faithful
+4× enhancement of the original artwork, rendered at the display's resolution.
+The first use downloads about 50 MB of enhancement tools and builds a separate
+local cache from your installed game data. Preparation shows progress and can
+be cancelled; later launches reuse the result. Allow additional disk space and
+time for the one-time build, especially with all ten player colors.
+Preparation calibrates parallel asset workers within the available CPU, memory
+and GPU limits, and reduces concurrency if resources become tight.
+
+On a **MacBook Pro with an M4 Pro (14 CPU cores, 48 GB RAM)**, allow approximately
+**60–80 minutes** for the first complete preparation of all 16,183 frames and ten player colors.
+The full serial run took about 77 minutes; the parallel estimate is about
+63 minutes, based on a measured 18% reduction on a representative batch. A full
+parallel run has not been timed. Other MacBooks can take longer or finish
+sooner, depending on their GPU, available memory and other running work.
+The completed cache uses about **1.35 GB**. Switching to **Classic keeps it**;
+selecting HD again reuses it for the same game assets or mod without regenerating.
+
+To reuse HD artwork from another computer, select **Options → Graphics → Use
+existing HD folder** and choose an exported folder or its `hd-cache` directory.
+The app validates it against the active game assets or mod and copies it into
+the local cache. **Export HD artwork** saves a portable **Atomic Bomberman HD**
+folder inside your selected destination. Copy that folder to the other computer
+and import it there; matching original game data is still required.
+All 16,183 frames are packed into 1,174 PNG sprite sheets; the export includes
+every sheet and its frame manifest.
+
+HD preparation needs a supported graphics device: Metal on macOS, or a
+Vulkan-capable graphics driver on Windows/Linux. If preparation or HD loading
+fails, the game continues with Classic graphics and shows the reason under
+**Options → Graphics**, where you can retry. Fullscreen is also in that menu;
+F11 and the Mac fullscreen shortcut remain available.
+
+Both modes use the original-style score bar: colored score/kill counters,
+crossed-out counters for eliminated players, and a large timer. Classic and HD
+players can play together on LAN and Internet. The main-menu cursor uses the original striped
+green trigger-bomb animation without player recoloring.
+
+HD follows the selected mod. Voice/scheme-only mods reuse unchanged HD artwork;
+graphics, font and palette overrides get a separate matching cache. Until that
+cache is prepared, the mod remains active with Classic graphics.
+
+See [HD graphics and recovery](docs/hd-graphics.md) for preparation details.
 
 ## Asset mods
 
@@ -160,6 +207,37 @@ shared outcomes such as bombs, pickups, damage and scores. Live gameplay uses
 encrypted UDP, with a separate reliable connection for lobbies and setup.
 A lightweight Linux relay connects online players without requiring port
 forwarding on their computers.
+
+## Credits
+
+The original **Atomic Bomberman** artwork, music, sounds, game design and
+characters belong to their original creators at **Hudson Soft and Interplay**.
+The imported **About Bomberman** credits retain the original team's credits.
+Each player supplies their own game data; original or enhanced game artwork
+is not included in the application downloads.
+
+This reconstruction uses the following projects. Credit belongs to their
+authors and contributors; the links point to the upstream projects.
+
+| Project | Contribution |
+| --- | --- |
+| [Macroquad](https://github.com/not-fl3/macroquad), [Miniquad](https://github.com/not-fl3/miniquad), [quad-snd](https://github.com/not-fl3/quad-snd) — Fedor Logachev and contributors | Native graphics, window/input handling and audio; the vendored Miniquad and quad-snd changes are described in their notices. |
+| [gilrs](https://gitlab.com/gilrs-project/gilrs) | Game controller input. |
+| [Quinn](https://github.com/quinn-rs/quinn), [Tokio](https://github.com/tokio-rs/tokio), [rustls](https://github.com/rustls/rustls), [tokio-tungstenite](https://github.com/snapview/tokio-tungstenite) | Native multiplayer transport, asynchronous networking and TLS. |
+| [Serde](https://github.com/serde-rs/serde), [RustCrypto](https://github.com/RustCrypto/hashes) | Structured game/configuration data and content hashes. |
+| [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) — Xintao Wang and collaborators | The optional `RealESRGAN_x4plus` enhancement model. |
+| [Real-ESRGAN ncnn Vulkan](https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan) — Xintao Wang; [realsr-ncnn-vulkan](https://github.com/nihui/realsr-ncnn-vulkan) — nihui | The optional native enhancement executable and its upstream implementation. |
+| [ncnn](https://github.com/Tencent/ncnn) — Tencent and contributors; [MoltenVK](https://github.com/KhronosGroup/MoltenVK) — Khronos Group and contributors | Neural-network inference and Vulkan-to-Metal support in the macOS enhancement helper. |
+| [image](https://github.com/image-rs/image), [png](https://github.com/image-rs/image-png), [ureq](https://github.com/algesten/ureq), [zip](https://github.com/zip-rs/zip2) | Local image/alpha processing, validated asset caches and verified enhancement-tool downloads. |
+| [sysinfo](https://github.com/GuillaumeGomez/sysinfo) — Guillaume Gomez and contributors | Available-memory checks for resource-bounded parallel HD preparation. |
+| [REA](https://github.com/morluto/rea), [Ghidra](https://github.com/NationalSecurityAgency/ghidra) | Inspection and decompilation of the original executable during reconstruction. |
+| [Unicorn](https://github.com/unicorn-engine/unicorn), [Capstone](https://github.com/capstone-engine/capstone), [Pillow](https://github.com/python-pillow/Pillow) | Development-only isolated original-routine execution and rendering comparisons. |
+| [FFmpeg](https://ffmpeg.org/), [yt-dlp](https://github.com/yt-dlp/yt-dlp) | Development-only reference-video inspection and frame extraction. |
+| [libarchive](https://github.com/libarchive/libarchive) | Import of original game-data archives. |
+
+Packaged Rust dependency notices list the locked dependencies, authors and
+license texts. [HD third-party notices](docs/third-party-hd-notices.txt) accompany
+the downloaded enhancement tools; no Python installation is needed to use HD.
 
 ## Development
 

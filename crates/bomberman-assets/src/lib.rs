@@ -1,6 +1,7 @@
 //! Original-disc asset import and validated native cache.
 mod archive;
 mod formats;
+pub mod hd;
 mod manifest;
 mod mods;
 pub use mods::modded_cache;

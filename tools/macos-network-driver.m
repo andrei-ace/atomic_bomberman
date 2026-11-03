@@ -158,6 +158,10 @@ __attribute__((constructor)) static void InstallDriver(void) {
                 } else unsetenv("ATOMIC_BOMBERMAN_SCREENSHOT_PROBE");
                 Tap(111); // Existing opt-in F12 state probe, after the game draws.
                 lastProbe = now;
+            } else if ([operation isEqual:@"show"]) {
+                [NSApp unhide:nil];
+                [window deminiaturize:nil];
+                [window orderFront:nil];
             } else if ([operation isEqual:@"tap"]) Tap([command[@"code"] unsignedShortValue]);
             else if ([operation isEqual:@"cancel_folder_picker"]) CancelFolderPicker();
             else if ([operation isEqual:@"key"]) Key([command[@"code"] unsignedShortValue], [command[@"down"] boolValue], nil);

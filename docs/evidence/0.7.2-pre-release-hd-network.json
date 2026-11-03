@@ -1,0 +1,48 @@
+{
+  "format_version": 1,
+  "recorded_at_utc": "2026-11-03T13:53:22.022364+00:00",
+  "version": "0.7.2",
+  "source": {
+    "base_commit": "e5961b60df5d37b29819ff8dd706b020aaee0313",
+    "dirty": true,
+    "sha256": "6626442f43b25fb36f06b2532b0bca04a6cb332ed0f99f4211a97b71fbceb36c"
+  },
+  "protocol": 8,
+  "relay_before_deployment": "0.7.1",
+  "native_mixed_lan": {
+    "passed": true,
+    "canonical_simulation_sha256": "ea716c44e1a905b6dd43d2e66396cdbc46c1c05bea614ee0eab71e02c950cf18",
+    "graphics": [
+      "HD",
+      "Classic"
+    ],
+    "players": 3,
+    "game_binary_sha256": "e7ac377b45eaaa0d9f773d47339ee3976d7e728008d7b5b7af1f5f6794860ef3"
+  },
+  "native_mixed_live_wan": {
+    "passed": true,
+    "canonical_simulation_sha256": "bd5b723632803eb14d334457699e89c849b5c4225a351ac8cf5b26b94890cff4",
+    "graphics": [
+      "HD",
+      "Classic"
+    ],
+    "players": 3,
+    "game_binary_sha256": "ba6c884b41f995ff2b3113a84a2960d587e598d3f3c7539a93e379d9673f16f7"
+  },
+  "cache_retention": {
+    "passed": true,
+    "mode_sequence": [
+      "HD",
+      "Classic",
+      "HD"
+    ],
+    "pages_preserved": 1174,
+    "metadata_unchanged": true,
+    "all_page_sizes_mtimes_and_inodes_unchanged": true
+  },
+  "limitations": [
+    "Both native windows run on one macOS computer; the WAN case traverses the deployed private internet relay.",
+    "Synthetic process-local Cocoa events; no physical input/audio or Windows/Linux graphics claim.",
+    "This is pre-deployment compatibility evidence; the 0.7.2 relay requires separate post-deployment checks."
+  ]
+}

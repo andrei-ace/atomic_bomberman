@@ -188,7 +188,8 @@ def build(clean, emulated_runtime=False):
         copy(icon, app / 'usr/share/icons/hicolor/256x256/apps/atomic-bomberman.png')
         copy(ROOT / 'tools/linux/atomic-bomberman.desktop', app / 'usr/share/applications/atomic-bomberman.desktop')
         copy(ROOT / 'tools/linux/atomic-bomberman.svg', app / 'usr/share/icons/hicolor/scalable/apps/atomic-bomberman.svg')
-        for document in ['INSTALL-linux.md', 'online-play.md', 'relay.md', 'hardware-check.md', 'asset-formats.md']:
+        for document in ['INSTALL-linux.md', 'online-play.md', 'relay.md', 'hardware-check.md', 'asset-formats.md',
+                         'hd-graphics.md', 'third-party-hd-notices.txt']:
             copy(ROOT / 'docs' / document, docs / document)
         copy(ROOT / 'LICENSE', docs / 'LICENSE')
         copy(license_path, docs / 'licenses/AppImage-runtime-LICENSE')

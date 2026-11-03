@@ -245,20 +245,21 @@ impl DocumentView {
                         if visible_width == 0 || visible_top >= visible_bottom {
                             continue;
                         }
-                        draw_texture_ex(
+                        media.keyed_picture(
+                            id,
                             texture,
-                            BODY_X + *x as f32,
-                            BODY_Y + (visible_top - top) as f32,
-                            WHITE,
-                            DrawTextureParams {
-                                source: Some(Rect::new(
-                                    0.,
-                                    (visible_top - *y) as f32,
-                                    visible_width as f32,
-                                    (visible_bottom - visible_top) as f32,
-                                )),
-                                ..Default::default()
-                            },
+                            Rect::new(
+                                0.,
+                                (visible_top - *y) as f32,
+                                visible_width as f32,
+                                (visible_bottom - visible_top) as f32,
+                            ),
+                            Rect::new(
+                                BODY_X + *x as f32,
+                                BODY_Y + (visible_top - top) as f32,
+                                visible_width as f32,
+                                (visible_bottom - visible_top) as f32,
+                            ),
                         );
                     }
                 }

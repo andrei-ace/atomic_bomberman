@@ -1,0 +1,249 @@
+{
+  "version": "0.7.2",
+  "status": "unreleased",
+  "passed": true,
+  "verified_at_utc": "2026-11-03T10:55:00.144379+00:00",
+  "source": {
+    "commit": "e5961b60df5d37b29819ff8dd706b020aaee0313",
+    "dirty": true,
+    "sha256": "4bfb200b184f9344a19d68d2133c4a280c4de23500e040d1d9cc121b4b0ea10d"
+  },
+  "platform": {
+    "os": "macOS",
+    "architecture": "aarch64",
+    "gpu": "Apple M4 Pro",
+    "display_backing_scale": 1
+  },
+  "model": {
+    "name": "realesrgan-x4plus",
+    "scale": 4,
+    "helper_release": "20220424 / Real-ESRGAN v0.2.5.0"
+  },
+  "prepared_stock_pack": {
+    "source_key": "3352e69a890ef554663a8bfc34cbad39132a96963daa9f63a9aac98d0e8b3506",
+    "groups": 698,
+    "frames": 16183,
+    "pages": 1174,
+    "complete_file_hash_and_pixel_audit": true,
+    "development_cache_note": "All model pixels were generated from the stock originals. During development the same audited pages were reindexed to the final visual fingerprint; model pixels, page hashes and frame geometry were retained."
+  },
+  "parallel_performance": {
+    "all_page_hashes_and_region_metadata_equal": true,
+    "calibrated_workers": 2,
+    "calibration": {
+      "calibration": [
+        {
+          "frames": 24,
+          "seconds": 8.215381334,
+          "workers": 1
+        },
+        {
+          "frames": 24,
+          "seconds": 7.091115958,
+          "workers": 2
+        },
+        {
+          "frames": 24,
+          "seconds": 7.759005041,
+          "workers": 4
+        }
+      ],
+      "resources": {
+        "available_memory_bytes": 8433795072,
+        "cpu_threads": 14,
+        "gpu_budget_bytes": 40200814592,
+        "max_workers": 4
+      },
+      "selected_workers": 2
+    },
+    "frames": 93,
+    "groups": 7,
+    "passed": true,
+    "resources": {
+      "available_memory_bytes": 8433795072,
+      "cpu_threads": 14,
+      "gpu_budget_bytes": 40200814592,
+      "max_workers": 4
+    },
+    "scope": "Real model on a representative subset of original walking colors, menu bomb, tiles and fonts; not a full-pack timing.",
+    "timings": [
+      {
+        "mode": "serial",
+        "seconds": 25.36263825,
+        "workers": 1
+      },
+      {
+        "mode": "parallel",
+        "seconds": 20.803058125,
+        "workers": 2
+      }
+    ],
+    "elapsed_time_reduction_percent": 17.98,
+    "timing_scope": "Serial and parallel job processing excludes the separately recorded first-use calibration; this is a representative subset, not a full-pack speed claim."
+  },
+  "native": {
+    "all_eleven_arenas_and_mods": {
+      "checks": [
+        "base HD loads from the complete validated cache",
+        "all eleven arenas render with HD active and bounded texture memory",
+        "missing HD page during play recovers to Classic, keeps rendering and preserves the saved preference",
+        "silent voice mod stays selected and reuses the base HD cache after restart",
+        "changed mod graphics use the mod in Classic while their HD cache is unavailable",
+        "prepared HD artwork from the graphical mod takes priority over stock HD artwork",
+        "switching back restores base HD and preserves settings, source data and intentional silence"
+      ],
+      "arenas": [
+        {
+          "arena": "NewGreenAcres",
+          "texture_bytes": 59244544,
+          "width": 640.0,
+          "height": 480.0
+        },
+        {
+          "arena": "ClassicGreenAcres",
+          "texture_bytes": 81002496,
+          "width": 640.0,
+          "height": 480.0
+        },
+        {
+          "arena": "HockeyRink",
+          "texture_bytes": 104857600,
+          "width": 640.0,
+          "height": 480.0
+        },
+        {
+          "arena": "AncientEgypt",
+          "texture_bytes": 126615552,
+          "width": 640.0,
+          "height": 480.0
+        },
+        {
+          "arena": "CoalMine",
+          "texture_bytes": 148373504,
+          "width": 640.0,
+          "height": 480.0
+        },
+        {
+          "arena": "Beach",
+          "texture_bytes": 170131456,
+          "width": 640.0,
+          "height": 480.0
+        },
+        {
+          "arena": "Aliens",
+          "texture_bytes": 191889408,
+          "width": 640.0,
+          "height": 480.0
+        },
+        {
+          "arena": "HauntedHouse",
+          "texture_bytes": 213647360,
+          "width": 640.0,
+          "height": 480.0
+        },
+        {
+          "arena": "UnderTheOcean",
+          "texture_bytes": 211550208,
+          "width": 640.0,
+          "height": 480.0
+        },
+        {
+          "arena": "DeepForest",
+          "texture_bytes": 211550208,
+          "width": 640.0,
+          "height": 480.0
+        },
+        {
+          "arena": "InnerCity",
+          "texture_bytes": 215744512,
+          "width": 640.0,
+          "height": 480.0
+        }
+      ],
+      "diagnostic_game_sha256": "a85d66ac2a5c645264e47eb62f2307c65829aef5961618a8f7cdc0c03a10d7a0"
+    },
+    "graphics_menu_ten_players_and_resize": [
+      "original striped trigger-bomb menu cursor without recoloring",
+      "validated HD cache loads at physical viewport resolution",
+      "Options opens normally",
+      "Graphics submenu opens from Options",
+      "HD player setup opens",
+      "HD arena preview opens",
+      "ten-player battle renders with HD active",
+      "HD render target follows physical window resizing"
+    ],
+    "missing_saved_cache": [
+      "original striped trigger-bomb menu cursor without recoloring",
+      "Classic remains playable when HD is unavailable or unselected",
+      "Options opens normally",
+      "Graphics submenu opens from Options",
+      "missing HD cache falls back once and reports the reason",
+      "HD failure preserves unrelated profile settings",
+      "Classic can be selected and saved after HD fallback"
+    ],
+    "in_game_parallel_preparation_cancellation": {
+      "checks": [
+        "original striped trigger-bomb menu cursor without recoloring",
+        "Classic remains playable when HD is unavailable or unselected",
+        "Options opens normally",
+        "Graphics submenu opens from Options",
+        "in-game preparation downloads and verifies helper/model and starts enhancement",
+        "cancellation keeps Classic active and preserves the saved preference"
+      ],
+      "remaining_inference_children": 0,
+      "remaining_preparation_stages": 0,
+      "helper_download_reused_from_verified_local_cache": true
+    },
+    "mixed_hd_classic_lan": {
+      "passed": true,
+      "canonical_simulation_sha256": "cf710e646d842a37f9f494ef99eed66cf80e8679db32045c40b4041dbb5c29c2",
+      "graphics": [
+        "HD",
+        "Classic"
+      ],
+      "players": 3,
+      "diagnostic_game_sha256": "37d10a05148720483af13057745d65beb2d9871054d2a7cd8b5056b6f1a18a58"
+    }
+  },
+  "classic_placement": {
+    "target_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+    "fixtures": 4595,
+    "flame_fixtures": 2090,
+    "colors": 10,
+    "brick_arenas": 11,
+    "other_battle_sequences": 122,
+    "other_battle_states": 2340,
+    "ground_tiles": 165
+  },
+  "automated_checks": {
+    "client_tests_passed": 55,
+    "asset_tests_passed": 37,
+    "real_gpu_hardware_test_passed": true,
+    "package_fixture_tests_passed": 6,
+    "format": true,
+    "workspace_clippy": true
+  },
+  "local_macos_package": {
+    "verified": true,
+    "original_game_data_included": false,
+    "source_sha256": "4bfb200b184f9344a19d68d2133c4a280c4de23500e040d1d9cc121b4b0ea10d",
+    "archive_sha256": "b80223bce19abdf7a4b0faaa30850e1d221f7e599668a7e7efd3e63fef3e566b",
+    "checks": [
+      "signature",
+      "checksums",
+      "provenance",
+      "dependency licenses",
+      "relocation",
+      "help",
+      "original/enhanced game asset exclusion"
+    ],
+    "published": false
+  },
+  "limits": [
+    "Native checks use process-local synthetic Cocoa events and instrumented diagnostic builds; no physical input or audio claim.",
+    "Unchanged real HD pages are linked into the graphical-mod QA fixture; its changed background uses the pinned real model.",
+    "The HD page budget excludes the original textures and frame targets.",
+    "Physical Retina scale 2, Windows and Linux GPU runtime behavior were not exercised on this macOS host.",
+    "The original executable is inspected and isolated routines are compared; the complete original application is not launched."
+  ]
+}

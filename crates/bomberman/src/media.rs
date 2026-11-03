@@ -5,6 +5,11 @@ use macroquad::{
     audio::{load_sound, play_sound, set_sound_volume, stop_sound, PlaySoundParams, Sound},
     prelude::*,
 };
+#[path = "media/hd.rs"]
+mod hd;
+#[allow(unused_imports)]
+// Production target helper; sprite-only examples include this module too.
+pub(crate) use hd::target as hd_target;
 use std::{collections::HashMap, path::PathBuf};
 
 pub const MUSIC: [&str; 11] = [
@@ -16,6 +21,7 @@ pub struct Media {
     pub manifest: Manifest,
     cache: PathBuf,
     textures: HashMap<String, Texture2D>,
+    hd: hd::Graphics,
     runtime_variants: HashMap<String, Vec<Texture2D>>,
     sequences: HashMap<String, (usize, usize)>,
     sounds: HashMap<String, Sound>,
@@ -79,6 +85,7 @@ impl Media {
             cache,
             manifest,
             textures: HashMap::new(),
+            hd: hd::Graphics::default(),
             runtime_variants: HashMap::new(),
             sequences,
             sounds: HashMap::new(),
@@ -373,21 +380,93 @@ impl Media {
     }
 
     pub fn image(&self, id: &str, x: f32, y: f32, width: f32, height: f32) -> bool {
-        if let Some(texture) = self.texture(id) {
+        let Some(texture) = self.texture(id) else {
+            return false;
+        };
+        self.image_region(
+            id,
+            Rect::new(0., 0., texture.width(), texture.height()),
+            Rect::new(x, y, width, height),
+        )
+    }
+
+    pub fn image_region(&self, id: &str, source: Rect, destination: Rect) -> bool {
+        let Some(asset) =
+            self.manifest.textures.iter().find(|t| {
+                t.id.eq_ignore_ascii_case(id) || basename(&t.id).eq_ignore_ascii_case(id)
+            })
+        else {
+            return false;
+        };
+        let Some(texture) = self.textures.get(&asset.path) else {
+            return false;
+        };
+        self.draw_asset(&asset.path, texture, source, destination, WHITE);
+        true
+    }
+
+    fn draw_asset(
+        &self,
+        key: &str,
+        texture: &Texture2D,
+        source: Rect,
+        destination: Rect,
+        color: Color,
+    ) {
+        if !self.hd.draw(key, source, destination, color, false) {
             draw_texture_ex(
                 texture,
-                x,
-                y,
-                WHITE,
+                destination.x,
+                destination.y,
+                color,
                 DrawTextureParams {
-                    dest_size: Some(vec2(width, height)),
+                    source: Some(source),
+                    dest_size: Some(vec2(destination.w, destination.h)),
                     ..Default::default()
                 },
             );
-            true
-        } else {
-            false
         }
+    }
+
+    pub fn keyed_picture(&self, id: &str, texture: &Texture2D, source: Rect, destination: Rect) {
+        let key = self
+            .manifest
+            .textures
+            .iter()
+            .find(|t| t.id.eq_ignore_ascii_case(id) || basename(&t.id).eq_ignore_ascii_case(id))
+            .map(|t| t.path.as_str());
+        if !key.is_some_and(|key| self.hd.draw(key, source, destination, WHITE, true)) {
+            draw_texture_ex(
+                texture,
+                destination.x,
+                destination.y,
+                WHITE,
+                DrawTextureParams {
+                    source: Some(source),
+                    dest_size: Some(vec2(destination.w, destination.h)),
+                    ..Default::default()
+                },
+            );
+        }
+    }
+
+    pub fn hd_enabled(&self) -> bool {
+        self.hd.enabled()
+    }
+    pub fn hd_bytes(&self) -> u64 {
+        self.hd.bytes()
+    }
+    pub fn begin_frame(&self) {
+        self.hd.begin_frame();
+    }
+    pub async fn load_hd_requests(&self) -> Result<()> {
+        self.hd.load_requested().await
+    }
+    pub fn activate_hd(&self, path: PathBuf, pack: bomberman_assets::hd::Pack) -> Result<()> {
+        self.hd.activate(path, pack)
+    }
+    pub fn disable_hd(&self) {
+        self.hd.disable();
     }
 
     pub fn text(&self, value: &str, x: f32, y: f32, size: f32, color: Color) {
@@ -442,24 +521,22 @@ impl Media {
                 .find(|g| g.codepoint == ch as u32)
                 .or_else(|| font.glyphs.iter().find(|g| g.codepoint == '?' as u32));
             if let Some(glyph) = glyph {
-                draw_texture_ex(
+                self.draw_asset(
+                    &font.texture,
                     texture,
-                    cursor,
-                    top,
+                    Rect::new(
+                        glyph.x as f32,
+                        glyph.y as f32,
+                        glyph.width as f32,
+                        glyph.height as f32,
+                    ),
+                    Rect::new(
+                        cursor,
+                        top,
+                        glyph.width as f32 * scale,
+                        glyph.height as f32 * scale,
+                    ),
                     color,
-                    DrawTextureParams {
-                        dest_size: Some(vec2(
-                            glyph.width as f32 * scale,
-                            glyph.height as f32 * scale,
-                        )),
-                        source: Some(Rect::new(
-                            glyph.x as f32,
-                            glyph.y as f32,
-                            glyph.width as f32,
-                            glyph.height as f32,
-                        )),
-                        ..Default::default()
-                    },
                 );
                 cursor += glyph.advance as f32 * scale;
             } else {
@@ -531,20 +608,20 @@ impl Media {
             return false;
         };
         let (x, y) = crate::presentation::image_position(frame, x, y);
-        draw_texture_ex(
+        let key = variant
+            .map(|v| bomberman_assets::hd::variant_key(animation, v))
+            .unwrap_or_else(|| animation.texture.clone());
+        self.draw_asset(
+            &key,
             texture,
-            x,
-            y,
+            Rect::new(
+                frame.x as f32,
+                frame.y as f32,
+                frame.width as f32,
+                frame.height as f32,
+            ),
+            Rect::new(x, y, frame.width as f32, frame.height as f32),
             WHITE,
-            DrawTextureParams {
-                source: Some(Rect::new(
-                    frame.x as f32,
-                    frame.y as f32,
-                    frame.width as f32,
-                    frame.height as f32,
-                )),
-                ..Default::default()
-            },
         );
         true
     }

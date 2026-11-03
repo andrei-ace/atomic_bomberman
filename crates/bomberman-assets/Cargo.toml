@@ -11,3 +11,14 @@ serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
 png.workspace = true
+image = { version = "=0.24.9", default-features = false, features = ["png"] }
+ureq = { version = "=2.12.1", default-features = false, features = ["tls"] }
+zip = { version = "=9.0.0", default-features = false, features = ["deflate"] }
+sysinfo = { version = "=0.37.2", default-features = false, features = ["system"] }
+
+[target.'cfg(target_arch = "aarch64")'.dependencies]
+# RustCrypto gates its runtime-detected ARM SHA instructions behind this feature.
+sha2 = { workspace = true, features = ["asm"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc = { package = "objc-rs", version = "=0.2.8" }
