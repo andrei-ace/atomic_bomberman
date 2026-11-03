@@ -147,6 +147,63 @@ pub fn prepare(
     prepare_with_workers(base, root, cancel, None, progress)
 }
 
+/// Generate a texture preview through the same preparation path as a full
+/// pack. Previews deliberately have no hd.json and cannot be imported as packs.
+pub fn preview(
+    base: &Path,
+    root: &Path,
+    texture: &str,
+    cancel: &AtomicBool,
+    progress: impl Fn(Progress),
+) -> Result<PathBuf> {
+    check_cancel(cancel)?;
+    let manifest = crate::validate(base)?;
+    let asset = manifest
+        .textures
+        .iter()
+        .find(|asset| {
+            asset.id.eq_ignore_ascii_case(texture)
+                || asset
+                    .id
+                    .rsplit('/')
+                    .next()
+                    .is_some_and(|name| name.eq_ignore_ascii_case(texture))
+        })
+        .context("Unknown texture for HD preview")?;
+    let job = jobs(&manifest)
+        .into_iter()
+        .find(|job| job.key == asset.path)
+        .context("Missing HD preview job")?;
+    crate::ensure_safe_directory(root)?;
+    fs::create_dir_all(root)?;
+    let base = fs::canonicalize(base)?;
+    let root = fs::canonicalize(root)?;
+    ensure!(
+        !root.starts_with(&base),
+        "HD preview must be outside the original asset cache"
+    );
+    let _lock = lock_cache(&root)?;
+    let tool = tool::Tool::obtain(&root, cancel, &progress)?;
+    let nonce = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
+    let name = format!("preview-{}-{nonce}", std::process::id());
+    let stage = Stage(root.join(format!(".{name}")));
+    fs::create_dir(&stage.0)?;
+    fs::create_dir(stage.0.join("pages"))?;
+    let output = enhance_job(&base, &stage.0, &manifest, &job, 0, &tool, cancel, |_| {})?;
+    check_cancel(cancel)?;
+    let images = BTreeMap::from([(job.key, output.regions)]);
+    fs::write(
+        stage.0.join("preview.json"),
+        serde_json::to_vec(&serde_json::json!({
+            "version":VERSION,"source":source_key(&manifest)?,"scale":SCALE,"model":MODEL,
+            "images":images,"pages":output.pages,
+        }))?,
+    )?;
+    let destination = root.join(name);
+    fs::rename(&stage.0, &destination)?;
+    Ok(destination)
+}
+
 /// An explicit worker count is useful for reproducible performance checks. It
 /// may reduce, but never exceed, the detected resource limit.
 pub fn prepare_with_workers(
@@ -315,6 +372,12 @@ fn enhance_job(
         );
         let original = imageops::crop_imm(&image, x, y, w, h).to_image();
         let blank = original.pixels().all(|p| p[3] == 0);
+        let mut reference = (!job.font && !blank).then(|| super::color::reference(&original));
+        if let Some(reference) = reference.as_mut() {
+            // Unassociated RGB around transparent edges must remain valid for
+            // color interpolation; alpha is always taken from the original.
+            dilate_rgb(reference);
+        }
         let offset = if job.pieces.len() == 1 && !job.font {
             [0, 0]
         } else {
@@ -330,21 +393,29 @@ fn enhance_job(
                 imageops::resize(&original, w * SCALE, h * SCALE, FilterType::CatmullRom);
             enlarged.save(output.join(format!("{i:04}.png")))?;
         } else {
+            let input_image = super::color::model_input(
+                reference.as_ref().context("Missing HD color reference")?,
+            );
             let mut canvas = if job.pieces.len() == 1 {
-                original.clone()
+                input_image.clone()
             } else {
                 RgbaImage::new(layout.2, layout.3)
             };
             if job.tile {
-                repeat_context(&mut canvas, &original, offset);
+                repeat_context(&mut canvas, &input_image, offset);
             } else {
-                imageops::replace(&mut canvas, &original, offset[0] as i64, offset[1] as i64);
+                imageops::replace(
+                    &mut canvas,
+                    &input_image,
+                    offset[0] as i64,
+                    offset[1] as i64,
+                );
                 dilate_rgb(&mut canvas);
             }
             canvas.save(input.join(format!("{i:04}.png")))?;
             any_inference = true;
         }
-        crops.push((original, offset, blank));
+        crops.push((original, reference, offset, blank));
     }
     if any_inference {
         tool.run(&input, &output, cancel)?;
@@ -352,7 +423,7 @@ fn enhance_job(
     let mut atlas = Atlas::new(stage, index);
     let mut pages = BTreeMap::new();
     let mut regions = Vec::new();
-    for (i, (original, offset, blank)) in crops.into_iter().enumerate() {
+    for (i, (original, reference, offset, blank)) in crops.into_iter().enumerate() {
         check_cancel(cancel)?;
         let path = output.join(format!("{i:04}.png"));
         let mut enhanced = image::open(&path)
@@ -372,6 +443,10 @@ fn enhance_job(
             );
             enhanced = imageops::crop_imm(&enhanced, offset[0] * SCALE, offset[1] * SCALE, w, h)
                 .to_image();
+            super::color::reconstruct(
+                reference.as_ref().context("Missing HD color reference")?,
+                &mut enhanced,
+            )?;
             let alpha = imageops::resize(&original, w, h, FilterType::CatmullRom);
             for (pixel, source) in enhanced.pixels_mut().zip(alpha.pixels()) {
                 pixel[3] = source[3];
@@ -398,7 +473,7 @@ fn check_job_memory(base: &Path, job: &Job, layout: (i32, i32, u32, u32)) -> Res
     let retained: u64 = job
         .pieces
         .iter()
-        .map(|p| u64::from(p.rect[2]) * u64::from(p.rect[3]) * 4)
+        .map(|p| u64::from(p.rect[2]) * u64::from(p.rect[3]) * 8)
         .sum();
     // Include decode/remap overlap, retained original crops, enhanced canvases,
     // alpha reconstruction and atlas buffers; leave the rest for the helper.
@@ -452,10 +527,13 @@ fn calibrate(
             "Invalid HD calibration source frame"
         );
         let original = imageops::crop_imm(&source, x, y, w, h).to_image();
+        let mut reference = super::color::reference(&original);
+        dilate_rgb(&mut reference);
+        let luminance = super::color::model_input(&reference);
         let mut canvas = RgbaImage::new(layout.2, layout.3);
         imageops::replace(
             &mut canvas,
-            &original,
+            &luminance,
             i64::from(layout.0 - piece.origin[0]),
             i64::from(layout.1 - piece.origin[1]),
         );
@@ -890,6 +968,120 @@ mod tests {
             "scope":"Real model on a representative subset of original walking colors, menu bomb, tiles and fonts; not a full-pack timing."});
         fs::write(
             output.join("report.json"),
+            serde_json::to_vec_pretty(&report)?,
+        )?;
+        eprintln!("{}", serde_json::to_string_pretty(&report)?);
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "requires original assets and the pinned GPU upscaler"]
+    fn real_preparation_preserves_floor_color_and_all_player_palettes() -> Result<()> {
+        let path = |name: &str| -> Result<PathBuf> {
+            std::env::var_os(name)
+                .map(PathBuf::from)
+                .with_context(|| format!("Set {name}"))
+        };
+        let base = path("ATOMIC_BOMBERMAN_HD_BENCH_ASSETS")?;
+        let root = path("ATOMIC_BOMBERMAN_HD_BENCH_CACHE")?;
+        let output = path("ATOMIC_BOMBERMAN_HD_BENCH_OUTPUT")?;
+        fs::create_dir_all(output.join("pages"))?;
+        let manifest = crate::validate(&base)?;
+        let cancel = AtomicBool::new(false);
+        let tool = tool::Tool::obtain(&root, &cancel, &|_| {})?;
+        let floor = manifest
+            .textures
+            .iter()
+            .find(|t| t.id.ends_with("FIELD1.PCX"))
+            .context("Missing source floor")?;
+        let walk = manifest
+            .animation("DATA/ANI/WALK.ANI")
+            .context("Missing walking frames")?;
+        let mut sample: Vec<_> = jobs(&manifest)
+            .into_iter()
+            .filter(|j| j.key == floor.path || j.path == walk.indexed_path && j.remap.is_some())
+            .collect();
+        for job in &mut sample {
+            if job.remap.is_some() {
+                job.pieces.truncate(2);
+            }
+        }
+        ensure!(
+            sample.len() == 11,
+            "Expected one floor and all ten player palettes"
+        );
+        let mut variants = BTreeSet::new();
+        let mut floor_means = Vec::new();
+        let mut checked_alpha = 0;
+        for (index, job) in sample.iter().enumerate() {
+            let result = enhance_job(
+                &base,
+                &output,
+                &manifest,
+                job,
+                index,
+                &tool,
+                &cancel,
+                |_| {},
+            )?;
+            let original = read_job(&base, job, &manifest)?;
+            for region in &result.regions {
+                let [x, y, w, h] = region.rect;
+                let page = image::open(output.join(&region.page))?.into_rgba8();
+                let frame = imageops::crop_imm(&page, x, y, w, h).to_image();
+                let [sx, sy, sw, sh] = region.original;
+                let source = imageops::crop_imm(&original, sx, sy, sw, sh).to_image();
+                let expected = imageops::resize(&source, w, h, FilterType::CatmullRom);
+                ensure!(
+                    frame
+                        .pixels()
+                        .zip(expected.pixels())
+                        .all(|(a, b)| a[3] == b[3]),
+                    "Original alpha changed"
+                );
+                checked_alpha += 1;
+                if job.remap.is_some() {
+                    variants.insert(format!("{:x}", Sha256::digest(frame.as_raw())));
+                } else {
+                    for (px, py) in [(40, 96), (260, 240), (500, 380)] {
+                        let patch = imageops::crop_imm(
+                            &frame,
+                            px * SCALE,
+                            py * SCALE,
+                            64 * SCALE,
+                            64 * SCALE,
+                        )
+                        .to_image();
+                        let mut mean = [0.; 3];
+                        for p in patch.pixels() {
+                            for c in 0..3 {
+                                mean[c] += f64::from(p[c]);
+                            }
+                        }
+                        for component in &mut mean {
+                            *component /= f64::from(patch.width() * patch.height());
+                        }
+                        for (actual, expected) in mean.into_iter().zip([21., 85., 79.]) {
+                            ensure!(
+                                (actual - expected).abs() < 10.,
+                                "Floor color drift: {mean:?}"
+                            );
+                        }
+                        floor_means.push(mean);
+                    }
+                }
+            }
+        }
+        ensure!(
+            variants.len() == 20,
+            "Some source player palettes were lost"
+        );
+        let report = serde_json::json!({"passed":true,"preparation_version":VERSION,
+            "groups":sample.len(),"player_palettes":10,"original_alpha_frames_checked":checked_alpha,
+            "floor_reference_rgb":[21,85,79],"enhanced_floor_patch_means":floor_means,
+            "scope":"Actual production preparation using the pinned GPU model; no display-time recoloring"});
+        fs::write(
+            output.join("color-report.json"),
             serde_json::to_vec_pretty(&report)?,
         )?;
         eprintln!("{}", serde_json::to_string_pretty(&report)?);

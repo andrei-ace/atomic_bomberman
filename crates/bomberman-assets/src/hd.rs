@@ -1,4 +1,6 @@
 //! Optional, locally generated presentation data. Original manifests remain unchanged.
+mod color;
+mod decode;
 mod prepare;
 mod resources;
 mod scheduler;
@@ -7,7 +9,8 @@ mod transfer;
 
 use crate::{source::check_relative, Manifest};
 use anyhow::{ensure, Context, Result};
-pub use prepare::{prepare, prepare_with_workers, Progress};
+pub use decode::PageDecoder;
+pub use prepare::{prepare, prepare_with_workers, preview, Progress};
 pub use resources::Resources;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -20,7 +23,7 @@ use std::{
 pub use transfer::{export_pack, import_pack};
 
 pub const SCALE: u32 = 4;
-pub const VERSION: u32 = 1;
+pub const VERSION: u32 = 2;
 pub const MODEL: &str = "realesrgan-x4plus";
 pub const PAGE_SIZE: u32 = 2048;
 
@@ -168,10 +171,11 @@ impl Pack {
         let pack: Self =
             serde_json::from_slice(&fs::read(&metadata)?).context("read HD manifest")?;
         ensure!(
-            pack.version == VERSION
-                && pack.scale == SCALE
-                && pack.model == MODEL
-                && pack.source == source_key(manifest)?,
+            pack.version == VERSION,
+            "HD artwork uses a different processing format. Prepare HD again or import a current HD folder."
+        );
+        ensure!(
+            pack.scale == SCALE && pack.model == MODEL && pack.source == source_key(manifest)?,
             "HD artwork does not match the installed game data"
         );
         ensure!(
@@ -341,6 +345,17 @@ mod tests {
         fn drop(&mut self) {
             let _ = fs::remove_dir_all(&self.root);
         }
+    }
+    #[test]
+    fn old_generation_formats_cannot_activate_as_color_corrected_packs() {
+        let mut f = Fixture::new();
+        f.pack.version = VERSION - 1;
+        f.save();
+        assert!(Pack::load(&f.root, &f.manifest)
+            .unwrap_err()
+            .to_string()
+            .contains("processing format"));
+        assert!(f.root.join("page.png").is_file());
     }
     #[test]
     fn hd_cache_binds_to_source_content_and_rejects_corruption() {

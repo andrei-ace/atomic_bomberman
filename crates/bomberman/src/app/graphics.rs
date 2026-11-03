@@ -279,7 +279,7 @@ impl App {
         if let Err(error) = self.media.load_hd_requests().await {
             self.fallback_hd(format!("{error:#}"));
             self.draw();
-        } else if self.graphics_ui.pending_save && self.media.hd_bytes() > 0 {
+        } else if self.graphics_ui.pending_save && self.media.hd_ready() {
             self.graphics_ui.pending_save = false;
             self.settings.graphics = GraphicsMode::Hd;
             self.save();

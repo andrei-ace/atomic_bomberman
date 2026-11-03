@@ -11,6 +11,14 @@ pub struct Resources {
 }
 
 impl Resources {
+    /// Reserve display memory independently of the enhancement worker budget.
+    /// Unknown GPU budgets retain a conservative one-GiB ceiling.
+    pub fn texture_cache_bytes(&self) -> u64 {
+        let gpu = self.gpu_budget_bytes.map_or(GIB, |bytes| bytes / 8);
+        (self.available_memory_bytes / 6)
+            .min(gpu)
+            .clamp(128 * 1024 * 1024, 2 * GIB)
+    }
     pub fn detect() -> Self {
         let cpu_threads = std::thread::available_parallelism().map_or(1, usize::from);
         let available_memory_bytes = available_memory().unwrap_or(2 * GIB);
@@ -94,5 +102,21 @@ mod tests {
             1
         );
         assert_eq!(Resources::from_capacity(32, 24 * GIB, None).max_workers, 2);
+    }
+
+    #[test]
+    fn display_cache_fits_available_memory_and_reported_gpu_budget() {
+        assert_eq!(
+            Resources::from_capacity(14, 24 * GIB, Some(32 * GIB)).texture_cache_bytes(),
+            2 * GIB
+        );
+        assert_eq!(
+            Resources::from_capacity(14, 24 * GIB, None).texture_cache_bytes(),
+            GIB
+        );
+        assert_eq!(
+            Resources::from_capacity(4, 3 * GIB, Some(8 * GIB)).texture_cache_bytes(),
+            GIB / 2
+        );
     }
 }

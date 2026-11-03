@@ -71,6 +71,8 @@ Version **0.7.2** offers optional HD graphics.
 **Classic is the default.**
 Choose **Options → Graphics → HD** for a faithful
 4× enhancement of the original artwork, rendered at the display's resolution.
+HD preparation keeps the original palette colors while enhancing brightness
+detail and reconstructing transparency from the original masks.
 The first use downloads about 50 MB of enhancement tools and builds a separate
 local cache from your installed game data. Preparation shows progress and can
 be cancelled; later launches reuse the result. Allow additional disk space and
@@ -78,13 +80,12 @@ time for the one-time build, especially with all ten player colors.
 Preparation calibrates parallel asset workers within the available CPU, memory
 and GPU limits, and reduces concurrency if resources become tight.
 
-On a **MacBook Pro with an M4 Pro (14 CPU cores, 48 GB RAM)**, allow approximately
-**60–80 minutes** for the first complete preparation of all 16,183 frames and ten player colors.
-The full serial run took about 77 minutes; the parallel estimate is about
-63 minutes, based on a measured 18% reduction on a representative batch. A full
-parallel run has not been timed. Other MacBooks can take longer or finish
-sooner, depending on their GPU, available memory and other running work.
-The completed cache uses about **1.35 GB**. Switching to **Classic keeps it**;
+On a **MacBook Pro with an M4 Pro (14 CPU cores, 48 GB RAM)**, the complete
+preparation of all 16,183 frames and ten player colors took **59 minutes 36 seconds**
+with two automatically selected workers. Budget about **one hour**, plus the
+initial tool download. Other MacBooks vary with GPU, available memory,
+temperature and background work; see the [measurement details](docs/hd-graphics.md#preparation-performance).
+The completed cache uses about **1.36 GB**. Switching to **Classic keeps it**;
 selecting HD again reuses it for the same game assets or mod without regenerating.
 
 To reuse HD artwork from another computer, select **Options → Graphics → Use

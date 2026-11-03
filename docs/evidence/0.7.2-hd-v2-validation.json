@@ -1,0 +1,950 @@
+{
+  "version": "0.7.2",
+  "status": "pre-release local hardware validation",
+  "passed": true,
+  "verified_at_utc": "2026-11-03T23:58:06.419748+00:00",
+  "source": {
+    "commit": "eb289c10c991e18d3c96a5e27591e171698fe8cb",
+    "dirty": true,
+    "sha256": "672465602385bed75a1dbac6fe0ef35fd69378f4647bb3a7e05bcd844116ceb9"
+  },
+  "hardware": {
+    "os": "macOS",
+    "chip": "Apple M4 Pro",
+    "cpu_threads": 14,
+    "physical_memory_bytes": 51539607552,
+    "display_backing_scale": 2
+  },
+  "diagnostic_game_sha256": "0a7b5659b96b96115cef13e662aa6b0abecfdc6d9b561945cb883f7d7096f6ef",
+  "full_preparation_generator_sha256": "b96b10c6a3e720ea2047bea3dbb5ceaa7e402fe942b962f659c778a63ffbbdd5",
+  "generation": {
+    "passed": true,
+    "preparation_version": 2,
+    "source_key": "b727e4035f5d3970f9460a85eb77efcf2f874cae7b81cc9b53c32b8deffef3c3",
+    "groups": 698,
+    "frames": 16183,
+    "png_pages": 1174,
+    "encoded_page_bytes": 1356047875,
+    "started_at_utc": "2026-11-03T22:48:48.750316+00:00",
+    "finished_at_utc": "2026-11-03T23:48:25.120285+00:00",
+    "seconds": 3576.3699691295624,
+    "scope": "Complete stock preparation including source validation, first-use calibration and final cache validation; helper already downloaded. Other source checks and native HUD checks ran during preparation.",
+    "calibration": {
+      "calibration": [
+        {
+          "frames": 24,
+          "seconds": 6.0308935,
+          "workers": 1
+        },
+        {
+          "frames": 24,
+          "seconds": 5.258872625,
+          "workers": 2
+        },
+        {
+          "frames": 24,
+          "seconds": 5.806899542,
+          "workers": 4
+        }
+      ],
+      "resources": {
+        "available_memory_bytes": 8386691072,
+        "cpu_threads": 14,
+        "gpu_budget_bytes": 40200814592,
+        "max_workers": 4
+      },
+      "selected_workers": 2
+    }
+  },
+  "generation_note": "Fresh format-2 preparation from all stock originals, not relabelled format-1 pages. Older completed caches were retained.",
+  "full_page_hash_header_and_pixel_audit_passed": true,
+  "source_color_and_alpha_hardware_proof": {
+    "enhanced_floor_patch_means": [
+      [
+        22.000259399414062,
+        89.28724670410156,
+        83.26565551757812
+      ],
+      [
+        22.0015869140625,
+        89.14752197265625,
+        83.12400817871094
+      ],
+      [
+        22.0015869140625,
+        89.14752197265625,
+        83.12400817871094
+      ]
+    ],
+    "floor_reference_rgb": [
+      21,
+      85,
+      79
+    ],
+    "groups": 11,
+    "original_alpha_frames_checked": 21,
+    "passed": true,
+    "player_palettes": 10,
+    "preparation_version": 2,
+    "scope": "Actual production preparation using the pinned GPU model; no display-time recoloring"
+  },
+  "serial_parallel_hardware_proof": {
+    "all_page_hashes_and_region_metadata_equal": true,
+    "calibrated_workers": 2,
+    "calibration": {
+      "calibration": [
+        {
+          "frames": 24,
+          "seconds": 8.305071833,
+          "workers": 1
+        },
+        {
+          "frames": 24,
+          "seconds": 7.05153925,
+          "workers": 2
+        },
+        {
+          "frames": 24,
+          "seconds": 7.749285584,
+          "workers": 4
+        }
+      ],
+      "resources": {
+        "available_memory_bytes": 8987492352,
+        "cpu_threads": 14,
+        "gpu_budget_bytes": 40200814592,
+        "max_workers": 4
+      },
+      "selected_workers": 2
+    },
+    "frames": 93,
+    "groups": 7,
+    "passed": true,
+    "resources": {
+      "available_memory_bytes": 8987492352,
+      "cpu_threads": 14,
+      "gpu_budget_bytes": 40200814592,
+      "max_workers": 4
+    },
+    "scope": "Real model on a representative subset of original walking colors, menu bomb, tiles and fonts; not a full-pack timing.",
+    "timings": [
+      {
+        "mode": "serial",
+        "seconds": 25.446522541,
+        "workers": 1
+      },
+      {
+        "mode": "parallel",
+        "seconds": 20.896281334,
+        "workers": 2
+      }
+    ]
+  },
+  "native_hud": {
+    "classic": {
+      "passed": true,
+      "mode": "Classic",
+      "players": 10,
+      "target_size": [
+        640,
+        480
+      ],
+      "score_strip_height": 48,
+      "score_background_rgb": [
+        173,
+        173,
+        168
+      ],
+      "score_strip_pixels_outside_text_are_clear": true,
+      "sprite_comparisons": [
+        {
+          "player": 0,
+          "row": "first",
+          "reference_sprite_pixels_checked": 204,
+          "matching_fraction": 1.0
+        },
+        {
+          "player": 1,
+          "row": "last",
+          "reference_sprite_pixels_checked": 1186,
+          "matching_fraction": 1.0
+        },
+        {
+          "player": 2,
+          "row": "last",
+          "reference_sprite_pixels_checked": 1183,
+          "matching_fraction": 1.0
+        },
+        {
+          "player": 3,
+          "row": "first",
+          "reference_sprite_pixels_checked": 206,
+          "matching_fraction": 1.0
+        },
+        {
+          "player": 5,
+          "row": "first",
+          "reference_sprite_pixels_checked": 210,
+          "matching_fraction": 1.0
+        },
+        {
+          "player": 9,
+          "row": "last",
+          "reference_sprite_pixels_checked": 1192,
+          "matching_fraction": 1.0
+        }
+      ],
+      "pixel_reference": "original palette sprites"
+    },
+    "hd": {
+      "passed": true,
+      "mode": "Hd",
+      "players": 10,
+      "target_size": [
+        2560,
+        1920
+      ],
+      "score_strip_height": 48,
+      "score_background_rgb": [
+        173,
+        173,
+        168
+      ],
+      "score_strip_pixels_outside_text_are_clear": true,
+      "sprite_comparisons": [
+        {
+          "player": 0,
+          "row": "first",
+          "reference_sprite_pixels_checked": 2580,
+          "matching_fraction": 1.0
+        },
+        {
+          "player": 1,
+          "row": "last",
+          "reference_sprite_pixels_checked": 15328,
+          "matching_fraction": 1.0
+        },
+        {
+          "player": 2,
+          "row": "last",
+          "reference_sprite_pixels_checked": 15386,
+          "matching_fraction": 1.0
+        },
+        {
+          "player": 3,
+          "row": "first",
+          "reference_sprite_pixels_checked": 2564,
+          "matching_fraction": 1.0
+        },
+        {
+          "player": 5,
+          "row": "first",
+          "reference_sprite_pixels_checked": 2557,
+          "matching_fraction": 1.0
+        },
+        {
+          "player": 9,
+          "row": "last",
+          "reference_sprite_pixels_checked": 15318,
+          "matching_fraction": 1.0
+        }
+      ],
+      "pixel_reference": "prepared HD pages"
+    }
+  },
+  "native_arenas_mods_cache_and_mixed_lan": {
+    "passed": true,
+    "checks": [
+      "base HD loads from the complete validated cache",
+      "switching HD to Classic and back preserves and reuses all completed HD pages",
+      "all eleven arenas render with HD active and bounded texture memory",
+      "missing HD page during play recovers to Classic, keeps rendering and preserves the saved preference",
+      "silent voice mod stays selected and reuses the base HD cache after restart",
+      "changed mod graphics use the mod in Classic while their HD cache is unavailable",
+      "prepared HD artwork from the graphical mod takes priority over stock HD artwork",
+      "switching back restores base HD and preserves settings, source data and intentional silence",
+      "native HD host and Classic client play together with identical confirmed simulation"
+    ],
+    "arenas": [
+      {
+        "arena": "NewGreenAcres",
+        "texture_bytes": 83099648,
+        "cache_budget_bytes": 1505940821,
+        "pending_pages": 0,
+        "in_flight_pages": 0,
+        "width": 1280.0,
+        "height": 960.0
+      },
+      {
+        "arena": "ClassicGreenAcres",
+        "texture_bytes": 104857600,
+        "cache_budget_bytes": 1505940821,
+        "pending_pages": 0,
+        "in_flight_pages": 0,
+        "width": 1280.0,
+        "height": 960.0
+      },
+      {
+        "arena": "HockeyRink",
+        "texture_bytes": 128712704,
+        "cache_budget_bytes": 1505940821,
+        "pending_pages": 0,
+        "in_flight_pages": 0,
+        "width": 1280.0,
+        "height": 960.0
+      },
+      {
+        "arena": "AncientEgypt",
+        "texture_bytes": 150470656,
+        "cache_budget_bytes": 1505940821,
+        "pending_pages": 0,
+        "in_flight_pages": 0,
+        "width": 1280.0,
+        "height": 960.0
+      },
+      {
+        "arena": "CoalMine",
+        "texture_bytes": 172228608,
+        "cache_budget_bytes": 1505940821,
+        "pending_pages": 0,
+        "in_flight_pages": 0,
+        "width": 1280.0,
+        "height": 960.0
+      },
+      {
+        "arena": "Beach",
+        "texture_bytes": 193986560,
+        "cache_budget_bytes": 1505940821,
+        "pending_pages": 0,
+        "in_flight_pages": 0,
+        "width": 1280.0,
+        "height": 960.0
+      },
+      {
+        "arena": "Aliens",
+        "texture_bytes": 215744512,
+        "cache_budget_bytes": 1505940821,
+        "pending_pages": 0,
+        "in_flight_pages": 0,
+        "width": 1280.0,
+        "height": 960.0
+      },
+      {
+        "arena": "HauntedHouse",
+        "texture_bytes": 237502464,
+        "cache_budget_bytes": 1505940821,
+        "pending_pages": 0,
+        "in_flight_pages": 0,
+        "width": 1280.0,
+        "height": 960.0
+      },
+      {
+        "arena": "UnderTheOcean",
+        "texture_bytes": 259260416,
+        "cache_budget_bytes": 1505940821,
+        "pending_pages": 0,
+        "in_flight_pages": 0,
+        "width": 1280.0,
+        "height": 960.0
+      },
+      {
+        "arena": "DeepForest",
+        "texture_bytes": 281018368,
+        "cache_budget_bytes": 1505940821,
+        "pending_pages": 0,
+        "in_flight_pages": 0,
+        "width": 1280.0,
+        "height": 960.0
+      },
+      {
+        "arena": "InnerCity",
+        "texture_bytes": 306970624,
+        "cache_budget_bytes": 1505940821,
+        "pending_pages": 0,
+        "in_flight_pages": 0,
+        "width": 1280.0,
+        "height": 960.0
+      }
+    ],
+    "cache_toggle": {
+      "passed": true,
+      "mode_sequence": [
+        "HD",
+        "Classic",
+        "HD"
+      ],
+      "pages_preserved": 1174,
+      "metadata_unchanged": true,
+      "all_page_sizes_mtimes_and_inodes_unchanged": true
+    },
+    "mixed_lan": {
+      "passed": true,
+      "canonical_simulation_sha256": "f9428ee42532f16821bd46fde629df0c70fe3e8f68b1a27ff89ef7daa8951155",
+      "graphics": [
+        "HD",
+        "Classic"
+      ],
+      "players": 3
+    },
+    "limitations": [
+      "Process-local synthetic Cocoa events; no physical input/audio claim.",
+      "Unchanged HD pages are reused in the graphical-mod QA fixture."
+    ]
+  },
+  "native_transfer": {
+    "passed": true,
+    "checks": [
+      "real native import/export folder sheets cancel without changing graphics mode",
+      "full HD cache exports while Classic is active without changing the local cache",
+      "incompatible imported artwork preserves Classic and the saved preference",
+      "matching HD imports into an independent local cache without enhancement tools",
+      "disconnecting the source and switching HD/Classic/HD reuses every imported page"
+    ],
+    "cache_toggle": {
+      "passed": true,
+      "mode_sequence": [
+        "HD",
+        "Classic",
+        "HD"
+      ],
+      "pages_preserved": 1174,
+      "metadata_unchanged": true,
+      "all_page_sizes_mtimes_and_inodes_unchanged": true
+    },
+    "source_key": "b727e4035f5d3970f9460a85eb77efcf2f874cae7b81cc9b53c32b8deffef3c3",
+    "limitations": [
+      "Synthetic process-local Cocoa events; no physical input/audio claim.",
+      "Selection paths use a debug fixture after real native folder-sheet cancellation checks."
+    ]
+  },
+  "performance": {
+    "before": {
+      "passed": true,
+      "seed": 1997,
+      "players": 10,
+      "arena": "ClassicGreenAcres",
+      "cases": [
+        {
+          "mode": "Classic",
+          "requested_size": [
+            960,
+            720
+          ],
+          "actual_content_size": "{960, 720}",
+          "backing_scale_factor": 2,
+          "target_size": [
+            640.0,
+            480.0
+          ],
+          "resident_hd_bytes": 0,
+          "cache": null,
+          "after_warmup_hd_coverage": null,
+          "startup_to_battle_seconds": 3.0154929999262094,
+          "whole_interval": {
+            "frames": 1097,
+            "fps": 54.359290208527895,
+            "one_percent_low_fps": 37.710363836446724,
+            "frame_ms": {
+              "mean": 18.396119525547444,
+              "p50": 18.689,
+              "p95": 18.714,
+              "p99": 18.74,
+              "max": 68.034
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 1.9535733819507748,
+              "p50": 2.006,
+              "p95": 2.491,
+              "p99": 2.774,
+              "max": 54.287
+            },
+            "frames_over_33_ms": 1
+          },
+          "after_warmup": {
+            "frames": 928,
+            "fps": 54.473067387238984,
+            "one_percent_low_fps": 44.71012192450249,
+            "frame_ms": {
+              "mean": 18.35769579288026,
+              "p50": 18.689,
+              "p95": 18.714,
+              "p99": 18.74,
+              "max": 32.845
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 1.9191875,
+              "p50": 1.995,
+              "p95": 2.482,
+              "p99": 2.716,
+              "max": 30.469
+            },
+            "frames_over_33_ms": 0
+          }
+        },
+        {
+          "mode": "Hd",
+          "requested_size": [
+            960,
+            720
+          ],
+          "actual_content_size": "{960, 720}",
+          "backing_scale_factor": 2,
+          "target_size": [
+            1920.0,
+            1440.0
+          ],
+          "resident_hd_bytes": 530317312,
+          "cache": null,
+          "after_warmup_hd_coverage": null,
+          "startup_to_battle_seconds": 3.742757499916479,
+          "whole_interval": {
+            "frames": 849,
+            "fps": 42.042304076913624,
+            "one_percent_low_fps": 9.335789683330015,
+            "frame_ms": {
+              "mean": 23.785566037735848,
+              "p50": 18.686,
+              "p95": 53.444,
+              "p99": 77.658,
+              "max": 202.976
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 10.020540636042403,
+              "p50": 0.751,
+              "p95": 50.94,
+              "p99": 74.944,
+              "max": 198.129
+            },
+            "frames_over_33_ms": 86
+          },
+          "after_warmup": {
+            "frames": 733,
+            "fps": 43.048529866240806,
+            "one_percent_low_fps": 12.088244182532488,
+            "frame_ms": {
+              "mean": 23.22959699453552,
+              "p50": 18.686,
+              "p95": 52.667,
+              "p99": 75.352,
+              "max": 93.695
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 9.444645293315144,
+              "p50": 0.732,
+              "p95": 50.166,
+              "p99": 73.045,
+              "max": 91.24
+            },
+            "frames_over_33_ms": 70
+          }
+        },
+        {
+          "mode": "Classic",
+          "requested_size": [
+            1840,
+            1380
+          ],
+          "actual_content_size": "{1840, 1051}",
+          "backing_scale_factor": 2,
+          "target_size": [
+            640.0,
+            480.0
+          ],
+          "resident_hd_bytes": 0,
+          "cache": null,
+          "after_warmup_hd_coverage": null,
+          "startup_to_battle_seconds": 2.051199750043452,
+          "whole_interval": {
+            "frames": 1099,
+            "fps": 54.32654259797146,
+            "one_percent_low_fps": 41.18292331365289,
+            "frame_ms": {
+              "mean": 18.407208561020038,
+              "p50": 18.689,
+              "p95": 18.717,
+              "p99": 18.741,
+              "max": 62.008
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 1.9462347588717015,
+              "p50": 1.976,
+              "p95": 2.426,
+              "p99": 2.618,
+              "max": 47.476
+            },
+            "frames_over_33_ms": 1
+          },
+          "after_warmup": {
+            "frames": 928,
+            "fps": 54.44718690415351,
+            "one_percent_low_fps": 48.75931912486774,
+            "frame_ms": {
+              "mean": 18.36642179072276,
+              "p50": 18.689,
+              "p95": 18.717,
+              "p99": 18.74,
+              "max": 33.16
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 1.9063405172413792,
+              "p50": 1.966,
+              "p95": 2.429,
+              "p99": 2.592,
+              "max": 25.167
+            },
+            "frames_over_33_ms": 0
+          }
+        },
+        {
+          "mode": "Hd",
+          "requested_size": [
+            1840,
+            1380
+          ],
+          "actual_content_size": "{1840, 1051}",
+          "backing_scale_factor": 2,
+          "target_size": [
+            2803.0,
+            2102.0
+          ],
+          "resident_hd_bytes": 532414464,
+          "cache": null,
+          "after_warmup_hd_coverage": null,
+          "startup_to_battle_seconds": 3.02416850021109,
+          "whole_interval": {
+            "frames": 826,
+            "fps": 41.41140093514473,
+            "one_percent_low_fps": 10.804360639954284,
+            "frame_ms": {
+              "mean": 24.147939393939392,
+              "p50": 18.688,
+              "p95": 53.046,
+              "p99": 77.888,
+              "max": 128.689
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 10.869535108958837,
+              "p50": 0.718,
+              "p95": 50.159,
+              "p99": 74.561,
+              "max": 124.448
+            },
+            "frames_over_33_ms": 97
+          },
+          "after_warmup": {
+            "frames": 712,
+            "fps": 41.79443556761723,
+            "one_percent_low_fps": 12.620964052339138,
+            "frame_ms": {
+              "mean": 23.926630098452883,
+              "p50": 18.687,
+              "p95": 52.594,
+              "p99": 74.198,
+              "max": 86.178
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 10.681828651685393,
+              "p50": 0.655,
+              "p95": 49.546,
+              "p99": 70.586,
+              "max": 82.88
+            },
+            "frames_over_33_ms": 83
+          }
+        }
+      ],
+      "limitations": [
+        "Optimized diagnostic build with in-memory timing instrumentation.",
+        "Cocoa events are confined to the private test process; no physical input/audio claim.",
+        "Larger test windows may extend beyond the visible desktop; actual sizes are recorded."
+      ]
+    },
+    "after": {
+      "passed": true,
+      "seed": 1997,
+      "players": 10,
+      "arena": "ClassicGreenAcres",
+      "cases": [
+        {
+          "mode": "Classic",
+          "requested_size": [
+            960,
+            720
+          ],
+          "actual_content_size": "{960, 720}",
+          "backing_scale_factor": 2,
+          "target_size": [
+            640.0,
+            480.0
+          ],
+          "resident_hd_bytes": 0,
+          "cache": null,
+          "after_warmup_hd_coverage": null,
+          "startup_to_battle_seconds": 3.119684249861166,
+          "whole_interval": {
+            "frames": 1210,
+            "fps": 59.853479276809566,
+            "one_percent_low_fps": 45.13763506569261,
+            "frame_ms": {
+              "mean": 16.707466501240695,
+              "p50": 16.668,
+              "p95": 18.282,
+              "p99": 18.603,
+              "max": 63.52
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 1.8916016528925619,
+              "p50": 1.972,
+              "p95": 2.507,
+              "p99": 2.777,
+              "max": 47.201
+            },
+            "frames_over_33_ms": 1
+          },
+          "after_warmup": {
+            "frames": 1022,
+            "fps": 60.00008344771645,
+            "one_percent_low_fps": 53.461121614331475,
+            "frame_ms": {
+              "mean": 16.66664348677767,
+              "p50": 16.668,
+              "p95": 18.271,
+              "p99": 18.585,
+              "max": 19.382
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 1.8514853228962818,
+              "p50": 1.989,
+              "p95": 2.486,
+              "p99": 2.685,
+              "max": 2.955
+            },
+            "frames_over_33_ms": 0
+          }
+        },
+        {
+          "mode": "Hd",
+          "requested_size": [
+            960,
+            720
+          ],
+          "actual_content_size": "{960, 720}",
+          "backing_scale_factor": 2,
+          "target_size": [
+            1920.0,
+            1440.0
+          ],
+          "resident_hd_bytes": 931659776,
+          "cache": {
+            "budget_bytes": 1526322517,
+            "evictions": 0,
+            "hd_draws": 845205,
+            "in_flight": 0,
+            "loads": 89,
+            "pages": 89,
+            "pending": 0,
+            "resident_bytes": 931659776,
+            "waiting_draws": 1833
+          },
+          "after_warmup_hd_coverage": {
+            "enhanced_draws": 702983,
+            "waiting_for_page_draws": 9,
+            "enhanced_fraction": 0.9999871975783509,
+            "page_loads": 2,
+            "evictions": 0
+          },
+          "startup_to_battle_seconds": 2.4835166668053716,
+          "whole_interval": {
+            "frames": 1208,
+            "fps": 59.86396150335618,
+            "one_percent_low_fps": 45.538138190734735,
+            "frame_ms": {
+              "mean": 16.704541010770505,
+              "p50": 16.667,
+              "p95": 18.352,
+              "p99": 18.598,
+              "max": 61.792
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 2.275930463576159,
+              "p50": 2.463,
+              "p95": 3.075,
+              "p99": 3.368,
+              "max": 46.358
+            },
+            "frames_over_33_ms": 1
+          },
+          "after_warmup": {
+            "frames": 1023,
+            "fps": 60.00511628750811,
+            "one_percent_low_fps": 53.6847242557345,
+            "frame_ms": {
+              "mean": 16.665245596868886,
+              "p50": 16.666,
+              "p95": 18.378,
+              "p99": 18.581,
+              "max": 18.671
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 2.3873284457478006,
+              "p50": 2.513,
+              "p95": 3.108,
+              "p99": 3.368,
+              "max": 12.747
+            },
+            "frames_over_33_ms": 0
+          }
+        },
+        {
+          "mode": "Classic",
+          "requested_size": [
+            1840,
+            1380
+          ],
+          "actual_content_size": "{1840, 1051}",
+          "backing_scale_factor": 2,
+          "target_size": [
+            640.0,
+            480.0
+          ],
+          "resident_hd_bytes": 0,
+          "cache": null,
+          "after_warmup_hd_coverage": null,
+          "startup_to_battle_seconds": 2.1916424171067774,
+          "whole_interval": {
+            "frames": 1208,
+            "fps": 59.84921468855426,
+            "one_percent_low_fps": 43.123465799774436,
+            "frame_ms": {
+              "mean": 16.7086570008285,
+              "p50": 16.667,
+              "p95": 18.421,
+              "p99": 18.608,
+              "max": 66.517
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 2.018148178807947,
+              "p50": 2.034,
+              "p95": 2.54,
+              "p99": 2.92,
+              "max": 51.295
+            },
+            "frames_over_33_ms": 1
+          },
+          "after_warmup": {
+            "frames": 1022,
+            "fps": 60.00415268700183,
+            "one_percent_low_fps": 50.87810992446913,
+            "frame_ms": {
+              "mean": 16.665513222331047,
+              "p50": 16.667,
+              "p95": 18.419,
+              "p99": 18.602,
+              "max": 29.94
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 1.986302348336595,
+              "p50": 2.029,
+              "p95": 2.533,
+              "p99": 2.84,
+              "max": 26.233
+            },
+            "frames_over_33_ms": 0
+          }
+        },
+        {
+          "mode": "Hd",
+          "requested_size": [
+            1840,
+            1380
+          ],
+          "actual_content_size": "{1840, 1051}",
+          "backing_scale_factor": 2,
+          "target_size": [
+            2803.0,
+            2102.0
+          ],
+          "resident_hd_bytes": 914882560,
+          "cache": {
+            "budget_bytes": 1478118058,
+            "evictions": 0,
+            "hd_draws": 849771,
+            "in_flight": 0,
+            "loads": 88,
+            "pages": 88,
+            "pending": 0,
+            "resident_bytes": 914882560,
+            "waiting_draws": 1927
+          },
+          "after_warmup_hd_coverage": {
+            "enhanced_draws": 708627,
+            "waiting_for_page_draws": 2,
+            "enhanced_fraction": 0.9999971776486709,
+            "page_loads": 1,
+            "evictions": 0
+          },
+          "startup_to_battle_seconds": 2.397935749962926,
+          "whole_interval": {
+            "frames": 1207,
+            "fps": 59.85804708803257,
+            "one_percent_low_fps": 45.31100778652242,
+            "frame_ms": {
+              "mean": 16.706191542288558,
+              "p50": 16.666,
+              "p95": 18.271,
+              "p99": 18.601,
+              "max": 63.294
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 2.362082850041425,
+              "p50": 2.588,
+              "p95": 3.081,
+              "p99": 3.285,
+              "max": 49.156
+            },
+            "frames_over_33_ms": 1
+          },
+          "after_warmup": {
+            "frames": 1022,
+            "fps": 60.0035426185593,
+            "one_percent_low_fps": 53.67529375024397,
+            "frame_ms": {
+              "mean": 16.66568266405485,
+              "p50": 16.665,
+              "p95": 18.295,
+              "p99": 18.601,
+              "max": 18.665
+            },
+            "update_draw_and_page_load_ms": {
+              "mean": 2.500783757338552,
+              "p50": 2.657,
+              "p95": 3.107,
+              "p99": 3.285,
+              "max": 3.536
+            },
+            "frames_over_33_ms": 0
+          }
+        }
+      ],
+      "limitations": [
+        "Optimized diagnostic build with in-memory timing instrumentation.",
+        "Cocoa events are confined to the private test process; no physical input/audio claim.",
+        "Larger test windows may extend beyond the visible desktop; actual sizes are recorded."
+      ]
+    },
+    "before_binary_sha256": "e5a538b6de9573df6b5743b25cdc57c7877f9e95301ba437c5977996f95260b6",
+    "after_binary_sha256": "0a7b5659b96b96115cef13e662aa6b0abecfdc6d9b561945cb883f7d7096f6ef",
+    "scope": "Optimized diagnostic builds, identical ten-bot games and seed. After timings exclude warmup and its diagnostic snapshot; no AI preparation runs during FPS sampling. Not physical display/input latency."
+  },
+  "local_checks": [
+    "Rust 1.89.0 formatting and workspace Clippy -D warnings",
+    "Full workspace and audio-mixer suites passed before the final activation-message changes",
+    "Final client tests: 56 passed; asset tests: 48 passed, 3 hardware tests ignored by default",
+    "Six portable package tests passed"
+  ],
+  "limitations": [
+    "Native GUI checks run on one macOS machine with process-local synthetic Cocoa input.",
+    "Graphical mod fixture runs production preparation for its changed background and links identical stock HD pages.",
+    "Published native packages, final-commit CI and deployed WAN results are separate release evidence."
+  ]
+}

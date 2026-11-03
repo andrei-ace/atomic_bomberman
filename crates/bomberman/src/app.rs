@@ -237,16 +237,24 @@ impl App {
 
     pub async fn run(&mut self) -> Result<()> {
         prevent_quit();
-        let mut frame_started = std::time::Instant::now();
+        let mut frame_deadline = std::time::Instant::now();
         loop {
             if self.cli.smoke_frames.is_none() {
                 // Some X11 drivers ignore swap intervals. Keep a 60 Hz ceiling
                 // without adding a second delay when vertical sync already waits.
                 let budget = std::time::Duration::from_secs_f64(1. / 60.);
-                if let Some(wait) = budget.checked_sub(frame_started.elapsed()) {
+                if let Some(wait) = frame_deadline.checked_duration_since(std::time::Instant::now())
+                {
                     std::thread::sleep(wait);
                 }
-                frame_started = std::time::Instant::now();
+                let now = std::time::Instant::now();
+                // Advance the absolute deadline so OS sleep overshoot does
+                // not accumulate into a persistent sub-60-Hz frame rate.
+                frame_deadline = if now > frame_deadline + budget {
+                    now + budget
+                } else {
+                    frame_deadline + budget
+                };
             }
             #[cfg(debug_assertions)]
             let trace_input = self.input_trace.observe();
@@ -424,7 +432,7 @@ impl App {
                     "asset_fingerprint": crate::network::compatibility(&self.media.manifest).assets,
                     "mods": self.mod_ui.probe(),
                     "active_mod": self.cli.mod_path,
-                    "graphics": {"requested": self.settings.graphics, "hd_active": self.media.hd_enabled(), "source_key":bomberman_assets::hd::source_key(&self.media.manifest).ok(), "texture_bytes": self.media.hd_bytes(), "target_width":self.target.texture.width(), "target_height":self.target.texture.height(),"job":self.graphics_ui.probe()},
+                    "graphics": {"requested": self.settings.graphics, "hd_active": self.media.hd_enabled(), "source_key":bomberman_assets::hd::source_key(&self.media.manifest).ok(), "texture_bytes": self.media.hd_bytes(), "target_width":self.target.texture.width(), "target_height":self.target.texture.height(),"job":self.graphics_ui.probe(),"cache":self.media.hd_diagnostics()},
                     "frame": self.frame,
                     "version": bomberman_net::APP_VERSION,
                     "main_footer": MAIN_FOOTER,
@@ -1045,6 +1053,25 @@ impl App {
             return;
         }
         let arena = &self.media.manifest.arenas[simulation.config.arena.index()];
+        let (left, top, scale) = crate::presentation::battle_viewport();
+        unsafe {
+            let gl = macroquad::window::get_internal_gl();
+            gl.quad_gl.push_model_matrix(
+                Mat4::from_translation(vec3(left, top, 0.))
+                    * Mat4::from_scale(vec3(scale, scale, 1.)),
+            );
+            let height = self.target.texture.height() as i32;
+            let hud = (crate::presentation::HUD_HEIGHT * self.target.texture.height() / 480.).ceil()
+                as i32;
+            // QuadGl's scissor uses the same logical top-left coordinates as
+            // this render target. Keep the entire field below the HUD visible.
+            gl.quad_gl.scissor(Some((
+                0,
+                hud,
+                self.target.texture.width() as i32,
+                height - hud,
+            )));
+        }
         self.media.image(&arena.background, 0., 0., 640., 480.);
         // 0x415b22 keeps insertion order and appends translated color queues.
         // Plain scenery/items/shadows precede the owner-colored actors. Player
@@ -1184,6 +1211,11 @@ impl App {
         {
             self.draw_bomb(bomb);
         }
+        unsafe {
+            let gl = macroquad::window::get_internal_gl();
+            gl.quad_gl.pop_model_matrix();
+            gl.quad_gl.scissor(None);
+        }
         self.draw_hud(simulation);
         match simulation.phase {
             RoundPhase::Countdown { remaining_ms } => {
@@ -1260,7 +1292,13 @@ impl App {
             .as_ref()
             .and_then(|n| n.replay.as_ref())
             .map_or(simulation, |r| &r.simulation);
-        draw_rectangle(0., 0., 640., 48., Color::new(0.68, 0.68, 0.66, 1.));
+        draw_rectangle(
+            0.,
+            0.,
+            640.,
+            crate::presentation::HUD_HEIGHT,
+            Color::new(0.68, 0.68, 0.66, 1.),
+        );
         for (i, player) in simulation.players.iter().enumerate() {
             let x = 10. + (i / 2) as f32 * 100.;
             let y = 5. + (i % 2) as f32 * 20.;

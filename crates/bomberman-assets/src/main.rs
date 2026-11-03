@@ -21,7 +21,15 @@ fn run() -> Result<()> {
     let mut output = None;
     let mut assets = None;
     let mut workers = None;
+    let mut texture = None;
     while let Some(arg) = args.next() {
+        if arg == "--texture" {
+            texture = Some(
+                args.next()
+                    .context("--texture needs an original texture ID")?,
+            );
+            continue;
+        }
         if arg == "--jobs" {
             let value = args
                 .next()
@@ -51,6 +59,21 @@ fn run() -> Result<()> {
         workers.is_none() || command == "prepare-hd",
         "--jobs is only available with prepare-hd"
     );
+    anyhow::ensure!(
+        texture.is_none() || command == "preview-hd",
+        "--texture is only available with preview-hd"
+    );
+    if command == "preview-hd" {
+        let path = bomberman_assets::hd::preview(
+            &assets.context("preview-hd needs --assets <original-cache>")?,
+            &output.context("preview-hd needs --output <HD-cache-root>")?,
+            &texture.context("preview-hd needs --texture <original-texture-ID>")?,
+            &std::sync::atomic::AtomicBool::new(false),
+            |p| eprintln!("{}", p.message),
+        )?;
+        println!("{}", path.display());
+        return Ok(());
+    }
     if command == "hd-resources" {
         println!(
             "{}",
@@ -140,6 +163,7 @@ fn run() -> Result<()> {
     Ok(())
 }
 fn print_help() {
+    println!("Inspect generated HD artwork:\n  bomberman-assets preview-hd --assets <original-cache> --output <HD-cache-root> --texture <texture-ID>\n");
     println!("Portable HD artwork:\n  bomberman-assets import-hd --assets <original-cache> --source <exported-HD-folder> --output <HD-cache-root>\n  bomberman-assets export-hd --assets <original-cache> --source <HD-cache-root> --output <destination-folder>\n");
     println!("Optional local HD artwork:\n  bomberman-assets prepare-hd --assets <original-cache> --output <HD-cache-root> [--jobs <count>]\n  bomberman-assets validate-hd --assets <original-cache> --output <HD-pack-directory>\n  bomberman-assets hd-resources\n\nHD preparation selects resource-bounded parallelism automatically; --jobs overrides calibration within those limits.\n");
     println!("Original Atomic Bomberman asset importer\n\n  bomberman-assets import --source <MODE1-2352.img-or-game-directory> --output <new-cache-directory>\n  bomberman-assets validate --assets <cache-directory>\n\nOriginal source files are opened read-only. Output must be new or empty; distribute the native program separately from original game assets.");

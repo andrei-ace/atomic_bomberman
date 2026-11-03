@@ -30,13 +30,21 @@ def ready(player, hd):
                         'HD validation finishes', timeout=120)
     assert state['graphics']['hd_active'] == hd, state['graphics']
     if hd:
-        state = player.wait(lambda s: s['graphics']['texture_bytes'] > 0,
-                            'HD textures become resident')
+        state = player.wait(lambda s: s['graphics']['texture_bytes'] > 0
+                            and s['graphics']['cache']['pending'] == 0
+                            and s['graphics']['cache']['in_flight'] == 0
+                            and s['graphics']['requested'] == 'Hd',
+                            'initial HD textures finish loading and the preference is saved')
     return state
 
 
 def snapshot_after_draw(player, label):
-    player.snapshot()
+    state = player.snapshot()
+    if state['graphics']['hd_active']:
+        player.wait(lambda s: s['graphics']['hd_active']
+                    and s['graphics']['cache']['pending'] == 0
+                    and s['graphics']['cache']['in_flight'] == 0,
+                    'current HD display pages finish loading', timeout=90)
     time.sleep(.25)
     return player.snapshot(label)
 
@@ -112,7 +120,7 @@ def mixed_network(host, directory, app, driver, assets, scheme, transport='lan',
         client.close()
 
 
-def seed_changed_background(tool_root, stock, target, manifest, changed_cache):
+def seed_changed_background(asset_tool, tool_root, stock, target, manifest, changed_cache):
     """All pixels are real model output; only identical existing work is reused."""
     pack = json.loads((stock / 'hd.json').read_text())
     key = target.name
@@ -130,14 +138,16 @@ def seed_changed_background(tool_root, stock, target, manifest, changed_cache):
             destination.parent.mkdir(parents=True, exist_ok=True)
             if name != page:
                 destination.hardlink_to(stock / name)
-        binary = tool_root / 'realesrgan-ncnn-vulkan'
-        subprocess.run([str(binary), '-i', str(changed_cache / texture['path']),
-                        '-o', str(stage / page), '-m', str(tool_root / 'models'),
-                        '-n', 'realesrgan-x4plus', '-s', '4', '-t', '64',
-                        '-j', '1:1:1', '-f', 'png'], check=True)
-        # The game cache requires RGBA, including opaque PCX backgrounds.
-        with Image.open(stage / page) as image:
-            image.convert('RGBA').save(stage / page)
+        preview = Path(subprocess.check_output([
+            str(asset_tool.resolve()), 'preview-hd', '--assets', str(changed_cache),
+            '--output', str(tool_root.parent), '--texture', texture['id']], text=True).strip())
+        try:
+            metadata = json.loads((preview / 'preview.json').read_text())
+            generated, = metadata['images'][texture['path']]
+            assert generated['original'] == region['original'] and generated['rect'] == region['rect']
+            shutil.copy2(preview / generated['page'], stage / page)
+        finally:
+            shutil.rmtree(preview)
         data = (stage / page).read_bytes()
         pack['pages'][page].update(bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
         write_json(stage / 'hd.json', pack)
@@ -237,13 +247,27 @@ def main():
             player.wait(lambda s: s['screen'] == 'Battle' and s['simulation']['config']['arena'] == arena, arena)
             state = snapshot_after_draw(player, 'hd-' + arena)
             assert state['graphics']['hd_active'], state['graphics']
-            assert state['graphics']['texture_bytes'] <= 512 * 1024 * 1024
+            assert state['graphics']['texture_bytes'] <= state['graphics']['cache']['budget_bytes']
             report['arenas'].append({'arena': arena, 'texture_bytes': state['graphics']['texture_bytes'],
+                                     'cache_budget_bytes': state['graphics']['cache']['budget_bytes'],
+                                     'pending_pages': state['graphics']['cache']['pending'],
+                                     'in_flight_pages': state['graphics']['cache']['in_flight'],
                                      'width': state['graphics']['target_width'], 'height': state['graphics']['target_height']})
         report['checks'].append('all eleven arenas render with HD active and bounded texture memory')
         player.tap('Escape')
         player.select(3, 4)
         player.wait(lambda s: s['screen'] == 'Main', 'leave local match')
+        # Retained GPU pages remain valid if their file disappears. Restart
+        # with the same profile so the lazy-load failure targets an uncached
+        # settings page after successful on-disk validation and activation.
+        player.close()
+        player = Player('host', directory / 'player', app, driver, assets, scheme,
+                        preserve_settings=True, settings_path=settings,
+                        extra_environment={'ATOMIC_BOMBERMAN_TEST_MOD_PICKER': str(mod),
+                                           'ATOMIC_BOMBERMAN_INPUT_TRACE': '1',
+                                           'ATOMIC_BOMBERMAN_TEST_CONFIG': str(config_path)})
+        ready(player, True)
+        player.send('show')
         # Remove a page not used by the battle or main menu, after successful
         # activation. A failed lazy load must recover without losing the game.
         stock_pack=json.loads((stock/'hd.json').read_text())
@@ -308,7 +332,7 @@ def main():
                 candidates.append(path.parent)
         assert len(candidates) == 1, candidates
         prepared = cache / source_key
-        seed_changed_background(cache / 'upscaler-20220424-macos', stock, prepared, manifest, candidates[0])
+        seed_changed_background(args.asset_tool, cache / 'upscaler-20220424-macos', stock, prepared, manifest, candidates[0])
         subprocess.run([str(args.asset_tool.resolve()), 'validate-hd', '--assets', str(candidates[0]),
                         '--output', str(prepared)], check=True)
         player.select(3, 7)

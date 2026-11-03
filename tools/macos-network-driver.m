@@ -162,6 +162,17 @@ __attribute__((constructor)) static void InstallDriver(void) {
                 [NSApp unhide:nil];
                 [window deminiaturize:nil];
                 [window orderFront:nil];
+            } else if ([operation isEqual:@"resize"]) {
+                CGFloat width = [command[@"width"] doubleValue];
+                CGFloat height = [command[@"height"] doubleValue];
+                if (width < 64 || height < 64 || width > 4096 || height > 4096) {
+                    lastID = identifier;
+                    Acknowledge(identifier, @"Invalid test window size");
+                    return;
+                }
+                [window setContentSize:NSMakeSize(width, height)];
+                NSRect screen = window.screen.visibleFrame;
+                [window setFrameTopLeftPoint:NSMakePoint(NSMinX(screen) + 15, NSMaxY(screen) - 25)];
             } else if ([operation isEqual:@"tap"]) Tap([command[@"code"] unsignedShortValue]);
             else if ([operation isEqual:@"cancel_folder_picker"]) CancelFolderPicker();
             else if ([operation isEqual:@"key"]) Key([command[@"code"] unsignedShortValue], [command[@"down"] boolValue], nil);

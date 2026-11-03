@@ -456,6 +456,9 @@ impl Media {
     pub fn hd_bytes(&self) -> u64 {
         self.hd.bytes()
     }
+    pub fn hd_ready(&self) -> bool {
+        self.hd.ready()
+    }
     pub fn begin_frame(&self) {
         self.hd.begin_frame();
     }
@@ -464,6 +467,10 @@ impl Media {
     }
     pub fn activate_hd(&self, path: PathBuf, pack: bomberman_assets::hd::Pack) -> Result<()> {
         self.hd.activate(path, pack)
+    }
+    #[cfg(debug_assertions)]
+    pub fn hd_diagnostics(&self) -> serde_json::Value {
+        self.hd.diagnostics()
     }
     pub fn disable_hd(&self) {
         self.hd.disable();

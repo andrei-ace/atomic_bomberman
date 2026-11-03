@@ -4,6 +4,17 @@ use bomberman_assets::{AnimationAsset, AnimationFrame, AnimationSequence, Manife
 use bomberman_core::{Direction, Player};
 use std::collections::HashMap;
 
+pub const HUD_HEIGHT: f32 = 48.;
+
+/// Original first-row standing/walking masks begin at world Y=22. Keep two
+/// pixels above those masks, then fit the complete field uniformly below the
+/// score strip. Actor anchors and simulation coordinates stay in world space.
+pub fn battle_viewport() -> (f32, f32, f32) {
+    let top = 20.;
+    let scale = (480. - HUD_HEIGHT) / (480. - top);
+    ((640. - 640. * scale) * 0.5, HUD_HEIGHT - top * scale, scale)
+}
+
 /// Destruction leaves the brick solid for physics, but its transparent artwork
 /// must reveal the floor. Never mutate the authoritative board while drawing.
 pub fn render_terrain(
@@ -158,6 +169,15 @@ mod tests {
     use super::*;
     use bomberman_assets::AnimationSequence;
     use bomberman_core::{GameConfig, Simulation};
+
+    #[test]
+    fn battle_viewport_keeps_first_row_heads_below_scores_and_the_bottom_in_view() {
+        let (x, y, scale) = battle_viewport();
+        assert!(y + 22. * scale >= HUD_HEIGHT);
+        assert!((y + 480. * scale - 480.).abs() < 0.001);
+        assert!((x + 320. * scale - 320.).abs() < 0.001);
+        assert!(scale > 0.9 && scale < 1.);
+    }
 
     #[test]
     fn cropped_flames_match_original_call_site_anchors() {

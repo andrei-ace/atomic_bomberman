@@ -1,27 +1,52 @@
-//! GPU resources for the optional HD overlay. Original textures remain available
-//! throughout activation and recovery, so the simulation can keep running.
+//! Bounded, asynchronous display pages; PNG decoding never occupies the frame
+//! loop. Original textures remain usable while pages arrive.
 use anyhow::{ensure, Context, Result};
-use bomberman_assets::hd::Pack;
+use bomberman_assets::hd::{Pack, PageDecoder, Resources};
 use macroquad::prelude::*;
 use std::{
     cell::RefCell,
-    collections::{BTreeSet, HashMap},
+    collections::{BTreeSet, HashMap, VecDeque},
     path::PathBuf,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc, Arc,
+    },
 };
 
-const MAX_TEXTURE_BYTES: u64 = 512 * 1024 * 1024;
+type Key = (String, bool);
 struct Cached {
     texture: Texture2D,
     bytes: u64,
     last_frame: u64,
 }
+struct Loaded {
+    key: Key,
+    image: Result<Image>,
+}
 struct Active {
-    root: PathBuf,
     pack: Pack,
-    textures: HashMap<(String, bool), Cached>,
-    requests: BTreeSet<(String, bool)>,
+    decoder: Arc<PageDecoder>,
+    textures: HashMap<Key, Cached>,
+    requests: BTreeSet<Key>,
+    pending: VecDeque<Key>,
+    queued: BTreeSet<Key>,
+    in_flight: BTreeSet<Key>,
+    ready: mpsc::Receiver<Loaded>,
+    sender: mpsc::Sender<Loaded>,
+    cancel: Arc<AtomicBool>,
+    workers: usize,
+    budget: u64,
     bytes: u64,
     frame: u64,
+    loads: u64,
+    evictions: u64,
+    hd_draws: u64,
+    waiting_draws: u64,
+}
+impl Drop for Active {
+    fn drop(&mut self) {
+        self.cancel.store(true, Ordering::Release);
+    }
 }
 #[derive(Default)]
 pub(super) struct Graphics {
@@ -34,8 +59,6 @@ impl Graphics {
     }
     pub(super) fn disable(&self) {
         if self.enabled() {
-            // A recoverable page failure can arrive after draw calls were
-            // queued. Submit them before releasing textures used by that batch.
             unsafe {
                 macroquad::window::get_internal_gl().flush();
             }
@@ -50,13 +73,28 @@ impl Graphics {
                 .all(|p| p.width <= limit && p.height <= limit),
             "The display does not support the HD texture sizes"
         );
+        let decoder = Arc::new(PageDecoder::new(&root, &pack));
+        let capacity = Resources::detect();
+        let (sender, ready) = mpsc::channel();
         self.active.replace(Some(Active {
-            root,
             pack,
+            decoder,
             textures: HashMap::new(),
             requests: BTreeSet::new(),
+            pending: VecDeque::new(),
+            queued: BTreeSet::new(),
+            in_flight: BTreeSet::new(),
+            ready,
+            sender,
+            cancel: Arc::new(AtomicBool::new(false)),
+            workers: capacity.max_workers.clamp(1, 2),
+            budget: capacity.texture_cache_bytes(),
             bytes: 0,
             frame: 0,
+            loads: 0,
+            evictions: 0,
+            hd_draws: 0,
+            waiting_draws: 0,
         }));
         Ok(())
     }
@@ -67,6 +105,19 @@ impl Graphics {
     }
     pub(super) fn bytes(&self) -> u64 {
         self.active.borrow().as_ref().map_or(0, |a| a.bytes)
+    }
+    pub(super) fn ready(&self) -> bool {
+        self.active.borrow().as_ref().is_some_and(|a| {
+            a.bytes > 0 && a.requests.is_empty() && a.pending.is_empty() && a.in_flight.is_empty()
+        })
+    }
+    #[cfg(debug_assertions)]
+    pub(super) fn diagnostics(&self) -> serde_json::Value {
+        self.active.borrow().as_ref().map_or(serde_json::Value::Null, |a| serde_json::json!({
+            "budget_bytes": a.budget, "resident_bytes": a.bytes, "pages": a.textures.len(),
+            "loads": a.loads, "evictions": a.evictions, "in_flight": a.in_flight.len(),
+            "pending": a.pending.len(), "hd_draws": a.hd_draws, "waiting_draws": a.waiting_draws,
+        }))
     }
     pub(super) fn draw(
         &self,
@@ -95,7 +146,6 @@ impl Graphics {
         }) else {
             return false;
         };
-        let name = region.page.clone();
         let [sx, sy, _, _] = region.original;
         let [x, y, _, _] = region.rect;
         let scale = active.pack.scale as f32;
@@ -105,13 +155,14 @@ impl Graphics {
             source.w * scale,
             source.h * scale,
         );
-        let frame = active.frame;
-        let texture_key = (name, keyed);
+        let texture_key = (region.page.clone(), keyed);
         let Some(cached) = active.textures.get_mut(&texture_key) else {
             active.requests.insert(texture_key);
+            active.waiting_draws += 1;
             return false;
         };
-        cached.last_frame = frame;
+        cached.last_frame = active.frame;
+        active.hd_draws += 1;
         draw_texture_ex(
             &cached.texture,
             destination.x,
@@ -126,92 +177,88 @@ impl Graphics {
         true
     }
     pub(super) async fn load_requested(&self) -> Result<()> {
-        let requests = match &mut *self.active.borrow_mut() {
-            Some(a) => std::mem::take(&mut a.requests),
-            None => return Ok(()),
+        let mut state = self.active.borrow_mut();
+        let Some(active) = state.as_mut() else {
+            return Ok(());
         };
-        for (name, keyed) in requests {
-            let (path, expected) = {
-                let mut state = self.active.borrow_mut();
-                let Some(active) = state.as_mut() else {
-                    return Ok(());
+        // Upload at most one ready page per frame; CPU decoding and filtering
+        // are bounded separately, with at most two completed buffers in flight.
+        if let Ok(loaded) = active.ready.try_recv() {
+            active.in_flight.remove(&loaded.key);
+            let image = loaded.image?;
+            let required = u64::from(image.width) * u64::from(image.height) * 4;
+            while active.bytes + required > active.budget {
+                let victim = active
+                    .textures
+                    .iter()
+                    .filter(|(_, p)| p.last_frame + 2 < active.frame)
+                    .min_by_key(|(_, p)| p.last_frame)
+                    .map(|(name, _)| name.clone());
+                let Some(victim) = victim else {
+                    anyhow::bail!("HD artwork exceeds the available texture budget");
                 };
-                let page = active.pack.pages.get(&name).context("Missing HD page")?;
-                let required = page.width as u64 * page.height as u64 * 4;
-                while active.bytes + required > MAX_TEXTURE_BYTES {
-                    let victim = active
-                        .textures
-                        .iter()
-                        .filter(|(_, p)| p.last_frame + 2 < active.frame)
-                        .min_by_key(|(_, p)| p.last_frame)
-                        .map(|(name, _)| name.clone());
-                    let Some(victim) = victim else {
-                        anyhow::bail!("HD artwork exceeds the available texture budget");
-                    };
-                    if let Some(old) = active.textures.remove(&victim) {
-                        active.bytes -= old.bytes;
-                    }
-                }
-                (
-                    active.root.join(&name),
-                    (page.width, page.height, page.bytes, page.sha256.clone()),
-                )
-            };
-            // File hashes were checked by the worker; check again on first load
-            // to handle a cache being changed or removed while the game runs.
-            let data = load_file(&path.to_string_lossy())
-                .await
-                .context("read HD artwork")?;
-            use sha2::{Digest, Sha256};
-            ensure!(
-                data.len() as u64 == expected.2
-                    && format!("{:x}", Sha256::digest(&data)) == expected.3,
-                "HD artwork is damaged"
-            );
-            let mut image = Image::from_file_with_format(&data, Some(ImageFormat::Png))
-                .context("decode HD artwork")?;
-            if keyed {
-                for pixel in image.bytes.chunks_exact_mut(4) {
-                    if pixel[..3] == [0, 0, 0] {
-                        pixel[3] = 0;
-                    }
+                if let Some(old) = active.textures.remove(&victim) {
+                    active.bytes -= old.bytes;
+                    active.evictions += 1;
                 }
             }
-            ensure!(
-                (image.width as u32, image.height as u32) == (expected.0, expected.1),
-                "HD texture dimensions changed"
-            );
             let texture = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 Texture2D::from_image(&image)
             }))
             .map_err(|_| anyhow::anyhow!("The display could not allocate an HD texture"))?;
             check_gl_error()?;
             texture.set_filter(FilterMode::Linear);
-            let mut state = self.active.borrow_mut();
-            let Some(active) = state.as_mut() else {
-                return Ok(());
-            };
-            let bytes = expected.0 as u64 * expected.1 as u64 * 4;
             active.textures.insert(
-                (name, keyed),
+                loaded.key,
                 Cached {
                     texture,
-                    bytes,
+                    bytes: required,
                     last_frame: active.frame,
                 },
             );
-            active.bytes += bytes;
+            active.bytes += required;
+            active.loads += 1;
         }
-        // Old arena and menu pages can be reclaimed even below the hard limit.
-        if let Some(active) = self.active.borrow_mut().as_mut() {
-            let frame = active.frame;
-            active.textures.retain(|_, p| {
-                let keep = p.last_frame + 300 >= frame;
-                if !keep {
-                    active.bytes -= p.bytes;
-                }
-                keep
-            });
+        for key in std::mem::take(&mut active.requests) {
+            if !active.textures.contains_key(&key)
+                && !active.in_flight.contains(&key)
+                && active.queued.insert(key.clone())
+            {
+                ensure!(
+                    active.pending.len() < 256,
+                    "Too many pending HD display pages"
+                );
+                active.pending.push_back(key);
+            }
+        }
+        while active.in_flight.len() < active.workers {
+            let Some(key) = active.pending.pop_front() else {
+                break;
+            };
+            active.queued.remove(&key);
+            if active.textures.contains_key(&key) {
+                continue;
+            }
+            active.in_flight.insert(key.clone());
+            let decoder = active.decoder.clone();
+            let cancel = active.cancel.clone();
+            let sender = active.sender.clone();
+            std::thread::Builder::new()
+                .name("HD display page".into())
+                .spawn(move || {
+                    let image = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        decoder.decode(&key.0, key.1, &cancel).map(|image| Image {
+                            width: image.width() as u16,
+                            height: image.height() as u16,
+                            bytes: image.into_raw(),
+                        })
+                    }))
+                    .unwrap_or_else(|_| Err(anyhow::anyhow!("Could not decode HD artwork")));
+                    if !cancel.load(Ordering::Acquire) {
+                        let _ = sender.send(Loaded { key, image });
+                    }
+                })
+                .context("Could not start HD display worker")?;
         }
         Ok(())
     }
