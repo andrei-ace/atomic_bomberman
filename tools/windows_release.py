@@ -25,7 +25,7 @@ DOCUMENTS = {'README.txt', 'LICENSE', 'BUILD-INFO.json', 'docs/online-play.md',
              'licenses/miniquad-NOTICE.md'}
 SYSTEM_DLLS = set('advapi32 bcrypt bcryptprimitives cfgmgr32 combase comctl32 comdlg32 crypt32 dbghelp dinput8 '
                   'dwmapi dxgi gdi32 hid imm32 iphlpapi kernel32 kernelbase msvcrt '
-                  'normaliz ntdll ole32 oleaut32 opengl32 powrprof propsys psapi '
+                  'normaliz ntdll ole32 oleaut32 opengl32 pdh powrprof propsys psapi '
                   'rpcrt4 secur32 setupapi shcore shell32 shlwapi ucrtbase user32 '
                   'userenv usp10 uxtheme version windowsapp winmm winspool wintrust '
                   'ws2_32 xinput1_4'.split())

@@ -127,6 +127,7 @@ class PackageTests(unittest.TestCase):
 
     def test_pe_rejects_wrong_architecture_unresolved_runtime_and_bad_addresses(self):
         self.assertEqual(windows_release.pe_imports(pe()), ['kernel32.dll'])
+        self.assertEqual(windows_release.pe_imports(pe('PDH.dll')), ['pdh.dll'])
         for data in [pe(machine=0xaa64), pe('vcruntime140.dll'), pe('private-library.dll'), b'MZ']:
             with self.assertRaises(ValueError):
                 windows_release.pe_imports(data)
