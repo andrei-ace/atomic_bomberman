@@ -135,6 +135,103 @@ fn canonical_catching_the_owner_clock_preserves_its_real_pose() {
 }
 
 #[test]
+fn input_observed_between_captures_cannot_rewind_an_overtaken_owner() {
+    let mut canonical = initial();
+    let mut prediction = ClientPrediction::new_owner_at(vec![0], &canonical, 0);
+    let right = PlayerInput {
+        direction: Some(Direction::Right),
+        ..Default::default()
+    };
+    prediction.capture_at(&[right], 20).unwrap();
+    prediction
+        .capture_at(&[PlayerInput::default()], 40)
+        .unwrap();
+    prediction.refresh_at(&canonical, 40).unwrap();
+    let stopped = prediction.display(40).players[0].presentation.clone();
+    for step in 0..10 {
+        let now = 60 + step * u64::from(STEP_MS);
+        let mut frame = canonical
+            .advance(vec![right, PlayerInput::default()], vec![])
+            .unwrap()
+            .0;
+        frame.acknowledgments = vec![InputAck::default(); 2];
+        prediction
+            .record_acknowledgment(&canonical, &frame, now)
+            .unwrap();
+        prediction.refresh_at(&canonical, now).unwrap();
+    }
+    let tick = prediction.replay().tick;
+    assert!(tick > canonical.tick);
+    // The UI can observe a turn before the next fixed capture. Rebuilding the
+    // same canonical baseline must retain the provisional owner pose and clock.
+    prediction
+        .observe(&[PlayerInput {
+            direction: Some(Direction::Down),
+            ..Default::default()
+        }])
+        .unwrap();
+    prediction.refresh_at(&canonical, 241).unwrap();
+    assert_eq!(prediction.replay().tick, tick);
+    assert_eq!(
+        prediction.display(241).players[0]
+            .presentation
+            .render_position,
+        stopped.render_position
+    );
+    assert_eq!(
+        prediction.display(241).players[0]
+            .presentation
+            .render_moving,
+        stopped.render_moving
+    );
+}
+
+#[test]
+fn canonical_arriving_at_a_stopped_owner_cannot_restart_its_walking_pose() {
+    let mut canonical = initial();
+    let mut prediction = ClientPrediction::new_owner_at(vec![0], &canonical, 0);
+    let right = PlayerInput {
+        direction: Some(Direction::Right),
+        ..Default::default()
+    };
+    prediction.capture_at(&[right], 20).unwrap();
+    prediction
+        .capture_at(&[PlayerInput::default()], 40)
+        .unwrap();
+    prediction.refresh_at(&canonical, 40).unwrap();
+    let stopped = prediction.display(40).players[0].presentation.clone();
+    for (now, input) in [(60, PlayerInput::default()), (80, right)] {
+        let mut frame = canonical
+            .advance(vec![input, PlayerInput::default()], vec![])
+            .unwrap()
+            .0;
+        frame.acknowledgments = vec![InputAck::default(); 2];
+        prediction
+            .record_acknowledgment(&canonical, &frame, now)
+            .unwrap();
+        prediction.refresh_at(&canonical, now).unwrap();
+    }
+    assert_eq!(
+        canonical.simulation.players[0].presentation.render_position,
+        stopped.render_position
+    );
+    assert!(canonical.simulation.players[0].presentation.render_moving);
+    let display = prediction.display(80);
+    assert_eq!(
+        display.players[0].presentation.render_position,
+        stopped.render_position
+    );
+    assert_eq!(
+        display.players[0].presentation.render_moving,
+        stopped.render_moving
+    );
+    assert_eq!(
+        display.players[0].presentation.render_frame,
+        stopped.render_frame
+    );
+}
+
+#[test]
 fn retaining_an_overtaken_owner_still_respects_a_confirmed_obstruction() {
     let mut canonical = initial();
     let mut prediction = ClientPrediction::new_owner_at(vec![0], &canonical, 0);

@@ -1,0 +1,1853 @@
+{
+  "date_utc": "2026-11-04",
+  "scope": "Local follow-up source candidate against the unchanged deployed 0.7.2 ARM64 relay; ten headless production-session clients on one Mac over Wi-Fi, no injected WAN impairment.",
+  "source_base_commit": "0a29c4dd2ab9ed084e800b598bc17e862f7df24d",
+  "source_patch": {
+    "local_path": "build/wan-investigation-20261104/candidate-source.patch",
+    "sha256": "acf4d03259a67e611e5a40fd0938385fd4d91c62d0b36cd1cc7c207416590606"
+  },
+  "source_files": [
+    {
+      "local_path": "crates/bomberman-net/src/prediction/owner.rs",
+      "sha256": "46f42728334f04357200e63961860201b56e3030b5713e85cffc02b95283192a"
+    },
+    {
+      "local_path": "crates/bomberman-net/tests/consistency.rs",
+      "sha256": "f7b388569436c67d1286afeab20904f9f20bb2fd07de2c84fbb5e6e0b54e93cc"
+    },
+    {
+      "local_path": "crates/bomberman/examples/relay_load.rs",
+      "sha256": "d205e9e615a21ad8341b711770984b240bba23e231a145bd062697a2afba781f"
+    },
+    {
+      "local_path": "tools/benchmark_relay.py",
+      "sha256": "6e17cfbdfefe43d5b99cab9174f5680f3d0f531fd0a7274221831c2a0d8e051f"
+    }
+  ],
+  "published_0_7_2_artifacts_include_these_fixes": false,
+  "production_restarted_or_downgraded": false,
+  "diagnosis": {
+    "audit_driver_stall": {
+      "finding": "Full canonical snapshot comparisons blocked the thread pumping all ten clients. Delayed batches made the host consumer miss receive-queue drain opportunities.",
+      "comparison_stage_max_us": 124455,
+      "loop_work_max_ms": 137,
+      "sleep_overshoot_max_ms": 21,
+      "overflow_sequences": [
+        {
+          "actual_sleep_us": 0,
+          "at_ms": 35504,
+          "peers": [
+            {
+              "new_evictions": 0,
+              "peer": 6,
+              "queue_evictions": 0,
+              "room": 0,
+              "stages_us": [
+                756,
+                1,
+                20994,
+                19
+              ]
+            },
+            {
+              "new_evictions": 0,
+              "peer": 7,
+              "queue_evictions": 0,
+              "room": 0,
+              "stages_us": [
+                965,
+                1,
+                40545,
+                8
+              ]
+            }
+          ],
+          "requested_sleep_us": 0,
+          "work_us": 65328
+        },
+        {
+          "actual_sleep_us": 0,
+          "at_ms": 35569,
+          "peers": [
+            {
+              "new_evictions": 10,
+              "peer": 0,
+              "queue_evictions": 10,
+              "room": 0,
+              "stages_us": [
+                617,
+                0,
+                2,
+                2
+              ]
+            },
+            {
+              "new_evictions": 0,
+              "peer": 6,
+              "queue_evictions": 0,
+              "room": 0,
+              "stages_us": [
+                181,
+                0,
+                10454,
+                2
+              ]
+            }
+          ],
+          "requested_sleep_us": 0,
+          "work_us": 16336
+        },
+        {
+          "actual_sleep_us": 0,
+          "at_ms": 35700,
+          "peers": [
+            {
+              "new_evictions": 0,
+              "peer": 6,
+              "queue_evictions": 0,
+              "room": 0,
+              "stages_us": [
+                294,
+                0,
+                18086,
+                8
+              ]
+            }
+          ],
+          "requested_sleep_us": 0,
+          "work_us": 19887
+        },
+        {
+          "actual_sleep_us": 0,
+          "at_ms": 43297,
+          "peers": [
+            {
+              "new_evictions": 0,
+              "peer": 2,
+              "queue_evictions": 0,
+              "room": 0,
+              "stages_us": [
+                2860,
+                0,
+                30214,
+                17
+              ]
+            }
+          ],
+          "requested_sleep_us": 0,
+          "work_us": 34853
+        },
+        {
+          "actual_sleep_us": 0,
+          "at_ms": 43547,
+          "peers": [
+            {
+              "new_evictions": 0,
+              "peer": 7,
+              "queue_evictions": 0,
+              "room": 0,
+              "stages_us": [
+                2195,
+                0,
+                89787,
+                3
+              ]
+            }
+          ],
+          "requested_sleep_us": 0,
+          "work_us": 92269
+        },
+        {
+          "actual_sleep_us": 5822,
+          "at_ms": 43639,
+          "peers": [
+            {
+              "new_evictions": 3,
+              "peer": 0,
+              "queue_evictions": 13,
+              "room": 0,
+              "stages_us": [
+                244,
+                0,
+                3,
+                2
+              ]
+            }
+          ],
+          "requested_sleep_us": 3867,
+          "work_us": 1132
+        }
+      ],
+      "correction": "Move the unchanged Agreement oracle to a bounded 512-sample worker queue. Fail on queue exhaustion, drain all submitted samples, and fail if any peer tick is missing. Gameplay transport buffers and acceptance thresholds are unchanged."
+    },
+    "prediction_clock_rewind": {
+      "finding": "An input observed between fixed captures could rebuild the same canonical baseline after owner retention, reducing the predicted tick and replacing its position with the host forecast.",
+      "observed_failure": "render.speed: dx=-9600 dy=-1400 ticks=0 budget=0",
+      "correction": "Retain validated owner motion on repeated rebuilds, and keep the active prediction target at least the previous predicted tick within the existing prediction bound.",
+      "regression": "input_observed_between_captures_cannot_rewind_an_overtaken_owner"
+    },
+    "stale_walking_pose": {
+      "finding": "Position equality was used as pose equality. A host forecast reaching the stopped owner position replaced its idle gait with walking.",
+      "correction": "Compare the full native AvatarMotion, including gait, when retaining owner motion. Shared collision validation remains active.",
+      "regression": "canonical_arriving_at_a_stopped_owner_cannot_restart_its_walking_pose"
+    },
+    "local_path_observations": {
+      "icmp": {
+        "relay_path": {
+          "samples_ms": [
+            67.474,
+            62.103,
+            40.059,
+            71.453,
+            55.645,
+            42.718,
+            73.615,
+            49.919,
+            61.737,
+            51.718,
+            54.361,
+            45.316,
+            46.328,
+            276.071,
+            59.314,
+            54.809,
+            220.531,
+            292.801,
+            362.162,
+            302.154,
+            86.343,
+            83.108,
+            38.336,
+            70.912,
+            38.724,
+            69.501,
+            89.562,
+            138.04,
+            109.3,
+            73.164
+          ],
+          "summary": [
+            "30 packets transmitted, 30 packets received, 0.0% packet loss",
+            "round-trip min/avg/max/stddev = 38.336/102.909/362.162/88.508 ms"
+          ],
+          "exit_code": 0
+        },
+        "wifi_gateway": {
+          "samples_ms": [
+            2.201,
+            24.338,
+            6.397,
+            7.951,
+            18.025,
+            20.857,
+            32.333,
+            33.052,
+            28.715,
+            12.304,
+            17.121,
+            20.759,
+            13.282,
+            266.078,
+            24.636,
+            57.019,
+            116.185,
+            310.073,
+            321.244,
+            296.72,
+            62.832,
+            55.646,
+            16.254,
+            45.963,
+            26.781,
+            26.758,
+            56.699,
+            39.626,
+            52.085,
+            54.877
+          ],
+          "summary": [
+            "30 packets transmitted, 30 packets received, 0.0% packet loss",
+            "round-trip min/avg/max/stddev = 2.201/68.894/321.244/93.093 ms"
+          ],
+          "exit_code": 0
+        },
+        "finished_unix_ms": 1793772854637
+      },
+      "interpretation": "Gateway and relay ICMP delays rose together. These samples show local-path timing variability; they do not establish QUIC packet loss or independently explain every timeout."
+    }
+  },
+  "retained_runs": {
+    "fresh-rust189": {
+      "local_path": "build/wan-investigation-20261104/fresh-rust189.json",
+      "sha256": "e8023201354d3dbf10f87e5029d5bc3684104adf990c5cc027464a6b695f2351",
+      "passed": false,
+      "complete": false,
+      "error": "generator failed before producing results: Gameplay load generator: room 0 peer 8 at 4119ms: Gameplay connection unavailable. Allow UDP 443 to the Internet relay, or UDP 1997 to the LAN host. TCP alone cannot start a match.",
+      "client_sha256": "b86837f9386e2bac67f7e197d33e67fbaa2faab392fb48d7d823d8fdbd8d9d4f",
+      "transport": "deployed WAN",
+      "cases": [],
+      "driver_profiles": []
+    },
+    "fresh-two-clients": {
+      "local_path": "build/wan-investigation-20261104/fresh-two-clients.json",
+      "sha256": "9be6bdb3480fd1499262141ed60c050e4260f8d32500f33056d3c8f61f42eae5",
+      "passed": true,
+      "complete": true,
+      "client_sha256": "b86837f9386e2bac67f7e197d33e67fbaa2faab392fb48d7d823d8fdbd8d9d4f",
+      "transport": "deployed WAN",
+      "cases": [
+        {
+          "passed": true,
+          "first_failure": null,
+          "players_per_room": 2,
+          "rooms": 1,
+          "warmup_seconds": 10,
+          "measurement_seconds": 30,
+          "seed": 1997,
+          "measurement_start_unix_ms": 1793772672029,
+          "measurement_end_unix_ms": 1793772702029,
+          "canonical_ticks_compared": 2005,
+          "render_frames_checked": 11782,
+          "shared_outcomes": {
+            "bomb_placements": 23,
+            "deaths": 4,
+            "detonations": 22,
+            "round_results": 2
+          },
+          "application_rtt_ms": {
+            "max": 914,
+            "p50": 84,
+            "p95": 914,
+            "p99": 914,
+            "samples": 4393
+          },
+          "host_commit_to_client_apply_ms": {
+            "max": 722,
+            "p50": 47,
+            "p95": 592,
+            "p99": 668,
+            "samples": 1497
+          },
+          "owner_sample_to_confirmation_ms": {
+            "max": 1329,
+            "p50": 86,
+            "p95": 125,
+            "p99": 1154,
+            "samples": 2795
+          },
+          "generator_scheduling_delay_ms": {
+            "max": 13,
+            "p50": 2,
+            "p95": 3,
+            "p99": 3,
+            "samples": 4393
+          },
+          "generator_cpu_percent": {
+            "samples": 160,
+            "p50": 10.969865473052604,
+            "p95": 11.435330811720602,
+            "p99": 14.883565125515547,
+            "max": 15.050664025635243
+          },
+          "queue_evictions": 0,
+          "lifetime_application_failures": 0,
+          "send_failures_and_queue_rejections": 0
+        }
+      ],
+      "driver_profiles": []
+    },
+    "profile-ten-clients": {
+      "local_path": "build/wan-investigation-20261104/profile-ten-clients.json",
+      "sha256": "ea883e4833f9b3b3331869416e77b01491bd5498d85c4959f57bcd2a206ac2e3",
+      "passed": false,
+      "complete": true,
+      "client_sha256": "d20c5c3984ac330730a335e068ead813d13798482d35e80e90d11baddd245ca7",
+      "transport": "deployed WAN",
+      "cases": [
+        {
+          "passed": false,
+          "first_failure": "audit comparison window exhausted (missing committed ticks)",
+          "players_per_room": 10,
+          "rooms": 1,
+          "warmup_seconds": 10,
+          "measurement_seconds": 60,
+          "seed": 1997,
+          "measurement_start_unix_ms": 1793772816075,
+          "measurement_end_unix_ms": 1793772876077,
+          "canonical_ticks_compared": 1948,
+          "render_frames_checked": 68126,
+          "shared_outcomes": {
+            "bomb_placements": 67,
+            "deaths": 47,
+            "detonations": 59,
+            "round_results": 5
+          },
+          "application_rtt_ms": {
+            "max": 1044,
+            "p50": 397,
+            "p95": 988,
+            "p99": 1044,
+            "samples": 77688
+          },
+          "host_commit_to_client_apply_ms": {
+            "max": 3983,
+            "p50": 171,
+            "p95": 2744,
+            "p99": 3403,
+            "samples": 12987
+          },
+          "owner_sample_to_confirmation_ms": {
+            "max": 5327,
+            "p50": 175,
+            "p95": 510,
+            "p99": 3314,
+            "samples": 11959
+          },
+          "generator_scheduling_delay_ms": {
+            "max": 87,
+            "p50": 2,
+            "p95": 3,
+            "p99": 15,
+            "samples": 8632
+          },
+          "generator_cpu_percent": {
+            "samples": 274,
+            "p50": 32.87012287916599,
+            "p95": 51.94901375156594,
+            "p99": 56.97807168881394,
+            "max": 60.97601805596697
+          },
+          "queue_evictions": 13,
+          "lifetime_application_failures": 13,
+          "send_failures_and_queue_rejections": 0
+        }
+      ],
+      "driver_profiles": [
+        {
+          "local_path": "build/wan-investigation-20261104/profile-ten-clients-1x10-r1.driver.json",
+          "sha256": "41ab3b473822327620f487d0e86b80255b363d117b16d20bfac17de5bc579a06",
+          "stage_order": [
+            "pump",
+            "prepared_and_confirmations",
+            "audit_comparison",
+            "render_oracle_and_trace"
+          ],
+          "stage_max_us": [
+            9378,
+            62,
+            124455,
+            4997
+          ],
+          "loop_work_ms": {
+            "max": 137,
+            "p50": 0,
+            "p95": 5,
+            "p99": 20,
+            "samples": 10586
+          },
+          "sleep_overshoot_ms": {
+            "max": 21,
+            "p50": 1,
+            "p95": 2,
+            "p99": 2,
+            "samples": 10586
+          },
+          "failure": null
+        }
+      ]
+    },
+    "worker-ten-clients": {
+      "local_path": "build/wan-investigation-20261104/worker-ten-clients.json",
+      "sha256": "b9de4259b03a07b4f61957916038be4858ca2072e59c81a464cd9f923825a987",
+      "passed": false,
+      "complete": true,
+      "client_sha256": "bd34920a8839590b29ec2ae115598752172345a400ff37288e096ab6ae8dfab3",
+      "transport": "deployed WAN",
+      "cases": [
+        {
+          "passed": false,
+          "first_failure": "room=0 peer=4 at=45503ms: render.speed: dx=-9600 dy=-1400 ticks=0 budget=0",
+          "players_per_room": 10,
+          "rooms": 1,
+          "warmup_seconds": 10,
+          "measurement_seconds": 60,
+          "seed": 1997,
+          "measurement_start_unix_ms": 1793773085803,
+          "measurement_end_unix_ms": 1793773145803,
+          "canonical_ticks_compared": 1941,
+          "render_frames_checked": 62699,
+          "shared_outcomes": {
+            "bomb_placements": 46,
+            "deaths": 37,
+            "detonations": 40,
+            "match_results": 1,
+            "round_results": 4
+          },
+          "application_rtt_ms": {
+            "max": 1002,
+            "p50": 106,
+            "p95": 941,
+            "p99": 975,
+            "samples": 81747
+          },
+          "host_commit_to_client_apply_ms": {
+            "max": 3900,
+            "p50": 214,
+            "p95": 2021,
+            "p99": 2883,
+            "samples": 13077
+          },
+          "owner_sample_to_confirmation_ms": {
+            "max": 4381,
+            "p50": 237,
+            "p95": 444,
+            "p99": 1223,
+            "samples": 21013
+          },
+          "generator_scheduling_delay_ms": {
+            "max": 10,
+            "p50": 2,
+            "p95": 3,
+            "p99": 3,
+            "samples": 9083
+          },
+          "generator_cpu_percent": {
+            "samples": 279,
+            "p50": 25.845592623826892,
+            "p95": 52.70309135671296,
+            "p99": 60.62419679032306,
+            "max": 78.72251293177848
+          },
+          "queue_evictions": 0,
+          "lifetime_application_failures": 0,
+          "send_failures_and_queue_rejections": 0
+        },
+        {
+          "passed": true,
+          "first_failure": null,
+          "players_per_room": 10,
+          "rooms": 1,
+          "warmup_seconds": 10,
+          "measurement_seconds": 60,
+          "seed": 1998,
+          "measurement_start_unix_ms": 1793773160818,
+          "measurement_end_unix_ms": 1793773220817,
+          "canonical_ticks_compared": 3471,
+          "render_frames_checked": 107124,
+          "shared_outcomes": {
+            "bomb_placements": 49,
+            "deaths": 37,
+            "detonations": 44,
+            "match_results": 1,
+            "round_results": 4
+          },
+          "application_rtt_ms": {
+            "max": 1004,
+            "p50": 111,
+            "p95": 896,
+            "p99": 975,
+            "samples": 81333
+          },
+          "host_commit_to_client_apply_ms": {
+            "max": 2484,
+            "p50": 225,
+            "p95": 948,
+            "p99": 1825,
+            "samples": 25776
+          },
+          "owner_sample_to_confirmation_ms": {
+            "max": 2527,
+            "p50": 244,
+            "p95": 459,
+            "p99": 968,
+            "samples": 18541
+          },
+          "generator_scheduling_delay_ms": {
+            "max": 52,
+            "p50": 2,
+            "p95": 3,
+            "p99": 3,
+            "samples": 9037
+          },
+          "generator_cpu_percent": {
+            "samples": 274,
+            "p50": 37.59960973302327,
+            "p95": 56.16564047489615,
+            "p99": 69.30762279890783,
+            "max": 75.66752720063177
+          },
+          "queue_evictions": 0,
+          "lifetime_application_failures": 0,
+          "send_failures_and_queue_rejections": 0
+        },
+        {
+          "passed": false,
+          "first_failure": "room=0 peer=3 at=11989ms: render.motion_after_release: dx=0 dy=0 ticks=0 idle=4 moving=true old_moving=false",
+          "players_per_room": 10,
+          "rooms": 1,
+          "warmup_seconds": 10,
+          "measurement_seconds": 60,
+          "seed": 1999,
+          "measurement_start_unix_ms": 1793773233780,
+          "measurement_end_unix_ms": 1793773293783,
+          "canonical_ticks_compared": 531,
+          "render_frames_checked": 16282,
+          "shared_outcomes": {
+            "bomb_placements": 57,
+            "deaths": 36,
+            "detonations": 51,
+            "match_results": 1,
+            "round_results": 4
+          },
+          "application_rtt_ms": {
+            "max": 994,
+            "p50": 104,
+            "p95": 695,
+            "p99": 979,
+            "samples": 82512
+          },
+          "host_commit_to_client_apply_ms": {
+            "max": 519,
+            "p50": 188,
+            "p95": 407,
+            "p99": 478,
+            "samples": 405
+          },
+          "owner_sample_to_confirmation_ms": {
+            "max": 4015,
+            "p50": 244,
+            "p95": 438,
+            "p99": 583,
+            "samples": 23469
+          },
+          "generator_scheduling_delay_ms": {
+            "max": 7,
+            "p50": 2,
+            "p95": 3,
+            "p99": 3,
+            "samples": 9168
+          },
+          "generator_cpu_percent": {
+            "samples": 265,
+            "p50": 22.5118763815072,
+            "p95": 45.8819687852388,
+            "p99": 56.8522355649976,
+            "max": 67.38998506659337
+          },
+          "queue_evictions": 0,
+          "lifetime_application_failures": 0,
+          "send_failures_and_queue_rejections": 0
+        }
+      ],
+      "driver_profiles": [
+        {
+          "local_path": "build/wan-investigation-20261104/worker-ten-clients-1x10-r1.driver.json",
+          "sha256": "eb8f49d7a3ea6f22b614f81e418a2f5d9161749878cbc4eb952571e03a235377",
+          "stage_order": [
+            "pump",
+            "prepared_and_confirmations",
+            "audit_comparison",
+            "render_oracle_and_trace"
+          ],
+          "stage_max_us": [
+            8216,
+            52,
+            1206,
+            6304
+          ],
+          "loop_work_ms": {
+            "max": 11,
+            "p50": 0,
+            "p95": 1,
+            "p99": 3,
+            "samples": 11339
+          },
+          "sleep_overshoot_ms": {
+            "max": 10,
+            "p50": 1,
+            "p95": 2,
+            "p99": 2,
+            "samples": 11339
+          },
+          "failure": "room=0 peer=4 at=45503ms: render.speed: dx=-9600 dy=-1400 ticks=0 budget=0"
+        },
+        {
+          "local_path": "build/wan-investigation-20261104/worker-ten-clients-1x10-r2.driver.json",
+          "sha256": "8f66660ec7cfd3964c70bb6101497d7b8f1a5ec78b826ef85f388d3c44f11a59",
+          "stage_order": [
+            "pump",
+            "prepared_and_confirmations",
+            "audit_comparison",
+            "render_oracle_and_trace"
+          ],
+          "stage_max_us": [
+            50515,
+            39,
+            225,
+            2485
+          ],
+          "loop_work_ms": {
+            "max": 56,
+            "p50": 0,
+            "p95": 2,
+            "p99": 3,
+            "samples": 11265
+          },
+          "sleep_overshoot_ms": {
+            "max": 7,
+            "p50": 1,
+            "p95": 2,
+            "p99": 2,
+            "samples": 11265
+          },
+          "failure": null
+        },
+        {
+          "local_path": "build/wan-investigation-20261104/worker-ten-clients-1x10-r3.driver.json",
+          "sha256": "1dd1c562cf7ad05aed3b34de1e42849dff5f90f344d1f9f7aa67af5c1c4ac318",
+          "stage_order": [
+            "pump",
+            "prepared_and_confirmations",
+            "audit_comparison",
+            "render_oracle_and_trace"
+          ],
+          "stage_max_us": [
+            8862,
+            84,
+            5571,
+            1922
+          ],
+          "loop_work_ms": {
+            "max": 14,
+            "p50": 0,
+            "p95": 2,
+            "p99": 3,
+            "samples": 11027
+          },
+          "sleep_overshoot_ms": {
+            "max": 66,
+            "p50": 1,
+            "p95": 2,
+            "p99": 2,
+            "samples": 11027
+          },
+          "failure": "room=0 peer=3 at=11989ms: render.motion_after_release: dx=0 dy=0 ticks=0 idle=4 moving=true old_moving=false"
+        }
+      ]
+    },
+    "prediction-fixed-ten-clients": {
+      "local_path": "build/wan-investigation-20261104/prediction-fixed-ten-clients.json",
+      "sha256": "fcbbf0845f40b2982d6b43528d9cb675cd97a329a403571074271f3a526d969b",
+      "passed": true,
+      "complete": true,
+      "client_sha256": "561d79654f04008d7ea281a627b31edce54c1929e0e5dad685d925dbd48b00c3",
+      "transport": "deployed WAN",
+      "cases": [
+        {
+          "passed": true,
+          "first_failure": null,
+          "players_per_room": 10,
+          "rooms": 1,
+          "warmup_seconds": 10,
+          "measurement_seconds": 60,
+          "seed": 1997,
+          "measurement_start_unix_ms": 1793773525766,
+          "measurement_end_unix_ms": 1793773585765,
+          "canonical_ticks_compared": 3502,
+          "render_frames_checked": 106048,
+          "shared_outcomes": {
+            "bomb_placements": 72,
+            "deaths": 54,
+            "detonations": 62,
+            "round_results": 5
+          },
+          "application_rtt_ms": {
+            "max": 999,
+            "p50": 109,
+            "p95": 937,
+            "p99": 968,
+            "samples": 81450
+          },
+          "host_commit_to_client_apply_ms": {
+            "max": 2517,
+            "p50": 184,
+            "p95": 1432,
+            "p99": 2021,
+            "samples": 27090
+          },
+          "owner_sample_to_confirmation_ms": {
+            "max": 817,
+            "p50": 232,
+            "p95": 463,
+            "p99": 595,
+            "samples": 23087
+          },
+          "generator_scheduling_delay_ms": {
+            "max": 23,
+            "p50": 2,
+            "p95": 3,
+            "p99": 3,
+            "samples": 9050
+          },
+          "generator_cpu_percent": {
+            "samples": 279,
+            "p50": 41.02322471422555,
+            "p95": 56.25895665128271,
+            "p99": 60.5126248189821,
+            "max": 64.17152926649776
+          },
+          "queue_evictions": 0,
+          "lifetime_application_failures": 0,
+          "send_failures_and_queue_rejections": 0,
+          "audit_execution": "bounded background worker; all samples drained before final result"
+        },
+        {
+          "passed": true,
+          "first_failure": null,
+          "players_per_room": 10,
+          "rooms": 1,
+          "warmup_seconds": 10,
+          "measurement_seconds": 60,
+          "seed": 1998,
+          "measurement_start_unix_ms": 1793773599689,
+          "measurement_end_unix_ms": 1793773659690,
+          "canonical_ticks_compared": 3504,
+          "render_frames_checked": 106661,
+          "shared_outcomes": {
+            "bomb_placements": 61,
+            "deaths": 36,
+            "detonations": 53,
+            "match_results": 1,
+            "round_results": 4
+          },
+          "application_rtt_ms": {
+            "max": 983,
+            "p50": 107,
+            "p95": 657,
+            "p99": 983,
+            "samples": 81666
+          },
+          "host_commit_to_client_apply_ms": {
+            "max": 2970,
+            "p50": 182,
+            "p95": 622,
+            "p99": 1835,
+            "samples": 27207
+          },
+          "owner_sample_to_confirmation_ms": {
+            "max": 2718,
+            "p50": 230,
+            "p95": 415,
+            "p99": 482,
+            "samples": 25874
+          },
+          "generator_scheduling_delay_ms": {
+            "max": 11,
+            "p50": 2,
+            "p95": 3,
+            "p99": 3,
+            "samples": 9074
+          },
+          "generator_cpu_percent": {
+            "samples": 272,
+            "p50": 40.464635989427656,
+            "p95": 52.70687582971251,
+            "p99": 63.37580538359321,
+            "max": 85.10770864928163
+          },
+          "queue_evictions": 0,
+          "lifetime_application_failures": 0,
+          "send_failures_and_queue_rejections": 0,
+          "audit_execution": "bounded background worker; all samples drained before final result"
+        },
+        {
+          "passed": true,
+          "first_failure": null,
+          "players_per_room": 10,
+          "rooms": 1,
+          "warmup_seconds": 10,
+          "measurement_seconds": 60,
+          "seed": 1999,
+          "measurement_start_unix_ms": 1793773671664,
+          "measurement_end_unix_ms": 1793773731663,
+          "canonical_ticks_compared": 3503,
+          "render_frames_checked": 105977,
+          "shared_outcomes": {
+            "bomb_placements": 35,
+            "deaths": 28,
+            "detonations": 32,
+            "match_results": 1,
+            "round_results": 3
+          },
+          "application_rtt_ms": {
+            "max": 942,
+            "p50": 105,
+            "p95": 897,
+            "p99": 929,
+            "samples": 81207
+          },
+          "host_commit_to_client_apply_ms": {
+            "max": 2653,
+            "p50": 213,
+            "p95": 1303,
+            "p99": 1882,
+            "samples": 27198
+          },
+          "owner_sample_to_confirmation_ms": {
+            "max": 2086,
+            "p50": 256,
+            "p95": 425,
+            "p99": 1223,
+            "samples": 23528
+          },
+          "generator_scheduling_delay_ms": {
+            "max": 7,
+            "p50": 2,
+            "p95": 3,
+            "p99": 3,
+            "samples": 9023
+          },
+          "generator_cpu_percent": {
+            "samples": 265,
+            "p50": 37.590745854248375,
+            "p95": 53.11939962313636,
+            "p99": 63.56802055482696,
+            "max": 86.39537739152567
+          },
+          "queue_evictions": 0,
+          "lifetime_application_failures": 0,
+          "send_failures_and_queue_rejections": 0,
+          "audit_execution": "bounded background worker; all samples drained before final result"
+        }
+      ],
+      "driver_profiles": [
+        {
+          "local_path": "build/wan-investigation-20261104/prediction-fixed-ten-clients-1x10-r1.driver.json",
+          "sha256": "f0624670916f2e2f07f7f7ce1a111fa1eece519e8ff5d267dec9029e25d3a29e",
+          "stage_order": [
+            "pump",
+            "prepared_and_confirmations",
+            "audit_submission",
+            "render_oracle_and_trace"
+          ],
+          "stage_max_us": [
+            16765,
+            396,
+            1185,
+            1439
+          ],
+          "loop_work_ms": {
+            "max": 18,
+            "p50": 0,
+            "p95": 2,
+            "p99": 3,
+            "samples": 11237
+          },
+          "sleep_overshoot_ms": {
+            "max": 23,
+            "p50": 1,
+            "p95": 2,
+            "p99": 2,
+            "samples": 11237
+          },
+          "failure": null
+        },
+        {
+          "local_path": "build/wan-investigation-20261104/prediction-fixed-ten-clients-1x10-r2.driver.json",
+          "sha256": "6f004bf89517f1f7a55bfccafc7619fdff6832ecfe2514383ca66ef909719e6d",
+          "stage_order": [
+            "pump",
+            "prepared_and_confirmations",
+            "audit_submission",
+            "render_oracle_and_trace"
+          ],
+          "stage_max_us": [
+            6568,
+            62,
+            234,
+            3352
+          ],
+          "loop_work_ms": {
+            "max": 12,
+            "p50": 0,
+            "p95": 1,
+            "p99": 3,
+            "samples": 11143
+          },
+          "sleep_overshoot_ms": {
+            "max": 11,
+            "p50": 1,
+            "p95": 2,
+            "p99": 2,
+            "samples": 11143
+          },
+          "failure": null
+        },
+        {
+          "local_path": "build/wan-investigation-20261104/prediction-fixed-ten-clients-1x10-r3.driver.json",
+          "sha256": "f0b25e1b6b792a980e35746b1e4a303ba38645418f1e667a3a9c5e292d343aa8",
+          "stage_order": [
+            "pump",
+            "prepared_and_confirmations",
+            "audit_submission",
+            "render_oracle_and_trace"
+          ],
+          "stage_max_us": [
+            8095,
+            49,
+            458,
+            1815
+          ],
+          "loop_work_ms": {
+            "max": 11,
+            "p50": 0,
+            "p95": 1,
+            "p99": 3,
+            "samples": 10765
+          },
+          "sleep_overshoot_ms": {
+            "max": 6,
+            "p50": 1,
+            "p95": 2,
+            "p99": 2,
+            "samples": 10765
+          },
+          "failure": null
+        }
+      ]
+    }
+  },
+  "movement_failure_proofs": [
+    {
+      "local_path": "build/wan-investigation-20261104/worker-ten-clients-1x10-r1.failure.json",
+      "sha256": "dd3aac10464c9b4a9143ccc94fa693ac0455405e6538299f93c503572ebe9ac5",
+      "first_invariant": "room=0 peer=4 at=45503ms: render.speed: dx=-9600 dy=-1400 ticks=0 budget=0",
+      "failure_samples": [
+        {
+          "arena": "NewGreenAcres",
+          "canonical_player": {
+            "airborne_ms": 0,
+            "alive": true,
+            "bot_cooldown_ms": 0,
+            "bot_direction": null,
+            "carrying": null,
+            "config": {
+              "control": "Human",
+              "name": "Yellow",
+              "team": 1
+            },
+            "disease_duration_ms": 0,
+            "disease_elapsed_ms": 0,
+            "disease_freshness_updates": 0,
+            "diseases": [],
+            "facing": "Up",
+            "ice_direction": null,
+            "ice_remaining_ms": 0,
+            "id": 5,
+            "kills": -1,
+            "last_bomb_tile": {
+              "x": 8,
+              "y": 7
+            },
+            "moving": false,
+            "original_ai_state": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "original_anchor": {
+              "x": 34000,
+              "y": 30600
+            },
+            "position": {
+              "x": 22000,
+              "y": 11200
+            },
+            "powers": {
+              "bombs": 3,
+              "brakes": 0,
+              "flame": 2,
+              "gold_flame": false,
+              "grab": false,
+              "jelly": false,
+              "kick": false,
+              "native_inventory": [
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "punch": false,
+              "skates": 0,
+              "spooge": false,
+              "trigger": true
+            },
+            "powerup_pickups": 0,
+            "presentation": {
+              "accumulator_ms": 0,
+              "death_accumulator_ms": -20,
+              "death_animation": 1,
+              "death_finished": false,
+              "death_frame": 0,
+              "death_rise_accumulator_ms": 0,
+              "frame": 0,
+              "palette": 5,
+              "personal_palette": true,
+              "render_alive": true,
+              "render_carrying": false,
+              "render_facing": "Up",
+              "render_frame": 243,
+              "render_moving": false,
+              "render_position": {
+                "x": 22000,
+                "y": 11200
+              },
+              "render_special": 0,
+              "render_visible": true,
+              "special": 0,
+              "walk_pixels": 730
+            },
+            "trigger_charges": 2,
+            "warp_cooldown_ms": 0,
+            "wins": 1
+          },
+          "canonical_tick": 2057,
+          "failure_at_ms": 45503,
+          "input": {
+            "action": false,
+            "bomb": false,
+            "direction": "Down",
+            "direction_mask": 0
+          },
+          "peer": 4,
+          "player": {
+            "airborne_ms": 0,
+            "alive": true,
+            "bot_cooldown_ms": 0,
+            "bot_direction": null,
+            "carrying": null,
+            "config": {
+              "control": "Human",
+              "name": "Yellow",
+              "team": 1
+            },
+            "disease_duration_ms": 0,
+            "disease_elapsed_ms": 0,
+            "disease_freshness_updates": 0,
+            "diseases": [],
+            "facing": "Up",
+            "ice_direction": null,
+            "ice_remaining_ms": 0,
+            "id": 5,
+            "kills": -1,
+            "last_bomb_tile": {
+              "x": 8,
+              "y": 7
+            },
+            "moving": false,
+            "original_ai_state": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "original_anchor": {
+              "x": 34000,
+              "y": 30600
+            },
+            "position": {
+              "x": 22000,
+              "y": 11200
+            },
+            "powers": {
+              "bombs": 3,
+              "brakes": 0,
+              "flame": 2,
+              "gold_flame": false,
+              "grab": false,
+              "jelly": false,
+              "kick": false,
+              "native_inventory": [
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "punch": false,
+              "skates": 0,
+              "spooge": false,
+              "trigger": true
+            },
+            "powerup_pickups": 0,
+            "presentation": {
+              "accumulator_ms": 0,
+              "death_accumulator_ms": -20,
+              "death_animation": 1,
+              "death_finished": false,
+              "death_frame": 0,
+              "death_rise_accumulator_ms": 0,
+              "frame": 0,
+              "palette": 5,
+              "personal_palette": true,
+              "render_alive": true,
+              "render_carrying": false,
+              "render_facing": "Up",
+              "render_frame": 243,
+              "render_moving": false,
+              "render_position": {
+                "x": 22000,
+                "y": 11200
+              },
+              "render_special": 0,
+              "render_visible": true,
+              "special": 0,
+              "walk_pixels": 730
+            },
+            "trigger_charges": 2,
+            "warp_cooldown_ms": 0,
+            "wins": 1
+          },
+          "predicted_input": {
+            "action": false,
+            "bomb": false,
+            "direction": null,
+            "direction_mask": 0
+          },
+          "predicted_tick": 2057,
+          "reconciliation": 24,
+          "room": 0,
+          "seat": 5
+        }
+      ]
+    },
+    {
+      "local_path": "build/wan-investigation-20261104/worker-ten-clients-1x10-r3.failure.json",
+      "sha256": "757a46940373d5b1288457975dfc2948d59af6fd735127e59b27039338f51ee3",
+      "first_invariant": "room=0 peer=3 at=11989ms: render.motion_after_release: dx=0 dy=0 ticks=0 idle=4 moving=true old_moving=false",
+      "failure_samples": [
+        {
+          "arena": "NewGreenAcres",
+          "canonical_player": {
+            "airborne_ms": 0,
+            "alive": true,
+            "bot_cooldown_ms": 0,
+            "bot_direction": null,
+            "carrying": null,
+            "config": {
+              "control": "Human",
+              "name": "Blue",
+              "team": 0
+            },
+            "disease_duration_ms": 0,
+            "disease_elapsed_ms": 0,
+            "disease_freshness_updates": 0,
+            "diseases": [],
+            "facing": "Up",
+            "ice_direction": "Up",
+            "ice_remaining_ms": 0,
+            "id": 3,
+            "kills": 0,
+            "last_bomb_tile": {
+              "x": 3,
+              "y": 5
+            },
+            "moving": true,
+            "original_ai_state": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "original_anchor": {
+              "x": 10000,
+              "y": 30600
+            },
+            "position": {
+              "x": 10000,
+              "y": 19900
+            },
+            "powers": {
+              "bombs": 3,
+              "brakes": 0,
+              "flame": 2,
+              "gold_flame": false,
+              "grab": false,
+              "jelly": false,
+              "kick": false,
+              "native_inventory": [
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "punch": false,
+              "skates": 0,
+              "spooge": false,
+              "trigger": true
+            },
+            "powerup_pickups": 0,
+            "presentation": {
+              "accumulator_ms": 0,
+              "death_accumulator_ms": 0,
+              "death_animation": 1,
+              "death_finished": false,
+              "death_frame": 0,
+              "death_rise_accumulator_ms": 0,
+              "frame": 0,
+              "palette": 3,
+              "personal_palette": true,
+              "render_alive": true,
+              "render_carrying": false,
+              "render_facing": "Up",
+              "render_frame": 553,
+              "render_moving": true,
+              "render_position": {
+                "x": 10000,
+                "y": 19900
+              },
+              "render_special": 0,
+              "render_visible": true,
+              "special": 0,
+              "walk_pixels": 1661
+            },
+            "trigger_charges": 3,
+            "warp_cooldown_ms": 0,
+            "wins": 0
+          },
+          "canonical_tick": 532,
+          "failure_at_ms": 11989,
+          "input": {
+            "action": false,
+            "bomb": false,
+            "direction": null,
+            "direction_mask": 0
+          },
+          "peer": 3,
+          "player": {
+            "airborne_ms": 0,
+            "alive": true,
+            "bot_cooldown_ms": 0,
+            "bot_direction": null,
+            "carrying": null,
+            "config": {
+              "control": "Human",
+              "name": "Blue",
+              "team": 0
+            },
+            "disease_duration_ms": 0,
+            "disease_elapsed_ms": 0,
+            "disease_freshness_updates": 0,
+            "diseases": [],
+            "facing": "Up",
+            "ice_direction": "Up",
+            "ice_remaining_ms": 0,
+            "id": 3,
+            "kills": 0,
+            "last_bomb_tile": {
+              "x": 3,
+              "y": 5
+            },
+            "moving": true,
+            "original_ai_state": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "original_anchor": {
+              "x": 10000,
+              "y": 30600
+            },
+            "position": {
+              "x": 10000,
+              "y": 19900
+            },
+            "powers": {
+              "bombs": 3,
+              "brakes": 0,
+              "flame": 2,
+              "gold_flame": false,
+              "grab": false,
+              "jelly": false,
+              "kick": false,
+              "native_inventory": [
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "punch": false,
+              "skates": 0,
+              "spooge": false,
+              "trigger": true
+            },
+            "powerup_pickups": 0,
+            "presentation": {
+              "accumulator_ms": 0,
+              "death_accumulator_ms": 0,
+              "death_animation": 1,
+              "death_finished": false,
+              "death_frame": 0,
+              "death_rise_accumulator_ms": 0,
+              "frame": 0,
+              "palette": 3,
+              "personal_palette": true,
+              "render_alive": true,
+              "render_carrying": false,
+              "render_facing": "Up",
+              "render_frame": 553,
+              "render_moving": true,
+              "render_position": {
+                "x": 10000,
+                "y": 19900
+              },
+              "render_special": 0,
+              "render_visible": true,
+              "special": 0,
+              "walk_pixels": 1661
+            },
+            "trigger_charges": 3,
+            "warp_cooldown_ms": 0,
+            "wins": 0
+          },
+          "predicted_input": {
+            "action": false,
+            "bomb": false,
+            "direction": "Up",
+            "direction_mask": 0
+          },
+          "predicted_tick": 532,
+          "reconciliation": 0,
+          "room": 0,
+          "seat": 3
+        }
+      ]
+    }
+  ],
+  "matched_server_metrics": {
+    "runs": [
+      {
+        "summary_records": 80,
+        "measured_intervals": 50,
+        "connections": 10,
+        "forwarding_ms": {
+          "samples": 69277,
+          "p50": 0.1,
+          "p95": 0.2,
+          "p99": 0.3,
+          "max": 5.204
+        },
+        "forwarding_failures": 0,
+        "send_buffer_pressure": 2726,
+        "sender_loss_estimate": 155,
+        "congestion_events": 84
+      },
+      {
+        "summary_records": 80,
+        "measured_intervals": 50,
+        "connections": 10,
+        "forwarding_ms": {
+          "samples": 68771,
+          "p50": 0.1,
+          "p95": 0.2,
+          "p99": 0.3,
+          "max": 4.59
+        },
+        "forwarding_failures": 0,
+        "send_buffer_pressure": 1082,
+        "sender_loss_estimate": 150,
+        "congestion_events": 72
+      },
+      {
+        "summary_records": 80,
+        "measured_intervals": 50,
+        "connections": 10,
+        "forwarding_ms": {
+          "samples": 68937,
+          "p50": 0.1,
+          "p95": 0.2,
+          "p99": 0.3,
+          "max": 7.438
+        },
+        "forwarding_failures": 0,
+        "send_buffer_pressure": 1403,
+        "sender_loss_estimate": 99,
+        "congestion_events": 56
+      }
+    ],
+    "health": [
+      "ActiveState=active",
+      "SubState=running",
+      "MainPID=512738",
+      "NRestarts=0",
+      "5b1a6e5145ee15436bdae712afd65ca877081b909c4112c068ef8428216cdefa  /proc/512738/exe",
+      "UdpInErrors                     0                  0.0",
+      "UdpRcvbufErrors                 0                  0.0",
+      "UdpSndbufErrors                 0                  0.0"
+    ]
+  },
+  "validation": {
+    "both_prediction_regressions_failed_before_correction": true,
+    "before_logs": [
+      {
+        "local_path": "build/wan-investigation-20261104/prediction-regression-before.log",
+        "sha256": "cef4187a8d23546e10680749921f1d3872e97441df8421e5cd3cc39afc767eef"
+      },
+      {
+        "local_path": "build/wan-investigation-20261104/prediction-pose-regression-before.log",
+        "sha256": "81c0affd6410a704306da4045c77b673b12bf37afbfb7f146749f85bbdd86927"
+      }
+    ],
+    "full_network_and_game_suites": {
+      "command": "CARGO_TARGET_DIR=build/wan-investigation-target cargo +1.89.0 test --locked --release -p bomberman-net -p bomberman --all-targets",
+      "exit_code": 0,
+      "completed_targets": 22,
+      "passed_executions": 321,
+      "failed_executions": 0,
+      "ignored_executions": 1,
+      "local_path": "build/wan-investigation-20261104/network-tests.log",
+      "sha256": "5ee01306bbc2dc6a6efac85beeadd4929646643f212c4924ed260d3fddce85e5"
+    },
+    "clippy": {
+      "command": "CARGO_TARGET_DIR=build/wan-investigation-target cargo +1.89.0 clippy --locked -p bomberman-net -p bomberman --all-targets -- -D warnings",
+      "exit_code": 0,
+      "local_path": "build/wan-investigation-20261104/clippy.log",
+      "sha256": "1f5b22b90880c2a55f0e4564766aa448556f1073c390bf30980b310140c5736c"
+    },
+    "rust_format_python_compile_and_diff_checks_passed": true,
+    "live_ten_client_repetitions_passed": 3,
+    "matrix": {
+      "arenas": 11,
+      "canonical_hash_and_shared_events_checked_at_each_matching_tick": true,
+      "complete": true,
+      "detector_fault_fixtures": "consistency::oracles_detect_backward_jump_stale_pose_state_drift_and_duplicate_action",
+      "games": 1056,
+      "layout_rotation": [
+        "open",
+        "corridor",
+        "bricks"
+      ],
+      "matching_committed_ticks": 261591,
+      "owner_render_samples": 1584000,
+      "passed": true,
+      "players": [
+        2,
+        10
+      ],
+      "profiles": 8,
+      "protocol": 8,
+      "seeds": 6,
+      "ticks_per_game": 250,
+      "version": "0.7.2"
+    }
+  },
+  "limitations": [
+    "The published 0.7.2 clients still contain the prediction defects; these corrections are local source changes.",
+    "The production relay stayed on the published 0.7.2 executable; no production version A/B comparison was performed.",
+    "Headless state/render oracles do not measure physical display, input-device or audio latency.",
+    "Only one ten-client WAN room at a time was retested, not forty simultaneous WAN clients.",
+    "The original failures and the startup timeout are retained; three passing repetitions do not guarantee all future Internet conditions.",
+    "Raw report/log hashes refer to retained local build artifacts; the compact measurements and failure samples are embedded here."
+  ]
+}

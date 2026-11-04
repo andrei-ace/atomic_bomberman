@@ -1,10 +1,10 @@
-# Native private relay — 0.7.2
+# Native private relay — 0.7.3
 
 Native Linux packages are available for ARM64 (`aarch64`) and amd64 (`x86_64`),
 with Ubuntu 24.04/glibc 2.39 or newer as the baseline. The existing ARM64 CAX11
 deployment runs Ubuntu 26. No Docker, domain, certificate authority, database or original
 game assets are required. The service forwards bounded traffic between outbound
-clients; the player's computer hosts simulation. Version 0.7.2 uses protocol 8
+clients; the player's computer hosts simulation. Version 0.7.3 uses protocol 8
 and the 0.7.0 handshake family. Update the relay and every player together.
 Protocol-7 builds, including 0.6.1, are incompatible. Shared player setup,
 slot controls and nicknames are required features of this client generation.
@@ -26,7 +26,7 @@ The example below uses ARM64; substitute `x86_64` for an amd64 server. Check the
 extracting. Run the following from its extracted directory:
 
 ```sh
-sha256sum -c atomic-bomberman-0.7.2-relay-linux-arm64.tar.gz.sha256
+sha256sum -c atomic-bomberman-0.7.3-relay-linux-arm64.tar.gz.sha256
 sudo useradd --system --home-dir /var/lib/bomberman-relay \
   --shell /usr/sbin/nologin bomberman-relay
 sudo install -d -m755 /usr/local/lib/bomberman-relay
@@ -172,7 +172,7 @@ python3 tools/package_relay.py --target aarch64-unknown-linux-gnu --release
 # On amd64, choose this target instead (the default remains ARM64):
 python3 tools/package_relay.py --target x86_64-unknown-linux-gnu --release
 # Verify a downloaded archive without starting the service:
-python3 tools/package_relay.py --verify /path/to/atomic-bomberman-0.7.2-relay-linux-x86_64.tar.gz --release
+python3 tools/package_relay.py --verify /path/to/atomic-bomberman-0.7.3-relay-linux-x86_64.tar.gz --release
 ```
 
 `--release` requires a clean committed checkout. The package includes the binary,

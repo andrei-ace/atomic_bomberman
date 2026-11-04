@@ -172,7 +172,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "anyhow",
  "axum-server",
@@ -196,7 +196,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-assets"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "anyhow",
  "image",
@@ -212,7 +212,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-core"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "serde",
  "serde_json",
@@ -220,7 +220,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-net"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "anyhow",
  "base64",
@@ -243,7 +243,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-relay"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "anyhow",
  "axum",
@@ -263,7 +263,7 @@ dependencies = [
 
 [[package]]
 name = "bomberman-windows-launcher"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "anyhow",
  "bomberman-net",

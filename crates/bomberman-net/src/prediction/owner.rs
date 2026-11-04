@@ -354,30 +354,34 @@ impl ClientPrediction {
         let owner = self.owner.as_ref().unwrap();
         let previous_tick = self.predicted.tick;
         let caught_up = previous_tick <= canonical.tick;
-        let retain_owner = caught_up
-            && self.owned.iter().enumerate().any(|(local, seat)| {
-                let canonical_player = &canonical.simulation.players[*seat];
-                canonical_player.alive
-                    && canonical_player.config.control == bomberman_core::ControlKind::Human
-                    && canonical_player.position
-                        != self.predicted.simulation.players[*seat].position
-                    && owner
-                        .samples
-                        .iter()
-                        .rev()
-                        .find(|sample| {
-                            sample.seat == *seat && sample.round == canonical.simulation.round
-                        })
-                        .is_some_and(|sample| {
-                            sample.active && sample.sequence > owner.invalid_through[local]
-                        })
-            });
+        let retain_owner = self.owned.iter().enumerate().any(|(local, seat)| {
+            let canonical_player = &canonical.simulation.players[*seat];
+            canonical_player.alive
+                && canonical_player.config.control == bomberman_core::ControlKind::Human
+                && canonical.simulation.avatar_motion(*seat)
+                    != self.predicted.simulation.avatar_motion(*seat)
+                && owner
+                    .samples
+                    .iter()
+                    .rev()
+                    .find(|sample| {
+                        sample.seat == *seat && sample.round == canonical.simulation.round
+                    })
+                    .is_some_and(|sample| {
+                        sample.active
+                            && sample.tick <= canonical.tick
+                            && sample.sequence > owner.invalid_through[local]
+                    })
+        });
         // The host may forecast past the owner's last capture. Keep that
         // owner's actual pose on the next provisional tick, validating its
         // path against the new shared world just like a late owner fact.
-        // Receiving an ACK must not substitute the host's held-input pose.
+        // Receiving an ACK must not substitute the host's held-input pose,
+        // including its walking state when both positions happen to match.
+        // Retain the provisional pose on repeated refreshes between captures.
         let minimum = canonical.tick.saturating_add(u64::from(retain_owner));
         let target = (self.clock_ms / u64::from(STEP_MS))
+            .max(previous_tick)
             .clamp(minimum, canonical.tick + MAX_PREDICT_TICKS as u64);
         let previous_positions = self
             .owned

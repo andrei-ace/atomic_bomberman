@@ -1,5 +1,39 @@
 # Multiplayer release and relay acceptance
 
+## 0.7.2 ten-client WAN follow-up
+
+The [follow-up evidence](evidence/0.7.2-wan-follow-up.json) retains the failed
+retests and separates three causes. Full snapshot comparisons ran on the same
+thread that pumped all ten clients. A delayed batch spent up to 124ms comparing
+snapshots; host queue evictions followed 65ms and 92ms driver stalls. Moving
+those unchanged comparisons to a bounded worker eliminated queue evictions in
+all six subsequent ten-client runs. The worker still fails on mismatches,
+missing ticks, or an exhausted audit queue, and drains before reporting success.
+
+That correction exposed two production prediction defects. An input observed
+between captures could rebuild an overtaken owner at an earlier predicted tick,
+causing a snap. Also, a host forecast arriving at the owner's stopped position
+could replace its idle pose with walking. Prediction now retains the owner's
+complete validated motion, including gait, across repeated rebuilds and keeps
+the active prediction clock monotonic. Native collision checks still apply.
+Two deterministic regressions fail on the released implementation and pass with
+these corrections; the existing obstruction and movement oracles also pass.
+
+Three fresh WAN repetitions with both corrections passed all state, event and
+movement checks, comparing 3,502, 3,504 and 3,503 committed ticks. Each used ten
+clients, ten seconds warm-up and sixty seconds measurement, with zero application
+queue evictions or send failures. Matched server forwarding p99 was 0.3ms in all
+three runs. Application RTT still spiked near one second. Separate gateway and
+relay ICMP probes showed simultaneous local-path delay spikes; those samples
+do not establish QUIC packet loss.
+
+These corrections are included in [0.7.3](release-notes/0.7.3.md). The follow-up
+measurements above used the local source candidate before the version bump;
+the published 0.7.2 artifacts retain the defects. The production 0.7.2 relay
+stayed on the same process and executable throughout those measurements; no
+production downgrade or service restart was needed. The shared network
+prediction code applies to both Classic and HD graphics.
+
 ## 0.6.1 alignment release and deployment
 
 [Release v0.6.1](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.6.1)
@@ -162,6 +196,12 @@ latency histograms and total generator CPU/memory across those processes. Each
 room measures a full sixty seconds; relay/resources use their common overlapping
 window. The per-room reports preserve the exact seeds and measurement windows.
 
+Each room compares its complete canonical snapshots on a separate worker. Its
+512-sample queue is bounded, and exhaustion fails the run. The final drain waits
+for every submitted comparison; missing ticks and late mismatches still fail.
+This prevents expensive comparisons of a delayed batch from blocking the other
+clients' network consumers. Production gameplay does not enable this auditing.
+
 State, shared-event and render correctness are required for a performance pass.
 Clean runs also require zero application queue evictions/rejections, zero
 forwarding/send failures, and relay forwarding p99 below 20ms. Reports include
@@ -180,6 +220,14 @@ can repeat a cached probe value. CPU uses process-time deltas; 100% is one core.
 Packet rates and latency histograms use the measurement window. The approximate
 compared-tick rate includes the final frozen agreement drain; the drain also
 ensures final committed frames are checked by every client.
+
+`generator_scheduling_delay_ms` measures the interval between driver iterations
+minus the nominal 5ms period. It includes processing work as well as sleep
+overshoot. To distinguish those causes, add `--profile-driver` to the benchmark
+command. Each room writes a `.driver.json` sidecar with work/sleep histograms,
+per-stage timing totals and maxima, queue-eviction observations, and the last
+128 slow iterations. These diagnostics cover startup, warm-up and measurement;
+they do not change the workload or acceptance thresholds.
 
 Optional injected-WAN checks use the existing opaque encrypted-packet proxy:
 

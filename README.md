@@ -18,17 +18,19 @@ locally from your copy of the game.
 
 ## Download and install
 
-Download the **0.7.2** package for your platform and its matching `.sha256` file
-from [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.2).
+Download the **0.7.3** package for your platform and its matching `.sha256` file
+from [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.3).
 The installation guides explain checksum verification and first-run setup.
 
-Version 0.7.2 adds optional HD graphics, portable HD import/export, the original
-score bar and menu cursor, and dependency security fixes. It includes the earlier
-menus, mods and movement corrections. See the [release notes](docs/release-notes/0.7.2.md).
+Version 0.7.3 fixes player snapping and stale walking poses when network updates
+arrive late. It includes optional HD graphics, portable HD import/export, the
+original score bar and menu cursor, and the earlier security fixes.
+See the [release notes](docs/release-notes/0.7.3.md).
 
-**Multiplayer upgrade:** update every client and the relay to 0.7.2 or a compatible
-protocol-8 build. Version 0.6.1 uses protocol 7 and cannot join these games.
-Existing private server links, settings and imported data remain valid.
+**Multiplayer upgrade:** update clients to 0.7.3 for the movement fixes.
+Compatible protocol-8 clients and relays in the 0.7.0 family can play together.
+Version 0.6.1 uses protocol 7 and cannot join these games. Existing private server
+links, settings, imported data and prepared HD artwork remain valid.
 
 | Platform | Requirements | Installation |
 | --- | --- | --- |
@@ -67,7 +69,7 @@ Controls can be remapped in the game.
 
 ## Graphics
 
-Version **0.7.2** offers optional HD graphics.
+The game offers optional HD graphics.
 **Classic is the default.**
 Choose **Options → Graphics → HD** for a faithful
 4× enhancement of the original artwork, rendered at the display's resolution.

@@ -208,7 +208,8 @@ def run_case(args, rooms, players, repetition, link):
                 with generator_logs[-1].open("w") as log:
                     generator = subprocess.Popen([str(args.client), "--rooms", "1", "--players", str(players),
                         "--warmup", str(args.warmup), "--duration", str(args.duration), "--seed", str(args.seed+repetition+room),
-                        "--report", str(child)], stdin=subprocess.PIPE, stdout=log, stderr=log, text=True)
+                        "--report", str(child)] + (["--profile-driver"] if args.profile_driver else []),
+                        stdin=subprocess.PIPE, stdout=log, stderr=log, text=True)
                 generators.append(generator)
                 generator.stdin.write(link)
                 generator.stdin.close()
@@ -301,6 +302,7 @@ def main():
     parser.add_argument("--duration", type=int, default=60)
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--seed", type=int, default=1997)
+    parser.add_argument("--profile-driver", action="store_true", help="write bounded client-loop work/sleep diagnostics beside each room report")
     parser.add_argument("--rtt-ms", type=float, default=0)
     parser.add_argument("--jitter-ms", type=float, default=0)
     parser.add_argument("--loss-percent", type=float, default=0)
