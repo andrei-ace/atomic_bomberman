@@ -1,0 +1,365 @@
+{
+  "version": "0.7.2",
+  "status": "Published and deployed; live ten-client WAN acceptance remains open",
+  "verified_at_utc": "2026-11-04T01:25:06.406320+00:00",
+  "release_source_commit": "40cd3c32d5a9756f788c228cdf05fd8071189a05",
+  "release_source_sha256": "672465602385bed75a1dbac6fe0ef35fd69378f4647bb3a7e05bcd844116ceb9",
+  "publication_and_artifact_verification": {
+    "passed": true,
+    "verified_at_utc": "2026-11-04T00:34:22.905549+00:00",
+    "version": "0.7.2",
+    "source_commit": "40cd3c32d5a9756f788c228cdf05fd8071189a05",
+    "source_sha256": "672465602385bed75a1dbac6fe0ef35fd69378f4647bb3a7e05bcd844116ceb9",
+    "release_url": "https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.2",
+    "published_at": "2026-11-04T00:31:17Z",
+    "assets": [
+      {
+        "name": "atomic-bomberman-0.7.2-linux-x86_64.AppImage",
+        "bytes": 37573776,
+        "sha256": "3d95c8da0add693e749e9535fd3f882546bd7285f0a8c2c533ea741dc1b30f8d",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.2/atomic-bomberman-0.7.2-linux-x86_64.AppImage"
+      },
+      {
+        "name": "atomic-bomberman-0.7.2-linux-x86_64.AppImage.sha256",
+        "bytes": 111,
+        "sha256": "bc05106cfdd5c1a33917d8e7b1a56e3f9f1be37175c303806b19162dfc1a04cf",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.2/atomic-bomberman-0.7.2-linux-x86_64.AppImage.sha256"
+      },
+      {
+        "name": "atomic-bomberman-0.7.2-linux-x86_64.build.json",
+        "bytes": 45508,
+        "sha256": "b02193192d23e272aad49525d1f9776d1c5f329c01fde2487b2bdff96f102008",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.2/atomic-bomberman-0.7.2-linux-x86_64.build.json"
+      },
+      {
+        "name": "atomic-bomberman-0.7.2-macos-arm64.build.json",
+        "bytes": 34940,
+        "sha256": "bf9234044c840d470d82163f33e1b5d517d3d5e5fb502627b90171118d9dc9ed",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.2/atomic-bomberman-0.7.2-macos-arm64.build.json"
+      },
+      {
+        "name": "atomic-bomberman-0.7.2-macos-arm64.zip",
+        "bytes": 7586559,
+        "sha256": "de9de14f3c43b7ca3d2b59c8aec7eb216360243fccc0d5fd26e337b2eec8ec56",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.2/atomic-bomberman-0.7.2-macos-arm64.zip"
+      },
+      {
+        "name": "atomic-bomberman-0.7.2-macos-arm64.zip.sha256",
+        "bytes": 105,
+        "sha256": "ae96ac76dbc358afa0ae5d03a1929818330105f33a498b323870f6989f5554ef",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.2/atomic-bomberman-0.7.2-macos-arm64.zip.sha256"
+      },
+      {
+        "name": "atomic-bomberman-0.7.2-relay-linux-arm64.build.json",
+        "bytes": 34274,
+        "sha256": "8ff2ab3d49592c3f72ab1b537acc362660d7b4a76bcfa3fec830583eb3c65f7d",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.2/atomic-bomberman-0.7.2-relay-linux-arm64.build.json"
+      },
+      {
+        "name": "atomic-bomberman-0.7.2-relay-linux-arm64.tar.gz",
+        "bytes": 2927823,
+        "sha256": "48d6c0e019471b5bc6ed6571a5ddfd94f11dee0ca5ab021fcefe36b06387d7aa",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.2/atomic-bomberman-0.7.2-relay-linux-arm64.tar.gz"
+      },
+      {
+        "name": "atomic-bomberman-0.7.2-relay-linux-arm64.tar.gz.sha256",
+        "bytes": 114,
+        "sha256": "2e9c5ddc8c131839f0daa8b1c1ac0b9bb511bf9a0140f27ef819dd5950ba8b36",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.2/atomic-bomberman-0.7.2-relay-linux-arm64.tar.gz.sha256"
+      },
+      {
+        "name": "atomic-bomberman-0.7.2-relay-linux-x86_64.build.json",
+        "bytes": 34437,
+        "sha256": "e45c070f5302bb90cc8e0e91871de9df764c420aa526f14d269475c9565d1ad2",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.2/atomic-bomberman-0.7.2-relay-linux-x86_64.build.json"
+      },
+      {
+        "name": "atomic-bomberman-0.7.2-relay-linux-x86_64.tar.gz",
+        "bytes": 3025236,
+        "sha256": "748d75372eccdd6ad60696ca220c66518ac48a0bc6a1dbd8cc350dab3492b647",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.2/atomic-bomberman-0.7.2-relay-linux-x86_64.tar.gz"
+      },
+      {
+        "name": "atomic-bomberman-0.7.2-relay-linux-x86_64.tar.gz.sha256",
+        "bytes": 115,
+        "sha256": "9d1f558a802dda359750498ebb84dc0a58097db31b1aa7a2037aa8ddebf08eab",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.2/atomic-bomberman-0.7.2-relay-linux-x86_64.tar.gz.sha256"
+      },
+      {
+        "name": "atomic-bomberman-0.7.2-windows-x86_64.build.json",
+        "bytes": 40468,
+        "sha256": "0c08c7ee425e81267d0bee2dcc41dda7f78bc3052157736ef7a5826ce50b9594",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.2/atomic-bomberman-0.7.2-windows-x86_64.build.json"
+      },
+      {
+        "name": "atomic-bomberman-0.7.2-windows-x86_64.zip",
+        "bytes": 7637354,
+        "sha256": "429558303867f244fa0139eeadbc71bda2051a10c8028f04ee2fe8676805f20b",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.2/atomic-bomberman-0.7.2-windows-x86_64.zip"
+      },
+      {
+        "name": "atomic-bomberman-0.7.2-windows-x86_64.zip.sha256",
+        "bytes": 109,
+        "sha256": "cc50e4b3111f298273eb60ca650879e35c9f37fe0372c1a36b31665e3bb3dfcb",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.2/atomic-bomberman-0.7.2-windows-x86_64.zip.sha256"
+      }
+    ],
+    "all_five_packages_match_clean_source": true,
+    "mac_signature_provenance_licenses_and_relocation_verified": true,
+    "windows_architecture_imports_hashes_and_provenance_verified": true,
+    "both_relay_archives_architecture_hashes_licenses_and_provenance_verified": true,
+    "mac_published_hd_smoke": {
+      "passed": true,
+      "frames": 12000,
+      "target_size": [
+        1920,
+        1440
+      ],
+      "elapsed_seconds": 12.222545334137976,
+      "original_game_data_included": false
+    },
+    "initial_smoke_note": "The unthrottled 900-frame smoke exited within two seconds, before asynchronous HD validation finished, and captured the Classic startup target. A longer frame budget lets the actual published binary complete loading. The original log and capture are retained locally.",
+    "limitations": [
+      "Native Linux AppImage runtime verification is supplied by the native release runner and publisher.",
+      "Local Windows verification is static; native launcher and QUIC checks run in Windows CI.",
+      "Mac HD smoke uses private settings and supplied local originals; physical audio/input latency is not claimed."
+    ]
+  },
+  "exact_release_commit_ci": [
+    {
+      "workflow": "release",
+      "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/41743548896",
+      "source_commit": "40cd3c32d5a9756f788c228cdf05fd8071189a05",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "build (ubuntu-24.04, linux, python3)",
+          "conclusion": "success"
+        },
+        {
+          "name": "build (windows-2022, windows, python)",
+          "conclusion": "success"
+        },
+        {
+          "name": "build (ubuntu-24.04, relay-amd64, python3, x86_64-unknown-linux-gnu)",
+          "conclusion": "success"
+        },
+        {
+          "name": "build (macos-15, macos, python3)",
+          "conclusion": "success"
+        },
+        {
+          "name": "build (ubuntu-24.04-arm, relay-arm64, python3, aarch64-unknown-linux-gnu)",
+          "conclusion": "success"
+        },
+        {
+          "name": "publish",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "workflow": "windows",
+      "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/41743463158",
+      "source_commit": "40cd3c32d5a9756f788c228cdf05fd8071189a05",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "check",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "workflow": "linux",
+      "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/41743463316",
+      "source_commit": "40cd3c32d5a9756f788c228cdf05fd8071189a05",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "check",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "workflow": "macos",
+      "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/41743463073",
+      "source_commit": "40cd3c32d5a9756f788c228cdf05fd8071189a05",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "check (macos-15)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "workflow": "codeql",
+      "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/41743463061",
+      "source_commit": "40cd3c32d5a9756f788c228cdf05fd8071189a05",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "Analyze (swift)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Analyze (rust)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Analyze (c-cpp)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Analyze (python)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Analyze (actions)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Analyze (java-kotlin)",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "security": {
+    "open_dependabot_alerts": 0,
+    "open_codeql_alerts": 0,
+    "codeql_analyses": [
+      {
+        "id": 2090798196,
+        "commit_sha": "40cd3c32d5a9756f788c228cdf05fd8071189a05",
+        "category": "/language:swift",
+        "results_count": 0,
+        "rules_count": 27,
+        "error": "",
+        "warning": "",
+        "created_at": "2026-11-04T00:12:09Z",
+        "tool": {
+          "name": "CodeQL",
+          "guid": null,
+          "version": "2.27.4"
+        }
+      },
+      {
+        "id": 2090757560,
+        "commit_sha": "40cd3c32d5a9756f788c228cdf05fd8071189a05",
+        "category": "/language:rust",
+        "results_count": 0,
+        "rules_count": 26,
+        "error": "",
+        "warning": "",
+        "created_at": "2026-11-04T00:04:36Z",
+        "tool": {
+          "name": "CodeQL",
+          "guid": null,
+          "version": "2.27.4"
+        }
+      },
+      {
+        "id": 2090746289,
+        "commit_sha": "40cd3c32d5a9756f788c228cdf05fd8071189a05",
+        "category": "/language:java-kotlin",
+        "results_count": 0,
+        "rules_count": 76,
+        "error": "",
+        "warning": "",
+        "created_at": "2026-11-04T00:02:22Z",
+        "tool": {
+          "name": "CodeQL",
+          "guid": null,
+          "version": "2.27.4"
+        }
+      },
+      {
+        "id": 2090738726,
+        "commit_sha": "40cd3c32d5a9756f788c228cdf05fd8071189a05",
+        "category": "/language:c-cpp",
+        "results_count": 0,
+        "rules_count": 58,
+        "error": "",
+        "warning": "",
+        "created_at": "2026-11-04T00:00:55Z",
+        "tool": {
+          "name": "CodeQL",
+          "guid": null,
+          "version": "2.27.4"
+        }
+      },
+      {
+        "id": 2090738311,
+        "commit_sha": "40cd3c32d5a9756f788c228cdf05fd8071189a05",
+        "category": "/language:python",
+        "results_count": 0,
+        "rules_count": 43,
+        "error": "",
+        "warning": "",
+        "created_at": "2026-11-04T00:00:50Z",
+        "tool": {
+          "name": "CodeQL",
+          "guid": null,
+          "version": "2.27.4"
+        }
+      },
+      {
+        "id": 2090737573,
+        "commit_sha": "40cd3c32d5a9756f788c228cdf05fd8071189a05",
+        "category": "/language:actions",
+        "results_count": 0,
+        "rules_count": 17,
+        "error": "",
+        "warning": "",
+        "created_at": "2026-11-04T00:00:41Z",
+        "tool": {
+          "name": "CodeQL",
+          "guid": null,
+          "version": "2.27.4"
+        }
+      }
+    ],
+    "rustsec_vulnerabilities": 0,
+    "rustsec_database_commit": "965bf9ad083b58e6340d65829d85217b18be9290",
+    "existing_upstream_notices": [
+      {
+        "id": "RUSTSEC-2025-0134",
+        "title": "rustls-pemfile is unmaintained"
+      },
+      {
+        "id": "RUSTSEC-2026-0192",
+        "title": "`ttf-parser` is unmaintained"
+      },
+      {
+        "id": "RUSTSEC-2025-0035",
+        "title": "Multiple soundness issues in `macroquad`"
+      }
+    ],
+    "patched_dependency_versions_from_github": {
+      "rustls": [
+        "0.23.46"
+      ],
+      "time": [
+        "0.3.47"
+      ],
+      "rand": [
+        "0.10.3",
+        "0.8.6",
+        "0.9.5"
+      ],
+      "tokio": [
+        "1.51.6"
+      ],
+      "zip": [
+        "9.0.5"
+      ]
+    }
+  },
+  "hd_validation": "0.7.2-hd-v2-validation.json",
+  "network_acceptance_cleared": false,
+  "live_stress_results": "0.7.2-deployed-relay-load.json",
+  "scope_note": "All native release jobs passed on the release commit. Later documentation/evidence commits do not replace published binaries. Live stress failures are retained and are not reported as passes."
+}

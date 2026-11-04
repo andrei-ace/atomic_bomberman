@@ -1,0 +1,65 @@
+{
+  "version": "0.7.2",
+  "verified_at_utc": "2026-11-04T01:25:06.406320+00:00",
+  "passed": true,
+  "release_source_commit": "40cd3c32d5a9756f788c228cdf05fd8071189a05",
+  "before_deployment": {
+    "passed": true,
+    "base_source_key": "b727e4035f5d3970f9460a85eb77efcf2f874cae7b81cc9b53c32b8deffef3c3",
+    "cache_toggle": {
+      "passed": true,
+      "mode_sequence": [
+        "HD",
+        "Classic",
+        "HD"
+      ],
+      "pages_preserved": 1174,
+      "metadata_unchanged": true,
+      "all_page_sizes_mtimes_and_inodes_unchanged": true
+    },
+    "mixed_relay": {
+      "passed": true,
+      "canonical_simulation_sha256": "ee61a6706078b0c2f8448c1f9201453ecfc6aa9581bb45ee7af4e070f3d5cfa5",
+      "graphics": [
+        "HD",
+        "Classic"
+      ],
+      "players": 3
+    },
+    "limitations": [
+      "Process-local synthetic Cocoa events; no physical input/audio claim.",
+      "Unchanged HD pages are reused in the graphical-mod QA fixture.",
+      "Live private relay; both native client windows run on this Mac."
+    ]
+  },
+  "after_deployment": {
+    "passed": true,
+    "base_source_key": "b727e4035f5d3970f9460a85eb77efcf2f874cae7b81cc9b53c32b8deffef3c3",
+    "cache_toggle": {
+      "passed": true,
+      "mode_sequence": [
+        "HD",
+        "Classic",
+        "HD"
+      ],
+      "pages_preserved": 1174,
+      "metadata_unchanged": true,
+      "all_page_sizes_mtimes_and_inodes_unchanged": true
+    },
+    "mixed_relay": {
+      "passed": true,
+      "canonical_simulation_sha256": "80b453b91e7367514be0c7bb6e3504f32cf8ee01f3fb08f4c994e72b31624bf9",
+      "graphics": [
+        "HD",
+        "Classic"
+      ],
+      "players": 3
+    },
+    "limitations": [
+      "Process-local synthetic Cocoa events; no physical input/audio claim.",
+      "Unchanged HD pages are reused in the graphical-mod QA fixture.",
+      "Live private relay; both native client windows run on this Mac."
+    ]
+  },
+  "scope": "Native HD host and Classic client, three players, same confirmed simulation through the private internet relay. Both client windows run on one Mac. The existing saved server profile was reused; it is excluded from this record."
+}

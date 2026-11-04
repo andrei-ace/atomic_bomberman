@@ -1,0 +1,4170 @@
+{
+  "scope": "Retained failing live stress trace; no claim that all compared invariants passed.",
+  "seed": 1997,
+  "scenario": {
+    "measurement_seconds": 60,
+    "players": 10,
+    "rooms": 1,
+    "schedule": "input(tick, seat, seed) in relay_load.rs",
+    "warmup_seconds": 10
+  },
+  "first_invariant": "room=0 peer=4 at=47733ms: render.motion_after_release: dx=0 dy=0 ticks=7 idle=7 moving=true old_moving=true",
+  "samples": [
+    {
+      "at_ms": 47645,
+      "canonical": [
+        54000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        7200
+      ],
+      "paused": false,
+      "peer": 8,
+      "phase": "Playing",
+      "predicted_tick": 2027,
+      "render": [
+        54000,
+        7200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47645,
+      "canonical": [
+        19000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        19000,
+        34200
+      ],
+      "paused": false,
+      "peer": 9,
+      "phase": "Playing",
+      "predicted_tick": 2022,
+      "render": [
+        19000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47652,
+      "canonical": [
+        22000,
+        17500
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        22000,
+        17500
+      ],
+      "paused": false,
+      "peer": 0,
+      "phase": "Playing",
+      "predicted_tick": 2029,
+      "render": [
+        22000,
+        17500
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2024
+    },
+    {
+      "at_ms": 47652,
+      "canonical": [
+        19500,
+        16200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        25800,
+        17300
+      ],
+      "paused": false,
+      "peer": 1,
+      "phase": "Playing",
+      "predicted_tick": 2023,
+      "render": [
+        25800,
+        17300
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47652,
+      "canonical": [
+        6000,
+        6900
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        6000,
+        6900
+      ],
+      "paused": false,
+      "peer": 2,
+      "phase": "Playing",
+      "predicted_tick": 2027,
+      "render": [
+        6000,
+        6900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47652,
+      "canonical": [
+        54000,
+        9000
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        9000
+      ],
+      "paused": false,
+      "peer": 3,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        54000,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47652,
+      "canonical": [
+        34000,
+        33100
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": true,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        34000,
+        23900
+      ],
+      "paused": false,
+      "peer": 4,
+      "phase": "Playing",
+      "predicted_tick": 2019,
+      "render": [
+        34000,
+        23900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1994
+    },
+    {
+      "at_ms": 47652,
+      "canonical": [
+        54000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        34200
+      ],
+      "paused": false,
+      "peer": 5,
+      "phase": "Playing",
+      "predicted_tick": 2029,
+      "render": [
+        54000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2019
+    },
+    {
+      "at_ms": 47652,
+      "canonical": [
+        14000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        23600,
+        9000
+      ],
+      "paused": false,
+      "peer": 6,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        23600,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47652,
+      "canonical": [
+        26000,
+        21400
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        21400
+      ],
+      "paused": false,
+      "peer": 7,
+      "phase": "Playing",
+      "predicted_tick": 2023,
+      "render": [
+        26000,
+        21400
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2019
+    },
+    {
+      "at_ms": 47652,
+      "canonical": [
+        54000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        7200
+      ],
+      "paused": false,
+      "peer": 8,
+      "phase": "Playing",
+      "predicted_tick": 2027,
+      "render": [
+        54000,
+        7200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47652,
+      "canonical": [
+        19000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        19000,
+        34200
+      ],
+      "paused": false,
+      "peer": 9,
+      "phase": "Playing",
+      "predicted_tick": 2023,
+      "render": [
+        19000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47659,
+      "canonical": [
+        22000,
+        17500
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        22000,
+        17500
+      ],
+      "paused": false,
+      "peer": 0,
+      "phase": "Playing",
+      "predicted_tick": 2030,
+      "render": [
+        22000,
+        17500
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2025
+    },
+    {
+      "at_ms": 47659,
+      "canonical": [
+        19500,
+        16200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        25800,
+        17300
+      ],
+      "paused": false,
+      "peer": 1,
+      "phase": "Playing",
+      "predicted_tick": 2023,
+      "render": [
+        25800,
+        17300
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47659,
+      "canonical": [
+        6000,
+        6900
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        6000,
+        6900
+      ],
+      "paused": false,
+      "peer": 2,
+      "phase": "Playing",
+      "predicted_tick": 2028,
+      "render": [
+        6000,
+        6900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47659,
+      "canonical": [
+        54000,
+        9000
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        9000
+      ],
+      "paused": false,
+      "peer": 3,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        54000,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47659,
+      "canonical": [
+        34000,
+        33100
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": true,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        34000,
+        23900
+      ],
+      "paused": false,
+      "peer": 4,
+      "phase": "Playing",
+      "predicted_tick": 2019,
+      "render": [
+        34000,
+        23900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1994
+    },
+    {
+      "at_ms": 47659,
+      "canonical": [
+        54000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        34200
+      ],
+      "paused": false,
+      "peer": 5,
+      "phase": "Playing",
+      "predicted_tick": 2029,
+      "render": [
+        54000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2019
+    },
+    {
+      "at_ms": 47659,
+      "canonical": [
+        14000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        23600,
+        9000
+      ],
+      "paused": false,
+      "peer": 6,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        23600,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47659,
+      "canonical": [
+        26000,
+        21400
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        21400
+      ],
+      "paused": false,
+      "peer": 7,
+      "phase": "Playing",
+      "predicted_tick": 2024,
+      "render": [
+        26000,
+        21400
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2019
+    },
+    {
+      "at_ms": 47659,
+      "canonical": [
+        54000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        7200
+      ],
+      "paused": false,
+      "peer": 8,
+      "phase": "Playing",
+      "predicted_tick": 2027,
+      "render": [
+        54000,
+        7200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47659,
+      "canonical": [
+        19000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        19000,
+        34200
+      ],
+      "paused": false,
+      "peer": 9,
+      "phase": "Playing",
+      "predicted_tick": 2023,
+      "render": [
+        19000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47666,
+      "canonical": [
+        22000,
+        17500
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        22000,
+        17500
+      ],
+      "paused": false,
+      "peer": 0,
+      "phase": "Playing",
+      "predicted_tick": 2030,
+      "render": [
+        22000,
+        17500
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2025
+    },
+    {
+      "at_ms": 47666,
+      "canonical": [
+        19500,
+        16200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        17600
+      ],
+      "paused": false,
+      "peer": 1,
+      "phase": "Playing",
+      "predicted_tick": 2024,
+      "render": [
+        26000,
+        17600
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47666,
+      "canonical": [
+        6000,
+        6900
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        6000,
+        6900
+      ],
+      "paused": false,
+      "peer": 2,
+      "phase": "Playing",
+      "predicted_tick": 2028,
+      "render": [
+        6000,
+        6900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47666,
+      "canonical": [
+        54000,
+        9000
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        9000
+      ],
+      "paused": false,
+      "peer": 3,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        54000,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47666,
+      "canonical": [
+        34000,
+        33100
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        34000,
+        23900
+      ],
+      "paused": false,
+      "peer": 4,
+      "phase": "Playing",
+      "predicted_tick": 2019,
+      "render": [
+        34000,
+        23900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1994
+    },
+    {
+      "at_ms": 47666,
+      "canonical": [
+        54000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        34200
+      ],
+      "paused": false,
+      "peer": 5,
+      "phase": "Playing",
+      "predicted_tick": 2030,
+      "render": [
+        54000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2019
+    },
+    {
+      "at_ms": 47666,
+      "canonical": [
+        14000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        23600,
+        9000
+      ],
+      "paused": false,
+      "peer": 6,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        23600,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47666,
+      "canonical": [
+        26000,
+        21400
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        21400
+      ],
+      "paused": false,
+      "peer": 7,
+      "phase": "Playing",
+      "predicted_tick": 2024,
+      "render": [
+        26000,
+        21400
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2019
+    },
+    {
+      "at_ms": 47666,
+      "canonical": [
+        54000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        7200
+      ],
+      "paused": false,
+      "peer": 8,
+      "phase": "Playing",
+      "predicted_tick": 2028,
+      "render": [
+        54000,
+        7200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47666,
+      "canonical": [
+        19000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        19000,
+        34200
+      ],
+      "paused": false,
+      "peer": 9,
+      "phase": "Playing",
+      "predicted_tick": 2023,
+      "render": [
+        19000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47673,
+      "canonical": [
+        22000,
+        17500
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        22000,
+        17500
+      ],
+      "paused": false,
+      "peer": 0,
+      "phase": "Playing",
+      "predicted_tick": 2031,
+      "render": [
+        22000,
+        17500
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2026
+    },
+    {
+      "at_ms": 47673,
+      "canonical": [
+        19500,
+        16200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        17600
+      ],
+      "paused": false,
+      "peer": 1,
+      "phase": "Playing",
+      "predicted_tick": 2024,
+      "render": [
+        26000,
+        17600
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47673,
+      "canonical": [
+        6000,
+        6900
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        6000,
+        6900
+      ],
+      "paused": false,
+      "peer": 2,
+      "phase": "Playing",
+      "predicted_tick": 2028,
+      "render": [
+        6000,
+        6900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47673,
+      "canonical": [
+        54000,
+        9000
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        9000
+      ],
+      "paused": false,
+      "peer": 3,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        54000,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47673,
+      "canonical": [
+        34000,
+        33100
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        34000,
+        23900
+      ],
+      "paused": false,
+      "peer": 4,
+      "phase": "Playing",
+      "predicted_tick": 2019,
+      "render": [
+        34000,
+        23900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1994
+    },
+    {
+      "at_ms": 47673,
+      "canonical": [
+        54000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        34200
+      ],
+      "paused": false,
+      "peer": 5,
+      "phase": "Playing",
+      "predicted_tick": 2030,
+      "render": [
+        54000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2020
+    },
+    {
+      "at_ms": 47673,
+      "canonical": [
+        14000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        23600,
+        9000
+      ],
+      "paused": false,
+      "peer": 6,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        23600,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47673,
+      "canonical": [
+        26000,
+        21400
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        21400
+      ],
+      "paused": false,
+      "peer": 7,
+      "phase": "Playing",
+      "predicted_tick": 2024,
+      "render": [
+        26000,
+        21400
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2020
+    },
+    {
+      "at_ms": 47673,
+      "canonical": [
+        54000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        7200
+      ],
+      "paused": false,
+      "peer": 8,
+      "phase": "Playing",
+      "predicted_tick": 2028,
+      "render": [
+        54000,
+        7200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47673,
+      "canonical": [
+        19000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        19000,
+        34200
+      ],
+      "paused": false,
+      "peer": 9,
+      "phase": "Playing",
+      "predicted_tick": 2024,
+      "render": [
+        19000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47680,
+      "canonical": [
+        22000,
+        17500
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        22000,
+        17500
+      ],
+      "paused": false,
+      "peer": 0,
+      "phase": "Playing",
+      "predicted_tick": 2031,
+      "render": [
+        22000,
+        17500
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2026
+    },
+    {
+      "at_ms": 47680,
+      "canonical": [
+        19500,
+        16200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        18000
+      ],
+      "paused": false,
+      "peer": 1,
+      "phase": "Playing",
+      "predicted_tick": 2025,
+      "render": [
+        26000,
+        18000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47680,
+      "canonical": [
+        6000,
+        6900
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        6000,
+        6900
+      ],
+      "paused": false,
+      "peer": 2,
+      "phase": "Playing",
+      "predicted_tick": 2029,
+      "render": [
+        6000,
+        6900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47680,
+      "canonical": [
+        54000,
+        9000
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        9000
+      ],
+      "paused": false,
+      "peer": 3,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        54000,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47680,
+      "canonical": [
+        34000,
+        33100
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        34000,
+        23900
+      ],
+      "paused": false,
+      "peer": 4,
+      "phase": "Playing",
+      "predicted_tick": 2019,
+      "render": [
+        34000,
+        23900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1994
+    },
+    {
+      "at_ms": 47680,
+      "canonical": [
+        54000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        34200
+      ],
+      "paused": false,
+      "peer": 5,
+      "phase": "Playing",
+      "predicted_tick": 2030,
+      "render": [
+        54000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2020
+    },
+    {
+      "at_ms": 47680,
+      "canonical": [
+        14000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        23600,
+        9000
+      ],
+      "paused": false,
+      "peer": 6,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        23600,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47680,
+      "canonical": [
+        26000,
+        21400
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        21400
+      ],
+      "paused": false,
+      "peer": 7,
+      "phase": "Playing",
+      "predicted_tick": 2025,
+      "render": [
+        26000,
+        21400
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2020
+    },
+    {
+      "at_ms": 47680,
+      "canonical": [
+        54000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        7200
+      ],
+      "paused": false,
+      "peer": 8,
+      "phase": "Playing",
+      "predicted_tick": 2028,
+      "render": [
+        54000,
+        7200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47680,
+      "canonical": [
+        19000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        19000,
+        34200
+      ],
+      "paused": false,
+      "peer": 9,
+      "phase": "Playing",
+      "predicted_tick": 2024,
+      "render": [
+        19000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47686,
+      "canonical": [
+        22000,
+        17500
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        22000,
+        17500
+      ],
+      "paused": false,
+      "peer": 0,
+      "phase": "Playing",
+      "predicted_tick": 2031,
+      "render": [
+        22000,
+        17500
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2026
+    },
+    {
+      "at_ms": 47686,
+      "canonical": [
+        19500,
+        16200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        18000
+      ],
+      "paused": false,
+      "peer": 1,
+      "phase": "Playing",
+      "predicted_tick": 2025,
+      "render": [
+        26000,
+        18000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47686,
+      "canonical": [
+        6000,
+        6900
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        6000,
+        6900
+      ],
+      "paused": false,
+      "peer": 2,
+      "phase": "Playing",
+      "predicted_tick": 2029,
+      "render": [
+        6000,
+        6900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47686,
+      "canonical": [
+        54000,
+        9000
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        9000
+      ],
+      "paused": false,
+      "peer": 3,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        54000,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47686,
+      "canonical": [
+        34000,
+        33100
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        34000,
+        23900
+      ],
+      "paused": false,
+      "peer": 4,
+      "phase": "Playing",
+      "predicted_tick": 2019,
+      "render": [
+        34000,
+        23900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1994
+    },
+    {
+      "at_ms": 47686,
+      "canonical": [
+        54000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        34200
+      ],
+      "paused": false,
+      "peer": 5,
+      "phase": "Playing",
+      "predicted_tick": 2031,
+      "render": [
+        54000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2021
+    },
+    {
+      "at_ms": 47686,
+      "canonical": [
+        14000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        23600,
+        9000
+      ],
+      "paused": false,
+      "peer": 6,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        23600,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47686,
+      "canonical": [
+        26000,
+        21400
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        21400
+      ],
+      "paused": false,
+      "peer": 7,
+      "phase": "Playing",
+      "predicted_tick": 2025,
+      "render": [
+        26000,
+        21400
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2021
+    },
+    {
+      "at_ms": 47686,
+      "canonical": [
+        54000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        7200
+      ],
+      "paused": false,
+      "peer": 8,
+      "phase": "Playing",
+      "predicted_tick": 2029,
+      "render": [
+        54000,
+        7200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47686,
+      "canonical": [
+        19000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        19000,
+        34200
+      ],
+      "paused": false,
+      "peer": 9,
+      "phase": "Playing",
+      "predicted_tick": 2024,
+      "render": [
+        19000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47693,
+      "canonical": [
+        22000,
+        17500
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        22000,
+        17500
+      ],
+      "paused": false,
+      "peer": 0,
+      "phase": "Playing",
+      "predicted_tick": 2032,
+      "render": [
+        22000,
+        17500
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2027
+    },
+    {
+      "at_ms": 47693,
+      "canonical": [
+        19500,
+        16200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        18000
+      ],
+      "paused": false,
+      "peer": 1,
+      "phase": "Playing",
+      "predicted_tick": 2025,
+      "render": [
+        26000,
+        18000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47693,
+      "canonical": [
+        6000,
+        6900
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        6000,
+        6900
+      ],
+      "paused": false,
+      "peer": 2,
+      "phase": "Playing",
+      "predicted_tick": 2029,
+      "render": [
+        6000,
+        6900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47693,
+      "canonical": [
+        54000,
+        9000
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        9000
+      ],
+      "paused": false,
+      "peer": 3,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        54000,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47693,
+      "canonical": [
+        34000,
+        33100
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        34000,
+        23900
+      ],
+      "paused": false,
+      "peer": 4,
+      "phase": "Playing",
+      "predicted_tick": 2019,
+      "render": [
+        34000,
+        23900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1994
+    },
+    {
+      "at_ms": 47693,
+      "canonical": [
+        54000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        34200
+      ],
+      "paused": false,
+      "peer": 5,
+      "phase": "Playing",
+      "predicted_tick": 2031,
+      "render": [
+        54000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2022
+    },
+    {
+      "at_ms": 47693,
+      "canonical": [
+        14000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        23600,
+        9000
+      ],
+      "paused": false,
+      "peer": 6,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        23600,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47693,
+      "canonical": [
+        26000,
+        21400
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        21400
+      ],
+      "paused": false,
+      "peer": 7,
+      "phase": "Playing",
+      "predicted_tick": 2025,
+      "render": [
+        26000,
+        21400
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2021
+    },
+    {
+      "at_ms": 47693,
+      "canonical": [
+        54000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        7200
+      ],
+      "paused": false,
+      "peer": 8,
+      "phase": "Playing",
+      "predicted_tick": 2029,
+      "render": [
+        54000,
+        7200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47693,
+      "canonical": [
+        19000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        19000,
+        34200
+      ],
+      "paused": false,
+      "peer": 9,
+      "phase": "Playing",
+      "predicted_tick": 2025,
+      "render": [
+        19000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47699,
+      "canonical": [
+        22000,
+        17500
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        22000,
+        17500
+      ],
+      "paused": false,
+      "peer": 0,
+      "phase": "Playing",
+      "predicted_tick": 2032,
+      "render": [
+        22000,
+        17500
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2027
+    },
+    {
+      "at_ms": 47699,
+      "canonical": [
+        19500,
+        16200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        18000
+      ],
+      "paused": false,
+      "peer": 1,
+      "phase": "Playing",
+      "predicted_tick": 2025,
+      "render": [
+        26000,
+        18000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47699,
+      "canonical": [
+        6000,
+        6900
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        6000,
+        6900
+      ],
+      "paused": false,
+      "peer": 2,
+      "phase": "Playing",
+      "predicted_tick": 2030,
+      "render": [
+        6000,
+        6900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47699,
+      "canonical": [
+        54000,
+        9000
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        9000
+      ],
+      "paused": false,
+      "peer": 3,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        54000,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47699,
+      "canonical": [
+        34000,
+        33100
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        34000,
+        23900
+      ],
+      "paused": false,
+      "peer": 4,
+      "phase": "Playing",
+      "predicted_tick": 2019,
+      "render": [
+        34000,
+        23900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1994
+    },
+    {
+      "at_ms": 47699,
+      "canonical": [
+        54000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        34200
+      ],
+      "paused": false,
+      "peer": 5,
+      "phase": "Playing",
+      "predicted_tick": 2031,
+      "render": [
+        54000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2023
+    },
+    {
+      "at_ms": 47699,
+      "canonical": [
+        14000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        23600,
+        9000
+      ],
+      "paused": false,
+      "peer": 6,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        23600,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47699,
+      "canonical": [
+        26000,
+        21400
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        21400
+      ],
+      "paused": false,
+      "peer": 7,
+      "phase": "Playing",
+      "predicted_tick": 2026,
+      "render": [
+        26000,
+        21400
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2023
+    },
+    {
+      "at_ms": 47699,
+      "canonical": [
+        54000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        7200
+      ],
+      "paused": false,
+      "peer": 8,
+      "phase": "Playing",
+      "predicted_tick": 2029,
+      "render": [
+        54000,
+        7200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47699,
+      "canonical": [
+        19000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        19000,
+        34200
+      ],
+      "paused": false,
+      "peer": 9,
+      "phase": "Playing",
+      "predicted_tick": 2025,
+      "render": [
+        19000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47705,
+      "canonical": [
+        22000,
+        17500
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        22000,
+        17500
+      ],
+      "paused": false,
+      "peer": 0,
+      "phase": "Playing",
+      "predicted_tick": 2032,
+      "render": [
+        22000,
+        17500
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2027
+    },
+    {
+      "at_ms": 47705,
+      "canonical": [
+        19500,
+        16200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        18400
+      ],
+      "paused": false,
+      "peer": 1,
+      "phase": "Playing",
+      "predicted_tick": 2026,
+      "render": [
+        26000,
+        18400
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47705,
+      "canonical": [
+        6000,
+        6900
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        6000,
+        6900
+      ],
+      "paused": false,
+      "peer": 2,
+      "phase": "Playing",
+      "predicted_tick": 2030,
+      "render": [
+        6000,
+        6900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47705,
+      "canonical": [
+        54000,
+        9000
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        9000
+      ],
+      "paused": false,
+      "peer": 3,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        54000,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47705,
+      "canonical": [
+        34000,
+        33100
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        34000,
+        23900
+      ],
+      "paused": false,
+      "peer": 4,
+      "phase": "Playing",
+      "predicted_tick": 2019,
+      "render": [
+        34000,
+        23900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1994
+    },
+    {
+      "at_ms": 47705,
+      "canonical": [
+        54000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        34200
+      ],
+      "paused": false,
+      "peer": 5,
+      "phase": "Playing",
+      "predicted_tick": 2032,
+      "render": [
+        54000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2023
+    },
+    {
+      "at_ms": 47705,
+      "canonical": [
+        14000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        23600,
+        9000
+      ],
+      "paused": false,
+      "peer": 6,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        23600,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47705,
+      "canonical": [
+        26000,
+        21400
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        21400
+      ],
+      "paused": false,
+      "peer": 7,
+      "phase": "Playing",
+      "predicted_tick": 2026,
+      "render": [
+        26000,
+        21400
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2023
+    },
+    {
+      "at_ms": 47705,
+      "canonical": [
+        54000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        7200
+      ],
+      "paused": false,
+      "peer": 8,
+      "phase": "Playing",
+      "predicted_tick": 2030,
+      "render": [
+        54000,
+        7200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47705,
+      "canonical": [
+        19000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        19000,
+        34200
+      ],
+      "paused": false,
+      "peer": 9,
+      "phase": "Playing",
+      "predicted_tick": 2025,
+      "render": [
+        19000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47710,
+      "canonical": [
+        22000,
+        17500
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        22000,
+        17500
+      ],
+      "paused": false,
+      "peer": 0,
+      "phase": "Playing",
+      "predicted_tick": 2032,
+      "render": [
+        22000,
+        17500
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2027
+    },
+    {
+      "at_ms": 47710,
+      "canonical": [
+        19500,
+        16200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        18400
+      ],
+      "paused": false,
+      "peer": 1,
+      "phase": "Playing",
+      "predicted_tick": 2026,
+      "render": [
+        26000,
+        18400
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47710,
+      "canonical": [
+        6000,
+        6900
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        6000,
+        6900
+      ],
+      "paused": false,
+      "peer": 2,
+      "phase": "Playing",
+      "predicted_tick": 2030,
+      "render": [
+        6000,
+        6900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47710,
+      "canonical": [
+        54000,
+        9000
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        9000
+      ],
+      "paused": false,
+      "peer": 3,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        54000,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47710,
+      "canonical": [
+        34000,
+        33100
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        34000,
+        23900
+      ],
+      "paused": false,
+      "peer": 4,
+      "phase": "Playing",
+      "predicted_tick": 2019,
+      "render": [
+        34000,
+        23900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1994
+    },
+    {
+      "at_ms": 47710,
+      "canonical": [
+        54000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        34200
+      ],
+      "paused": false,
+      "peer": 5,
+      "phase": "Playing",
+      "predicted_tick": 2032,
+      "render": [
+        54000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2023
+    },
+    {
+      "at_ms": 47710,
+      "canonical": [
+        14000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        23600,
+        9000
+      ],
+      "paused": false,
+      "peer": 6,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        23600,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47710,
+      "canonical": [
+        26000,
+        21400
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        21400
+      ],
+      "paused": false,
+      "peer": 7,
+      "phase": "Playing",
+      "predicted_tick": 2026,
+      "render": [
+        26000,
+        21400
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2023
+    },
+    {
+      "at_ms": 47710,
+      "canonical": [
+        54000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        7200
+      ],
+      "paused": false,
+      "peer": 8,
+      "phase": "Playing",
+      "predicted_tick": 2030,
+      "render": [
+        54000,
+        7200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47710,
+      "canonical": [
+        19000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        19000,
+        34200
+      ],
+      "paused": false,
+      "peer": 9,
+      "phase": "Playing",
+      "predicted_tick": 2026,
+      "render": [
+        19000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47715,
+      "canonical": [
+        22000,
+        17500
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        22000,
+        17500
+      ],
+      "paused": false,
+      "peer": 0,
+      "phase": "Playing",
+      "predicted_tick": 2033,
+      "render": [
+        22000,
+        17500
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2028
+    },
+    {
+      "at_ms": 47715,
+      "canonical": [
+        19500,
+        16200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        18400
+      ],
+      "paused": false,
+      "peer": 1,
+      "phase": "Playing",
+      "predicted_tick": 2026,
+      "render": [
+        26000,
+        18400
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47715,
+      "canonical": [
+        6000,
+        6900
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        6000,
+        6900
+      ],
+      "paused": false,
+      "peer": 2,
+      "phase": "Playing",
+      "predicted_tick": 2030,
+      "render": [
+        6000,
+        6900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47715,
+      "canonical": [
+        54000,
+        9000
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        9000
+      ],
+      "paused": false,
+      "peer": 3,
+      "phase": "Playing",
+      "predicted_tick": 2024,
+      "render": [
+        54000,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2024
+    },
+    {
+      "at_ms": 47715,
+      "canonical": [
+        34000,
+        33100
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        34000,
+        23900
+      ],
+      "paused": false,
+      "peer": 4,
+      "phase": "Playing",
+      "predicted_tick": 2019,
+      "render": [
+        34000,
+        23900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1994
+    },
+    {
+      "at_ms": 47715,
+      "canonical": [
+        54000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        34200
+      ],
+      "paused": false,
+      "peer": 5,
+      "phase": "Playing",
+      "predicted_tick": 2032,
+      "render": [
+        54000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2024
+    },
+    {
+      "at_ms": 47715,
+      "canonical": [
+        14000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        23600,
+        9000
+      ],
+      "paused": false,
+      "peer": 6,
+      "phase": "Playing",
+      "predicted_tick": 2017,
+      "render": [
+        23600,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1992
+    },
+    {
+      "at_ms": 47715,
+      "canonical": [
+        26000,
+        21400
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        21400
+      ],
+      "paused": false,
+      "peer": 7,
+      "phase": "Playing",
+      "predicted_tick": 2026,
+      "render": [
+        26000,
+        21400
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2024
+    },
+    {
+      "at_ms": 47715,
+      "canonical": [
+        54000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        7200
+      ],
+      "paused": false,
+      "peer": 8,
+      "phase": "Playing",
+      "predicted_tick": 2030,
+      "render": [
+        54000,
+        7200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47715,
+      "canonical": [
+        19000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        19000,
+        34200
+      ],
+      "paused": false,
+      "peer": 9,
+      "phase": "Playing",
+      "predicted_tick": 2026,
+      "render": [
+        19000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47720,
+      "canonical": [
+        22000,
+        17500
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        22000,
+        17500
+      ],
+      "paused": false,
+      "peer": 0,
+      "phase": "Playing",
+      "predicted_tick": 2033,
+      "render": [
+        22000,
+        17500
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2028
+    },
+    {
+      "at_ms": 47720,
+      "canonical": [
+        19500,
+        16200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        18700
+      ],
+      "paused": false,
+      "peer": 1,
+      "phase": "Playing",
+      "predicted_tick": 2027,
+      "render": [
+        26000,
+        18700
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47720,
+      "canonical": [
+        6000,
+        6900
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        6000,
+        6900
+      ],
+      "paused": false,
+      "peer": 2,
+      "phase": "Playing",
+      "predicted_tick": 2031,
+      "render": [
+        6000,
+        6900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47720,
+      "canonical": [
+        54000,
+        9000
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        9000
+      ],
+      "paused": false,
+      "peer": 3,
+      "phase": "Playing",
+      "predicted_tick": 2025,
+      "render": [
+        54000,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2025
+    },
+    {
+      "at_ms": 47720,
+      "canonical": [
+        34000,
+        33100
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        34000,
+        23900
+      ],
+      "paused": false,
+      "peer": 4,
+      "phase": "Playing",
+      "predicted_tick": 2019,
+      "render": [
+        34000,
+        23900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 1994
+    },
+    {
+      "at_ms": 47720,
+      "canonical": [
+        54000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        34200
+      ],
+      "paused": false,
+      "peer": 5,
+      "phase": "Playing",
+      "predicted_tick": 2032,
+      "render": [
+        54000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2024
+    },
+    {
+      "at_ms": 47720,
+      "canonical": [
+        25800,
+        9000
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        9000
+      ],
+      "paused": false,
+      "peer": 6,
+      "phase": "Playing",
+      "predicted_tick": 2026,
+      "render": [
+        26000,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2025
+    },
+    {
+      "at_ms": 47720,
+      "canonical": [
+        26000,
+        21400
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        21400
+      ],
+      "paused": false,
+      "peer": 7,
+      "phase": "Playing",
+      "predicted_tick": 2027,
+      "render": [
+        26000,
+        21400
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2025
+    },
+    {
+      "at_ms": 47720,
+      "canonical": [
+        54000,
+        7200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        7200
+      ],
+      "paused": false,
+      "peer": 8,
+      "phase": "Playing",
+      "predicted_tick": 2030,
+      "render": [
+        54000,
+        7200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47720,
+      "canonical": [
+        19000,
+        34200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        19000,
+        34200
+      ],
+      "paused": false,
+      "peer": 9,
+      "phase": "Playing",
+      "predicted_tick": 2026,
+      "render": [
+        19000,
+        34200
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2011
+    },
+    {
+      "at_ms": 47733,
+      "canonical": [
+        22000,
+        17500
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Right",
+        "direction_mask": 0
+      },
+      "owner": [
+        22000,
+        17500
+      ],
+      "paused": false,
+      "peer": 0,
+      "phase": "Playing",
+      "predicted_tick": 2034,
+      "render": [
+        22000,
+        17500
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2029
+    },
+    {
+      "at_ms": 47733,
+      "canonical": [
+        19500,
+        16200
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Down",
+        "direction_mask": 0
+      },
+      "owner": [
+        26000,
+        18700
+      ],
+      "paused": false,
+      "peer": 1,
+      "phase": "Playing",
+      "predicted_tick": 2027,
+      "render": [
+        26000,
+        18700
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47733,
+      "canonical": [
+        6000,
+        6900
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Left",
+        "direction_mask": 0
+      },
+      "owner": [
+        6000,
+        6900
+      ],
+      "paused": false,
+      "peer": 2,
+      "phase": "Playing",
+      "predicted_tick": 2031,
+      "render": [
+        6000,
+        6900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2010
+    },
+    {
+      "at_ms": 47733,
+      "canonical": [
+        54000,
+        9000
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "owner": [
+        54000,
+        9000
+      ],
+      "paused": false,
+      "peer": 3,
+      "phase": "Playing",
+      "predicted_tick": 2025,
+      "render": [
+        54000,
+        9000
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2025
+    },
+    {
+      "arena": "NewGreenAcres",
+      "canonical_player": {
+        "airborne_ms": 0,
+        "alive": true,
+        "bot_cooldown_ms": 0,
+        "bot_direction": null,
+        "carrying": null,
+        "config": {
+          "control": "Human",
+          "name": "Purple",
+          "team": 1
+        },
+        "disease_duration_ms": 0,
+        "disease_elapsed_ms": 0,
+        "disease_freshness_updates": 0,
+        "diseases": [],
+        "facing": "Up",
+        "ice_direction": "Up",
+        "ice_remaining_ms": 0,
+        "id": 9,
+        "kills": 0,
+        "last_bomb_tile": {
+          "x": 8,
+          "y": 5
+        },
+        "moving": true,
+        "original_ai_state": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "original_anchor": {
+          "x": 34000,
+          "y": 19800
+        },
+        "position": {
+          "x": 34000,
+          "y": 21700
+        },
+        "powers": {
+          "bombs": 3,
+          "brakes": 0,
+          "flame": 2,
+          "gold_flame": false,
+          "grab": false,
+          "jelly": false,
+          "kick": false,
+          "native_inventory": [
+            3,
+            2,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "punch": false,
+          "skates": 0,
+          "spooge": false,
+          "trigger": true
+        },
+        "powerup_pickups": 0,
+        "presentation": {
+          "accumulator_ms": 0,
+          "death_accumulator_ms": -30,
+          "death_animation": 1,
+          "death_finished": false,
+          "death_frame": 0,
+          "death_rise_accumulator_ms": 0,
+          "frame": 0,
+          "palette": 9,
+          "personal_palette": true,
+          "render_alive": true,
+          "render_carrying": false,
+          "render_facing": "Up",
+          "render_frame": 193,
+          "render_moving": true,
+          "render_position": {
+            "x": 34000,
+            "y": 21700
+          },
+          "render_special": 0,
+          "render_visible": true,
+          "special": 0,
+          "walk_pixels": 580
+        },
+        "trigger_charges": 1,
+        "warp_cooldown_ms": 0,
+        "wins": 0
+      },
+      "canonical_tick": 2025,
+      "failure_at_ms": 47733,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "peer": 4,
+      "player": {
+        "airborne_ms": 0,
+        "alive": true,
+        "bot_cooldown_ms": 0,
+        "bot_direction": null,
+        "carrying": null,
+        "config": {
+          "control": "Human",
+          "name": "Purple",
+          "team": 1
+        },
+        "disease_duration_ms": 0,
+        "disease_elapsed_ms": 0,
+        "disease_freshness_updates": 0,
+        "diseases": [],
+        "facing": "Up",
+        "ice_direction": "Up",
+        "ice_remaining_ms": 0,
+        "id": 9,
+        "kills": 0,
+        "last_bomb_tile": {
+          "x": 8,
+          "y": 5
+        },
+        "moving": true,
+        "original_ai_state": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "original_anchor": {
+          "x": 34000,
+          "y": 19800
+        },
+        "position": {
+          "x": 34000,
+          "y": 23900
+        },
+        "powers": {
+          "bombs": 3,
+          "brakes": 0,
+          "flame": 2,
+          "gold_flame": false,
+          "grab": false,
+          "jelly": false,
+          "kick": false,
+          "native_inventory": [
+            3,
+            2,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "punch": false,
+          "skates": 0,
+          "spooge": false,
+          "trigger": true
+        },
+        "powerup_pickups": 0,
+        "presentation": {
+          "accumulator_ms": 0,
+          "death_accumulator_ms": -30,
+          "death_animation": 1,
+          "death_finished": false,
+          "death_frame": 0,
+          "death_rise_accumulator_ms": 0,
+          "frame": 0,
+          "palette": 9,
+          "personal_palette": true,
+          "render_alive": true,
+          "render_carrying": false,
+          "render_facing": "Up",
+          "render_frame": 186,
+          "render_moving": true,
+          "render_position": {
+            "x": 34000,
+            "y": 23900
+          },
+          "render_special": 0,
+          "render_visible": true,
+          "special": 0,
+          "walk_pixels": 558
+        },
+        "trigger_charges": 1,
+        "warp_cooldown_ms": 0,
+        "wins": 0
+      },
+      "predicted_input": {
+        "action": false,
+        "bomb": false,
+        "direction": "Up",
+        "direction_mask": 0
+      },
+      "predicted_tick": 2026,
+      "reconciliation": 15,
+      "room": 0,
+      "seat": 9
+    },
+    {
+      "at_ms": 47733,
+      "canonical": [
+        34000,
+        21700
+      ],
+      "control": "Human",
+      "generation": 1,
+      "input": {
+        "action": false,
+        "bomb": false,
+        "direction": null,
+        "direction_mask": 0
+      },
+      "owner": [
+        34000,
+        23900
+      ],
+      "paused": false,
+      "peer": 4,
+      "phase": "Playing",
+      "predicted_tick": 2026,
+      "render": [
+        34000,
+        23900
+      ],
+      "room": 0,
+      "round": 4,
+      "tick": 2025
+    }
+  ]
+}
