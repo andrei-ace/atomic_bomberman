@@ -1,0 +1,1551 @@
+{
+  "version": "0.7.3",
+  "status": "Published, deployed and verified",
+  "verified_at_utc": "2026-11-04T08:36:20.039925+00:00",
+  "release_source_commit": "efec64b11e13a0efa690251fa5410593b070bedd",
+  "release_source_sha256": "b9c9f90058201d05865de882abd2e903571591ec05534a3fd50442bed1cd7c36",
+  "publication_and_artifact_verification": {
+    "passed": true,
+    "verified_at_utc": "2026-11-04T08:21:55.492758+00:00",
+    "version": "0.7.3",
+    "source_commit": "efec64b11e13a0efa690251fa5410593b070bedd",
+    "source_sha256": "b9c9f90058201d05865de882abd2e903571591ec05534a3fd50442bed1cd7c36",
+    "release_url": "https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.3",
+    "published_at": "2026-11-04T08:18:58Z",
+    "assets": [
+      {
+        "name": "atomic-bomberman-0.7.3-linux-x86_64.AppImage",
+        "bytes": 37577872,
+        "sha256": "ba846186f3f34493f64e1043b359c859fca3e90e2051b4c4b02b70ac3870d98a",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.3/atomic-bomberman-0.7.3-linux-x86_64.AppImage"
+      },
+      {
+        "name": "atomic-bomberman-0.7.3-linux-x86_64.AppImage.sha256",
+        "bytes": 111,
+        "sha256": "9e4eb7143fec7536c734ac6fd47ad7c1f824200552059598e76485a9b0ac179c",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.3/atomic-bomberman-0.7.3-linux-x86_64.AppImage.sha256"
+      },
+      {
+        "name": "atomic-bomberman-0.7.3-linux-x86_64.build.json",
+        "bytes": 45508,
+        "sha256": "6ddd8e01b23d66a507e8c2dd286f91131e596fa83ef90b86f70574a59f99ec96",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.3/atomic-bomberman-0.7.3-linux-x86_64.build.json"
+      },
+      {
+        "name": "atomic-bomberman-0.7.3-macos-arm64.build.json",
+        "bytes": 34940,
+        "sha256": "6095ef03d1c2515ac19bf694065f7d4e859b6b220097de99474049dec0df28da",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.3/atomic-bomberman-0.7.3-macos-arm64.build.json"
+      },
+      {
+        "name": "atomic-bomberman-0.7.3-macos-arm64.zip",
+        "bytes": 7591719,
+        "sha256": "4e0caba675673e84a5c6561ed670ac17d25524b73a14b1dc341030cc3e4453fd",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.3/atomic-bomberman-0.7.3-macos-arm64.zip"
+      },
+      {
+        "name": "atomic-bomberman-0.7.3-macos-arm64.zip.sha256",
+        "bytes": 105,
+        "sha256": "a4da882ffc9f8321c18eea1bdce87f5eed2affa1aaf492b077f4a3c337485562",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.3/atomic-bomberman-0.7.3-macos-arm64.zip.sha256"
+      },
+      {
+        "name": "atomic-bomberman-0.7.3-relay-linux-arm64.build.json",
+        "bytes": 34274,
+        "sha256": "50fa3320cb2540d4f9d72e2a6e01b87502c38bc7d7dde507f742f764a770925a",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.3/atomic-bomberman-0.7.3-relay-linux-arm64.build.json"
+      },
+      {
+        "name": "atomic-bomberman-0.7.3-relay-linux-arm64.tar.gz",
+        "bytes": 2928098,
+        "sha256": "62168ca9e44a9be145298a7aa72936f270ecabeea72f227327552814d6c57b7f",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.3/atomic-bomberman-0.7.3-relay-linux-arm64.tar.gz"
+      },
+      {
+        "name": "atomic-bomberman-0.7.3-relay-linux-arm64.tar.gz.sha256",
+        "bytes": 114,
+        "sha256": "9b8063e20d03cb26deb3a5eec70ca33efc91176d039e9b376ea422eac966b059",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.3/atomic-bomberman-0.7.3-relay-linux-arm64.tar.gz.sha256"
+      },
+      {
+        "name": "atomic-bomberman-0.7.3-relay-linux-x86_64.build.json",
+        "bytes": 34437,
+        "sha256": "aec19f73a43848e29627d66dcb2522136a48de1a33225d695b4a7e4cf4c5a040",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.3/atomic-bomberman-0.7.3-relay-linux-x86_64.build.json"
+      },
+      {
+        "name": "atomic-bomberman-0.7.3-relay-linux-x86_64.tar.gz",
+        "bytes": 3024703,
+        "sha256": "49e6142ea3f2978286dd56f74765cc70d4b547121063e3bef4c012817f7f1f78",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.3/atomic-bomberman-0.7.3-relay-linux-x86_64.tar.gz"
+      },
+      {
+        "name": "atomic-bomberman-0.7.3-relay-linux-x86_64.tar.gz.sha256",
+        "bytes": 115,
+        "sha256": "9b40dfc7dfbab11324e950fd0f69040a3ad6d74aa63f1a6cf5a55a765addda05",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.3/atomic-bomberman-0.7.3-relay-linux-x86_64.tar.gz.sha256"
+      },
+      {
+        "name": "atomic-bomberman-0.7.3-windows-x86_64.build.json",
+        "bytes": 40468,
+        "sha256": "a3bc9a2a6b1116924effe452ebfefd9e7721daf15af27f30c72b2a5eb473f99f",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.3/atomic-bomberman-0.7.3-windows-x86_64.build.json"
+      },
+      {
+        "name": "atomic-bomberman-0.7.3-windows-x86_64.zip",
+        "bytes": 7638875,
+        "sha256": "71c77e0fb363da493c0efd18779483f061a5169bf948e8c769268abce22be424",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.3/atomic-bomberman-0.7.3-windows-x86_64.zip"
+      },
+      {
+        "name": "atomic-bomberman-0.7.3-windows-x86_64.zip.sha256",
+        "bytes": 109,
+        "sha256": "fc32ba9973805dac6be2b0c943171d6fa42267d67c8f6df2040d48b771671768",
+        "url": "https://github.com/andrei-ace/atomic_bomberman/releases/download/v0.7.3/atomic-bomberman-0.7.3-windows-x86_64.zip.sha256"
+      }
+    ],
+    "all_five_packages_match_clean_source": true,
+    "mac_signature_provenance_licenses_and_relocation_verified": true,
+    "windows_architecture_imports_hashes_and_provenance_verified": true,
+    "both_relay_archives_architecture_hashes_licenses_and_provenance_verified": true,
+    "mac_published_hd_smoke": {
+      "passed": true,
+      "frames": 12000,
+      "target_size": [
+        1920,
+        1440
+      ],
+      "elapsed_seconds": 105.02905520796776,
+      "original_game_data_included": false
+    },
+    "smoke_scope": "The 12000-frame budget lets asynchronous HD validation finish before capture. Private settings/profile preserve the player configuration; the existing HD cache is reused.",
+    "limitations": [
+      "Native Linux AppImage runtime verification is supplied by the native release runner and publisher.",
+      "Local Windows verification is static; native launcher and QUIC checks run in Windows CI.",
+      "Mac HD smoke uses private settings and supplied local originals; physical audio/input latency is not claimed."
+    ]
+  },
+  "exact_release_commit_ci": [
+    {
+      "workflow": "Desktop and relay release",
+      "id": 41794929642,
+      "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/41794929642",
+      "headSha": "efec64b11e13a0efa690251fa5410593b070bedd",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 126456670797,
+          "name": "build (windows-2022, windows, python)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41794929642,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Validate tag syntax",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Check annotated tag and version",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Linux build dependencies",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 6
+            },
+            {
+              "name": "Source and package checks",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Compare portable replay digest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Linux launcher and AppImage",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 9
+            },
+            {
+              "name": "Mac launcher and ZIP",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10
+            },
+            {
+              "name": "Native Linux relay",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 11
+            },
+            {
+              "name": "Windows launcher and portable ZIP",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12
+            },
+            {
+              "name": "Relay gameplay over QUIC",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 13
+            },
+            {
+              "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 28
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 29
+            }
+          ]
+        },
+        {
+          "id": 126456671000,
+          "name": "build (ubuntu-24.04-arm, relay-arm64, python3, aarch64-unknown-linux-gnu)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41794929642,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Validate tag syntax",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Check annotated tag and version",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Linux build dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Source and package checks",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Compare portable replay digest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Linux launcher and AppImage",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 9
+            },
+            {
+              "name": "Mac launcher and ZIP",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10
+            },
+            {
+              "name": "Native Linux relay",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Windows launcher and portable ZIP",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 12
+            },
+            {
+              "name": "Relay gameplay over QUIC",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13
+            },
+            {
+              "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 28
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 29
+            }
+          ]
+        },
+        {
+          "id": 126456671013,
+          "name": "build (macos-15, macos, python3)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41794929642,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Validate tag syntax",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Check annotated tag and version",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Linux build dependencies",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 6
+            },
+            {
+              "name": "Source and package checks",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Compare portable replay digest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Linux launcher and AppImage",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 9
+            },
+            {
+              "name": "Mac launcher and ZIP",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Native Linux relay",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 11
+            },
+            {
+              "name": "Windows launcher and portable ZIP",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 12
+            },
+            {
+              "name": "Relay gameplay over QUIC",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 13
+            },
+            {
+              "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 28
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 29
+            }
+          ]
+        },
+        {
+          "id": 126456671265,
+          "name": "build (ubuntu-24.04, linux, python3)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41794929642,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Validate tag syntax",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Check annotated tag and version",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Linux build dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Source and package checks",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Compare portable replay digest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Linux launcher and AppImage",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Mac launcher and ZIP",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10
+            },
+            {
+              "name": "Native Linux relay",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 11
+            },
+            {
+              "name": "Windows launcher and portable ZIP",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 12
+            },
+            {
+              "name": "Relay gameplay over QUIC",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 13
+            },
+            {
+              "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 28
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 29
+            }
+          ]
+        },
+        {
+          "id": 126456671305,
+          "name": "build (ubuntu-24.04, relay-amd64, python3, x86_64-unknown-linux-gnu)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41794929642,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Validate tag syntax",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Check annotated tag and version",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Linux build dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Source and package checks",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Compare portable replay digest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Linux launcher and AppImage",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 9
+            },
+            {
+              "name": "Mac launcher and ZIP",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10
+            },
+            {
+              "name": "Native Linux relay",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Windows launcher and portable ZIP",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 12
+            },
+            {
+              "name": "Relay gameplay over QUIC",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13
+            },
+            {
+              "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 28
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 29
+            }
+          ]
+        },
+        {
+          "id": 126468294144,
+          "name": "publish",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41794929642,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Verify all artifacts and publish release",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workflow": "Windows",
+      "id": 41794925142,
+      "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/41794925142",
+      "headSha": "efec64b11e13a0efa690251fa5410593b070bedd",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 126456656949,
+          "name": "check",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41794925142,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run python tools/test_release_packages.py",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Compare portable replay digest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Native launcher lifecycle",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Fetch locked workspace dependencies for offline license metadata",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Run python tools/windows_release.py build --release",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Production gameplay over QUIC",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Full source and simulation checks",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workflow": "macOS",
+      "id": 41794924985,
+      "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/41794924985",
+      "headSha": "efec64b11e13a0efa690251fa5410593b070bedd",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 126456656337,
+          "name": "check (macos-15)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41794924985,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run tools/check.sh",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run python3 tools/test_release_packages.py",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Run tools/test_macos_launcher.sh",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Run cargo run --locked -p bomberman-net --example replay_digest > build/replay-digest.txt",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Run python3 tools/verify_replay_digest.py build/replay-digest.txt",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Run cargo build --locked --release --workspace",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Package Apple Silicon app",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Upload Apple Silicon app",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workflow": "Linux",
+      "id": 41794925030,
+      "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/41794925030",
+      "headSha": "efec64b11e13a0efa690251fa5410593b070bedd",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 126456656516,
+          "name": "check",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41794925030,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run sudo apt-get update && sudo apt-get install -y pkg-config libudev-dev libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libgtk-3-dev libarchive-tools librsvg2-common squashfs-tools",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run tools/check.sh",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Run python3 tools/test_release_packages.py",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Run python3 tools/test_linux_launcher.py",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Run cargo run --locked -p bomberman-net --example replay_digest > build/replay-digest.txt",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Run python3 tools/verify_replay_digest.py build/replay-digest.txt",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Run tools/package_linux.sh",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Run python3 tools/test_appimage_bootstrap.py dist/github/*.AppImage",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Native amd64 relay package and QUIC gameplay",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12
+            },
+            {
+              "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "workflow": "CodeQL",
+      "id": 41794925063,
+      "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/41794925063",
+      "headSha": "efec64b11e13a0efa690251fa5410593b070bedd",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 126456656546,
+          "name": "Analyze (c-cpp)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41794925063,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build standalone Swift tools",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 4
+            },
+            {
+              "name": "Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Post Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Post Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            }
+          ]
+        },
+        {
+          "id": 126456656868,
+          "name": "Analyze (swift)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41794925063,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build standalone Swift tools",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Post Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Post Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            }
+          ]
+        },
+        {
+          "id": 126456656926,
+          "name": "Analyze (actions)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41794925063,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build standalone Swift tools",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 4
+            },
+            {
+              "name": "Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Post Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Post Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            }
+          ]
+        },
+        {
+          "id": 126456656953,
+          "name": "Analyze (java-kotlin)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41794925063,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build standalone Swift tools",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 4
+            },
+            {
+              "name": "Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Post Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Post Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            }
+          ]
+        },
+        {
+          "id": 126456656973,
+          "name": "Analyze (python)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41794925063,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build standalone Swift tools",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 4
+            },
+            {
+              "name": "Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Post Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Post Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            }
+          ]
+        },
+        {
+          "id": 126456657145,
+          "name": "Analyze (rust)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41794925063,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Build standalone Swift tools",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 4
+            },
+            {
+              "name": "Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Post Perform CodeQL Analysis",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Post Initialize CodeQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "security": {
+    "open_dependabot_alerts": 0,
+    "open_codeql_alerts": 0,
+    "codeql_analyses": [
+      {
+        "analysis_key": ".github/workflows/codeql.yml:analyze",
+        "category": "/language:swift",
+        "commit_sha": "efec64b11e13a0efa690251fa5410593b070bedd",
+        "created_at": "2026-11-04T08:02:35Z",
+        "error": "",
+        "id": 2092825784,
+        "results_count": 0,
+        "tool": {
+          "guid": null,
+          "name": "CodeQL",
+          "version": "2.27.4"
+        }
+      },
+      {
+        "analysis_key": ".github/workflows/codeql.yml:analyze",
+        "category": "/language:rust",
+        "commit_sha": "efec64b11e13a0efa690251fa5410593b070bedd",
+        "created_at": "2026-11-04T07:53:17Z",
+        "error": "",
+        "id": 2092780253,
+        "results_count": 0,
+        "tool": {
+          "guid": null,
+          "name": "CodeQL",
+          "version": "2.27.4"
+        }
+      },
+      {
+        "analysis_key": ".github/workflows/codeql.yml:analyze",
+        "category": "/language:java-kotlin",
+        "commit_sha": "efec64b11e13a0efa690251fa5410593b070bedd",
+        "created_at": "2026-11-04T07:51:46Z",
+        "error": "",
+        "id": 2092772426,
+        "results_count": 0,
+        "tool": {
+          "guid": null,
+          "name": "CodeQL",
+          "version": "2.27.4"
+        }
+      },
+      {
+        "analysis_key": ".github/workflows/codeql.yml:analyze",
+        "category": "/language:c-cpp",
+        "commit_sha": "efec64b11e13a0efa690251fa5410593b070bedd",
+        "created_at": "2026-11-04T07:50:17Z",
+        "error": "",
+        "id": 2092765044,
+        "results_count": 0,
+        "tool": {
+          "guid": null,
+          "name": "CodeQL",
+          "version": "2.27.4"
+        }
+      },
+      {
+        "analysis_key": ".github/workflows/codeql.yml:analyze",
+        "category": "/language:python",
+        "commit_sha": "efec64b11e13a0efa690251fa5410593b070bedd",
+        "created_at": "2026-11-04T07:50:12Z",
+        "error": "",
+        "id": 2092764659,
+        "results_count": 0,
+        "tool": {
+          "guid": null,
+          "name": "CodeQL",
+          "version": "2.27.4"
+        }
+      },
+      {
+        "analysis_key": ".github/workflows/codeql.yml:analyze",
+        "category": "/language:actions",
+        "commit_sha": "efec64b11e13a0efa690251fa5410593b070bedd",
+        "created_at": "2026-11-04T07:50:06Z",
+        "error": "",
+        "id": 2092764201,
+        "results_count": 0,
+        "tool": {
+          "guid": null,
+          "name": "CodeQL",
+          "version": "2.27.4"
+        }
+      }
+    ],
+    "rustsec_vulnerabilities": 0,
+    "rustsec_database": {
+      "advisory-count": 1403,
+      "last-commit": "965bf9ad083b58e6340d65829d85217b18be9290",
+      "last-updated": "2026-11-03T21:34:28+01:00"
+    },
+    "existing_upstream_notices": [
+      {
+        "id": "RUSTSEC-2025-0134",
+        "title": "rustls-pemfile is unmaintained"
+      },
+      {
+        "id": "RUSTSEC-2026-0192",
+        "title": "`ttf-parser` is unmaintained"
+      },
+      {
+        "id": "RUSTSEC-2025-0035",
+        "title": "Multiple soundness issues in `macroquad`"
+      }
+    ]
+  },
+  "network_acceptance_cleared": true,
+  "network_scope": "Full local 2/10/40-client three-repetition gate, one predeployment ten-client WAN run, and fresh deployed 2/10-client WAN runs; strict latency and native mixed HD/Classic sessions also passed.",
+  "full_local_load": "0.7.3-relay-load.json",
+  "deployed_load": "0.7.3-deployed-relay-load.json",
+  "deployed_latency": "0.7.3-deployed-wan.json",
+  "deployment": "0.7.3-relay-deployment.json",
+  "native_hd_classic": "0.7.3-hd-classic-wan.json",
+  "dist": {
+    "verified": true,
+    "mac_app": "dist/Atomic Bomberman.app",
+    "all_published_assets": "dist/v0.7.3",
+    "asset_count": 15,
+    "previous_distribution_retained": true
+  },
+  "hd": {
+    "format_version": 2,
+    "source_key": "b727e4035f5d3970f9460a85eb77efcf2f874cae7b81cc9b53c32b8deffef3c3",
+    "regeneration_required": false,
+    "completed_pages_preserved": 1174
+  },
+  "limitations": [
+    "WAN clients and native graphics checks ran on one Apple Silicon Mac; no physical Windows/Linux cross-platform gameplay or physical input/audio latency is claimed.",
+    "Each deployed WAN room size has one full repetition; the local 2/10/40-client release gate has three repetitions each.",
+    "Later evidence-only commits do not replace the source commit of the published binaries."
+  ]
+}

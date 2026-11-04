@@ -1,0 +1,77 @@
+{
+  "version": "0.7.3",
+  "release_source_commit": "efec64b11e13a0efa690251fa5410593b070bedd",
+  "verified_at_utc": "2026-11-04T08:36:20.039925+00:00",
+  "before_deployment": {
+    "passed": true,
+    "checks": [
+      "base HD loads from the complete validated cache",
+      "switching HD to Classic and back preserves and reuses all completed HD pages",
+      "native HD host and Classic client play through the live private relay with identical confirmed simulation"
+    ],
+    "base_source_key": "b727e4035f5d3970f9460a85eb77efcf2f874cae7b81cc9b53c32b8deffef3c3",
+    "game_binary_sha256": "defe5306f540ed72dd4205afa65245e7a8292322ecfa82b3a1be7f5e0d2f566a",
+    "cache_toggle": {
+      "passed": true,
+      "mode_sequence": [
+        "HD",
+        "Classic",
+        "HD"
+      ],
+      "pages_preserved": 1174,
+      "metadata_unchanged": true,
+      "all_page_sizes_mtimes_and_inodes_unchanged": true
+    },
+    "mixed_relay": {
+      "passed": true,
+      "canonical_simulation_sha256": "5203d265b1a64bbbeadc9aee2af071ab57714928db9054462019ef5040364fc6",
+      "graphics": [
+        "HD",
+        "Classic"
+      ],
+      "players": 3
+    },
+    "limitations": [
+      "Process-local synthetic Cocoa events; no physical input/audio claim.",
+      "Unchanged HD pages are reused in the graphical-mod QA fixture.",
+      "Live private relay; both native client windows run on this Mac."
+    ]
+  },
+  "deployed": {
+    "passed": true,
+    "checks": [
+      "base HD loads from the complete validated cache",
+      "switching HD to Classic and back preserves and reuses all completed HD pages",
+      "native HD host and Classic client play through the live private relay with identical confirmed simulation"
+    ],
+    "base_source_key": "b727e4035f5d3970f9460a85eb77efcf2f874cae7b81cc9b53c32b8deffef3c3",
+    "game_binary_sha256": "595e7de5ba398c3f65cc375a7845dd203c313159d547c30c5d63b3075fd22d1f",
+    "cache_toggle": {
+      "passed": true,
+      "mode_sequence": [
+        "HD",
+        "Classic",
+        "HD"
+      ],
+      "pages_preserved": 1174,
+      "metadata_unchanged": true,
+      "all_page_sizes_mtimes_and_inodes_unchanged": true
+    },
+    "mixed_relay": {
+      "passed": true,
+      "canonical_simulation_sha256": "a726c34d597105e4603794c428039bf01ee8068b60bc4685514a60f436094612",
+      "graphics": [
+        "HD",
+        "Classic"
+      ],
+      "players": 3
+    },
+    "limitations": [
+      "Process-local synthetic Cocoa events; no physical input/audio claim.",
+      "Unchanged HD pages are reused in the graphical-mod QA fixture.",
+      "Live private relay; both native client windows run on this Mac."
+    ]
+  },
+  "game_compiler": "Rust 1.89.0",
+  "scope": "Native debug-enabled 0.7.3 game from the release source, using real HD pixels and Classic rendering; synthetic Cocoa events in process. The published Mac release binary separately passed the 12000-frame HD smoke."
+}
