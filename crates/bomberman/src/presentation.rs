@@ -4,15 +4,103 @@ use bomberman_assets::{AnimationAsset, AnimationFrame, AnimationSequence, Manife
 use bomberman_core::{Direction, Player};
 use std::collections::HashMap;
 
-pub const HUD_HEIGHT: f32 = 48.;
+#[path = "presentation/compositing.rs"]
+pub mod compositing;
+#[path = "presentation/viewport.rs"]
+pub mod viewport;
 
-/// Original first-row standing/walking masks begin at world Y=22. Keep two
-/// pixels above those masks, then fit the complete field uniformly below the
-/// score strip. Actor anchors and simulation coordinates stay in world space.
-pub fn battle_viewport() -> (f32, f32, f32) {
-    let top = 20.;
-    let scale = (480. - HUD_HEIGHT) / (480. - top);
-    ((640. - 640. * scale) * 0.5, HUD_HEIGHT - top * scale, scale)
+pub const HUD_HEIGHT: f32 = 48.;
+pub const BOARD_X: f32 = board_origin(640., 480.).0;
+pub const BOARD_Y: f32 = board_origin(640., 480.).1;
+
+/// Native 0x42647a centers fifteen 40-pixel columns and places eleven
+/// 36-pixel rows above a sixteen-pixel bottom wall. The display compositor
+/// scales this complete original canvas; the field has no second transform.
+pub const fn board_origin(width: f32, height: f32) -> (f32, f32) {
+    (
+        (width - bomberman_core::BOARD_WIDTH as f32 * bomberman_core::TILE_WIDTH as f32) * 0.5,
+        height - bomberman_core::BOARD_HEIGHT as f32 * bomberman_core::TILE_HEIGHT as f32 - 16.,
+    )
+}
+
+#[derive(Clone, Debug)]
+pub struct HudLayout {
+    pub columns: [f32; 5],
+    pub rows: [f32; 2],
+    pub timer: [f32; 2],
+    pub timer_spacing: f32,
+    pub colors: [[u8; 3]; 10],
+    pub outlines: [[u8; 3]; 10],
+}
+
+impl HudLayout {
+    /// VALUELST entries are presentation overrides, including in asset mods.
+    /// Defaults match the supplied game's native HUD routines, not a font fit.
+    pub fn from_manifest(manifest: &Manifest) -> Self {
+        let values = manifest.resources.iter().find(|table| {
+            table
+                .id
+                .rsplit('/')
+                .next()
+                .is_some_and(|id| id.eq_ignore_ascii_case("VALUELST.RES"))
+        });
+        let value = |number: u32, fallback: i32| {
+            values
+                .and_then(|table| {
+                    table
+                        .commands
+                        .iter()
+                        .rev()
+                        .find(|command| command.kind == number.to_string())
+                })
+                .and_then(|command| command.fields.first())
+                .and_then(|value| value.parse::<i32>().ok())
+                .unwrap_or(fallback) as f32
+        };
+        Self {
+            columns: std::array::from_fn(|i| value(115 + i as u32, 10 + i as i32 * 100)),
+            rows: [value(113, 6), value(114, 26)],
+            timer: [value(110, 525), value(111, 36)],
+            timer_spacing: value(112, 4),
+            // Compatibility for completed caches predating HUD color metadata.
+            // These are the original RGB555 lookup results, not modern RGB
+            // approximations; palette overrides still select their own RGB.
+            colors: std::array::from_fn(|i| {
+                const ORIGINAL: [u8; 10] = [72, 194, 242, 49, 113, 181, 94, 15, 206, 37];
+                let index = manifest
+                    .hud_color_indices
+                    .get(i)
+                    .copied()
+                    .unwrap_or(ORIGINAL[i]);
+                manifest
+                    .palette
+                    .get(index as usize)
+                    .copied()
+                    .unwrap_or([255; 3])
+            }),
+            outlines: std::array::from_fn(|i| {
+                let index = manifest
+                    .palette_lookup
+                    .get(if i == 1 { 32767 } else { 0 })
+                    .copied()
+                    .unwrap_or(if i == 1 { 72 } else { 255 });
+                manifest
+                    .palette
+                    .get(index as usize)
+                    .copied()
+                    .unwrap_or(if i == 1 { [255; 3] } else { [0; 3] })
+            }),
+        }
+    }
+}
+
+/// Native timer text maps ':' directly to numeric-font state ten.
+pub fn timer_glyph(character: char) -> Option<usize> {
+    match character {
+        '0'..='9' => Some(character as usize - '0' as usize),
+        ':' => Some(10),
+        _ => None,
+    }
 }
 
 /// Destruction leaves the brick solid for physics, but its transparent artwork
@@ -171,12 +259,51 @@ mod tests {
     use bomberman_core::{GameConfig, Simulation};
 
     #[test]
-    fn battle_viewport_keeps_first_row_heads_below_scores_and_the_bottom_in_view() {
-        let (x, y, scale) = battle_viewport();
-        assert!(y + 22. * scale >= HUD_HEIGHT);
-        assert!((y + 480. * scale - 480.).abs() < 0.001);
-        assert!((x + 320. * scale - 320.).abs() < 0.001);
-        assert!(scale > 0.9 && scale < 1.);
+    fn board_matches_original_background_floor_and_bottom_wall() {
+        // Original initialization and FIELD1.PCX independently agree: the
+        // playable floor is x20..619,y68..463, with a sixteen-pixel bottom wall.
+        assert_eq!(board_origin(640., 480.), (BOARD_X, BOARD_Y));
+        assert_eq!(BOARD_X + 15. * 40., 620.);
+        assert_eq!(BOARD_Y + 11. * 36., 464.);
+        assert_eq!(ground_anchor(40., BOARD_Y + 18.), (40., 103.));
+        assert_eq!(ground_anchor(600., BOARD_Y + 378.), (600., 463.));
+    }
+
+    #[test]
+    fn timer_uses_native_digit_and_colon_states() {
+        assert_eq!(
+            "1:32".chars().map(timer_glyph).collect::<Vec<_>>(),
+            vec![Some(1), Some(10), Some(3), Some(2)]
+        );
+        assert_eq!(timer_glyph('-'), None);
+    }
+
+    #[test]
+    fn hud_uses_last_resource_override_and_current_palette_lookup() {
+        let mut lookup = vec![0; 32768];
+        lookup[0] = 1;
+        lookup[32767] = 2;
+        let manifest: Manifest = serde_json::from_value(serde_json::json!({
+            "version": 1, "textures": [], "animations": [], "fonts": [],
+            "sounds": [], "schemes": [], "arenas": [], "sources": [],
+            "generated": [], "warnings": [], "player_remaps": [],
+            "sound_mappings": [], "animation_order": [],
+            "palette": [[11,22,33], [44,55,66], [77,88,99]],
+            "palette_lookup": lookup, "hud_color_indices": [2,1,0,0,0,0,0,0,0,0],
+            "resources": [{"id": "DATA/RES/VALUELST.RES", "text": "", "commands": [
+                {"kind": "110", "fields": ["525"]},
+                {"kind": "110", "fields": ["501"]},
+                {"kind": "114", "fields": ["28"]}
+            ]}]
+        }))
+        .unwrap();
+        let layout = HudLayout::from_manifest(&manifest);
+        assert_eq!(layout.timer, [501., 36.]);
+        assert_eq!(layout.rows, [6., 28.]);
+        assert_eq!(layout.colors[0], [77, 88, 99]);
+        assert_eq!(layout.colors[1], [44, 55, 66]);
+        assert_eq!(layout.outlines[0], [44, 55, 66]);
+        assert_eq!(layout.outlines[1], [77, 88, 99]);
     }
 
     #[test]

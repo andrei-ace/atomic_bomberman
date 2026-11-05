@@ -27,6 +27,7 @@ pub struct Media {
     sounds: HashMap<String, Sound>,
     music: Option<String>,
     font: Option<FontAsset>,
+    hud_layout: crate::presentation::HudLayout,
     pub warnings: Vec<String>,
     pub mute: bool,
     pub volume: f32,
@@ -60,6 +61,7 @@ pub(crate) fn animation_index(manifest: &Manifest) -> Result<HashMap<String, (us
 
 impl Media {
     pub async fn load(cache: PathBuf, manifest: Manifest, mute: bool, volume: f32) -> Result<Self> {
+        let hud_layout = crate::presentation::HudLayout::from_manifest(&manifest);
         let font = manifest
             .fonts
             .iter()
@@ -91,6 +93,7 @@ impl Media {
             sounds: HashMap::new(),
             music: None,
             font,
+            hud_layout,
             warnings: Vec::new(),
             mute,
             volume,
@@ -150,6 +153,16 @@ impl Media {
             this.loading_progress(0.6 + 0.3 * (i + 1) as f32 / animations.len() as f32)
                 .await;
         }
+        // Resolve the active MASTER namespace so a font/marker override loads
+        // its own atlas, including when its animation has a different filename.
+        for name in ["numeric font", "infinity", "xxx"] {
+            if let Some(id) = this
+                .sequence(name)
+                .map(|(animation, _)| animation.id.clone())
+            {
+                this.ensure_animation(&id).await?;
+            }
+        }
         // Random Each Game mixes the original tile sets in its thumbnail.
         let preview_tiles: Vec<_> = this
             .manifest
@@ -171,7 +184,17 @@ impl Media {
     }
 
     pub(crate) fn draw_loading(&self, progress: f32) {
-        let mut camera = Camera2D::from_display_rect(Rect::new(0., 0., 640., 480.));
+        let viewport =
+            crate::presentation::viewport::CanvasViewport::fit(screen_width(), screen_height());
+        if viewport.scale <= 0. {
+            return;
+        }
+        let mut camera = Camera2D::from_display_rect(Rect::new(
+            -viewport.x / viewport.scale,
+            -viewport.y / viewport.scale,
+            screen_width() / viewport.scale,
+            screen_height() / viewport.scale,
+        ));
         // This draws directly to the window. Unlike the battle's render
         // target, its camera must use a top-left origin before presentation.
         camera.zoom.y = -camera.zoom.y;
@@ -510,6 +533,19 @@ impl Media {
     }
 
     fn draw_font(&self, font: &FontAsset, value: &str, x: f32, y: f32, size: f32, color: Color) {
+        self.draw_font_clipped(font, value, vec2(x, y), size, color, None);
+    }
+
+    fn draw_font_clipped(
+        &self,
+        font: &FontAsset,
+        value: &str,
+        position: Vec2,
+        size: f32,
+        color: Color,
+        clip: Option<Rect>,
+    ) {
+        let (x, y) = (position.x, position.y);
         let Some(texture) = self.textures.get(&font.texture) else {
             return;
         };
@@ -528,28 +564,73 @@ impl Media {
                 .find(|g| g.codepoint == ch as u32)
                 .or_else(|| font.glyphs.iter().find(|g| g.codepoint == '?' as u32));
             if let Some(glyph) = glyph {
-                self.draw_asset(
-                    &font.texture,
-                    texture,
-                    Rect::new(
-                        glyph.x as f32,
-                        glyph.y as f32,
-                        glyph.width as f32,
-                        glyph.height as f32,
-                    ),
-                    Rect::new(
-                        cursor,
-                        top,
-                        glyph.width as f32 * scale,
-                        glyph.height as f32 * scale,
-                    ),
-                    color,
+                let mut source = Rect::new(
+                    glyph.x as f32,
+                    glyph.y as f32,
+                    glyph.width as f32,
+                    glyph.height as f32,
                 );
+                let mut destination = Rect::new(
+                    cursor,
+                    top,
+                    glyph.width as f32 * scale,
+                    glyph.height as f32 * scale,
+                );
+                if let Some(clip) = clip {
+                    let left = destination.x.max(clip.x);
+                    let top = destination.y.max(clip.y);
+                    let right = (destination.x + destination.w).min(clip.x + clip.w);
+                    let bottom = (destination.y + destination.h).min(clip.y + clip.h);
+                    if right <= left || bottom <= top {
+                        cursor += glyph.advance as f32 * scale;
+                        continue;
+                    }
+                    source.x += (left - destination.x) / scale;
+                    source.y += (top - destination.y) / scale;
+                    source.w = (right - left) / scale;
+                    source.h = (bottom - top) / scale;
+                    destination = Rect::new(left, top, right - left, bottom - top);
+                }
+                self.draw_asset(&font.texture, texture, source, destination, color);
                 cursor += glyph.advance as f32 * scale;
             } else {
                 cursor += size * 0.5;
             }
         }
+    }
+
+    pub fn hud_counter(&self, text: &str, x: f32, y: f32, palette: usize) {
+        let Some(font) = self
+            .manifest
+            .fonts
+            .iter()
+            .find(|font| basename(&font.id).eq_ignore_ascii_case("FONT6.FON"))
+            .or(self.font.as_ref())
+        else {
+            return;
+        };
+        let palette = palette.min(9);
+        let rgb = |value: [u8; 3]| Color::from_rgba(value[0], value[1], value[2], 255);
+        // Native 0x41696c clips each copy to 90 text pixels, then allows two
+        // more pixels for the diagonal outline. Do not resize long counters.
+        for (dx, dy) in [(0., 0.), (2., 0.), (0., 2.), (2., 2.)] {
+            self.draw_font_clipped(
+                font,
+                text,
+                vec2(x + dx, y + dy),
+                font.line_height as f32,
+                rgb(self.hud_layout.outlines[palette]),
+                Some(Rect::new(x + dx, y + dy, 90., font.line_height as f32)),
+            );
+        }
+        self.draw_font_clipped(
+            font,
+            text,
+            vec2(x + 1., y + 1.),
+            font.line_height as f32,
+            rgb(self.hud_layout.colors[palette]),
+            Some(Rect::new(x + 1., y + 1., 90., font.line_height as f32)),
+        );
     }
 
     pub fn text_width(&self, value: &str, size: f32) -> f32 {
@@ -736,6 +817,18 @@ impl Media {
             y,
             variant,
         )
+    }
+
+    pub fn hud_layout(&self) -> &crate::presentation::HudLayout {
+        &self.hud_layout
+    }
+
+    /// Width of the selected native CIMG, before its origin is subtracted.
+    /// Timer advances use this width rather than bitmap-font text metrics.
+    pub fn state_width(&self, name: &str, selected: usize) -> Option<f32> {
+        let (animation, sequence) = self.sequence(name)?;
+        let frame = crate::presentation::native_image(sequence, selected)?;
+        Some(animation.frames.get(frame as usize)?.width as f32)
     }
 
     /// Menu thumbnails copy the selected CIMG from its top-left corner.

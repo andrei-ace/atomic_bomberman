@@ -104,8 +104,19 @@ and a failed or cancelled transfer preserves the previous cache.
 
 HD preserves the original 640×480 logical canvas, 4:3 proportions, board layout,
 sprite origins, palette identities and animation timing. The display target uses
-the physical size of the letterboxed viewport, including Retina scaling.
+the physical size of the fitted original canvas, including Retina scaling.
 Classic retains the original 640×480 target and nearest-neighbor presentation.
+Widescreen windows fill the sides with matching arena or menu scenery. The
+playable board keeps its original proportions and all its cells; decorative
+areas do not accept menu clicks. Portrait windows fill the top and bottom in
+the same way. The last windowed content size is saved in logical screen units
+and restored on the next launch; fullscreen dimensions do not replace it.
+This presentation uses the active mod's existing textures and
+does not require another HD preparation or enlarge the HD render target.
+Scene rendering uses separate source-over alpha blending. Translucent sprite,
+font and overlay edges keep an opaque background opaque, so presenting the
+completed canvas does not darken its colors a second time. This display
+correction reuses the prepared pages unchanged.
 
 Sprite frames use padded canvases aligned by their original origins. Player
 remaps are applied before model inference. Repeated palette dithering is resolved
@@ -131,9 +142,13 @@ The restored battle HUD applies to both modes. Score and signed kill counters
 fill two rows by column in original slot colors. Dead players retain counters
 with red crosses. Network scores, deaths and timer use the canonical snapshot,
 independently of predicted movement.
-The battlefield uses a uniform viewport below the score strip, leaving room
-for complete first-row standing and walking poses. All world objects share
-that transform, keeping their placement relative to the board consistent.
+The original background, HUD and battlefield share the same 640×480 canvas.
+The board starts at `(20, 68)`, without an extra field scale or gray spacer.
+Scores use `FONT6.FON`, the timer uses the active `numeric font`/`infinity`
+animation, and elimination markers use `xxx`. Their positions come from
+`VALUELST.RES`; score colors use the RMP percentages and `COLOR.PAL` lookup.
+As in the original drawing order, first-row heads can extend over the bottom
+of the HUD. See [native layout verification](render-alignment.md#hud-and-window-layout).
 
 Preparation format 2 contains the corrected color processing. HD packs from
 earlier development builds need one new preparation; those old cache folders

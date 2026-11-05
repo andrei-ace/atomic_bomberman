@@ -12,6 +12,7 @@ mod modding;
 mod network;
 mod presentation;
 mod settings;
+mod window_state;
 
 use anyhow::{Context, Result};
 use cli::Cli;
@@ -95,8 +96,8 @@ fn launch() -> Result<()> {
     }
     let conf = Conf {
         window_title: "Atomic Bomberman — Rust".into(),
-        window_width: 960,
-        window_height: 720,
+        window_width: settings.window_size[0] as i32,
+        window_height: settings.window_size[1] as i32,
         fullscreen: settings.fullscreen,
         high_dpi: true,
         window_resizable: true,

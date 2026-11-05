@@ -2,6 +2,7 @@
 mod archive;
 mod formats;
 pub mod hd;
+mod hud;
 mod manifest;
 mod mods;
 pub use mods::modded_cache;
@@ -134,17 +135,20 @@ fn import_inner(source: &mut source::Source, output: &Path) -> Result<Manifest> 
         palette: palette.rgb.clone(),
         palette_lookup: palette.lookup.clone(),
         player_remaps: vec![],
+        hud_color_indices: vec![],
+        hud_color_percentages: vec![],
         sound_mappings: vec![],
         animation_order: vec![],
     };
+    let mut hud_profiles = Vec::with_capacity(10);
     for index in 0..10 {
         let id = format!("{index}.RMP");
         let data = source
             .read(&id)
             .with_context(|| format!("player color remap {id} missing"))?;
         ensure!(
-            data.len() == 259,
-            "{id}: expected 256 remap bytes and three color percentages"
+            matches!(data.len(), 256 | 259),
+            "{id}: expected 256 remap bytes, optionally followed by three color percentages"
         );
         let remap = data[..256]
             .iter()
@@ -152,6 +156,7 @@ fn import_inner(source: &mut source::Source, output: &Path) -> Result<Manifest> 
             .map(|(i, &v)| if v == 0 { i as u8 } else { v })
             .collect();
         manifest.player_remaps.push(remap);
+        hud_profiles.push(hud::remap_profile(&data));
         manifest.sources.push(source_record(&id, &data));
     }
     for path in source.paths() {
@@ -171,6 +176,7 @@ fn import_inner(source: &mut source::Source, output: &Path) -> Result<Manifest> 
             output,
         )?;
     }
+    hud::finish_profiles(&mut manifest, hud_profiles)?;
     finish_manifest(&mut manifest)?;
     Ok(manifest)
 }
@@ -746,7 +752,9 @@ fn check_manifest(m: &Manifest) -> Result<()> {
         m.palette.len() == 256
             && (m.palette_lookup.is_empty() || m.palette_lookup.len() == 32768)
             && m.player_remaps.len() == 10
-            && m.player_remaps.iter().all(|r| r.len() == 256),
+            && m.player_remaps.iter().all(|r| r.len() == 256)
+            && (m.hud_color_indices.is_empty() || m.hud_color_indices.len() == 10)
+            && (m.hud_color_percentages.is_empty() || m.hud_color_percentages.len() == 10),
         "invalid palette/remap lengths"
     );
     let mut generated = BTreeSet::new();
@@ -1129,6 +1137,171 @@ mod tests {
         );
         validate(&base).unwrap();
     }
+    #[test]
+    fn hud_rmp_footer_override_keeps_other_profiles_and_reuses_hd_artwork() {
+        let t = Temp::new();
+        let source = t.0.join("source");
+        game_fixture(&source);
+        let mut palette = fs::read(source.join("COLOR.PAL")).unwrap();
+        palette[768 + (31 << 10)] = 7;
+        palette[768 + 31] = 9;
+        save(&source, "COLOR.PAL", &palette);
+        let mut remap = vec![0; 259];
+        remap[256..].copy_from_slice(&[100, 0, 0]);
+        save(&source, "0.RMP", &remap);
+        let base = t.0.join("base");
+        let original = import(&source, &base).unwrap();
+        let before = fs::read(base.join("manifest.json")).unwrap();
+        assert_eq!(original.hud_color_indices[0], 7);
+        assert_eq!(original.hud_color_percentages[0], [100, 0, 0]);
+        remap[256..].copy_from_slice(&[0, 0, 100]);
+        let directory = t.0.join("mod");
+        save(&directory, "0.RMP", &remap);
+        let output = modded_cache(&base, &directory, &t.0.join("mods")).unwrap();
+        let modified = validate(&output).unwrap();
+        assert_eq!(modified.hud_color_indices[0], 9);
+        assert_eq!(modified.hud_color_percentages[0], [0, 0, 100]);
+        assert_eq!(
+            modified.hud_color_indices[1..],
+            original.hud_color_indices[1..]
+        );
+        assert_eq!(
+            modified.hud_color_percentages[1..],
+            original.hud_color_percentages[1..]
+        );
+        assert_eq!(modified.player_remaps, original.player_remaps);
+        assert_eq!(
+            hd::source_key(&modified).unwrap(),
+            hd::source_key(&original).unwrap()
+        );
+        assert_eq!(fs::read(base.join("manifest.json")).unwrap(), before);
+    }
+
+    #[test]
+    fn hud_palette_lookup_overlay_recomputes_retained_custom_rgb_profiles() {
+        let t = Temp::new();
+        let source = t.0.join("source");
+        game_fixture(&source);
+        let mut palette = fs::read(source.join("COLOR.PAL")).unwrap();
+        palette[768 + (31 << 10)] = 7;
+        palette[768 + 31] = 9;
+        save(&source, "COLOR.PAL", &palette);
+        for (player, rgb) in [(0, [100, 0, 0]), (1, [0, 0, 100])] {
+            let mut remap = vec![0; 259];
+            remap[256..].copy_from_slice(&rgb);
+            save(&source, &format!("{player}.RMP"), &remap);
+        }
+        let base = t.0.join("base");
+        let original = import(&source, &base).unwrap();
+        let directory = t.0.join("mod");
+        palette[768 + (31 << 10)] = 23;
+        palette[768 + 31] = 42;
+        save(&directory, "COLOR.PAL", &palette);
+        // Existing original-format palette conversion requires the complete
+        // animation set; the overlay intentionally supplies no RMP files.
+        for animation in &original.animations {
+            save(
+                &directory,
+                &animation.id,
+                &fs::read(source.join(&animation.id)).unwrap(),
+            );
+        }
+        let output = modded_cache(&base, &directory, &t.0.join("mods")).unwrap();
+        let modified = validate(&output).unwrap();
+        assert_eq!(modified.hud_color_indices[..2], [23, 42]);
+        assert_eq!(
+            modified.hud_color_percentages,
+            original.hud_color_percentages
+        );
+        assert_eq!(modified.palette, original.palette);
+        assert_eq!(validate(&base).unwrap().hud_color_indices[..2], [7, 9]);
+    }
+
+    #[test]
+    fn hud_without_rmp_footer_uses_current_value_resource_rgb() {
+        let t = Temp::new();
+        let source = t.0.join("source");
+        game_fixture(&source);
+        save(&source, "0.RMP", &[0; 256]);
+        save(
+            &source,
+            "DATA/RES/VALUELST.RES",
+            b"35,11\n200,100\n201,0\n202,0\n",
+        );
+        let mut palette = fs::read(source.join("COLOR.PAL")).unwrap();
+        palette[768 + (31 << 10)] = 7;
+        palette[768 + 31] = 9;
+        save(&source, "COLOR.PAL", &palette);
+        let base = t.0.join("base");
+        let original = import(&source, &base).unwrap();
+        assert_eq!(original.hud_color_indices[0], 7);
+        let directory = t.0.join("mod");
+        save(
+            &directory,
+            "DATA/RES/VALUELST.RES",
+            b"35,11\n200,0\n201,0\n202,100\n",
+        );
+        let output = modded_cache(&base, &directory, &t.0.join("mods")).unwrap();
+        let modified = validate(&output).unwrap();
+        assert_eq!(modified.hud_color_indices[0], 9);
+        assert_eq!(modified.hud_color_percentages[0], [0, 0, 100]);
+        assert_eq!(
+            hd::source_key(&modified).unwrap(),
+            hd::source_key(&original).unwrap()
+        );
+    }
+
+    #[test]
+    fn hud_metadata_is_optional_for_legacy_caches_and_does_not_change_hd_identity() {
+        let t = Temp::new();
+        let source = t.0.join("source");
+        game_fixture(&source);
+        let base = t.0.join("base");
+        let original = import(&source, &base).unwrap();
+        let key = hd::source_key(&original).unwrap();
+        let mut json = serde_json::to_value(&original).unwrap();
+        json.as_object_mut().unwrap().remove("hud_color_indices");
+        json.as_object_mut()
+            .unwrap()
+            .remove("hud_color_percentages");
+        fs::write(
+            base.join("manifest.json"),
+            serde_json::to_vec(&json).unwrap(),
+        )
+        .unwrap();
+        let legacy = validate(&base).unwrap();
+        assert!(legacy.hud_color_indices.is_empty());
+        assert!(legacy.hud_color_percentages.is_empty());
+        assert_eq!(hd::source_key(&legacy).unwrap(), key);
+        let mut updated = legacy.clone();
+        updated.hud_color_indices = vec![42; 10];
+        updated.hud_color_percentages = vec![[7, 90, 1]; 10];
+        assert_eq!(hd::source_key(&updated).unwrap(), key);
+        let serialized = serde_json::to_value(&legacy).unwrap();
+        assert!(serialized.get("hud_color_indices").is_none());
+        assert!(serialized.get("hud_color_percentages").is_none());
+        let mut identified = legacy.clone();
+        identified
+            .sources
+            .iter_mut()
+            .find(|s| s.path == "1.RMP")
+            .unwrap()
+            .sha256 = "5e2a7d2fd62855322d7a928c2b48d2451106ca866b95441133fafcc8466e12bb".into();
+        let profiles = hud::base_profiles(&identified);
+        assert_eq!(profiles[1], Some([15, 15, 10]));
+        assert_eq!(profiles[0], None);
+        let directory = t.0.join("mod");
+        // Unknown legacy custom footers cannot be recovered from indexed remaps.
+        let mut changed = vec![0; 259];
+        changed[256..].copy_from_slice(&[100, 0, 0]);
+        save(&directory, "0.RMP", &changed);
+        let error = modded_cache(&base, &directory, &t.0.join("mods")).unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("lacks score color percentages for 1.RMP"));
+        assert!(validate(&base).unwrap().hud_color_indices.is_empty());
+    }
+
     #[test]
     fn extracted_import_round_trip_checksums_and_corruption() {
         let t = Temp::new();

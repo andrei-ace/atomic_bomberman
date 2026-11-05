@@ -15,6 +15,78 @@ const UNIFORM_BUFFER_ALIGN: u64 = 256;
 #[cfg(all(target_os = "ios", not(target_arch = "x86_64")))]
 const UNIFORM_BUFFER_ALIGN: u64 = 16;
 
+fn blend_states(params: PipelineParams) -> Option<(BlendState, BlendState)> {
+    params
+        .color_blend
+        .map(|color| (color, params.alpha_blend.unwrap_or(color)))
+}
+
+#[cfg(test)]
+mod blend_tests {
+    use super::*;
+
+    fn rgb_blend() -> BlendState {
+        BlendState::new(
+            Equation::Add,
+            BlendFactor::Value(BlendValue::SourceAlpha),
+            BlendFactor::OneMinusValue(BlendValue::SourceAlpha),
+        )
+    }
+
+    fn alpha_result(state: BlendState, source: f32, destination: f32) -> f32 {
+        let factor = |value| match value {
+            BlendFactor::One => 1.,
+            BlendFactor::Value(BlendValue::SourceAlpha) => source,
+            BlendFactor::OneMinusValue(BlendValue::SourceAlpha) => 1. - source,
+            other => panic!("unexpected test blend factor: {:?}", other),
+        };
+        assert_eq!(state.equation, Equation::Add);
+        source * factor(state.sfactor) + destination * factor(state.dfactor)
+    }
+
+    #[test]
+    fn explicit_source_over_alpha_preserves_opaque_destination() {
+        let color = rgb_blend();
+        let (actual_color, actual_alpha) = blend_states(PipelineParams {
+            color_blend: Some(color),
+            alpha_blend: Some(BlendState::new(
+                Equation::Add,
+                BlendFactor::One,
+                BlendFactor::OneMinusValue(BlendValue::SourceAlpha),
+            )),
+            ..Default::default()
+        })
+        .unwrap();
+        assert_eq!(actual_color, color);
+        let mut coverage = 1.;
+        for source_alpha in [0.12, 0.5, 0.88] {
+            coverage = alpha_result(actual_alpha, source_alpha, coverage);
+            assert!((coverage - 1.).abs() < 1e-6);
+            // Reusing the RGB factors would produce a translucent scene and
+            // darken its RGB a second time when presented over the window.
+            assert!(alpha_result(color, source_alpha, 1.) < 0.99);
+        }
+        assert!((alpha_result(actual_alpha, 0.5, 0.) - 0.5).abs() < 1e-6);
+    }
+
+    #[test]
+    fn omitted_alpha_state_inherits_rgb_state() {
+        let color = rgb_blend();
+        assert_eq!(
+            blend_states(PipelineParams {
+                color_blend: Some(color),
+                ..Default::default()
+            }),
+            Some((color, color))
+        );
+    }
+
+    #[test]
+    fn omitted_color_state_disables_blending() {
+        assert_eq!(blend_states(PipelineParams::default()), None);
+    }
+}
+
 impl From<VertexFormat> for MTLVertexFormat {
     fn from(vf: VertexFormat) -> Self {
         match vf {
@@ -934,7 +1006,7 @@ impl RenderingBackend for MetalContext {
                 let color_attachment = msg_send_![color_attachments, objectAtIndexedSubscript: i];
                 let view_pixel_format: MTLPixelFormat = msg_send![self.view, colorPixelFormat];
                 msg_send_![color_attachment, setPixelFormat: view_pixel_format];
-                if let Some(color_blend) = params.color_blend {
+                if let Some((color_blend, alpha_blend)) = blend_states(params) {
                     msg_send_![color_attachment, setBlendingEnabled: true];
 
                     let BlendState {
@@ -946,7 +1018,7 @@ impl RenderingBackend for MetalContext {
                         equation: eq_alpha,
                         sfactor: src_alpha,
                         dfactor: dst_alpha,
-                    } = color_blend;
+                    } = alpha_blend;
                     msg_send_![
                         color_attachment,
                         setRgbBlendOperation: MTLBlendOperation::from(eq_rgb)
@@ -954,10 +1026,6 @@ impl RenderingBackend for MetalContext {
                     msg_send_![
                         color_attachment,
                         setAlphaBlendOperation: MTLBlendOperation::from(eq_alpha)
-                    ];
-                    msg_send_![
-                        color_attachment,
-                        setSourceRGBBlendFactor: MTLBlendFactor::from(src_rgb)
                     ];
                     msg_send_![
                         color_attachment,

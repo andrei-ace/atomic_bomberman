@@ -18,16 +18,17 @@ locally from your copy of the game.
 
 ## Download and install
 
-Download the **0.7.3** package for your platform and its matching `.sha256` file
-from [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.3).
+Download the **0.7.4** package for your platform and its matching `.sha256` file
+from [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.4).
 The installation guides explain checksum verification and first-run setup.
 
-Version 0.7.3 fixes player snapping and stale walking poses when network updates
-arrive late. It includes optional HD graphics, portable HD import/export, the
-original score bar and menu cursor, and the earlier security fixes.
-See the [release notes](docs/release-notes/0.7.3.md).
+Version 0.7.4 restores the original scoreboard and board alignment, fills
+widescreen windows with matching scenery, and remembers the window size.
+It also corrects HD display darkening and includes the earlier movement and
+security fixes, optional HD graphics and portable HD import/export.
+See the [release notes](docs/release-notes/0.7.4.md).
 
-**Multiplayer upgrade:** update clients to 0.7.3 for the movement fixes.
+**Multiplayer upgrade:** update clients to 0.7.4 for the latest fixes.
 Compatible protocol-8 clients and relays in the 0.7.0 family can play together.
 Version 0.6.1 uses protocol 7 and cannot join these games. Existing private server
 links, settings, imported data and prepared HD artwork remain valid.
@@ -113,6 +114,10 @@ green trigger-bomb animation without player recoloring.
 HD follows the selected mod. Voice/scheme-only mods reuse unchanged HD artwork;
 graphics, font and palette overrides get a separate matching cache. Until that
 cache is prepared, the mod remains active with Classic graphics.
+
+Widescreen windows keep the original board proportions and fill the sides with
+matching arena scenery. Classic and HD use the same board and HUD layout.
+The game remembers the last windowed size and restores it on the next launch.
 
 See [HD graphics and recovery](docs/hd-graphics.md) for preparation details.
 
@@ -224,7 +229,7 @@ authors and contributors; the links point to the upstream projects.
 
 | Project | Contribution |
 | --- | --- |
-| [Macroquad](https://github.com/not-fl3/macroquad), [Miniquad](https://github.com/not-fl3/miniquad), [quad-snd](https://github.com/not-fl3/quad-snd) — Fedor Logachev and contributors | Native graphics, window/input handling and audio; the vendored Miniquad and quad-snd changes are described in their notices. |
+| [Macroquad](https://github.com/not-fl3/macroquad), [Miniquad](https://github.com/not-fl3/miniquad), [quad-snd](https://github.com/not-fl3/quad-snd) — Fedor Logachev and contributors | Native graphics, window/input handling and audio. The scene shaders adapt Macroquad's default shaders; the vendored Miniquad and quad-snd changes are described in their notices. |
 | [gilrs](https://gitlab.com/gilrs-project/gilrs) | Game controller input. |
 | [Quinn](https://github.com/quinn-rs/quinn), [Tokio](https://github.com/tokio-rs/tokio), [rustls](https://github.com/rustls/rustls), [tokio-tungstenite](https://github.com/snapview/tokio-tungstenite) | Native multiplayer transport, asynchronous networking and TLS. |
 | [Serde](https://github.com/serde-rs/serde), [RustCrypto](https://github.com/RustCrypto/hashes) | Structured game/configuration data and content hashes. |

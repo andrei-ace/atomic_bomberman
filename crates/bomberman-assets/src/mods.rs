@@ -31,6 +31,14 @@ pub fn modded_cache(base: &Path, directory: &Path, cache_root: &Path) -> Result<
     );
     let mut digest = Sha256::new();
     digest.update(b"atomic-bomberman-mod-cache-2\0");
+    if records
+        .keys()
+        .any(|id| id == "COLOR.PAL" || id.ends_with(".RMP") || id == "DATA/RES/VALUELST.RES")
+    {
+        // Earlier color overlays discarded RMP footers. Rebuild their cheap
+        // combined cache once while retaining the unchanged HD artwork key.
+        digest.update(b"native-hud-colors-1\0");
+    }
     digest.update(serde_json::to_vec(&manifest)?);
     for record in records.values() {
         digest.update(serde_json::to_vec(record)?);
@@ -76,6 +84,13 @@ pub fn modded_cache(base: &Path, directory: &Path, cache_root: &Path) -> Result<
     };
     let palette_changed = changed("COLOR.PAL");
     let remaps_changed = (0..10).any(|n| changed(&format!("{n}.RMP")));
+    let fallback_colors_changed = changed("DATA/RES/VALUELST.RES")
+        && manifest
+            .sources
+            .iter()
+            .any(|s| s.path.ends_with(".RMP") && s.bytes == 256);
+    let update_hud_colors = palette_changed || remaps_changed || fallback_colors_changed;
+    let mut hud_profiles = hud::base_profiles(&manifest);
     if palette_changed {
         ensure!(manifest.animations.iter().all(|a| paths.contains_key(&a.id)),
             "a changed COLOR.PAL requires the mod's complete ANI set to preserve original color conversion");
@@ -117,12 +132,16 @@ pub fn modded_cache(base: &Path, directory: &Path, cache_root: &Path) -> Result<
     for n in 0..10 {
         if let Some(path) = paths.get(&format!("{n}.RMP")) {
             let data = read_checked(&mut source, path, &records[&format!("{n}.RMP")])?;
-            ensure!(data.len() == 259, "{path}: expected 259 color-remap bytes");
+            ensure!(
+                matches!(data.len(), 256 | 259),
+                "{path}: expected 256 remap bytes, optionally followed by three color percentages"
+            );
             manifest.player_remaps[n] = data[..256]
                 .iter()
                 .enumerate()
                 .map(|(i, &v)| if v == 0 { i as u8 } else { v })
                 .collect();
+            hud_profiles[n] = hud::remap_profile(&data);
         }
     }
     for (id, path) in paths {
@@ -171,6 +190,9 @@ pub fn modded_cache(base: &Path, directory: &Path, cache_root: &Path) -> Result<
     manifest.resources.sort_by(|a, b| a.id.cmp(&b.id));
     manifest.sources.sort_by(|a, b| a.path.cmp(&b.path));
     finish_manifest(&mut manifest)?;
+    if update_hud_colors {
+        hud::finish_profiles(&mut manifest, hud_profiles)?;
+    }
     fs::write(
         stage.0.join("manifest.json"),
         serde_json::to_vec_pretty(&manifest)?,

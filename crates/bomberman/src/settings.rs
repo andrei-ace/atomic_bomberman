@@ -10,6 +10,12 @@ pub const DEFAULT_ACTION: &str = if cfg!(target_os = "macos") {
 } else {
     "RightControl"
 };
+pub const DEFAULT_WINDOW_SIZE: [u32; 2] = [960, 720];
+
+pub fn valid_window_size(size: [u32; 2]) -> bool {
+    size.into_iter()
+        .all(|extent| (64..=16384).contains(&extent))
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Device {
@@ -110,6 +116,8 @@ pub struct Settings {
     pub disable_gameplay_music: bool,
     pub assign_keyboard_player: bool,
     pub fullscreen: bool,
+    /// Last windowed content size in logical screen units, independent of DPI.
+    pub window_size: [u32; 2],
     pub graphics: GraphicsMode,
     pub volume: f32,
     pub keyboard: [KeyLayout; 2],
@@ -160,6 +168,7 @@ impl Default for Settings {
             disable_gameplay_music: false,
             assign_keyboard_player: true,
             fullscreen: false,
+            window_size: DEFAULT_WINDOW_SIZE,
             graphics: GraphicsMode::Classic,
             volume: 0.65,
             keyboard: [
@@ -200,6 +209,9 @@ impl Settings {
 
     pub fn normalize(&mut self) {
         self.version = 1;
+        if !valid_window_size(self.window_size) {
+            self.window_size = DEFAULT_WINDOW_SIZE;
+        }
         self.participant_count = self.participant_count.clamp(2, 10);
         self.participants.resize_with(10, || Participant {
             device: Device::Bot,
@@ -472,6 +484,40 @@ pub fn default_path() -> PathBuf {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn older_profiles_keep_the_default_window_and_invalid_sizes_recover() {
+        let mut settings: super::Settings = serde_json::from_str("{}").unwrap();
+        assert_eq!(settings.window_size, super::DEFAULT_WINDOW_SIZE);
+        for invalid in [[0, 720], [960, 0], [u32::MAX, 720]] {
+            settings.window_size = invalid;
+            settings.normalize();
+            assert_eq!(settings.window_size, super::DEFAULT_WINDOW_SIZE);
+        }
+        settings.window_size = [1280, 720];
+        settings.normalize();
+        assert_eq!(settings.window_size, [1280, 720]);
+    }
+
+    #[test]
+    fn resized_window_survives_reload_and_another_windows_stale_save() {
+        let root =
+            std::env::temp_dir().join(format!("bomberman-window-size-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        let path = root.join("settings.json");
+        let mut resized = super::Settings::load(&path).unwrap();
+        let mut stale = super::Settings::load(&path).unwrap();
+        resized.window_size = [1280, 720];
+        resized.save(&path).unwrap();
+        stale.nickname = "Second window".into();
+        stale.save(&path).unwrap();
+        stale.save(&path).unwrap();
+        let restored = super::Settings::load(&path).unwrap();
+        assert_eq!(restored.window_size, [1280, 720]);
+        assert_eq!(restored.nickname, "Second window");
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
     #[test]
     fn old_or_unknown_graphics_preferences_preserve_the_rest_of_the_profile() {
         for graphics in [None, Some("FutureMode")] {

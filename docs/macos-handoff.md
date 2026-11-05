@@ -6,6 +6,9 @@ same deterministic Rust simulation as Linux. The app is ad-hoc signed for local
 use and is not notarized. Intel compilation remains covered by the Mac CI
 matrix; the portable package targets Apple Silicon.
 
+Window resizing is remembered between runs, including widescreen proportions.
+Fullscreen dimensions are kept separate from the last windowed size.
+
 ## Build and play
 
 For installation of a prebuilt app, see [the installation guide](INSTALL-macos.md).

@@ -33,8 +33,7 @@ class Original(NativeMachine):
         self.draws = []
         self.rectangles = []
         for address, value in {
-            0x464898: 20, 0x4648a4: 40, 0x4648a0: 36, 0x4648a8: 60,
-            0x4648ac: 15, 0x4648b4: 11, 0x46494c: 50, 0x464958: 0,
+            0x46494c: 50, 0x464958: 0,
             0x46224c: FLAMES, 0x4621f4: DANGER, 0x461b58: 1,
             0x461b5c: SEQ, 0x461b6c: FRAMES,
             0x46058c: 0, 0x460590: 0, 0x460594: 2048, 0x460598: 2048,
@@ -50,10 +49,25 @@ class Original(NativeMachine):
             0x424dfe: lambda: self.ret(0),
             0x415a9f: self.draw,
             0x4184d0: lambda: self.ret(SCRATCH),
+            0x410ebf: lambda: self.ret(),  # Shutdown callback registration.
             0x41863d: lambda: self.ret(0),
             0x4428e4: self.blit,
         })
         self.compact_hooks()
+        # Let the original initializer derive the board origin. Earlier audits
+        # injected Y=60 and therefore checked relative placement only.
+        self.put(0x464a70, 640)
+        self.put(0x464a6c, 480)
+        self.run(0x42647a)
+        self.board = {name: self.get(address, signed=True) for name, address in {
+            'x': 0x464898, 'y': 0x4648a8,
+            'columns': 0x4648ac, 'rows': 0x4648b4,
+            'tile_width': 0x4648a4, 'tile_height': 0x4648a0,
+        }.items()}
+
+    def center(self, tile):
+        return [self.board['x'] + (tile[0] * 2 + 1) * self.board['tile_width'] // 2,
+                self.board['y'] + (tile[1] * 2 + 1) * self.board['tile_height'] // 2]
 
     def cstring(self, address):
         return bytes(self.uc.mem_read(address, 256)).split(b'\0', 1)[0].decode('ascii')
@@ -163,7 +177,7 @@ def compare(exe, assets, rust):
                 expected.append(machine.execute(animation, sequence_index, shape, arena, frame, color, tile))
                 # Floor tiles anchor at the CIMG's bottom pixel; floor flames
                 # start with the tile center and use the production helper.
-                anchor = [20 + tile[0] * 40 + 20, 60 + tile[1] * 36 + 18]
+                anchor = machine.center(tile)
                 selected = min(frame, len(sequence['frames']) - 1) if shape == 9 else frame
                 fixtures.append(dict(animation=animation, sequence=sequence_index, frame=selected,
                                      anchor=anchor, floor_flame=shape != 9, ground_sprite=shape == 9))
@@ -181,7 +195,7 @@ def compare(exe, assets, rust):
             color, tile = frame % 10, (7, 5)
             expected.append(machine.ground(animation, sequence_index, frame, color, tile))
             fixtures.append(dict(animation=animation, sequence=sequence_index, frame=frame,
-                                 anchor=[320, 258], ground_sprite=True))
+                                 anchor=machine.center(tile), ground_sprite=True))
             contexts.append(dict(sequence=name, frame=frame, color=color, tile=tile))
     ground_states = len(fixtures) - flame_cases
     animation, sequence_index = sequences['shadow']
@@ -189,7 +203,7 @@ def compare(exe, assets, rust):
         for tx in range(15):
             expected.append(machine.ground(animation, sequence_index, 0, 0, (tx, ty)))
             fixtures.append(dict(animation=animation, sequence=sequence_index, frame=0,
-                                 anchor=[40 + tx * 40, 78 + ty * 36], ground_sprite=True))
+                                 anchor=machine.center((tx, ty)), ground_sprite=True))
             contexts.append(dict(sequence='shadow', frame=0, color=0, tile=(tx, ty)))
     previous = None
     inputs = []
@@ -210,8 +224,8 @@ def compare(exe, assets, rust):
                 fixtures=len(fixtures), flame_fixtures=flame_cases, colors=10,
                 floor_flame_shapes=9, brick_arenas=len(manifest['arenas']),
                 other_battle_sequences=ground_sequences, other_battle_states=ground_states,
-                ground_tiles=165,
-                native_entries=['0x426d06', '0x426524', '0x42655f', '0x41daa7', '0x41db41', '0x4156c7'],
+                ground_tiles=165, initialized_board=machine.board,
+                native_entries=['0x42647a', '0x426d06', '0x426524', '0x42655f', '0x41daa7', '0x41db41', '0x4156c7'],
                 compared=['native per-frame X and Y offsets', 'actual queued anchor for every color',
                           'CIMG origin subtraction and final bitmap rectangle', 'wrapped floor frames',
                           'clamped brick destruction frames', 'corner and central board tiles',

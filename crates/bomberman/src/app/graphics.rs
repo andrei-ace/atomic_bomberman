@@ -253,10 +253,10 @@ impl App {
     }
 
     fn hd_dimensions(&self) -> (u32, u32) {
-        let scale = (screen_width() / 640.).min(screen_height() / 480.) * screen_dpi_scale();
+        let viewport = CanvasViewport::fit(screen_width(), screen_height());
         (
-            (640. * scale).round().max(1.) as u32,
-            (480. * scale).round().max(1.) as u32,
+            (viewport.width * screen_dpi_scale()).round().max(1.) as u32,
+            (viewport.height * screen_dpi_scale()).round().max(1.) as u32,
         )
     }
 
@@ -356,9 +356,7 @@ impl App {
             }
             0 | 2 => self.start_hd_job(true, true),
             1 => {
-                self.settings.fullscreen = !self.settings.fullscreen;
-                set_fullscreen(self.settings.fullscreen);
-                self.save();
+                self.toggle_fullscreen();
             }
             3 | 4 if self.confirm() || click => {
                 match crate::modding::choose_hd_folder(self.selection == 4) {

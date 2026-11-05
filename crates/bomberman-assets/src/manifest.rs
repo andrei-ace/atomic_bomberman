@@ -21,6 +21,12 @@ pub struct Manifest {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub palette_lookup: Vec<u8>,
     pub player_remaps: Vec<Vec<u8>>,
+    /// Native score foreground palette indices, one for each player color.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub hud_color_indices: Vec<u8>,
+    /// Original RMP RGB percentages, retained for palette-only mod overlays.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub hud_color_percentages: Vec<[u8; 3]>,
     pub sound_mappings: Vec<SoundMapping>,
     pub animation_order: Vec<String>,
 }

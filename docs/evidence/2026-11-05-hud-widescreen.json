@@ -1,0 +1,589 @@
+{
+  "status": "local_unreleased",
+  "date": "2026-11-05",
+  "source_base_commit": "9781fb4a1a330710cbf6c06164e425878d25bed1",
+  "scope": "Original HUD and board layout; original-proportion canvas with decorative widescreen/portrait scenery; source-over scene alpha.",
+  "native": {
+    "passed": true,
+    "executable_sha256": "d1ff5f6fba03f20b4a161af1c75165b841e536cd9398ed2692202cee6d6b3857",
+    "board": {
+      "board_x": 20,
+      "board_y": 68,
+      "columns": 15,
+      "rows": 11,
+      "tile_width": 40,
+      "tile_height": 36
+    },
+    "timer_cases": 15,
+    "timer_glyph_states": 11,
+    "scores": 10,
+    "dead_marker_cases": 3,
+    "score_color_cases": 10,
+    "sprite_placement_cases": 4595,
+    "initialized_sprite_board": {
+      "x": 20,
+      "y": 68,
+      "columns": 15,
+      "rows": 11,
+      "tile_width": 40,
+      "tile_height": 36
+    }
+  },
+  "hud": [
+    {
+      "passed": true,
+      "mode": "Classic",
+      "binary_sha256": "17fa5c94645997e05ff42abf049236392ee0343c7ae9e67ace859a9619d35724",
+      "frames": [
+        {
+          "fixture": "native-numeric-hud",
+          "target_size": [
+            640,
+            480
+          ],
+          "pixel_comparisons": 22,
+          "reference_pixels_checked": 63356,
+          "minimum_matching_fraction": 1.0,
+          "dead_markers_checked": 0
+        },
+        {
+          "fixture": "native-infinity-hud",
+          "target_size": [
+            640,
+            480
+          ],
+          "pixel_comparisons": 19,
+          "reference_pixels_checked": 63587,
+          "minimum_matching_fraction": 1.0,
+          "dead_markers_checked": 0
+        },
+        {
+          "fixture": "native-dead-marker-hud",
+          "target_size": [
+            640,
+            480
+          ],
+          "pixel_comparisons": 14,
+          "reference_pixels_checked": 62396,
+          "minimum_matching_fraction": 1.0,
+          "dead_markers_checked": 1
+        }
+      ]
+    },
+    {
+      "passed": true,
+      "mode": "Hd",
+      "binary_sha256": "0739b6fc14badfc5a724f5af75e05c6c76ff06702a9bf080eec6b6d1ab02d9e6",
+      "frames": [
+        {
+          "fixture": "native-numeric-hud",
+          "target_size": [
+            1280,
+            960
+          ],
+          "pixel_comparisons": 22,
+          "reference_pixels_checked": 236327,
+          "minimum_matching_fraction": 1.0,
+          "dead_markers_checked": 0
+        },
+        {
+          "fixture": "native-infinity-hud",
+          "target_size": [
+            1280,
+            960
+          ],
+          "pixel_comparisons": 19,
+          "reference_pixels_checked": 238218,
+          "minimum_matching_fraction": 1.0,
+          "dead_markers_checked": 0
+        },
+        {
+          "fixture": "native-dead-marker-hud",
+          "target_size": [
+            1280,
+            960
+          ],
+          "pixel_comparisons": 14,
+          "reference_pixels_checked": 237373,
+          "minimum_matching_fraction": 1.0,
+          "dead_markers_checked": 1
+        }
+      ]
+    }
+  ],
+  "widescreen": {
+    "passed": true,
+    "binary_sha256": "ce861d6e016fc73c98094b55df5bb1b00ddfaa971c0e80a0e9407a61224e1f88",
+    "cases": [
+      {
+        "mode": "Classic",
+        "screen": "Main",
+        "ratio": "4-by-3",
+        "window_size": [
+          960,
+          720
+        ],
+        "framebuffer_size": [
+          960,
+          720
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          640,
+          480
+        ],
+        "center_pixels_checked": 684496,
+        "margin_samples_checked": 0,
+        "maximum_margin_channel_error": 0,
+        "mouse_mapping_checked": true
+      },
+      {
+        "mode": "Classic",
+        "screen": "Main",
+        "ratio": "16-by-9",
+        "window_size": [
+          1280,
+          720
+        ],
+        "framebuffer_size": [
+          1280,
+          720
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          640,
+          480
+        ],
+        "center_pixels_checked": 684496,
+        "margin_samples_checked": 2048,
+        "maximum_margin_channel_error": 0,
+        "mouse_mapping_checked": true
+      },
+      {
+        "mode": "Classic",
+        "screen": "Main",
+        "ratio": "ultrawide",
+        "window_size": [
+          1344,
+          576
+        ],
+        "framebuffer_size": [
+          1344,
+          576
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          640,
+          480
+        ],
+        "center_pixels_checked": 437008,
+        "margin_samples_checked": 2048,
+        "maximum_margin_channel_error": 0,
+        "mouse_mapping_checked": true
+      },
+      {
+        "mode": "Classic",
+        "screen": "Main",
+        "ratio": "portrait",
+        "window_size": [
+          432,
+          768
+        ],
+        "framebuffer_size": [
+          432,
+          768
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          640,
+          480
+        ],
+        "center_pixels_checked": 136960,
+        "margin_samples_checked": 2048,
+        "maximum_margin_channel_error": 0,
+        "mouse_mapping_checked": true
+      },
+      {
+        "mode": "Classic",
+        "screen": "Battle",
+        "ratio": "4-by-3",
+        "window_size": [
+          960,
+          720
+        ],
+        "framebuffer_size": [
+          960,
+          720
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          640,
+          480
+        ],
+        "center_pixels_checked": 684496,
+        "margin_samples_checked": 0,
+        "maximum_margin_channel_error": 0,
+        "mouse_mapping_checked": false
+      },
+      {
+        "mode": "Classic",
+        "screen": "Battle",
+        "ratio": "16-by-9",
+        "window_size": [
+          1280,
+          720
+        ],
+        "framebuffer_size": [
+          1280,
+          720
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          640,
+          480
+        ],
+        "center_pixels_checked": 684496,
+        "margin_samples_checked": 2048,
+        "maximum_margin_channel_error": 0,
+        "mouse_mapping_checked": false
+      },
+      {
+        "mode": "Classic",
+        "screen": "Battle",
+        "ratio": "ultrawide",
+        "window_size": [
+          1344,
+          576
+        ],
+        "framebuffer_size": [
+          1344,
+          576
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          640,
+          480
+        ],
+        "center_pixels_checked": 437008,
+        "margin_samples_checked": 2048,
+        "maximum_margin_channel_error": 0,
+        "mouse_mapping_checked": false
+      },
+      {
+        "mode": "Classic",
+        "screen": "Battle",
+        "ratio": "portrait",
+        "window_size": [
+          432,
+          768
+        ],
+        "framebuffer_size": [
+          432,
+          768
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          640,
+          480
+        ],
+        "center_pixels_checked": 136960,
+        "margin_samples_checked": 2048,
+        "maximum_margin_channel_error": 0,
+        "mouse_mapping_checked": false
+      },
+      {
+        "mode": "HD",
+        "screen": "Main",
+        "ratio": "4-by-3",
+        "window_size": [
+          960,
+          720
+        ],
+        "framebuffer_size": [
+          960,
+          720
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          960,
+          720
+        ],
+        "center_pixels_checked": 684496,
+        "margin_samples_checked": 0,
+        "maximum_margin_channel_error": 0,
+        "mouse_mapping_checked": true
+      },
+      {
+        "mode": "HD",
+        "screen": "Main",
+        "ratio": "16-by-9",
+        "window_size": [
+          1280,
+          720
+        ],
+        "framebuffer_size": [
+          1280,
+          720
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          960,
+          720
+        ],
+        "center_pixels_checked": 684496,
+        "margin_samples_checked": 2048,
+        "maximum_margin_channel_error": 1,
+        "mouse_mapping_checked": true
+      },
+      {
+        "mode": "HD",
+        "screen": "Main",
+        "ratio": "ultrawide",
+        "window_size": [
+          1344,
+          576
+        ],
+        "framebuffer_size": [
+          1344,
+          576
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          768,
+          576
+        ],
+        "center_pixels_checked": 437008,
+        "margin_samples_checked": 2048,
+        "maximum_margin_channel_error": 1,
+        "mouse_mapping_checked": true
+      },
+      {
+        "mode": "HD",
+        "screen": "Main",
+        "ratio": "portrait",
+        "window_size": [
+          432,
+          768
+        ],
+        "framebuffer_size": [
+          432,
+          768
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          432,
+          324
+        ],
+        "center_pixels_checked": 136960,
+        "margin_samples_checked": 2048,
+        "maximum_margin_channel_error": 1,
+        "mouse_mapping_checked": true
+      },
+      {
+        "mode": "HD",
+        "screen": "Battle",
+        "ratio": "4-by-3",
+        "window_size": [
+          960,
+          720
+        ],
+        "framebuffer_size": [
+          960,
+          720
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          960,
+          720
+        ],
+        "center_pixels_checked": 684496,
+        "margin_samples_checked": 0,
+        "maximum_margin_channel_error": 0,
+        "mouse_mapping_checked": false
+      },
+      {
+        "mode": "HD",
+        "screen": "Battle",
+        "ratio": "16-by-9",
+        "window_size": [
+          1280,
+          720
+        ],
+        "framebuffer_size": [
+          1280,
+          720
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          960,
+          720
+        ],
+        "center_pixels_checked": 684496,
+        "margin_samples_checked": 2048,
+        "maximum_margin_channel_error": 1,
+        "mouse_mapping_checked": false
+      },
+      {
+        "mode": "HD",
+        "screen": "Battle",
+        "ratio": "ultrawide",
+        "window_size": [
+          1344,
+          576
+        ],
+        "framebuffer_size": [
+          1344,
+          576
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          768,
+          576
+        ],
+        "center_pixels_checked": 437008,
+        "margin_samples_checked": 2048,
+        "maximum_margin_channel_error": 1,
+        "mouse_mapping_checked": false
+      },
+      {
+        "mode": "HD",
+        "screen": "Battle",
+        "ratio": "portrait",
+        "window_size": [
+          432,
+          768
+        ],
+        "framebuffer_size": [
+          432,
+          768
+        ],
+        "dpi": 1.0,
+        "target_size": [
+          432,
+          324
+        ],
+        "center_pixels_checked": 136960,
+        "margin_samples_checked": 2048,
+        "maximum_margin_channel_error": 1,
+        "mouse_mapping_checked": false
+      }
+    ],
+    "fallback_to_classic": true,
+    "cache_retention": {
+      "passed": true,
+      "files_checked": 8234,
+      "indices_checked": 7,
+      "sizes_mtimes_inodes_and_index_hashes_unchanged": true,
+      "changed_files": []
+    }
+  },
+  "compositing": {
+    "opengl_gpu_canvas_rgba": [
+      96,
+      63,
+      96,
+      255
+    ],
+    "opengl_gpu_window_rgba": [
+      96,
+      63,
+      96,
+      255
+    ],
+    "metal_shader_compilation_and_presentation": true,
+    "metal_framebuffer_readback": "unsupported by vendored backend",
+    "metal_blend_state_tests_passed": 3
+  },
+  "checks": {
+    "game_tests_passed": 71,
+    "asset_tests_passed": 52,
+    "unchanged_asset_hardware_tests_ignored": 3,
+    "workspace_clippy_all_targets_strict": true,
+    "rustfmt": true,
+    "python_compile": true,
+    "git_diff_check": true,
+    "window_size_persistence_and_fullscreen_native": true
+  },
+  "limitations": [
+    "Isolated original x86 routines, not the complete original Windows application.",
+    "Native macOS OpenGL pixels and process-local Cocoa events; no physical input, audio or other-platform runtime claim.",
+    "HUD compares opaque interiors and composited thin marker coverage; HD allows two channel levels of filtering/rounding error.",
+    "Window comparison excludes a two-pixel seam perimeter; mathematically ambiguous nearest-texel samples allow adjacent texels.",
+    "Widescreen runtime cases cover main menu and ClassicGreenAcres battle. Victory/network/manual background selections were checked against their drawing methods.",
+    "No FPS or physical display latency measurement in this layout validation."
+  ],
+  "packaged_local_build": {
+    "built_at_utc": "2026-11-05T11:38:51.860541+00:00",
+    "source_sha256": "7082524fbb0fe351c8e2e504f3cc81a149f7e0aacbefc86f88637fa61d8d6b5b",
+    "uncommitted_source": true,
+    "binary_sha256": "7e2ed3df6793731e4563ba35c0eda00a0baaaa0eb02abd7cceb78d17025606d9",
+    "signed_bundle_verified": true,
+    "packaging_verification_passed": true,
+    "graphics_menu_widescreen_margin_comparisons": [
+      {
+        "side": "left",
+        "rectangle": [
+          0,
+          0,
+          160.0,
+          720
+        ],
+        "reference_samples_checked": 1024,
+        "nonblack_reference_matches": 1024,
+        "maximum_channel_error": 1,
+        "channel_tolerance": 2
+      },
+      {
+        "side": "right",
+        "rectangle": [
+          1120.0,
+          0,
+          160.0,
+          720
+        ],
+        "reference_samples_checked": 1024,
+        "nonblack_reference_matches": 1024,
+        "maximum_channel_error": 1,
+        "channel_tolerance": 2
+      }
+    ],
+    "window_size_runs": [
+      {
+        "initial_size": [
+          960,
+          720
+        ],
+        "initial_fullscreen": 0,
+        "resized_and_saved": [
+          1280,
+          720
+        ],
+        "fullscreen_size": [
+          5120,
+          1410
+        ],
+        "fullscreen_preserved_windowed_size": true
+      },
+      {
+        "initial_size": [
+          1280,
+          720
+        ],
+        "initial_fullscreen": 0,
+        "restored_previous_run": true,
+        "resized_and_saved": [
+          1024,
+          768
+        ]
+      },
+      {
+        "initial_size": [
+          1024,
+          768
+        ],
+        "initial_fullscreen": 0,
+        "restored_previous_run": true
+      }
+    ]
+  }
+}

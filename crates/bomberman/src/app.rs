@@ -3,7 +3,7 @@ use crate::{
     cli::Cli,
     controls::{fullscreen_shortcut, key_named, Controllers, ACTIONS, PAD_BUTTONS},
     media::{Media, MUSIC},
-    presentation::{ground_anchor, player_sprite},
+    presentation::{ground_anchor, player_sprite, viewport::CanvasViewport, BOARD_X, BOARD_Y},
     settings::{Device, Settings},
 };
 use anyhow::{Context, Result};
@@ -32,8 +32,6 @@ const MAIN_FOOTER: &str = concat!("v", env!("CARGO_PKG_VERSION"));
 const GOLD: Color = Color::new(1., 0.87, 0.23, 1.);
 const LIGHT: Color = Color::new(0.91, 0.94, 1., 1.);
 const MUTED: Color = Color::new(0.62, 0.69, 0.78, 1.);
-const BOARD_X: f32 = 20.;
-const BOARD_Y: f32 = 60.; // Native DAT_004648a8, first cell's top edge.
 const PLAYER_COLORS: [Color; 10] = [
     WHITE,
     Color::new(0.4, 0.4, 0.4, 1.),
@@ -81,6 +79,7 @@ pub struct App {
     settings: Settings,
     media: Media,
     controllers: Controllers,
+    scene_material: Material,
     target: RenderTarget,
     classic_target: RenderTarget,
     screen: Screen,
@@ -95,6 +94,7 @@ pub struct App {
     frame: u32,
     time_remainder_ms: f64,
     ui_elapsed_ms: u64,
+    window_size_tracker: crate::window_state::WindowSizeTracker,
     roulette_ms: u32,
     mouse: Vec2,
     clicked: bool,
@@ -131,6 +131,7 @@ impl App {
             settings,
             media,
             controllers: Controllers::new(),
+            scene_material: crate::presentation::compositing::scene_material()?,
             classic_target: target.clone(),
             target,
             screen: initial_screen,
@@ -145,6 +146,7 @@ impl App {
             frame: 0,
             time_remainder_ms: 0.,
             ui_elapsed_ms: 0,
+            window_size_tracker: crate::window_state::WindowSizeTracker::default(),
             roulette_ms: 0,
             mouse: vec2(-1., -1.),
             clicked: false,
@@ -155,6 +157,9 @@ impl App {
             mod_ui: mods::State::default(),
             graphics_ui: graphics::State::default(),
         };
+        if this.settings.fullscreen {
+            this.window_size_tracker.fullscreen_transition(0);
+        }
         // Invalid hand-edited bindings are recovered individually.
         let defaults = Settings::default();
         for layout in 0..2 {
@@ -197,9 +202,40 @@ impl App {
     }
 
     fn save(&mut self) {
+        self.remember_window_size(true);
         if let Err(error) = self.settings.save(&self.cli.settings) {
             self.notify(format!("Settings could not be saved: {error:#}"));
         }
+    }
+
+    fn remember_window_size(&mut self, force: bool) -> bool {
+        let fullscreen =
+            crate::window_state::native_fullscreen().unwrap_or(self.settings.fullscreen);
+        let size = [
+            screen_width().round() as u32,
+            screen_height().round() as u32,
+        ];
+        let Some(size) =
+            self.window_size_tracker
+                .observe(size, fullscreen, self.ui_elapsed_ms, force)
+        else {
+            return false;
+        };
+        if self.settings.window_size == size {
+            return false;
+        }
+        self.settings.window_size = size;
+        true
+    }
+
+    fn toggle_fullscreen(&mut self) {
+        self.remember_window_size(true);
+        self.settings.fullscreen =
+            !crate::window_state::native_fullscreen().unwrap_or(self.settings.fullscreen);
+        self.window_size_tracker
+            .fullscreen_transition(self.ui_elapsed_ms);
+        set_fullscreen(self.settings.fullscreen);
+        self.save();
     }
 
     fn change_screen(&mut self, screen: Screen) {
@@ -281,10 +317,11 @@ impl App {
                 elapsed
             };
             self.ui_elapsed_ms += elapsed_ms as u64;
-            if fullscreen_shortcut() && self.capture.is_none() {
-                self.settings.fullscreen = !self.settings.fullscreen;
-                set_fullscreen(self.settings.fullscreen);
+            if self.remember_window_size(false) {
                 self.save();
+            }
+            if fullscreen_shortcut() && self.capture.is_none() {
+                self.toggle_fullscreen();
             }
             if is_key_pressed(KeyCode::F1)
                 && self.capture.is_none()
@@ -428,11 +465,12 @@ impl App {
             if let Some(path) = std::env::var_os("ATOMIC_BOMBERMAN_STATE_PROBE") {
                 let path = std::path::PathBuf::from(path);
                 let temporary = path.with_extension("json.tmp");
+                let viewport = CanvasViewport::fit(screen_width(), screen_height());
                 let state = serde_json::json!({
                     "asset_fingerprint": crate::network::compatibility(&self.media.manifest).assets,
                     "mods": self.mod_ui.probe(),
                     "active_mod": self.cli.mod_path,
-                    "graphics": {"requested": self.settings.graphics, "hd_active": self.media.hd_enabled(), "source_key":bomberman_assets::hd::source_key(&self.media.manifest).ok(), "texture_bytes": self.media.hd_bytes(), "target_width":self.target.texture.width(), "target_height":self.target.texture.height(),"job":self.graphics_ui.probe(),"cache":self.media.hd_diagnostics()},
+                    "graphics": {"window_width":screen_width(),"window_height":screen_height(),"window_dpi":screen_dpi_scale(),"content_viewport":[viewport.x,viewport.y,viewport.width,viewport.height],"requested": self.settings.graphics, "hd_active": self.media.hd_enabled(), "source_key":bomberman_assets::hd::source_key(&self.media.manifest).ok(), "texture_bytes": self.media.hd_bytes(), "target_width":self.target.texture.width(), "target_height":self.target.texture.height(),"job":self.graphics_ui.probe(),"cache":self.media.hd_diagnostics()},
                     "frame": self.frame,
                     "version": bomberman_net::APP_VERSION,
                     "main_footer": MAIN_FOOTER,
@@ -476,20 +514,21 @@ impl App {
                         .get_texture_data()
                         .export_png(&std::path::PathBuf::from(image).to_string_lossy());
                 }
+                if let Some(image) = std::env::var_os("ATOMIC_BOMBERMAN_WINDOW_SCREENSHOT_PROBE") {
+                    get_screen_data()
+                        .export_png(&std::path::PathBuf::from(image).to_string_lossy());
+                }
             }
         }
         Ok(())
     }
 
     fn map_mouse(&mut self) {
-        let scale = (screen_width() / 640.).min(screen_height() / 480.);
-        let offset = vec2(
-            (screen_width() - 640. * scale) * 0.5,
-            (screen_height() - 480. * scale) * 0.5,
-        );
+        let viewport = CanvasViewport::fit(screen_width(), screen_height());
         let (x, y) = mouse_position();
-        self.mouse = (vec2(x, y) - offset) / scale.max(0.01);
-        self.clicked = is_mouse_button_pressed(MouseButton::Left);
+        let (canvas_x, canvas_y) = viewport.to_canvas(x, y);
+        self.mouse = vec2(canvas_x, canvas_y);
+        self.clicked = viewport.contains(x, y) && is_mouse_button_pressed(MouseButton::Left);
     }
 
     fn confirm(&self) -> bool {
@@ -847,6 +886,7 @@ impl App {
         let mut camera = Camera2D::from_display_rect(Rect::new(0., 0., 640., 480.));
         camera.render_target = Some(self.target.clone());
         set_camera(&camera);
+        gl_use_material(&self.scene_material);
         clear_background(BLACK);
         match self.screen {
             Screen::Intro => self.draw_intro(),
@@ -882,19 +922,106 @@ impl App {
         }
         self.draw_compatibility_error();
         set_default_camera();
+        gl_use_default_material();
         clear_background(BLACK);
-        let scale = (screen_width() / 640.).min(screen_height() / 480.);
+        let viewport = CanvasViewport::fit(screen_width(), screen_height());
+        self.draw_backdrop(viewport);
         draw_texture_ex(
             &self.target.texture,
-            (screen_width() - 640. * scale) * 0.5,
-            (screen_height() - 480. * scale) * 0.5,
+            viewport.x,
+            viewport.y,
             WHITE,
             DrawTextureParams {
-                dest_size: Some(vec2(640. * scale, 480. * scale)),
+                dest_size: Some(vec2(viewport.width, viewport.height)),
                 flip_y: true,
                 ..Default::default()
             },
         );
+    }
+
+    fn draw_backdrop(&self, viewport: CanvasViewport) {
+        let window = [screen_width(), screen_height()];
+        let margins = viewport.margins(window[0], window[1]);
+        if margins.iter().all(Option::is_none) {
+            return;
+        }
+        let battle = matches!(self.screen, Screen::Battle | Screen::NetworkStarting)
+            && self.simulation.as_ref().is_some_and(|simulation| {
+                !matches!(simulation.phase, RoundPhase::RoundOver { .. }) || self.paused
+            });
+        let asset = if battle {
+            self.media.manifest.arenas[self.simulation.as_ref().unwrap().config.arena.index()]
+                .background
+                .clone()
+        } else {
+            match self.screen {
+                Screen::Main | Screen::Manual => "MAINMENU.PCX".into(),
+                Screen::Intro => {
+                    ["IPLOGO.PCX", "HSLOGO.PCX", "TITLE.PCX"][self.frontend.intro.min(2)].into()
+                }
+                Screen::Battle | Screen::Results => "RESULTS.PCX".into(),
+                Screen::Victory => self
+                    .simulation
+                    .as_ref()
+                    .and_then(|simulation| match simulation.phase {
+                        RoundPhase::MatchOver { winner } => {
+                            Some(format!("VICTORY{}.PCX", self.palette_index(winner)))
+                        }
+                        _ => None,
+                    })
+                    .unwrap_or_else(|| "RESULTS.PCX".into()),
+                Screen::Roulette => "ROULETTE.PCX".into(),
+                Screen::Arena | Screen::NetworkRules => format!("GLUE{}.PCX", self.arena_glue()),
+                Screen::Nickname
+                | Screen::Internet
+                | Screen::Online
+                | Screen::Lan
+                | Screen::NetworkLobby
+                | Screen::NetworkOptions
+                | Screen::NetworkStarting => "GLUE5.PCX".into(),
+                Screen::NetworkDevices => "GLUE4.PCX".into(),
+                _ => format!("GLUE{}.PCX", self.frontend.glue % 7),
+            }
+        };
+        let Some(texture) = self.media.texture(&asset) else {
+            return;
+        };
+        let source = if battle {
+            // Decorative scenery excludes the background's original HUD strip.
+            let header = crate::presentation::HUD_HEIGHT / 480.;
+            [
+                0.,
+                texture.height() * header,
+                texture.width(),
+                texture.height() * (1. - header),
+            ]
+        } else if matches!(self.screen, Screen::Main | Screen::Manual) {
+            // Clear starfield, without duplicating baked menu labels outside
+            // the interactive original canvas.
+            [
+                texture.width() * 350. / 640.,
+                0.,
+                texture.width() * 290. / 640.,
+                texture.height() * 100. / 480.,
+            ]
+        } else {
+            [0., 0., texture.width(), texture.height()]
+        };
+        for destination in margins.into_iter().flatten() {
+            let crop = crate::presentation::viewport::backdrop_source(source, window, destination);
+            if crop[2] > 0. && crop[3] > 0. {
+                self.media.image_region(
+                    &asset,
+                    Rect::new(crop[0], crop[1], crop[2], crop[3]),
+                    Rect::new(
+                        destination[0],
+                        destination[1],
+                        destination[2],
+                        destination[3],
+                    ),
+                );
+            }
+        }
     }
 
     fn heading(&self, title: &str) {
@@ -1053,26 +1180,11 @@ impl App {
             return;
         }
         let arena = &self.media.manifest.arenas[simulation.config.arena.index()];
-        let (left, top, scale) = crate::presentation::battle_viewport();
-        unsafe {
-            let gl = macroquad::window::get_internal_gl();
-            gl.quad_gl.push_model_matrix(
-                Mat4::from_translation(vec3(left, top, 0.))
-                    * Mat4::from_scale(vec3(scale, scale, 1.)),
-            );
-            let height = self.target.texture.height() as i32;
-            let hud = (crate::presentation::HUD_HEIGHT * self.target.texture.height() / 480.).ceil()
-                as i32;
-            // QuadGl's scissor uses the same logical top-left coordinates as
-            // this render target. Keep the entire field below the HUD visible.
-            gl.quad_gl.scissor(Some((
-                0,
-                hud,
-                self.target.texture.width() as i32,
-                height - hud,
-            )));
-        }
         self.media.image(&arena.background, 0., 0., 640., 480.);
+        // Native 0x42a191..0x42a324 draws counters before flushing queued
+        // actors. First-row heads may extend over the HUD; neither clipping
+        // them nor shrinking the battlefield matches the original layout.
+        self.draw_hud(simulation);
         // 0x415b22 keeps insertion order and appends translated color queues.
         // Plain scenery/items/shadows precede the owner-colored actors. Player
         // bodies follow slot order; held bombs follow players and Gold effects.
@@ -1211,12 +1323,6 @@ impl App {
         {
             self.draw_bomb(bomb);
         }
-        unsafe {
-            let gl = macroquad::window::get_internal_gl();
-            gl.quad_gl.pop_model_matrix();
-            gl.quad_gl.scissor(None);
-        }
-        self.draw_hud(simulation);
         match simulation.phase {
             RoundPhase::Countdown { remaining_ms } => {
                 self.banner(&format!("READY  {}", remaining_ms.div_ceil(1000)), None)
@@ -1292,83 +1398,34 @@ impl App {
             .as_ref()
             .and_then(|n| n.replay.as_ref())
             .map_or(simulation, |r| &r.simulation);
-        draw_rectangle(
-            0.,
-            0.,
-            640.,
-            crate::presentation::HUD_HEIGHT,
-            Color::new(0.68, 0.68, 0.66, 1.),
-        );
-        for (i, player) in simulation.players.iter().enumerate() {
-            let x = 10. + (i / 2) as f32 * 100.;
-            let y = 5. + (i % 2) as f32 * 20.;
-            let color = PLAYER_COLORS[self.palette_index(i)];
-            self.hud_text(
-                &format!("S:{}", player.wins),
-                vec2(x, y),
-                16.,
-                32.,
-                color,
-                BLACK,
-            );
-            self.hud_text(
-                &format!("K:{}", player.kills),
-                vec2(x + 35., y),
-                16.,
-                56.,
-                color,
-                BLACK,
+        let layout = self.media.hud_layout();
+        for (i, player) in simulation.players.iter().take(10).enumerate() {
+            let x = layout.columns[i / 2];
+            let y = layout.rows[i % 2];
+            self.media.hud_counter(
+                &format!("S:{} K:{}", player.wins, player.kills),
+                x,
+                y,
+                self.palette_index(i),
             );
             if !player.alive {
-                let red = Color::new(0.95, 0.28, 0.24, 1.);
-                for offset in [-7., 28.] {
-                    draw_line(x + offset, y - 2., x + offset + 35., y + 17., 1., red);
-                    draw_line(x + offset, y + 17., x + offset + 35., y - 2., 1., red);
-                }
+                self.media.state("xxx", 0, x, y, None);
             }
         }
-        let timer = simulation.remaining_ms.map_or_else(
-            || "--:--".into(),
-            |ms| {
-                let seconds = ms.div_ceil(1000);
-                format!("{}:{:02}", seconds / 60, seconds % 60)
-            },
-        );
-        self.hud_text(
-            &timer,
-            vec2(516., 8.),
-            30.,
-            113.,
-            Color::new(0.37, 0.7, 0.68, 1.),
-            Color::new(0.45, 0.23, 0.09, 1.),
-        );
-    }
-
-    fn hud_text(
-        &self,
-        text: &str,
-        position: Vec2,
-        size: f32,
-        width: f32,
-        color: Color,
-        outline: Color,
-    ) {
-        let (x, y) = (position.x, position.y);
-        let size = size * (width / self.media.text_width(text, size).max(1.)).min(1.);
-        for (dx, dy) in [
-            (-1., -1.),
-            (0., -1.),
-            (1., -1.),
-            (-1., 0.),
-            (1., 0.),
-            (-1., 1.),
-            (0., 1.),
-            (1., 1.),
-        ] {
-            self.media
-                .font_text("FONT1.FON", text, x + dx, y + dy, size, outline);
+        let [mut x, y] = layout.timer;
+        if let Some(ms) = simulation.remaining_ms {
+            let seconds = ms.div_ceil(1000);
+            for glyph in format!("{}:{:02}", seconds / 60, seconds % 60)
+                .chars()
+                .filter_map(crate::presentation::timer_glyph)
+            {
+                self.media.state("numeric font", glyph, x, y, None);
+                x += self.media.state_width("numeric font", glyph).unwrap_or(0.)
+                    + layout.timer_spacing;
+            }
+        } else {
+            self.media.state("infinity", 0, x, y, None);
         }
-        self.media.font_text("FONT1.FON", text, x, y, size, color);
     }
 
     fn draw_hazard(&self, hazard: Hazard, x: f32, y: f32, frame: usize) {
