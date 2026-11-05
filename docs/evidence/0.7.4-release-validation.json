@@ -1,0 +1,1027 @@
+{
+  "version": "0.7.4",
+  "release_source_commit": "4587894df1e6d009781e26225c2efbfe8e8ff57c",
+  "verified_at_utc": "2026-11-05T13:59:51.027456+00:00",
+  "status": "Published, deployed and verified",
+  "release_source_sha256": "43d4c72415407dd430dbf681fac1b1769bec38c7a88733f7d6df31fe17c757ad",
+  "publication_and_artifact_verification": {
+    "passed": true,
+    "checked_at_utc": "2026-11-05T13:50:12.645352+00:00",
+    "release": "https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.4",
+    "source_commit": "4587894df1e6d009781e26225c2efbfe8e8ff57c",
+    "source_sha256": "43d4c72415407dd430dbf681fac1b1769bec38c7a88733f7d6df31fe17c757ad",
+    "assets_verified": 15,
+    "assets": {
+      "atomic-bomberman-0.7.4-linux-x86_64.AppImage": {
+        "sha256": "35b558555baf7e90542ff7d1a3fde9ed7f54ed3dd8643efc0007e65243b8ea7c",
+        "size_bytes": 37602448
+      },
+      "atomic-bomberman-0.7.4-linux-x86_64.AppImage.sha256": {
+        "sha256": "91dbd55ceffb489384f8ab628c5d4b7e86dcce380339000eb08e36c4d9d70524",
+        "size_bytes": 111
+      },
+      "atomic-bomberman-0.7.4-linux-x86_64.build.json": {
+        "sha256": "b495d134de144ec1652c9da46a15cf7cd63491d4b6b434195a91daa4fa25c561",
+        "size_bytes": 45508
+      },
+      "atomic-bomberman-0.7.4-macos-arm64.build.json": {
+        "sha256": "c4b1d911035d7a2f3e3ef7acefaa4f4b754247b3411cdd3e450bdc4ff5061c0d",
+        "size_bytes": 34940
+      },
+      "atomic-bomberman-0.7.4-macos-arm64.zip": {
+        "sha256": "b8021f3cf275d38a18c630b99f76f5c5afa9a639f9ec8412660a51c5745759a5",
+        "size_bytes": 7615760
+      },
+      "atomic-bomberman-0.7.4-macos-arm64.zip.sha256": {
+        "sha256": "288fa6e7a899a3d5e99ff72044f8deacf65de791260afb757e9e6194791e4a7c",
+        "size_bytes": 105
+      },
+      "atomic-bomberman-0.7.4-relay-linux-arm64.build.json": {
+        "sha256": "0acb7ceb2b515723d448ef83df20433b4b38f9ef357c310c4d11ec1c8a6b3142",
+        "size_bytes": 34274
+      },
+      "atomic-bomberman-0.7.4-relay-linux-arm64.tar.gz": {
+        "sha256": "56a31036f7276f2b76a56b7df46aab2464a23bbfa3adb9e459389fcc2f74251e",
+        "size_bytes": 2928933
+      },
+      "atomic-bomberman-0.7.4-relay-linux-arm64.tar.gz.sha256": {
+        "sha256": "fbdaffb1d163b27ab323750caa1b2585bdcfe8a07b1d44c80f1883c7608a632e",
+        "size_bytes": 114
+      },
+      "atomic-bomberman-0.7.4-relay-linux-x86_64.build.json": {
+        "sha256": "b701e7ca82ea891b1bdcbbd79e501735c3a0c9aa05711be2a9bf874ce9cab6ce",
+        "size_bytes": 34437
+      },
+      "atomic-bomberman-0.7.4-relay-linux-x86_64.tar.gz": {
+        "sha256": "6488182316de9e2ba78ceeb651139eadbb4ce79bcc161947bb7aba3a67802d9a",
+        "size_bytes": 3025615
+      },
+      "atomic-bomberman-0.7.4-relay-linux-x86_64.tar.gz.sha256": {
+        "sha256": "14fab99168849f4276b05246d59fb23300b15c344bd4e876223190fdfab971d4",
+        "size_bytes": 115
+      },
+      "atomic-bomberman-0.7.4-windows-x86_64.build.json": {
+        "sha256": "ef43902d08479b39169bac5dcf8c54897034e3a487948717aee34acba9e4451a",
+        "size_bytes": 40468
+      },
+      "atomic-bomberman-0.7.4-windows-x86_64.zip": {
+        "sha256": "fa4a30e1ee1df5d6afcd6557e5263c1c2189a34e4b904121cc3b10a2814fbb83",
+        "size_bytes": 7656062
+      },
+      "atomic-bomberman-0.7.4-windows-x86_64.zip.sha256": {
+        "sha256": "2e6e7e84aef276dd78ef830895d65ee7f8b4892458f1eaed18adc1bcfd162b7f",
+        "size_bytes": 109
+      }
+    },
+    "packages": {
+      "atomic-bomberman-0.7.4-linux-x86_64": "x86_64-unknown-linux-gnu",
+      "atomic-bomberman-0.7.4-macos-arm64": "aarch64-apple-darwin",
+      "atomic-bomberman-0.7.4-windows-x86_64": "x86_64-pc-windows-msvc",
+      "atomic-bomberman-0.7.4-relay-linux-arm64": "aarch64-unknown-linux-gnu",
+      "atomic-bomberman-0.7.4-relay-linux-x86_64": "x86_64-unknown-linux-gnu"
+    },
+    "github_digests_and_sidecar_checksums_valid": true,
+    "source_digest_matches_tagged_source": true,
+    "macos_signature_and_relocated_launcher_verified": true,
+    "windows_and_relay_package_boundaries_verified": true,
+    "linux_native_appimage_verification": "Native tagged release job; downloaded checksum matches GitHub and common tagged source.",
+    "published_at": "2026-11-05T13:48:47Z"
+  },
+  "exact_release_commit_ci": {
+    "release_workflow": {
+      "conclusion": "success",
+      "headSha": "4587894df1e6d009781e26225c2efbfe8e8ff57c",
+      "jobs": [
+        {
+          "completedAt": "2026-11-05T13:39:46Z",
+          "conclusion": "success",
+          "databaseId": 127272596763,
+          "name": "build (ubuntu-24.04-arm, relay-arm64, python3, aarch64-unknown-linux-gnu)",
+          "startedAt": "2026-11-05T13:24:57Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-05T13:24:59Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-05T13:24:58Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:24:59Z",
+              "conclusion": "success",
+              "name": "Validate tag syntax",
+              "number": 2,
+              "startedAt": "2026-11-05T13:24:59Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:01Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "number": 3,
+              "startedAt": "2026-11-05T13:24:59Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:09Z",
+              "conclusion": "success",
+              "name": "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+              "number": 4,
+              "startedAt": "2026-11-05T13:25:01Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:09Z",
+              "conclusion": "success",
+              "name": "Check annotated tag and version",
+              "number": 5,
+              "startedAt": "2026-11-05T13:25:09Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:45Z",
+              "conclusion": "success",
+              "name": "Linux build dependencies",
+              "number": 6,
+              "startedAt": "2026-11-05T13:25:09Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:35:57Z",
+              "conclusion": "success",
+              "name": "Source and package checks",
+              "number": 7,
+              "startedAt": "2026-11-05T13:25:45Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:36:21Z",
+              "conclusion": "success",
+              "name": "Compare portable replay digest",
+              "number": 8,
+              "startedAt": "2026-11-05T13:35:57Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:36:21Z",
+              "conclusion": "skipped",
+              "name": "Linux launcher and AppImage",
+              "number": 9,
+              "startedAt": "2026-11-05T13:36:21Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:36:21Z",
+              "conclusion": "skipped",
+              "name": "Mac launcher and ZIP",
+              "number": 10,
+              "startedAt": "2026-11-05T13:36:21Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:37:45Z",
+              "conclusion": "success",
+              "name": "Native Linux relay",
+              "number": 11,
+              "startedAt": "2026-11-05T13:36:21Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:37:45Z",
+              "conclusion": "skipped",
+              "name": "Windows launcher and portable ZIP",
+              "number": 12,
+              "startedAt": "2026-11-05T13:37:45Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:39:43Z",
+              "conclusion": "success",
+              "name": "Relay gameplay over QUIC",
+              "number": 13,
+              "startedAt": "2026-11-05T13:37:45Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:39:44Z",
+              "conclusion": "success",
+              "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+              "number": 14,
+              "startedAt": "2026-11-05T13:39:43Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:39:45Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "number": 28,
+              "startedAt": "2026-11-05T13:39:44Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:39:45Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 29,
+              "startedAt": "2026-11-05T13:39:45Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/42035540463/job/127272596763"
+        },
+        {
+          "completedAt": "2026-11-05T13:40:11Z",
+          "conclusion": "success",
+          "databaseId": 127272597462,
+          "name": "build (ubuntu-24.04, linux, python3)",
+          "startedAt": "2026-11-05T13:24:55Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-05T13:24:57Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-05T13:24:56Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:24:57Z",
+              "conclusion": "success",
+              "name": "Validate tag syntax",
+              "number": 2,
+              "startedAt": "2026-11-05T13:24:57Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:24:58Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "number": 3,
+              "startedAt": "2026-11-05T13:24:57Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:06Z",
+              "conclusion": "success",
+              "name": "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+              "number": 4,
+              "startedAt": "2026-11-05T13:24:58Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:06Z",
+              "conclusion": "success",
+              "name": "Check annotated tag and version",
+              "number": 5,
+              "startedAt": "2026-11-05T13:25:06Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:23Z",
+              "conclusion": "success",
+              "name": "Linux build dependencies",
+              "number": 6,
+              "startedAt": "2026-11-05T13:25:06Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:36:13Z",
+              "conclusion": "success",
+              "name": "Source and package checks",
+              "number": 7,
+              "startedAt": "2026-11-05T13:25:23Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:36:35Z",
+              "conclusion": "success",
+              "name": "Compare portable replay digest",
+              "number": 8,
+              "startedAt": "2026-11-05T13:36:13Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:40:07Z",
+              "conclusion": "success",
+              "name": "Linux launcher and AppImage",
+              "number": 9,
+              "startedAt": "2026-11-05T13:36:35Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:40:07Z",
+              "conclusion": "skipped",
+              "name": "Mac launcher and ZIP",
+              "number": 10,
+              "startedAt": "2026-11-05T13:40:07Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:40:07Z",
+              "conclusion": "skipped",
+              "name": "Native Linux relay",
+              "number": 11,
+              "startedAt": "2026-11-05T13:40:07Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:40:07Z",
+              "conclusion": "skipped",
+              "name": "Windows launcher and portable ZIP",
+              "number": 12,
+              "startedAt": "2026-11-05T13:40:07Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:40:07Z",
+              "conclusion": "skipped",
+              "name": "Relay gameplay over QUIC",
+              "number": 13,
+              "startedAt": "2026-11-05T13:40:07Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:40:09Z",
+              "conclusion": "success",
+              "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+              "number": 14,
+              "startedAt": "2026-11-05T13:40:07Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:40:10Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "number": 28,
+              "startedAt": "2026-11-05T13:40:09Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:40:10Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 29,
+              "startedAt": "2026-11-05T13:40:10Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/42035540463/job/127272597462"
+        },
+        {
+          "completedAt": "2026-11-05T13:43:00Z",
+          "conclusion": "success",
+          "databaseId": 127272597537,
+          "name": "build (macos-15, macos, python3)",
+          "startedAt": "2026-11-05T13:24:56Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-05T13:24:57Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-05T13:24:55Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:24:57Z",
+              "conclusion": "success",
+              "name": "Validate tag syntax",
+              "number": 2,
+              "startedAt": "2026-11-05T13:24:57Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:01Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "number": 3,
+              "startedAt": "2026-11-05T13:24:57Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:12Z",
+              "conclusion": "success",
+              "name": "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+              "number": 4,
+              "startedAt": "2026-11-05T13:25:01Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:13Z",
+              "conclusion": "success",
+              "name": "Check annotated tag and version",
+              "number": 5,
+              "startedAt": "2026-11-05T13:25:12Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:13Z",
+              "conclusion": "skipped",
+              "name": "Linux build dependencies",
+              "number": 6,
+              "startedAt": "2026-11-05T13:25:13Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:38:09Z",
+              "conclusion": "success",
+              "name": "Source and package checks",
+              "number": 7,
+              "startedAt": "2026-11-05T13:25:13Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:38:43Z",
+              "conclusion": "success",
+              "name": "Compare portable replay digest",
+              "number": 8,
+              "startedAt": "2026-11-05T13:38:09Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:38:43Z",
+              "conclusion": "skipped",
+              "name": "Linux launcher and AppImage",
+              "number": 9,
+              "startedAt": "2026-11-05T13:38:43Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:42:53Z",
+              "conclusion": "success",
+              "name": "Mac launcher and ZIP",
+              "number": 10,
+              "startedAt": "2026-11-05T13:38:43Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:42:53Z",
+              "conclusion": "skipped",
+              "name": "Native Linux relay",
+              "number": 11,
+              "startedAt": "2026-11-05T13:42:53Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:42:53Z",
+              "conclusion": "skipped",
+              "name": "Windows launcher and portable ZIP",
+              "number": 12,
+              "startedAt": "2026-11-05T13:42:53Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:42:53Z",
+              "conclusion": "skipped",
+              "name": "Relay gameplay over QUIC",
+              "number": 13,
+              "startedAt": "2026-11-05T13:42:53Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:42:55Z",
+              "conclusion": "success",
+              "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+              "number": 14,
+              "startedAt": "2026-11-05T13:42:53Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:42:55Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "number": 28,
+              "startedAt": "2026-11-05T13:42:55Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:42:58Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 29,
+              "startedAt": "2026-11-05T13:42:55Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/42035540463/job/127272597537"
+        },
+        {
+          "completedAt": "2026-11-05T13:48:29Z",
+          "conclusion": "success",
+          "databaseId": 127272597732,
+          "name": "build (windows-2022, windows, python)",
+          "startedAt": "2026-11-05T13:24:55Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-05T13:24:57Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-05T13:24:56Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:24:58Z",
+              "conclusion": "success",
+              "name": "Validate tag syntax",
+              "number": 2,
+              "startedAt": "2026-11-05T13:24:57Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:06Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "number": 3,
+              "startedAt": "2026-11-05T13:24:58Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:19Z",
+              "conclusion": "success",
+              "name": "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+              "number": 4,
+              "startedAt": "2026-11-05T13:25:06Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:24Z",
+              "conclusion": "success",
+              "name": "Check annotated tag and version",
+              "number": 5,
+              "startedAt": "2026-11-05T13:25:19Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:24Z",
+              "conclusion": "skipped",
+              "name": "Linux build dependencies",
+              "number": 6,
+              "startedAt": "2026-11-05T13:25:24Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:38:57Z",
+              "conclusion": "success",
+              "name": "Source and package checks",
+              "number": 7,
+              "startedAt": "2026-11-05T13:25:24Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:39:29Z",
+              "conclusion": "success",
+              "name": "Compare portable replay digest",
+              "number": 8,
+              "startedAt": "2026-11-05T13:38:57Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:39:29Z",
+              "conclusion": "skipped",
+              "name": "Linux launcher and AppImage",
+              "number": 9,
+              "startedAt": "2026-11-05T13:39:29Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:39:29Z",
+              "conclusion": "skipped",
+              "name": "Mac launcher and ZIP",
+              "number": 10,
+              "startedAt": "2026-11-05T13:39:29Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:39:29Z",
+              "conclusion": "skipped",
+              "name": "Native Linux relay",
+              "number": 11,
+              "startedAt": "2026-11-05T13:39:29Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:48:23Z",
+              "conclusion": "success",
+              "name": "Windows launcher and portable ZIP",
+              "number": 12,
+              "startedAt": "2026-11-05T13:39:29Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:48:23Z",
+              "conclusion": "skipped",
+              "name": "Relay gameplay over QUIC",
+              "number": 13,
+              "startedAt": "2026-11-05T13:48:23Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:48:26Z",
+              "conclusion": "success",
+              "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+              "number": 14,
+              "startedAt": "2026-11-05T13:48:23Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:48:27Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "number": 28,
+              "startedAt": "2026-11-05T13:48:26Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:48:27Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 29,
+              "startedAt": "2026-11-05T13:48:27Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/42035540463/job/127272597732"
+        },
+        {
+          "completedAt": "2026-11-05T13:40:01Z",
+          "conclusion": "success",
+          "databaseId": 127272597782,
+          "name": "build (ubuntu-24.04, relay-amd64, python3, x86_64-unknown-linux-gnu)",
+          "startedAt": "2026-11-05T13:24:56Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-05T13:24:58Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-05T13:24:57Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:24:58Z",
+              "conclusion": "success",
+              "name": "Validate tag syntax",
+              "number": 2,
+              "startedAt": "2026-11-05T13:24:58Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:00Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "number": 3,
+              "startedAt": "2026-11-05T13:24:58Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:08Z",
+              "conclusion": "success",
+              "name": "Run dtolnay/rust-toolchain@599c45df1a24c1c63ae1129a7e59f46654b8fb66",
+              "number": 4,
+              "startedAt": "2026-11-05T13:25:00Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:08Z",
+              "conclusion": "success",
+              "name": "Check annotated tag and version",
+              "number": 5,
+              "startedAt": "2026-11-05T13:25:08Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:25:36Z",
+              "conclusion": "success",
+              "name": "Linux build dependencies",
+              "number": 6,
+              "startedAt": "2026-11-05T13:25:08Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:36:26Z",
+              "conclusion": "success",
+              "name": "Source and package checks",
+              "number": 7,
+              "startedAt": "2026-11-05T13:25:36Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:36:48Z",
+              "conclusion": "success",
+              "name": "Compare portable replay digest",
+              "number": 8,
+              "startedAt": "2026-11-05T13:36:26Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:36:48Z",
+              "conclusion": "skipped",
+              "name": "Linux launcher and AppImage",
+              "number": 9,
+              "startedAt": "2026-11-05T13:36:48Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:36:48Z",
+              "conclusion": "skipped",
+              "name": "Mac launcher and ZIP",
+              "number": 10,
+              "startedAt": "2026-11-05T13:36:48Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:38:03Z",
+              "conclusion": "success",
+              "name": "Native Linux relay",
+              "number": 11,
+              "startedAt": "2026-11-05T13:36:48Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:38:03Z",
+              "conclusion": "skipped",
+              "name": "Windows launcher and portable ZIP",
+              "number": 12,
+              "startedAt": "2026-11-05T13:38:03Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:39:56Z",
+              "conclusion": "success",
+              "name": "Relay gameplay over QUIC",
+              "number": 13,
+              "startedAt": "2026-11-05T13:38:03Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:39:58Z",
+              "conclusion": "success",
+              "name": "Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+              "number": 14,
+              "startedAt": "2026-11-05T13:39:56Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:39:59Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "number": 28,
+              "startedAt": "2026-11-05T13:39:58Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:39:59Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 29,
+              "startedAt": "2026-11-05T13:39:59Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/42035540463/job/127272597782"
+        },
+        {
+          "completedAt": "2026-11-05T13:48:50Z",
+          "conclusion": "success",
+          "databaseId": 127284672967,
+          "name": "publish",
+          "startedAt": "2026-11-05T13:48:32Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-05T13:48:34Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-05T13:48:33Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:48:36Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "number": 2,
+              "startedAt": "2026-11-05T13:48:34Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:48:39Z",
+              "conclusion": "success",
+              "name": "Run actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333",
+              "number": 3,
+              "startedAt": "2026-11-05T13:48:36Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:48:47Z",
+              "conclusion": "success",
+              "name": "Verify all artifacts and publish release",
+              "number": 4,
+              "startedAt": "2026-11-05T13:48:39Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:48:48Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "number": 8,
+              "startedAt": "2026-11-05T13:48:47Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-05T13:48:48Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 9,
+              "startedAt": "2026-11-05T13:48:48Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/42035540463/job/127284672967"
+        }
+      ],
+      "status": "completed",
+      "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/42035540463"
+    },
+    "main_ci": [
+      {
+        "platform": "macOS",
+        "workflow": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/42030885849",
+        "conclusion": "success"
+      },
+      {
+        "platform": "Windows",
+        "workflow": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/42030885810",
+        "conclusion": "success"
+      },
+      {
+        "platform": "Linux",
+        "workflow": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/42030885798",
+        "conclusion": "success"
+      },
+      {
+        "platform": "CodeQL",
+        "workflow": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/42030885947",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "local_checks": {
+    "passed_test_executions": 426,
+    "ignored_test_executions": 7,
+    "strict_clippy_and_rustfmt_passed": true,
+    "release_package_tests_passed": true,
+    "macos_launcher_tests_passed": true
+  },
+  "security": {
+    "dependabot_open": 0,
+    "code_scanning_open": 0,
+    "cargo_audit_vulnerabilities": 0,
+    "codeql_analyses": [
+      {
+        "category": "/language:swift",
+        "commit_sha": "4587894df1e6d009781e26225c2efbfe8e8ff57c",
+        "created_at": "2026-11-05T13:05:24Z",
+        "error": "",
+        "id": 2103454658,
+        "results_count": 0,
+        "tool": {
+          "guid": null,
+          "name": "CodeQL",
+          "version": "2.27.4"
+        }
+      },
+      {
+        "category": "/language:rust",
+        "commit_sha": "4587894df1e6d009781e26225c2efbfe8e8ff57c",
+        "created_at": "2026-11-05T12:57:52Z",
+        "error": "",
+        "id": 2103403898,
+        "results_count": 0,
+        "tool": {
+          "guid": null,
+          "name": "CodeQL",
+          "version": "2.27.4"
+        }
+      },
+      {
+        "category": "/language:java-kotlin",
+        "commit_sha": "4587894df1e6d009781e26225c2efbfe8e8ff57c",
+        "created_at": "2026-11-05T12:55:20Z",
+        "error": "",
+        "id": 2103386999,
+        "results_count": 0,
+        "tool": {
+          "guid": null,
+          "name": "CodeQL",
+          "version": "2.27.4"
+        }
+      },
+      {
+        "category": "/language:python",
+        "commit_sha": "4587894df1e6d009781e26225c2efbfe8e8ff57c",
+        "created_at": "2026-11-05T12:53:43Z",
+        "error": "",
+        "id": 2103376616,
+        "results_count": 0,
+        "tool": {
+          "guid": null,
+          "name": "CodeQL",
+          "version": "2.27.4"
+        }
+      },
+      {
+        "category": "/language:actions",
+        "commit_sha": "4587894df1e6d009781e26225c2efbfe8e8ff57c",
+        "created_at": "2026-11-05T12:53:35Z",
+        "error": "",
+        "id": 2103375739,
+        "results_count": 0,
+        "tool": {
+          "guid": null,
+          "name": "CodeQL",
+          "version": "2.27.4"
+        }
+      },
+      {
+        "category": "/language:c-cpp",
+        "commit_sha": "4587894df1e6d009781e26225c2efbfe8e8ff57c",
+        "created_at": "2026-11-05T12:53:31Z",
+        "error": "",
+        "id": 2103375309,
+        "results_count": 0,
+        "tool": {
+          "guid": null,
+          "name": "CodeQL",
+          "version": "2.27.4"
+        }
+      }
+    ],
+    "upstream_informational_advisories": [
+      {
+        "category": "unmaintained",
+        "id": "RUSTSEC-2026-0441",
+        "package": "pin-utils",
+        "title": "`pin-utils` is unmaintained"
+      },
+      {
+        "category": "unmaintained",
+        "id": "RUSTSEC-2025-0134",
+        "package": "rustls-pemfile",
+        "title": "rustls-pemfile is unmaintained"
+      },
+      {
+        "category": "unmaintained",
+        "id": "RUSTSEC-2026-0192",
+        "package": "ttf-parser",
+        "title": "`ttf-parser` is unmaintained"
+      },
+      {
+        "category": "unsound",
+        "id": "RUSTSEC-2025-0035",
+        "package": "macroquad",
+        "title": "Multiple soundness issues in `macroquad`"
+      }
+    ],
+    "audit_database": {
+      "advisory-count": 1409,
+      "last-commit": "26fd2d43f7280a1fb925a3743ec463017afe7119",
+      "last-updated": "2026-11-05T09:50:49+01:00"
+    }
+  },
+  "network_acceptance_cleared": true,
+  "network_evidence": [
+    "0.7.4-local-relay-load.json",
+    "0.7.4-deployed-relay-load.json",
+    "0.7.4-deployed-wan.json",
+    "0.7.4-hd-classic-wan.json"
+  ],
+  "deployment_evidence": "0.7.4-relay-deployment.json",
+  "packaged_macos_evidence": "0.7.4-packaged-macos.json",
+  "layout_evidence": "2026-11-05-hud-widescreen.json",
+  "dist": {
+    "app": "dist/Atomic Bomberman.app",
+    "published_downloads": "dist/v0.7.4",
+    "all_15_assets_also_in": "dist/github",
+    "previous_releases_retained": true
+  },
+  "hd": {
+    "cache_preserved": true,
+    "enhancement_format": 2,
+    "protocol": 8,
+    "compatibility_family": "0.7.0",
+    "regeneration_required": false
+  },
+  "limitations": [
+    "Native graphical runtime checks ran on this Apple Silicon Mac; Windows/Linux packages passed their tagged native CI but their physical graphics/input/audio hardware was not exercised here.",
+    "Metal shader compilation/presentation and blend-state unit checks passed in the layout investigation; its backend has no framebuffer readback, so exact native pixel comparisons use OpenGL.",
+    "Existing upstream cargo-audit informational advisories remain disclosed above; no advisory suppressions or security dependency changes in this release."
+  ]
+}

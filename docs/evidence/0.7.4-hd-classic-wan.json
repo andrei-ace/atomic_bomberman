@@ -1,0 +1,103 @@
+{
+  "version": "0.7.4",
+  "release_source_commit": "4587894df1e6d009781e26225c2efbfe8e8ff57c",
+  "verified_at_utc": "2026-11-05T13:59:51.027456+00:00",
+  "passed": true,
+  "native_lan": {
+    "passed": true,
+    "checks": [
+      "base HD loads from the complete validated cache",
+      "switching HD to Classic and back preserves and reuses all completed HD pages",
+      "native HD host and Classic client play together with identical confirmed simulation"
+    ],
+    "arenas": [],
+    "base_source_key": "b727e4035f5d3970f9460a85eb77efcf2f874cae7b81cc9b53c32b8deffef3c3",
+    "game_binary_sha256": "c9bf1e4c8c072783862cbc319b5674718f2a8b7bdb7af557b2c57036ae29fde5",
+    "limitations": [
+      "Process-local synthetic Cocoa events; no physical input/audio claim.",
+      "Unchanged HD pages are reused in the graphical-mod QA fixture."
+    ],
+    "cache_toggle": {
+      "passed": true,
+      "mode_sequence": [
+        "HD",
+        "Classic",
+        "HD"
+      ],
+      "pages_preserved": 1174,
+      "metadata_unchanged": true,
+      "all_page_sizes_mtimes_and_inodes_unchanged": true
+    },
+    "mixed_lan": {
+      "passed": true,
+      "canonical_simulation_sha256": "652c83c911ec3edb65c52dd96590a75c01c472bf2fffdd0f28af38096611a736",
+      "graphics": [
+        "HD",
+        "Classic"
+      ],
+      "players": 3
+    }
+  },
+  "deployed_wan": {
+    "passed": true,
+    "checks": [
+      "base HD loads from the complete validated cache",
+      "switching HD to Classic and back preserves and reuses all completed HD pages",
+      "native HD host and Classic client play through the live private relay with identical confirmed simulation"
+    ],
+    "arenas": [],
+    "base_source_key": "b727e4035f5d3970f9460a85eb77efcf2f874cae7b81cc9b53c32b8deffef3c3",
+    "game_binary_sha256": "26d9a90ecd9e155978215bf495e06c4132f09c6f0e7fb14a1a2f0bc833f1ac8c",
+    "limitations": [
+      "Process-local synthetic Cocoa events; no physical input/audio claim.",
+      "Unchanged HD pages are reused in the graphical-mod QA fixture.",
+      "Live private relay; both native client windows run on this Mac."
+    ],
+    "cache_toggle": {
+      "passed": true,
+      "mode_sequence": [
+        "HD",
+        "Classic",
+        "HD"
+      ],
+      "pages_preserved": 1174,
+      "metadata_unchanged": true,
+      "all_page_sizes_mtimes_and_inodes_unchanged": true
+    },
+    "mixed_relay": {
+      "passed": true,
+      "canonical_simulation_sha256": "684d1edff15ebf360b659eca2803de8ff029bcc4b8373f1024cd23be1550b0fe",
+      "graphics": [
+        "HD",
+        "Classic"
+      ],
+      "players": 3
+    }
+  },
+  "diagnostic_binary_identity": {
+    "passed": true,
+    "method": "Remove per-bundle ad-hoc signatures only on temporary copies, then normalize the single __LINKEDIT virtual-size field whose signature storage reservation changes during codesign. All remaining executable bytes, code, data and link-edit contents match the input. Original binaries unchanged.",
+    "binaries": {
+      "input": {
+        "signed_sha256": "07392ce2e52036b35ad93a2689b25c5742b4649d57c2f121f9746b62502fc769",
+        "unsigned_sha256": "8eb19d7ab8f9535a9e9bf691bc6495eca9d7a489829f5bf6981ec7f82a99bf50",
+        "linkedit_virtual_size": 6078464,
+        "normalized_executable_sha256": "c147881ff8e6020fab76bf9c31f671c456dab67a7ec44eed92a934a652f9f4bc"
+      },
+      "native-lan": {
+        "signed_sha256": "c9bf1e4c8c072783862cbc319b5674718f2a8b7bdb7af557b2c57036ae29fde5",
+        "unsigned_sha256": "98f3923784d9fcc5ab0919414c201cdce1da1ed0de0ae6e71e4d05e3a298fc17",
+        "linkedit_virtual_size": 5980160,
+        "normalized_executable_sha256": "c147881ff8e6020fab76bf9c31f671c456dab67a7ec44eed92a934a652f9f4bc"
+      },
+      "native-wan": {
+        "signed_sha256": "26d9a90ecd9e155978215bf495e06c4132f09c6f0e7fb14a1a2f0bc833f1ac8c",
+        "unsigned_sha256": "98f3923784d9fcc5ab0919414c201cdce1da1ed0de0ae6e71e4d05e3a298fc17",
+        "linkedit_virtual_size": 5980160,
+        "normalized_executable_sha256": "c147881ff8e6020fab76bf9c31f671c456dab67a7ec44eed92a934a652f9f4bc"
+      }
+    }
+  },
+  "compiler": "Rust 1.89.0, optimized test profile with diagnostics enabled, exact release source commit.",
+  "scope": "Two native client windows on this Mac, three player seats, HD and Classic, process-local synthetic Cocoa input; confirmed canonical state equality. Graphical network diagnostics use the optimized diagnostic binary; shipped release app verified separately."
+}

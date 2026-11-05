@@ -1,0 +1,4478 @@
+{
+  "version": "0.7.4",
+  "release_source_commit": "4587894df1e6d009781e26225c2efbfe8e8ff57c",
+  "verified_at_utc": "2026-11-05T13:59:51.027456+00:00",
+  "network_acceptance_cleared": true,
+  "environment": "Production headless clients on one Apple Silicon Mac to the deployed ARM64 relay over real WAN; no injected impairment.",
+  "deployed_relay_version": "0.7.4",
+  "deployed": {
+    "passed": true,
+    "complete": true,
+    "release_gate_passed": false,
+    "environment": "Darwin arm64",
+    "transport": "deployed WAN",
+    "warmup_seconds": 10,
+    "measurement_seconds": 60,
+    "repetitions": 1,
+    "client_sha256": "11303f32f704a792062588cfaed64b628d27b1a52bc656e3a2e5a4703de7bf76",
+    "relay_sha256": null,
+    "cases": [
+      {
+        "achieved_committed_ticks_per_second": 49.88333333333333,
+        "application_rtt_ms": {
+          "max": 158,
+          "p50": 74,
+          "p95": 95,
+          "p99": 158,
+          "samples": 9886
+        },
+        "audit_execution": "bounded background worker; all samples drained before final result",
+        "canonical_ticks_compared": 3490,
+        "client_diagnostics": [
+          {
+            "forwarding": {
+              "buckets": [],
+              "max_us": 0,
+              "samples": 0
+            },
+            "generation": 2,
+            "peer": 1,
+            "room_tag": "8d0a911a555d8724",
+            "traffic": {
+              "incoming_high_water": 4,
+              "outgoing_high_water": 2,
+              "queue_evictions": 0,
+              "queue_rejections": 0,
+              "received_bytes": 1176438,
+              "received_packets": 3563,
+              "send_buffer_pressure": 0,
+              "send_failures": 0,
+              "sent_bytes": 2355415,
+              "sent_packets": 7050,
+              "superseded_packets": 0
+            },
+            "transport": {
+              "congestion_events": 8,
+              "congestion_window": 8712,
+              "rtt_us": 38957,
+              "send_buffer_free": 4064,
+              "sender_lost_packets": 10,
+              "sender_sent_packets": 4232,
+              "udp_rx_bytes": 1327452,
+              "udp_rx_packets": 3674,
+              "udp_tx_bytes": 2525981,
+              "udp_tx_packets": 4231
+            }
+          },
+          {
+            "forwarding": {
+              "buckets": [],
+              "max_us": 0,
+              "samples": 0
+            },
+            "generation": 2,
+            "peer": 2,
+            "room_tag": "8d0a911a555d8724",
+            "traffic": {
+              "incoming_high_water": 7,
+              "outgoing_high_water": 2,
+              "queue_evictions": 0,
+              "queue_rejections": 0,
+              "received_bytes": 2348091,
+              "received_packets": 7027,
+              "send_buffer_pressure": 0,
+              "send_failures": 0,
+              "sent_bytes": 1179471,
+              "sent_packets": 3572,
+              "superseded_packets": 0
+            },
+            "transport": {
+              "congestion_events": 5,
+              "congestion_window": 5808,
+              "rtt_us": 42619,
+              "send_buffer_free": 4064,
+              "sender_lost_packets": 7,
+              "sender_sent_packets": 3916,
+              "udp_rx_bytes": 2509453,
+              "udp_rx_packets": 3688,
+              "udp_tx_bytes": 1335065,
+              "udp_tx_packets": 3915
+            }
+          }
+        ],
+        "explained_render_boundaries": 7764,
+        "failure_trace": null,
+        "first_failure": null,
+        "generator_scheduling_delay_ms": {
+          "max": 16,
+          "p50": 1,
+          "p95": 2,
+          "p99": 2,
+          "samples": 9886
+        },
+        "host_commit_to_client_apply_ms": {
+          "max": 183,
+          "p50": 37,
+          "p95": 49,
+          "p99": 73,
+          "samples": 2987
+        },
+        "intentional_supersessions": 0,
+        "latency_distributions": {
+          "application_rtt_ms": {
+            "buckets": [
+              [
+                71,
+                166
+              ],
+              [
+                72,
+                830
+              ],
+              [
+                73,
+                3171
+              ],
+              [
+                74,
+                1702
+              ],
+              [
+                75,
+                331
+              ],
+              [
+                76,
+                167
+              ],
+              [
+                77,
+                328
+              ],
+              [
+                78,
+                164
+              ],
+              [
+                79,
+                1154
+              ],
+              [
+                80,
+                329
+              ],
+              [
+                82,
+                164
+              ],
+              [
+                83,
+                494
+              ],
+              [
+                84,
+                165
+              ],
+              [
+                86,
+                162
+              ],
+              [
+                95,
+                90
+              ],
+              [
+                103,
+                161
+              ],
+              [
+                128,
+                157
+              ],
+              [
+                158,
+                151
+              ]
+            ],
+            "max": 158,
+            "samples": 9886
+          },
+          "generator_scheduling_delay_ms": {
+            "buckets": [
+              [
+                0,
+                998
+              ],
+              [
+                1,
+                7283
+              ],
+              [
+                2,
+                1579
+              ],
+              [
+                3,
+                12
+              ],
+              [
+                4,
+                3
+              ],
+              [
+                5,
+                1
+              ],
+              [
+                6,
+                3
+              ],
+              [
+                7,
+                3
+              ],
+              [
+                8,
+                3
+              ],
+              [
+                16,
+                1
+              ]
+            ],
+            "max": 16,
+            "samples": 9886
+          },
+          "host_commit_to_client_apply_ms": {
+            "buckets": [
+              [
+                33,
+                3
+              ],
+              [
+                34,
+                22
+              ],
+              [
+                35,
+                277
+              ],
+              [
+                36,
+                829
+              ],
+              [
+                37,
+                1083
+              ],
+              [
+                38,
+                128
+              ],
+              [
+                39,
+                14
+              ],
+              [
+                40,
+                28
+              ],
+              [
+                41,
+                86
+              ],
+              [
+                42,
+                163
+              ],
+              [
+                43,
+                111
+              ],
+              [
+                44,
+                20
+              ],
+              [
+                45,
+                4
+              ],
+              [
+                46,
+                5
+              ],
+              [
+                47,
+                20
+              ],
+              [
+                48,
+                34
+              ],
+              [
+                49,
+                32
+              ],
+              [
+                50,
+                15
+              ],
+              [
+                52,
+                2
+              ],
+              [
+                53,
+                12
+              ],
+              [
+                54,
+                23
+              ],
+              [
+                55,
+                11
+              ],
+              [
+                56,
+                1
+              ],
+              [
+                58,
+                3
+              ],
+              [
+                59,
+                3
+              ],
+              [
+                60,
+                6
+              ],
+              [
+                61,
+                6
+              ],
+              [
+                62,
+                2
+              ],
+              [
+                63,
+                1
+              ],
+              [
+                64,
+                6
+              ],
+              [
+                66,
+                2
+              ],
+              [
+                67,
+                1
+              ],
+              [
+                68,
+                2
+              ],
+              [
+                69,
+                1
+              ],
+              [
+                71,
+                1
+              ],
+              [
+                73,
+                3
+              ],
+              [
+                77,
+                2
+              ],
+              [
+                78,
+                1
+              ],
+              [
+                79,
+                2
+              ],
+              [
+                83,
+                3
+              ],
+              [
+                91,
+                1
+              ],
+              [
+                92,
+                2
+              ],
+              [
+                93,
+                1
+              ],
+              [
+                94,
+                1
+              ],
+              [
+                106,
+                1
+              ],
+              [
+                112,
+                1
+              ],
+              [
+                123,
+                1
+              ],
+              [
+                130,
+                1
+              ],
+              [
+                147,
+                1
+              ],
+              [
+                154,
+                1
+              ],
+              [
+                173,
+                4
+              ],
+              [
+                183,
+                4
+              ]
+            ],
+            "max": 183,
+            "samples": 2987
+          },
+          "owner_sample_to_confirmation_ms": {
+            "buckets": [
+              [
+                20,
+                7
+              ],
+              [
+                21,
+                9
+              ],
+              [
+                22,
+                3
+              ],
+              [
+                23,
+                8
+              ],
+              [
+                24,
+                7
+              ],
+              [
+                25,
+                5
+              ],
+              [
+                26,
+                2
+              ],
+              [
+                40,
+                85
+              ],
+              [
+                41,
+                133
+              ],
+              [
+                42,
+                168
+              ],
+              [
+                43,
+                275
+              ],
+              [
+                44,
+                288
+              ],
+              [
+                45,
+                283
+              ],
+              [
+                46,
+                47
+              ],
+              [
+                49,
+                1
+              ],
+              [
+                60,
+                303
+              ],
+              [
+                61,
+                232
+              ],
+              [
+                62,
+                197
+              ],
+              [
+                63,
+                208
+              ],
+              [
+                64,
+                284
+              ],
+              [
+                65,
+                331
+              ],
+              [
+                66,
+                65
+              ],
+              [
+                68,
+                1
+              ],
+              [
+                70,
+                5
+              ],
+              [
+                71,
+                12
+              ],
+              [
+                72,
+                59
+              ],
+              [
+                73,
+                114
+              ],
+              [
+                74,
+                159
+              ],
+              [
+                75,
+                169
+              ],
+              [
+                76,
+                104
+              ],
+              [
+                77,
+                33
+              ],
+              [
+                78,
+                21
+              ],
+              [
+                79,
+                23
+              ],
+              [
+                80,
+                26
+              ],
+              [
+                81,
+                23
+              ],
+              [
+                82,
+                23
+              ],
+              [
+                83,
+                29
+              ],
+              [
+                84,
+                59
+              ],
+              [
+                85,
+                125
+              ],
+              [
+                86,
+                168
+              ],
+              [
+                87,
+                170
+              ],
+              [
+                88,
+                161
+              ],
+              [
+                89,
+                167
+              ],
+              [
+                90,
+                197
+              ],
+              [
+                91,
+                152
+              ],
+              [
+                92,
+                106
+              ],
+              [
+                93,
+                95
+              ],
+              [
+                94,
+                136
+              ],
+              [
+                95,
+                167
+              ],
+              [
+                96,
+                143
+              ],
+              [
+                97,
+                51
+              ],
+              [
+                98,
+                20
+              ],
+              [
+                99,
+                22
+              ],
+              [
+                100,
+                27
+              ],
+              [
+                101,
+                28
+              ],
+              [
+                102,
+                24
+              ],
+              [
+                103,
+                21
+              ],
+              [
+                104,
+                14
+              ],
+              [
+                105,
+                17
+              ],
+              [
+                106,
+                10
+              ],
+              [
+                107,
+                10
+              ],
+              [
+                108,
+                15
+              ],
+              [
+                109,
+                13
+              ],
+              [
+                110,
+                4
+              ],
+              [
+                111,
+                8
+              ],
+              [
+                112,
+                6
+              ],
+              [
+                113,
+                5
+              ],
+              [
+                114,
+                4
+              ],
+              [
+                115,
+                4
+              ],
+              [
+                116,
+                4
+              ],
+              [
+                117,
+                3
+              ],
+              [
+                118,
+                4
+              ],
+              [
+                119,
+                6
+              ],
+              [
+                120,
+                3
+              ],
+              [
+                122,
+                2
+              ],
+              [
+                123,
+                4
+              ],
+              [
+                124,
+                2
+              ],
+              [
+                125,
+                4
+              ],
+              [
+                126,
+                1
+              ],
+              [
+                127,
+                2
+              ],
+              [
+                128,
+                4
+              ],
+              [
+                129,
+                2
+              ],
+              [
+                130,
+                2
+              ],
+              [
+                131,
+                2
+              ],
+              [
+                132,
+                1
+              ],
+              [
+                133,
+                1
+              ],
+              [
+                134,
+                1
+              ],
+              [
+                136,
+                2
+              ],
+              [
+                138,
+                1
+              ],
+              [
+                139,
+                3
+              ],
+              [
+                142,
+                2
+              ],
+              [
+                143,
+                1
+              ],
+              [
+                144,
+                2
+              ],
+              [
+                148,
+                1
+              ],
+              [
+                150,
+                1
+              ],
+              [
+                151,
+                1
+              ],
+              [
+                152,
+                1
+              ],
+              [
+                154,
+                1
+              ],
+              [
+                156,
+                1
+              ],
+              [
+                158,
+                1
+              ],
+              [
+                159,
+                1
+              ],
+              [
+                162,
+                1
+              ],
+              [
+                163,
+                1
+              ],
+              [
+                169,
+                1
+              ],
+              [
+                182,
+                1
+              ],
+              [
+                183,
+                1
+              ],
+              [
+                202,
+                1
+              ],
+              [
+                203,
+                1
+              ],
+              [
+                222,
+                1
+              ],
+              [
+                223,
+                1
+              ],
+              [
+                242,
+                1
+              ],
+              [
+                243,
+                1
+              ],
+              [
+                262,
+                1
+              ],
+              [
+                263,
+                1
+              ],
+              [
+                282,
+                1
+              ]
+            ],
+            "max": 282,
+            "samples": 5972
+          }
+        },
+        "lifetime_application_failures": 0,
+        "limitations": [
+          "Headless production session display state; physical display and audio are outside this measurement.",
+          "Latency histograms cover the full measurement at 1ms resolution; RTT samples are cached application-probe observations. Forwarding uses separate relay timestamps."
+        ],
+        "measurement_end_unix_ms": 1793886784257,
+        "measurement_seconds": 60,
+        "measurement_start_unix_ms": 1793886724254,
+        "owner_sample_to_confirmation_ms": {
+          "max": 282,
+          "p50": 72,
+          "p95": 99,
+          "p99": 122,
+          "samples": 5972
+        },
+        "passed": true,
+        "players_per_room": 2,
+        "protocol": 8,
+        "queue_evictions": 0,
+        "received_packets_per_second": 151.36666666666667,
+        "rematches": 1,
+        "render_frames_checked": 23061,
+        "rooms": 1,
+        "sampled_render_frames": 23061,
+        "seed": 1997,
+        "send_failures_and_queue_rejections": 0,
+        "sent_packets_per_second": 151.58333333333334,
+        "shared_outcomes": {
+          "bomb_placements": 33,
+          "deaths": 4,
+          "detonations": 27,
+          "match_results": 1,
+          "round_results": 4
+        },
+        "version": "0.7.4",
+        "warmup_seconds": 10,
+        "impairment": {
+          "rtt_ms": 0,
+          "jitter_ms": 0,
+          "loss_percent": 0,
+          "udp_forwarded": null,
+          "udp_dropped": null
+        },
+        "generator_exit_codes": [
+          0
+        ],
+        "generator_exit_code": 0,
+        "resource_scope": "measurement interval; CPU from process-time deltas (100 percent = one core)",
+        "relay_cpu_percent": {
+          "samples": 0,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        },
+        "relay_memory_kib": {
+          "samples": 0,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        },
+        "generator_cpu_percent": {
+          "samples": 265,
+          "p50": 11.171196701619635,
+          "p95": 11.459867868611877,
+          "p99": 14.877190493334316,
+          "max": 15.072270864364798
+        },
+        "generator_memory_kib": {
+          "samples": 267,
+          "p50": 14640,
+          "p95": 15040,
+          "p99": 15040,
+          "max": 15040
+        },
+        "relay": null,
+        "relay_forwarding_scope": "collected separately from deployed relay diagnostics",
+        "gates": {
+          "gameplay_correct": true,
+          "zero_application_evictions": true,
+          "zero_send_failures": true
+        }
+      },
+      {
+        "achieved_committed_ticks_per_second": 50.1,
+        "application_rtt_ms": {
+          "max": 164,
+          "p50": 78,
+          "p95": 92,
+          "p99": 124,
+          "samples": 87489
+        },
+        "audit_execution": "bounded background worker; all samples drained before final result",
+        "canonical_ticks_compared": 3502,
+        "client_diagnostics": [
+          {
+            "forwarding": {
+              "buckets": [],
+              "max_us": 0,
+              "samples": 0
+            },
+            "generation": 1,
+            "peer": 1,
+            "room_tag": "c28f90e6d5dac6fd",
+            "traffic": {
+              "incoming_high_water": 30,
+              "outgoing_high_water": 9,
+              "queue_evictions": 0,
+              "queue_rejections": 0,
+              "received_bytes": 10547423,
+              "received_packets": 31908,
+              "send_buffer_pressure": 0,
+              "send_failures": 0,
+              "sent_bytes": 4625178,
+              "sent_packets": 7621,
+              "superseded_packets": 0
+            },
+            "transport": {
+              "congestion_events": 7,
+              "congestion_window": 5332,
+              "rtt_us": 33786,
+              "send_buffer_free": 4064,
+              "sender_lost_packets": 17,
+              "sender_sent_packets": 15176,
+              "udp_rx_bytes": 11494081,
+              "udp_rx_packets": 31012,
+              "udp_tx_bytes": 5202138,
+              "udp_tx_packets": 15175
+            }
+          },
+          {
+            "forwarding": {
+              "buckets": [],
+              "max_us": 0,
+              "samples": 0
+            },
+            "generation": 1,
+            "peer": 2,
+            "room_tag": "c28f90e6d5dac6fd",
+            "traffic": {
+              "incoming_high_water": 8,
+              "outgoing_high_water": 2,
+              "queue_evictions": 0,
+              "queue_rejections": 0,
+              "received_bytes": 4593163,
+              "received_packets": 7048,
+              "send_buffer_pressure": 0,
+              "send_failures": 0,
+              "sent_bytes": 1181588,
+              "sent_packets": 3575,
+              "superseded_packets": 0
+            },
+            "transport": {
+              "congestion_events": 4,
+              "congestion_window": 4356,
+              "rtt_us": 35137,
+              "send_buffer_free": 4064,
+              "sender_lost_packets": 5,
+              "sender_sent_packets": 4148,
+              "udp_rx_bytes": 4759176,
+              "udp_rx_packets": 3871,
+              "udp_tx_bytes": 1341826,
+              "udp_tx_packets": 4147
+            }
+          },
+          {
+            "forwarding": {
+              "buckets": [],
+              "max_us": 0,
+              "samples": 0
+            },
+            "generation": 1,
+            "peer": 3,
+            "room_tag": "c28f90e6d5dac6fd",
+            "traffic": {
+              "incoming_high_water": 8,
+              "outgoing_high_water": 2,
+              "queue_evictions": 0,
+              "queue_rejections": 0,
+              "received_bytes": 4571089,
+              "received_packets": 7015,
+              "send_buffer_pressure": 0,
+              "send_failures": 0,
+              "sent_bytes": 1183273,
+              "sent_packets": 3580,
+              "superseded_packets": 0
+            },
+            "transport": {
+              "congestion_events": 6,
+              "congestion_window": 4065,
+              "rtt_us": 34941,
+              "send_buffer_free": 4064,
+              "sender_lost_packets": 6,
+              "sender_sent_packets": 3963,
+              "udp_rx_bytes": 4735643,
+              "udp_rx_packets": 3816,
+              "udp_tx_bytes": 1340761,
+              "udp_tx_packets": 3962
+            }
+          },
+          {
+            "forwarding": {
+              "buckets": [],
+              "max_us": 0,
+              "samples": 0
+            },
+            "generation": 1,
+            "peer": 4,
+            "room_tag": "c28f90e6d5dac6fd",
+            "traffic": {
+              "incoming_high_water": 8,
+              "outgoing_high_water": 2,
+              "queue_evictions": 0,
+              "queue_rejections": 0,
+              "received_bytes": 4593163,
+              "received_packets": 7048,
+              "send_buffer_pressure": 0,
+              "send_failures": 0,
+              "sent_bytes": 1181588,
+              "sent_packets": 3575,
+              "superseded_packets": 0
+            },
+            "transport": {
+              "congestion_events": 5,
+              "congestion_window": 2904,
+              "rtt_us": 35975,
+              "send_buffer_free": 4064,
+              "sender_lost_packets": 5,
+              "sender_sent_packets": 3967,
+              "udp_rx_bytes": 4759355,
+              "udp_rx_packets": 3858,
+              "udp_tx_bytes": 1339606,
+              "udp_tx_packets": 3966
+            }
+          },
+          {
+            "forwarding": {
+              "buckets": [],
+              "max_us": 0,
+              "samples": 0
+            },
+            "generation": 1,
+            "peer": 5,
+            "room_tag": "c28f90e6d5dac6fd",
+            "traffic": {
+              "incoming_high_water": 8,
+              "outgoing_high_water": 2,
+              "queue_evictions": 0,
+              "queue_rejections": 0,
+              "received_bytes": 4593163,
+              "received_packets": 7048,
+              "send_buffer_pressure": 0,
+              "send_failures": 0,
+              "sent_bytes": 1184621,
+              "sent_packets": 3584,
+              "superseded_packets": 0
+            },
+            "transport": {
+              "congestion_events": 7,
+              "congestion_window": 3049,
+              "rtt_us": 34929,
+              "send_buffer_free": 4064,
+              "sender_lost_packets": 7,
+              "sender_sent_packets": 4115,
+              "udp_rx_bytes": 4762227,
+              "udp_rx_packets": 3977,
+              "udp_tx_bytes": 1345775,
+              "udp_tx_packets": 4114
+            }
+          },
+          {
+            "forwarding": {
+              "buckets": [],
+              "max_us": 0,
+              "samples": 0
+            },
+            "generation": 1,
+            "peer": 6,
+            "room_tag": "c28f90e6d5dac6fd",
+            "traffic": {
+              "incoming_high_water": 6,
+              "outgoing_high_water": 2,
+              "queue_evictions": 0,
+              "queue_rejections": 0,
+              "received_bytes": 4594490,
+              "received_packets": 7050,
+              "send_buffer_pressure": 0,
+              "send_failures": 0,
+              "sent_bytes": 1181588,
+              "sent_packets": 3575,
+              "superseded_packets": 0
+            },
+            "transport": {
+              "congestion_events": 4,
+              "congestion_window": 4356,
+              "rtt_us": 34888,
+              "send_buffer_free": 4064,
+              "sender_lost_packets": 5,
+              "sender_sent_packets": 4254,
+              "udp_rx_bytes": 4761137,
+              "udp_rx_packets": 3880,
+              "udp_tx_bytes": 1343728,
+              "udp_tx_packets": 4253
+            }
+          },
+          {
+            "forwarding": {
+              "buckets": [],
+              "max_us": 0,
+              "samples": 0
+            },
+            "generation": 1,
+            "peer": 8,
+            "room_tag": "c28f90e6d5dac6fd",
+            "traffic": {
+              "incoming_high_water": 8,
+              "outgoing_high_water": 2,
+              "queue_evictions": 0,
+              "queue_rejections": 0,
+              "received_bytes": 4574606,
+              "received_packets": 7019,
+              "send_buffer_pressure": 0,
+              "send_failures": 0,
+              "sent_bytes": 1182936,
+              "sent_packets": 3579,
+              "superseded_packets": 0
+            },
+            "transport": {
+              "congestion_events": 5,
+              "congestion_window": 3049,
+              "rtt_us": 35637,
+              "send_buffer_free": 4064,
+              "sender_lost_packets": 5,
+              "sender_sent_packets": 3904,
+              "udp_rx_bytes": 4738852,
+              "udp_rx_packets": 3799,
+              "udp_tx_bytes": 1339436,
+              "udp_tx_packets": 3903
+            }
+          },
+          {
+            "forwarding": {
+              "buckets": [],
+              "max_us": 0,
+              "samples": 0
+            },
+            "generation": 1,
+            "peer": 7,
+            "room_tag": "c28f90e6d5dac6fd",
+            "traffic": {
+              "incoming_high_water": 6,
+              "outgoing_high_water": 2,
+              "queue_evictions": 0,
+              "queue_rejections": 0,
+              "received_bytes": 4594490,
+              "received_packets": 7050,
+              "send_buffer_pressure": 0,
+              "send_failures": 0,
+              "sent_bytes": 1181251,
+              "sent_packets": 3574,
+              "superseded_packets": 1
+            },
+            "transport": {
+              "congestion_events": 3,
+              "congestion_window": 4116,
+              "rtt_us": 35773,
+              "send_buffer_free": 4064,
+              "sender_lost_packets": 3,
+              "sender_sent_packets": 4206,
+              "udp_rx_bytes": 4764968,
+              "udp_rx_packets": 4178,
+              "udp_tx_bytes": 1342391,
+              "udp_tx_packets": 4205
+            }
+          },
+          {
+            "forwarding": {
+              "buckets": [],
+              "max_us": 0,
+              "samples": 0
+            },
+            "generation": 1,
+            "peer": 9,
+            "room_tag": "c28f90e6d5dac6fd",
+            "traffic": {
+              "incoming_high_water": 8,
+              "outgoing_high_water": 2,
+              "queue_evictions": 0,
+              "queue_rejections": 0,
+              "received_bytes": 4571028,
+              "received_packets": 7013,
+              "send_buffer_pressure": 0,
+              "send_failures": 0,
+              "sent_bytes": 1183921,
+              "sent_packets": 3581,
+              "superseded_packets": 0
+            },
+            "transport": {
+              "congestion_events": 5,
+              "congestion_window": 4356,
+              "rtt_us": 34873,
+              "send_buffer_free": 4064,
+              "sender_lost_packets": 5,
+              "sender_sent_packets": 4156,
+              "udp_rx_bytes": 4740460,
+              "udp_rx_packets": 4153,
+              "udp_tx_bytes": 1344044,
+              "udp_tx_packets": 4155
+            }
+          },
+          {
+            "forwarding": {
+              "buckets": [],
+              "max_us": 0,
+              "samples": 0
+            },
+            "generation": 1,
+            "peer": 10,
+            "room_tag": "c28f90e6d5dac6fd",
+            "traffic": {
+              "incoming_high_water": 8,
+              "outgoing_high_water": 2,
+              "queue_evictions": 0,
+              "queue_rejections": 0,
+              "received_bytes": 4576837,
+              "received_packets": 7022,
+              "send_buffer_pressure": 0,
+              "send_failures": 0,
+              "sent_bytes": 1182262,
+              "sent_packets": 3577,
+              "superseded_packets": 0
+            },
+            "transport": {
+              "congestion_events": 3,
+              "congestion_window": 4116,
+              "rtt_us": 35642,
+              "send_buffer_free": 4064,
+              "sender_lost_packets": 3,
+              "sender_sent_packets": 3939,
+              "udp_rx_bytes": 4740080,
+              "udp_rx_packets": 3761,
+              "udp_tx_bytes": 1338878,
+              "udp_tx_packets": 3938
+            }
+          }
+        ],
+        "explained_render_boundaries": 79108,
+        "failure_trace": null,
+        "first_failure": null,
+        "generator_scheduling_delay_ms": {
+          "max": 19,
+          "p50": 1,
+          "p95": 2,
+          "p99": 3,
+          "samples": 9721
+        },
+        "host_commit_to_client_apply_ms": {
+          "max": 544,
+          "p50": 41,
+          "p95": 206,
+          "p99": 265,
+          "samples": 27000
+        },
+        "intentional_supersessions": 1,
+        "latency_distributions": {
+          "application_rtt_ms": {
+            "buckets": [
+              [
+                66,
+                173
+              ],
+              [
+                70,
+                1259
+              ],
+              [
+                71,
+                2381
+              ],
+              [
+                72,
+                2220
+              ],
+              [
+                73,
+                151
+              ],
+              [
+                74,
+                1838
+              ],
+              [
+                75,
+                5345
+              ],
+              [
+                76,
+                6348
+              ],
+              [
+                77,
+                14114
+              ],
+              [
+                78,
+                12314
+              ],
+              [
+                79,
+                7011
+              ],
+              [
+                80,
+                4047
+              ],
+              [
+                81,
+                6815
+              ],
+              [
+                82,
+                3718
+              ],
+              [
+                83,
+                3949
+              ],
+              [
+                84,
+                6616
+              ],
+              [
+                85,
+                2268
+              ],
+              [
+                87,
+                604
+              ],
+              [
+                92,
+                2292
+              ],
+              [
+                106,
+                492
+              ],
+              [
+                112,
+                978
+              ],
+              [
+                118,
+                805
+              ],
+              [
+                124,
+                1443
+              ],
+              [
+                153,
+                155
+              ],
+              [
+                164,
+                153
+              ]
+            ],
+            "max": 164,
+            "samples": 87489
+          },
+          "generator_scheduling_delay_ms": {
+            "buckets": [
+              [
+                0,
+                1325
+              ],
+              [
+                1,
+                5893
+              ],
+              [
+                2,
+                2123
+              ],
+              [
+                3,
+                345
+              ],
+              [
+                4,
+                11
+              ],
+              [
+                5,
+                7
+              ],
+              [
+                6,
+                2
+              ],
+              [
+                7,
+                8
+              ],
+              [
+                8,
+                3
+              ],
+              [
+                10,
+                2
+              ],
+              [
+                11,
+                1
+              ],
+              [
+                19,
+                1
+              ]
+            ],
+            "max": 19,
+            "samples": 9721
+          },
+          "host_commit_to_client_apply_ms": {
+            "buckets": [
+              [
+                25,
+                1
+              ],
+              [
+                26,
+                2
+              ],
+              [
+                29,
+                12
+              ],
+              [
+                30,
+                1
+              ],
+              [
+                31,
+                3
+              ],
+              [
+                32,
+                18
+              ],
+              [
+                33,
+                46
+              ],
+              [
+                34,
+                449
+              ],
+              [
+                35,
+                2763
+              ],
+              [
+                36,
+                4235
+              ],
+              [
+                37,
+                1563
+              ],
+              [
+                38,
+                545
+              ],
+              [
+                39,
+                649
+              ],
+              [
+                40,
+                1491
+              ],
+              [
+                41,
+                2525
+              ],
+              [
+                42,
+                2133
+              ],
+              [
+                43,
+                399
+              ],
+              [
+                44,
+                136
+              ],
+              [
+                45,
+                66
+              ],
+              [
+                46,
+                155
+              ],
+              [
+                47,
+                286
+              ],
+              [
+                48,
+                182
+              ],
+              [
+                49,
+                102
+              ],
+              [
+                50,
+                32
+              ],
+              [
+                51,
+                24
+              ],
+              [
+                52,
+                125
+              ],
+              [
+                53,
+                74
+              ],
+              [
+                54,
+                53
+              ],
+              [
+                55,
+                38
+              ],
+              [
+                56,
+                47
+              ],
+              [
+                57,
+                42
+              ],
+              [
+                58,
+                34
+              ],
+              [
+                59,
+                63
+              ],
+              [
+                60,
+                65
+              ],
+              [
+                61,
+                32
+              ],
+              [
+                62,
+                34
+              ],
+              [
+                63,
+                34
+              ],
+              [
+                64,
+                49
+              ],
+              [
+                65,
+                59
+              ],
+              [
+                66,
+                68
+              ],
+              [
+                67,
+                27
+              ],
+              [
+                68,
+                28
+              ],
+              [
+                69,
+                69
+              ],
+              [
+                70,
+                48
+              ],
+              [
+                71,
+                55
+              ],
+              [
+                72,
+                43
+              ],
+              [
+                73,
+                26
+              ],
+              [
+                74,
+                7
+              ],
+              [
+                75,
+                9
+              ],
+              [
+                76,
+                48
+              ],
+              [
+                77,
+                57
+              ],
+              [
+                78,
+                44
+              ],
+              [
+                79,
+                25
+              ],
+              [
+                80,
+                16
+              ],
+              [
+                81,
+                28
+              ],
+              [
+                82,
+                41
+              ],
+              [
+                83,
+                37
+              ],
+              [
+                84,
+                87
+              ],
+              [
+                85,
+                24
+              ],
+              [
+                86,
+                68
+              ],
+              [
+                87,
+                44
+              ],
+              [
+                88,
+                97
+              ],
+              [
+                89,
+                50
+              ],
+              [
+                90,
+                34
+              ],
+              [
+                91,
+                66
+              ],
+              [
+                92,
+                38
+              ],
+              [
+                93,
+                12
+              ],
+              [
+                94,
+                40
+              ],
+              [
+                95,
+                48
+              ],
+              [
+                96,
+                5
+              ],
+              [
+                97,
+                12
+              ],
+              [
+                98,
+                45
+              ],
+              [
+                99,
+                29
+              ],
+              [
+                100,
+                53
+              ],
+              [
+                101,
+                66
+              ],
+              [
+                102,
+                38
+              ],
+              [
+                103,
+                25
+              ],
+              [
+                104,
+                28
+              ],
+              [
+                105,
+                49
+              ],
+              [
+                106,
+                50
+              ],
+              [
+                107,
+                53
+              ],
+              [
+                108,
+                60
+              ],
+              [
+                109,
+                46
+              ],
+              [
+                110,
+                51
+              ],
+              [
+                111,
+                50
+              ],
+              [
+                112,
+                49
+              ],
+              [
+                113,
+                83
+              ],
+              [
+                114,
+                18
+              ],
+              [
+                115,
+                17
+              ],
+              [
+                116,
+                7
+              ],
+              [
+                117,
+                32
+              ],
+              [
+                118,
+                41
+              ],
+              [
+                119,
+                73
+              ],
+              [
+                120,
+                100
+              ],
+              [
+                121,
+                46
+              ],
+              [
+                122,
+                79
+              ],
+              [
+                123,
+                46
+              ],
+              [
+                124,
+                32
+              ],
+              [
+                125,
+                94
+              ],
+              [
+                126,
+                72
+              ],
+              [
+                127,
+                66
+              ],
+              [
+                128,
+                63
+              ],
+              [
+                129,
+                59
+              ],
+              [
+                130,
+                57
+              ],
+              [
+                131,
+                78
+              ],
+              [
+                132,
+                33
+              ],
+              [
+                133,
+                35
+              ],
+              [
+                134,
+                27
+              ],
+              [
+                135,
+                22
+              ],
+              [
+                136,
+                46
+              ],
+              [
+                137,
+                34
+              ],
+              [
+                138,
+                42
+              ],
+              [
+                139,
+                87
+              ],
+              [
+                140,
+                51
+              ],
+              [
+                141,
+                68
+              ],
+              [
+                142,
+                73
+              ],
+              [
+                143,
+                47
+              ],
+              [
+                144,
+                47
+              ],
+              [
+                145,
+                104
+              ],
+              [
+                146,
+                53
+              ],
+              [
+                147,
+                97
+              ],
+              [
+                148,
+                57
+              ],
+              [
+                149,
+                32
+              ],
+              [
+                150,
+                26
+              ],
+              [
+                151,
+                32
+              ],
+              [
+                152,
+                55
+              ],
+              [
+                153,
+                37
+              ],
+              [
+                154,
+                26
+              ],
+              [
+                155,
+                33
+              ],
+              [
+                156,
+                18
+              ],
+              [
+                157,
+                51
+              ],
+              [
+                158,
+                52
+              ],
+              [
+                159,
+                21
+              ],
+              [
+                160,
+                62
+              ],
+              [
+                161,
+                41
+              ],
+              [
+                162,
+                62
+              ],
+              [
+                163,
+                95
+              ],
+              [
+                164,
+                33
+              ],
+              [
+                165,
+                57
+              ],
+              [
+                166,
+                50
+              ],
+              [
+                167,
+                69
+              ],
+              [
+                168,
+                59
+              ],
+              [
+                169,
+                58
+              ],
+              [
+                170,
+                46
+              ],
+              [
+                171,
+                67
+              ],
+              [
+                172,
+                69
+              ],
+              [
+                173,
+                15
+              ],
+              [
+                174,
+                29
+              ],
+              [
+                175,
+                21
+              ],
+              [
+                176,
+                63
+              ],
+              [
+                177,
+                92
+              ],
+              [
+                178,
+                58
+              ],
+              [
+                179,
+                88
+              ],
+              [
+                180,
+                127
+              ],
+              [
+                181,
+                96
+              ],
+              [
+                182,
+                116
+              ],
+              [
+                183,
+                97
+              ],
+              [
+                184,
+                106
+              ],
+              [
+                185,
+                92
+              ],
+              [
+                186,
+                102
+              ],
+              [
+                187,
+                152
+              ],
+              [
+                188,
+                118
+              ],
+              [
+                189,
+                98
+              ],
+              [
+                190,
+                61
+              ],
+              [
+                191,
+                46
+              ],
+              [
+                192,
+                29
+              ],
+              [
+                193,
+                16
+              ],
+              [
+                194,
+                11
+              ],
+              [
+                195,
+                47
+              ],
+              [
+                196,
+                31
+              ],
+              [
+                197,
+                24
+              ],
+              [
+                198,
+                45
+              ],
+              [
+                199,
+                8
+              ],
+              [
+                200,
+                39
+              ],
+              [
+                201,
+                9
+              ],
+              [
+                202,
+                14
+              ],
+              [
+                203,
+                43
+              ],
+              [
+                204,
+                27
+              ],
+              [
+                205,
+                31
+              ],
+              [
+                206,
+                40
+              ],
+              [
+                207,
+                28
+              ],
+              [
+                208,
+                28
+              ],
+              [
+                209,
+                9
+              ],
+              [
+                210,
+                42
+              ],
+              [
+                211,
+                27
+              ],
+              [
+                212,
+                18
+              ],
+              [
+                213,
+                39
+              ],
+              [
+                214,
+                7
+              ],
+              [
+                215,
+                13
+              ],
+              [
+                216,
+                16
+              ],
+              [
+                217,
+                4
+              ],
+              [
+                218,
+                29
+              ],
+              [
+                219,
+                48
+              ],
+              [
+                220,
+                28
+              ],
+              [
+                221,
+                14
+              ],
+              [
+                222,
+                17
+              ],
+              [
+                223,
+                11
+              ],
+              [
+                224,
+                62
+              ],
+              [
+                225,
+                26
+              ],
+              [
+                226,
+                16
+              ],
+              [
+                227,
+                24
+              ],
+              [
+                228,
+                18
+              ],
+              [
+                229,
+                30
+              ],
+              [
+                230,
+                34
+              ],
+              [
+                231,
+                34
+              ],
+              [
+                232,
+                20
+              ],
+              [
+                233,
+                8
+              ],
+              [
+                234,
+                1
+              ],
+              [
+                235,
+                5
+              ],
+              [
+                236,
+                9
+              ],
+              [
+                237,
+                16
+              ],
+              [
+                238,
+                17
+              ],
+              [
+                239,
+                16
+              ],
+              [
+                240,
+                50
+              ],
+              [
+                241,
+                12
+              ],
+              [
+                242,
+                1
+              ],
+              [
+                243,
+                15
+              ],
+              [
+                244,
+                26
+              ],
+              [
+                245,
+                47
+              ],
+              [
+                246,
+                11
+              ],
+              [
+                247,
+                24
+              ],
+              [
+                248,
+                4
+              ],
+              [
+                249,
+                28
+              ],
+              [
+                250,
+                22
+              ],
+              [
+                252,
+                12
+              ],
+              [
+                253,
+                8
+              ],
+              [
+                254,
+                8
+              ],
+              [
+                255,
+                4
+              ],
+              [
+                256,
+                14
+              ],
+              [
+                257,
+                6
+              ],
+              [
+                259,
+                8
+              ],
+              [
+                261,
+                12
+              ],
+              [
+                263,
+                3
+              ],
+              [
+                264,
+                6
+              ],
+              [
+                265,
+                9
+              ],
+              [
+                267,
+                9
+              ],
+              [
+                269,
+                11
+              ],
+              [
+                271,
+                1
+              ],
+              [
+                272,
+                2
+              ],
+              [
+                273,
+                9
+              ],
+              [
+                274,
+                9
+              ],
+              [
+                276,
+                6
+              ],
+              [
+                278,
+                1
+              ],
+              [
+                279,
+                8
+              ],
+              [
+                280,
+                11
+              ],
+              [
+                281,
+                1
+              ],
+              [
+                283,
+                2
+              ],
+              [
+                284,
+                5
+              ],
+              [
+                285,
+                3
+              ],
+              [
+                286,
+                4
+              ],
+              [
+                289,
+                10
+              ],
+              [
+                292,
+                9
+              ],
+              [
+                293,
+                1
+              ],
+              [
+                294,
+                9
+              ],
+              [
+                295,
+                2
+              ],
+              [
+                297,
+                8
+              ],
+              [
+                298,
+                1
+              ],
+              [
+                300,
+                2
+              ],
+              [
+                301,
+                2
+              ],
+              [
+                303,
+                7
+              ],
+              [
+                305,
+                4
+              ],
+              [
+                306,
+                25
+              ],
+              [
+                309,
+                22
+              ],
+              [
+                311,
+                1
+              ],
+              [
+                314,
+                8
+              ],
+              [
+                316,
+                4
+              ],
+              [
+                321,
+                4
+              ],
+              [
+                324,
+                4
+              ],
+              [
+                326,
+                2
+              ],
+              [
+                329,
+                2
+              ],
+              [
+                332,
+                1
+              ],
+              [
+                333,
+                2
+              ],
+              [
+                335,
+                7
+              ],
+              [
+                344,
+                1
+              ],
+              [
+                346,
+                2
+              ],
+              [
+                347,
+                1
+              ],
+              [
+                350,
+                14
+              ],
+              [
+                356,
+                2
+              ],
+              [
+                361,
+                1
+              ],
+              [
+                365,
+                1
+              ],
+              [
+                367,
+                2
+              ],
+              [
+                374,
+                2
+              ],
+              [
+                382,
+                4
+              ],
+              [
+                383,
+                1
+              ],
+              [
+                388,
+                1
+              ],
+              [
+                397,
+                2
+              ],
+              [
+                399,
+                1
+              ],
+              [
+                407,
+                1
+              ],
+              [
+                414,
+                2
+              ],
+              [
+                422,
+                1
+              ],
+              [
+                436,
+                2
+              ],
+              [
+                439,
+                1
+              ],
+              [
+                461,
+                1
+              ],
+              [
+                468,
+                2
+              ],
+              [
+                504,
+                1
+              ],
+              [
+                521,
+                1
+              ],
+              [
+                544,
+                2
+              ]
+            ],
+            "max": 544,
+            "samples": 27000
+          },
+          "owner_sample_to_confirmation_ms": {
+            "buckets": [
+              [
+                40,
+                46
+              ],
+              [
+                41,
+                45
+              ],
+              [
+                42,
+                54
+              ],
+              [
+                43,
+                65
+              ],
+              [
+                44,
+                73
+              ],
+              [
+                45,
+                62
+              ],
+              [
+                46,
+                54
+              ],
+              [
+                47,
+                7
+              ],
+              [
+                60,
+                393
+              ],
+              [
+                61,
+                384
+              ],
+              [
+                62,
+                377
+              ],
+              [
+                63,
+                391
+              ],
+              [
+                64,
+                407
+              ],
+              [
+                65,
+                331
+              ],
+              [
+                66,
+                75
+              ],
+              [
+                67,
+                9
+              ],
+              [
+                70,
+                1
+              ],
+              [
+                73,
+                2
+              ],
+              [
+                74,
+                1
+              ],
+              [
+                75,
+                4
+              ],
+              [
+                76,
+                4
+              ],
+              [
+                77,
+                5
+              ],
+              [
+                78,
+                4
+              ],
+              [
+                79,
+                5
+              ],
+              [
+                80,
+                34
+              ],
+              [
+                81,
+                28
+              ],
+              [
+                82,
+                42
+              ],
+              [
+                83,
+                134
+              ],
+              [
+                84,
+                327
+              ],
+              [
+                85,
+                351
+              ],
+              [
+                86,
+                503
+              ],
+              [
+                87,
+                484
+              ],
+              [
+                88,
+                734
+              ],
+              [
+                89,
+                781
+              ],
+              [
+                90,
+                799
+              ],
+              [
+                91,
+                708
+              ],
+              [
+                92,
+                762
+              ],
+              [
+                93,
+                768
+              ],
+              [
+                94,
+                745
+              ],
+              [
+                95,
+                744
+              ],
+              [
+                96,
+                663
+              ],
+              [
+                97,
+                702
+              ],
+              [
+                98,
+                710
+              ],
+              [
+                99,
+                676
+              ],
+              [
+                100,
+                638
+              ],
+              [
+                101,
+                566
+              ],
+              [
+                102,
+                478
+              ],
+              [
+                103,
+                504
+              ],
+              [
+                104,
+                444
+              ],
+              [
+                105,
+                375
+              ],
+              [
+                106,
+                342
+              ],
+              [
+                107,
+                272
+              ],
+              [
+                108,
+                247
+              ],
+              [
+                109,
+                287
+              ],
+              [
+                110,
+                303
+              ],
+              [
+                111,
+                342
+              ],
+              [
+                112,
+                256
+              ],
+              [
+                113,
+                249
+              ],
+              [
+                114,
+                289
+              ],
+              [
+                115,
+                275
+              ],
+              [
+                116,
+                210
+              ],
+              [
+                117,
+                170
+              ],
+              [
+                118,
+                156
+              ],
+              [
+                119,
+                161
+              ],
+              [
+                120,
+                193
+              ],
+              [
+                121,
+                130
+              ],
+              [
+                122,
+                138
+              ],
+              [
+                123,
+                120
+              ],
+              [
+                124,
+                98
+              ],
+              [
+                125,
+                107
+              ],
+              [
+                126,
+                118
+              ],
+              [
+                127,
+                82
+              ],
+              [
+                128,
+                76
+              ],
+              [
+                129,
+                73
+              ],
+              [
+                130,
+                86
+              ],
+              [
+                131,
+                81
+              ],
+              [
+                132,
+                53
+              ],
+              [
+                133,
+                69
+              ],
+              [
+                134,
+                70
+              ],
+              [
+                135,
+                68
+              ],
+              [
+                136,
+                46
+              ],
+              [
+                137,
+                42
+              ],
+              [
+                138,
+                54
+              ],
+              [
+                139,
+                46
+              ],
+              [
+                140,
+                59
+              ],
+              [
+                141,
+                52
+              ],
+              [
+                142,
+                47
+              ],
+              [
+                143,
+                59
+              ],
+              [
+                144,
+                58
+              ],
+              [
+                145,
+                56
+              ],
+              [
+                146,
+                49
+              ],
+              [
+                147,
+                39
+              ],
+              [
+                148,
+                42
+              ],
+              [
+                149,
+                42
+              ],
+              [
+                150,
+                49
+              ],
+              [
+                151,
+                49
+              ],
+              [
+                152,
+                32
+              ],
+              [
+                153,
+                48
+              ],
+              [
+                154,
+                47
+              ],
+              [
+                155,
+                43
+              ],
+              [
+                156,
+                49
+              ],
+              [
+                157,
+                32
+              ],
+              [
+                158,
+                39
+              ],
+              [
+                159,
+                38
+              ],
+              [
+                160,
+                59
+              ],
+              [
+                161,
+                50
+              ],
+              [
+                162,
+                44
+              ],
+              [
+                163,
+                49
+              ],
+              [
+                164,
+                44
+              ],
+              [
+                165,
+                52
+              ],
+              [
+                166,
+                50
+              ],
+              [
+                167,
+                55
+              ],
+              [
+                168,
+                37
+              ],
+              [
+                169,
+                36
+              ],
+              [
+                170,
+                51
+              ],
+              [
+                171,
+                49
+              ],
+              [
+                172,
+                33
+              ],
+              [
+                173,
+                52
+              ],
+              [
+                174,
+                58
+              ],
+              [
+                175,
+                45
+              ],
+              [
+                176,
+                46
+              ],
+              [
+                177,
+                36
+              ],
+              [
+                178,
+                45
+              ],
+              [
+                179,
+                41
+              ],
+              [
+                180,
+                70
+              ],
+              [
+                181,
+                60
+              ],
+              [
+                182,
+                58
+              ],
+              [
+                183,
+                60
+              ],
+              [
+                184,
+                53
+              ],
+              [
+                185,
+                60
+              ],
+              [
+                186,
+                57
+              ],
+              [
+                187,
+                55
+              ],
+              [
+                188,
+                48
+              ],
+              [
+                189,
+                36
+              ],
+              [
+                190,
+                54
+              ],
+              [
+                191,
+                52
+              ],
+              [
+                192,
+                36
+              ],
+              [
+                193,
+                60
+              ],
+              [
+                194,
+                60
+              ],
+              [
+                195,
+                45
+              ],
+              [
+                196,
+                55
+              ],
+              [
+                197,
+                41
+              ],
+              [
+                198,
+                52
+              ],
+              [
+                199,
+                43
+              ],
+              [
+                200,
+                71
+              ],
+              [
+                201,
+                66
+              ],
+              [
+                202,
+                58
+              ],
+              [
+                203,
+                65
+              ],
+              [
+                204,
+                55
+              ],
+              [
+                205,
+                62
+              ],
+              [
+                206,
+                56
+              ],
+              [
+                207,
+                53
+              ],
+              [
+                208,
+                52
+              ],
+              [
+                209,
+                41
+              ],
+              [
+                210,
+                54
+              ],
+              [
+                211,
+                54
+              ],
+              [
+                212,
+                37
+              ],
+              [
+                213,
+                56
+              ],
+              [
+                214,
+                61
+              ],
+              [
+                215,
+                48
+              ],
+              [
+                216,
+                56
+              ],
+              [
+                217,
+                39
+              ],
+              [
+                218,
+                48
+              ],
+              [
+                219,
+                44
+              ],
+              [
+                220,
+                74
+              ],
+              [
+                221,
+                69
+              ],
+              [
+                222,
+                52
+              ],
+              [
+                223,
+                63
+              ],
+              [
+                224,
+                55
+              ],
+              [
+                225,
+                61
+              ],
+              [
+                226,
+                61
+              ],
+              [
+                227,
+                53
+              ],
+              [
+                228,
+                49
+              ],
+              [
+                229,
+                42
+              ],
+              [
+                230,
+                52
+              ],
+              [
+                231,
+                52
+              ],
+              [
+                232,
+                41
+              ],
+              [
+                233,
+                58
+              ],
+              [
+                234,
+                65
+              ],
+              [
+                235,
+                42
+              ],
+              [
+                236,
+                53
+              ],
+              [
+                237,
+                41
+              ],
+              [
+                238,
+                51
+              ],
+              [
+                239,
+                46
+              ],
+              [
+                240,
+                69
+              ],
+              [
+                241,
+                67
+              ],
+              [
+                242,
+                52
+              ],
+              [
+                243,
+                64
+              ],
+              [
+                244,
+                55
+              ],
+              [
+                245,
+                63
+              ],
+              [
+                246,
+                60
+              ],
+              [
+                247,
+                53
+              ],
+              [
+                248,
+                49
+              ],
+              [
+                249,
+                38
+              ],
+              [
+                250,
+                51
+              ],
+              [
+                251,
+                52
+              ],
+              [
+                252,
+                39
+              ],
+              [
+                253,
+                54
+              ],
+              [
+                254,
+                63
+              ],
+              [
+                255,
+                41
+              ],
+              [
+                256,
+                50
+              ],
+              [
+                257,
+                39
+              ],
+              [
+                258,
+                47
+              ],
+              [
+                259,
+                40
+              ],
+              [
+                260,
+                62
+              ],
+              [
+                261,
+                59
+              ],
+              [
+                262,
+                41
+              ],
+              [
+                263,
+                55
+              ],
+              [
+                264,
+                43
+              ],
+              [
+                265,
+                50
+              ],
+              [
+                266,
+                49
+              ],
+              [
+                267,
+                38
+              ],
+              [
+                268,
+                36
+              ],
+              [
+                269,
+                34
+              ],
+              [
+                270,
+                30
+              ],
+              [
+                271,
+                27
+              ],
+              [
+                272,
+                23
+              ],
+              [
+                273,
+                32
+              ],
+              [
+                274,
+                35
+              ],
+              [
+                275,
+                28
+              ],
+              [
+                276,
+                28
+              ],
+              [
+                277,
+                22
+              ],
+              [
+                278,
+                21
+              ],
+              [
+                279,
+                22
+              ],
+              [
+                280,
+                46
+              ],
+              [
+                281,
+                38
+              ],
+              [
+                282,
+                23
+              ],
+              [
+                283,
+                28
+              ],
+              [
+                284,
+                31
+              ],
+              [
+                285,
+                26
+              ],
+              [
+                286,
+                29
+              ],
+              [
+                287,
+                30
+              ],
+              [
+                288,
+                17
+              ],
+              [
+                289,
+                19
+              ],
+              [
+                290,
+                21
+              ],
+              [
+                291,
+                18
+              ],
+              [
+                292,
+                11
+              ],
+              [
+                293,
+                21
+              ],
+              [
+                294,
+                16
+              ],
+              [
+                295,
+                17
+              ],
+              [
+                296,
+                20
+              ],
+              [
+                297,
+                10
+              ],
+              [
+                298,
+                16
+              ],
+              [
+                299,
+                16
+              ],
+              [
+                300,
+                29
+              ],
+              [
+                301,
+                24
+              ],
+              [
+                302,
+                16
+              ],
+              [
+                303,
+                15
+              ],
+              [
+                304,
+                18
+              ],
+              [
+                305,
+                15
+              ],
+              [
+                306,
+                17
+              ],
+              [
+                307,
+                24
+              ],
+              [
+                308,
+                16
+              ],
+              [
+                309,
+                13
+              ],
+              [
+                310,
+                14
+              ],
+              [
+                311,
+                10
+              ],
+              [
+                312,
+                9
+              ],
+              [
+                313,
+                15
+              ],
+              [
+                314,
+                15
+              ],
+              [
+                315,
+                5
+              ],
+              [
+                316,
+                10
+              ],
+              [
+                317,
+                8
+              ],
+              [
+                318,
+                6
+              ],
+              [
+                319,
+                10
+              ],
+              [
+                320,
+                24
+              ],
+              [
+                321,
+                5
+              ],
+              [
+                322,
+                13
+              ],
+              [
+                323,
+                9
+              ],
+              [
+                324,
+                7
+              ],
+              [
+                325,
+                7
+              ],
+              [
+                326,
+                5
+              ],
+              [
+                327,
+                9
+              ],
+              [
+                328,
+                6
+              ],
+              [
+                329,
+                6
+              ],
+              [
+                330,
+                7
+              ],
+              [
+                331,
+                8
+              ],
+              [
+                332,
+                2
+              ],
+              [
+                333,
+                7
+              ],
+              [
+                334,
+                6
+              ],
+              [
+                335,
+                5
+              ],
+              [
+                336,
+                8
+              ],
+              [
+                337,
+                6
+              ],
+              [
+                338,
+                2
+              ],
+              [
+                339,
+                2
+              ],
+              [
+                340,
+                14
+              ],
+              [
+                341,
+                2
+              ],
+              [
+                342,
+                8
+              ],
+              [
+                343,
+                5
+              ],
+              [
+                344,
+                1
+              ],
+              [
+                345,
+                3
+              ],
+              [
+                346,
+                3
+              ],
+              [
+                347,
+                4
+              ],
+              [
+                348,
+                3
+              ],
+              [
+                349,
+                3
+              ],
+              [
+                350,
+                3
+              ],
+              [
+                351,
+                7
+              ],
+              [
+                352,
+                2
+              ],
+              [
+                353,
+                3
+              ],
+              [
+                354,
+                2
+              ],
+              [
+                355,
+                3
+              ],
+              [
+                356,
+                4
+              ],
+              [
+                357,
+                4
+              ],
+              [
+                358,
+                2
+              ],
+              [
+                359,
+                2
+              ],
+              [
+                360,
+                11
+              ],
+              [
+                361,
+                2
+              ],
+              [
+                362,
+                7
+              ],
+              [
+                363,
+                5
+              ],
+              [
+                364,
+                1
+              ],
+              [
+                365,
+                3
+              ],
+              [
+                366,
+                3
+              ],
+              [
+                367,
+                3
+              ],
+              [
+                368,
+                3
+              ],
+              [
+                369,
+                3
+              ],
+              [
+                370,
+                3
+              ],
+              [
+                371,
+                7
+              ],
+              [
+                372,
+                2
+              ],
+              [
+                373,
+                4
+              ],
+              [
+                374,
+                2
+              ],
+              [
+                375,
+                3
+              ],
+              [
+                376,
+                3
+              ],
+              [
+                377,
+                4
+              ],
+              [
+                378,
+                2
+              ],
+              [
+                379,
+                2
+              ],
+              [
+                380,
+                11
+              ],
+              [
+                381,
+                2
+              ],
+              [
+                382,
+                4
+              ],
+              [
+                383,
+                4
+              ],
+              [
+                384,
+                1
+              ],
+              [
+                385,
+                2
+              ],
+              [
+                386,
+                1
+              ],
+              [
+                387,
+                2
+              ],
+              [
+                388,
+                2
+              ],
+              [
+                389,
+                2
+              ],
+              [
+                390,
+                1
+              ],
+              [
+                391,
+                3
+              ],
+              [
+                392,
+                1
+              ],
+              [
+                393,
+                2
+              ],
+              [
+                394,
+                2
+              ],
+              [
+                395,
+                2
+              ],
+              [
+                396,
+                3
+              ],
+              [
+                397,
+                2
+              ],
+              [
+                399,
+                1
+              ],
+              [
+                400,
+                2
+              ],
+              [
+                401,
+                2
+              ],
+              [
+                402,
+                2
+              ],
+              [
+                403,
+                1
+              ],
+              [
+                404,
+                1
+              ],
+              [
+                405,
+                2
+              ],
+              [
+                406,
+                1
+              ],
+              [
+                407,
+                2
+              ],
+              [
+                408,
+                2
+              ],
+              [
+                409,
+                1
+              ],
+              [
+                410,
+                1
+              ],
+              [
+                411,
+                1
+              ],
+              [
+                413,
+                2
+              ],
+              [
+                414,
+                1
+              ],
+              [
+                416,
+                2
+              ],
+              [
+                417,
+                2
+              ],
+              [
+                421,
+                1
+              ],
+              [
+                422,
+                2
+              ],
+              [
+                424,
+                1
+              ],
+              [
+                425,
+                2
+              ],
+              [
+                426,
+                1
+              ],
+              [
+                427,
+                1
+              ],
+              [
+                428,
+                1
+              ],
+              [
+                429,
+                1
+              ],
+              [
+                431,
+                1
+              ],
+              [
+                436,
+                2
+              ],
+              [
+                437,
+                1
+              ],
+              [
+                441,
+                1
+              ],
+              [
+                442,
+                2
+              ],
+              [
+                449,
+                1
+              ],
+              [
+                450,
+                1
+              ],
+              [
+                457,
+                1
+              ],
+              [
+                461,
+                1
+              ],
+              [
+                462,
+                2
+              ],
+              [
+                470,
+                1
+              ],
+              [
+                477,
+                1
+              ],
+              [
+                481,
+                1
+              ],
+              [
+                482,
+                1
+              ],
+              [
+                490,
+                1
+              ],
+              [
+                497,
+                1
+              ],
+              [
+                501,
+                1
+              ],
+              [
+                502,
+                1
+              ],
+              [
+                510,
+                1
+              ],
+              [
+                521,
+                1
+              ],
+              [
+                522,
+                1
+              ],
+              [
+                530,
+                1
+              ],
+              [
+                537,
+                1
+              ],
+              [
+                541,
+                1
+              ],
+              [
+                542,
+                1
+              ],
+              [
+                557,
+                1
+              ],
+              [
+                577,
+                1
+              ],
+              [
+                597,
+                1
+              ],
+              [
+                617,
+                1
+              ],
+              [
+                637,
+                1
+              ]
+            ],
+            "max": 637,
+            "samples": 29814
+          }
+        },
+        "lifetime_application_failures": 0,
+        "limitations": [
+          "Headless production session display state; physical display and audio are outside this measurement.",
+          "Latency histograms cover the full measurement at 1ms resolution; RTT samples are cached application-probe observations. Forwarding uses separate relay timestamps."
+        ],
+        "measurement_end_unix_ms": 1793886855439,
+        "measurement_seconds": 60,
+        "measurement_start_unix_ms": 1793886795440,
+        "owner_sample_to_confirmation_ms": {
+          "max": 637,
+          "p50": 102,
+          "p95": 268,
+          "p99": 333,
+          "samples": 29814
+        },
+        "passed": true,
+        "players_per_room": 10,
+        "protocol": 8,
+        "queue_evictions": 0,
+        "received_packets_per_second": 1364.15,
+        "rematches": 0,
+        "render_frames_checked": 114105,
+        "rooms": 1,
+        "sampled_render_frames": 114105,
+        "seed": 1997,
+        "send_failures_and_queue_rejections": 0,
+        "sent_packets_per_second": 568.15,
+        "shared_outcomes": {
+          "bomb_placements": 79,
+          "deaths": 63,
+          "detonations": 70,
+          "round_results": 6
+        },
+        "version": "0.7.4",
+        "warmup_seconds": 10,
+        "impairment": {
+          "rtt_ms": 0,
+          "jitter_ms": 0,
+          "loss_percent": 0,
+          "udp_forwarded": null,
+          "udp_dropped": null
+        },
+        "generator_exit_codes": [
+          0
+        ],
+        "generator_exit_code": 0,
+        "resource_scope": "measurement interval; CPU from process-time deltas (100 percent = one core)",
+        "relay_cpu_percent": {
+          "samples": 0,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        },
+        "relay_memory_kib": {
+          "samples": 0,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        },
+        "generator_cpu_percent": {
+          "samples": 265,
+          "p50": 48.75832923481483,
+          "p95": 56.686780260266154,
+          "p99": 60.383473489667836,
+          "max": 60.80530014460876
+        },
+        "generator_memory_kib": {
+          "samples": 267,
+          "p50": 33408,
+          "p95": 33568,
+          "p99": 33584,
+          "max": 33584
+        },
+        "relay": null,
+        "relay_forwarding_scope": "collected separately from deployed relay diagnostics",
+        "gates": {
+          "gameplay_correct": true,
+          "zero_application_evictions": true,
+          "zero_send_failures": true
+        }
+      }
+    ],
+    "limitations": [
+      "Relay forwarding and server resources are outside this client runner; collect matching deployed relay diagnostics separately."
+    ]
+  },
+  "matched_server_metrics": [
+    {
+      "summary_records": 16,
+      "measured_intervals": 10,
+      "connections": 2,
+      "forwarding_ms": {
+        "samples": 7604,
+        "p50": 0.1,
+        "p95": 0.1,
+        "p99": 0.1,
+        "max": 0.341
+      },
+      "forwarding_failures": 0,
+      "send_buffer_pressure": 0,
+      "sender_loss_estimate": 3,
+      "congestion_events": 3,
+      "queue_evictions": 0,
+      "queue_rejections": 0,
+      "players": 2,
+      "scope": "Complete ten-second intervals inside the matching client measurement window; sender-loss counters estimate QUIC transport loss, not wire packet loss."
+    },
+    {
+      "summary_records": 80,
+      "measured_intervals": 42,
+      "connections": 10,
+      "forwarding_ms": {
+        "samples": 60538,
+        "p50": 0.1,
+        "p95": 0.2,
+        "p99": 0.3,
+        "max": 31.926
+      },
+      "forwarding_failures": 0,
+      "send_buffer_pressure": 158,
+      "sender_loss_estimate": 145,
+      "congestion_events": 64,
+      "queue_evictions": 0,
+      "queue_rejections": 0,
+      "players": 10,
+      "scope": "Complete ten-second intervals inside the matching client measurement window; sender-loss counters estimate QUIC transport loss, not wire packet loss."
+    }
+  ],
+  "server_diagnostics_sha256": "71d7b9c4f6e688b7de96bb314c161bfac71931d5c4bf7025bc7031636f9d6a0b",
+  "limitations": [
+    "One deployed repetition each for two and ten clients; the full 1x2, 1x10 and 4x10 matrix with three repetitions runs locally.",
+    "The live runner cannot independently set its full local release_gate_passed flag: matching server forwarding diagnostics are collected separately and recorded here.",
+    "Application forwarding excludes WAN propagation and QUIC scheduling after enqueue."
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "version": "0.7.4",
+  "release_source_commit": "4587894df1e6d009781e26225c2efbfe8e8ff57c",
+  "verified_at_utc": "2026-11-05T13:59:51.027456+00:00",
+  "passed": true,
+  "source_sha256": "43d4c72415407dd430dbf681fac1b1769bec38c7a88733f7d6df31fe17c757ad",
+  "published_manifest_source": {
+    "repository": "https://github.com/andrei-ace/atomic_bomberman",
+    "commit": "4587894df1e6d009781e26225c2efbfe8e8ff57c",
+    "dirty": false,
+    "sha256": "43d4c72415407dd430dbf681fac1b1769bec38c7a88733f7d6df31fe17c757ad",
+    "file_count": 340,
+    "digest_definition": "Sorted git-visible non-evidence paths and contents, each followed by NUL"
+  },
+  "widescreen": {
+    "passed": true,
+    "app": "dist/Atomic Bomberman.app",
+    "binary_sha256": "a5c3ef7027db3f3bde551aa7547667a5c7d1befab1b56d2fb016ce099078aa04",
+    "captures": [
+      {
+        "name": "main-4-by-3",
+        "window_size": [
+          960,
+          720
+        ],
+        "framebuffer_size": [
+          960,
+          720
+        ],
+        "path": "build/dist-widescreen-20261105T112423Z/main-4-by-3.png",
+        "backing_scale_factor": 1
+      },
+      {
+        "name": "main-16-by-9",
+        "window_size": [
+          1280,
+          720
+        ],
+        "framebuffer_size": [
+          1280,
+          720
+        ],
+        "path": "build/dist-widescreen-20261105T112423Z/main-16-by-9.png",
+        "backing_scale_factor": 1
+      },
+      {
+        "name": "graphics-16-by-9",
+        "window_size": [
+          1280,
+          720
+        ],
+        "framebuffer_size": [
+          1280,
+          720
+        ],
+        "path": "build/dist-widescreen-20261105T112423Z/graphics-16-by-9.png",
+        "backing_scale_factor": 1
+      }
+    ],
+    "runtime_executable": "dist/Atomic Bomberman.app/Contents/MacOS/bomberman",
+    "graphics_margin_comparisons": [
+      {
+        "side": "left",
+        "rectangle": [
+          0,
+          0,
+          160.0,
+          720
+        ],
+        "reference_samples_checked": 1024,
+        "nonblack_reference_matches": 1024,
+        "maximum_channel_error": 1,
+        "channel_tolerance": 2
+      },
+      {
+        "side": "right",
+        "rectangle": [
+          1120.0,
+          0,
+          160.0,
+          720
+        ],
+        "reference_samples_checked": 1024,
+        "nonblack_reference_matches": 1024,
+        "maximum_channel_error": 1,
+        "channel_tolerance": 2
+      }
+    ],
+    "hd_source_key": "b727e4035f5d3970f9460a85eb77efcf2f874cae7b81cc9b53c32b8deffef3c3"
+  },
+  "window_restoration": {
+    "passed": true,
+    "app": "dist/Atomic Bomberman.app",
+    "binary_sha256": "a5c3ef7027db3f3bde551aa7547667a5c7d1befab1b56d2fb016ce099078aa04",
+    "runs": [
+      {
+        "initial_size": [
+          960,
+          720
+        ],
+        "initial_fullscreen": 0,
+        "executable": "dist/Atomic Bomberman.app/Contents/MacOS/bomberman",
+        "resized_and_saved": [
+          1280,
+          720
+        ],
+        "fullscreen_size": [
+          5120,
+          1410
+        ],
+        "fullscreen_preserved_windowed_size": true
+      },
+      {
+        "initial_size": [
+          1280,
+          720
+        ],
+        "initial_fullscreen": 0,
+        "executable": "dist/Atomic Bomberman.app/Contents/MacOS/bomberman",
+        "restored_previous_run": true,
+        "resized_and_saved": [
+          1024,
+          768
+        ]
+      },
+      {
+        "initial_size": [
+          1024,
+          768
+        ],
+        "initial_fullscreen": 0,
+        "executable": "dist/Atomic Bomberman.app/Contents/MacOS/bomberman",
+        "restored_previous_run": true
+      }
+    ]
+  },
+  "scope": "Exact downloaded, signed macOS release bundle in dist; own-window OpenGL readback and process-local synthetic Cocoa events. No Screen Recording or global event injection. Settings isolated from user profile."
+}

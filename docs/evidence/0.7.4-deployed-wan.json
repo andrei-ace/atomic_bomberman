@@ -1,0 +1,1204 @@
+{
+  "version": "0.7.4",
+  "release_source_commit": "4587894df1e6d009781e26225c2efbfe8e8ff57c",
+  "verified_at_utc": "2026-11-05T13:59:51.027456+00:00",
+  "local_synthetic_matrix": {
+    "passed": true,
+    "environment": "Darwin arm64",
+    "responsiveness_target_met": true,
+    "cases": [
+      {
+        "passed": true,
+        "build": {
+          "version": "0.7.4",
+          "protocol": 8,
+          "fixture_sha256": "836df91878e54798778c48149af65e45799a5f256e6d14a11b10e718cd42242e"
+        },
+        "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+        "host_platform": "macos",
+        "client_platform": "macos",
+        "canonical_state_hash": "4abb4fbfe9bf7454e15e8eb79a68c5352d2bc21f231d4e0b34eeef694104d4b4",
+        "host_tick": 300,
+        "client_tick": 300,
+        "observed_gameplay_rtt_ms": [
+          3,
+          5,
+          3,
+          5,
+          2,
+          3
+        ],
+        "sample_to_visible_ms": {
+          "median": 20.5382705,
+          "p95": 38.8895,
+          "max": 38.8895
+        },
+        "responsiveness_target_ms": 40,
+        "responsiveness_target_met": true,
+        "visible_before_confirmation_samples": 7,
+        "movement_continuity": {
+          "max_backward_step_pixels": 0.0,
+          "backward_step_limit_pixels": 8,
+          "total_backward_correction_pixels": 0.0,
+          "max_last_movement_after_release_ms": 0.04054199999999497,
+          "settled_samples": 10,
+          "observation_window_ms": 400
+        },
+        "samples": [
+          {
+            "actual_release_ms": 58.25175,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 10,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.01933400000000063,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 38.615542000000005,
+            "sample_to_visible_ms": 20.197416999999998,
+            "settled_after_release_ms": 0.01933400000000063,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 56.787459,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 31,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.012916000000004146,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 37.986709,
+            "sample_to_visible_ms": 18.808584,
+            "settled_after_release_ms": 0.012916000000004146,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 40.02225,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 52,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.03633299999999906,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 40.058583,
+            "sample_to_visible_ms": 20.872291,
+            "settled_after_release_ms": 0.03633299999999906,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 58.212541,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 73,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.04054199999999497,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 38.11725,
+            "sample_to_visible_ms": 20.20425,
+            "settled_after_release_ms": 0.04054199999999497,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 59.909542,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 95,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.0362920000000031,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 20.882499999999997,
+            "sample_to_visible_ms": 20.882499999999997,
+            "settled_after_release_ms": 0.0362920000000031,
+            "visible_before_confirmation": false
+          },
+          {
+            "actual_release_ms": 58.262916,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 117,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.03120900000000404,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 38.466541,
+            "sample_to_visible_ms": 20.892666000000002,
+            "settled_after_release_ms": 0.03120900000000404,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 40.900875000000006,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 138,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.032874999999989996,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 40.933749999999996,
+            "sample_to_visible_ms": 20.87675,
+            "settled_after_release_ms": 0.032874999999989996,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 56.221916,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 160,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.03575000000000017,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 20.024250000000002,
+            "sample_to_visible_ms": 20.024250000000002,
+            "settled_after_release_ms": 0.03575000000000017,
+            "visible_before_confirmation": false
+          },
+          {
+            "actual_release_ms": 59.705292,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 181,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.031374999999997044,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 38.8895,
+            "sample_to_visible_ms": 38.8895,
+            "settled_after_release_ms": 0.031374999999997044,
+            "visible_before_confirmation": false
+          },
+          {
+            "actual_release_ms": 58.085125,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 202,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.02979100000000301,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 37.272958,
+            "sample_to_visible_ms": 19.282541000000002,
+            "settled_after_release_ms": 0.02979100000000301,
+            "visible_before_confirmation": true
+          }
+        ],
+        "environment": "Disposable TLS/QUIC relay, native loopback through opaque packet proxy",
+        "injected_gameplay_rtt_ms": 0,
+        "jitter_ms": 0,
+        "udp_loss_percent": 0,
+        "udp_packets_received": 1492,
+        "udp_packets_forwarded": 1492,
+        "udp_packets_dropped": 0
+      },
+      {
+        "passed": true,
+        "build": {
+          "version": "0.7.4",
+          "protocol": 8,
+          "fixture_sha256": "836df91878e54798778c48149af65e45799a5f256e6d14a11b10e718cd42242e"
+        },
+        "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+        "host_platform": "macos",
+        "client_platform": "macos",
+        "canonical_state_hash": "5da47714edc2835e97375faf8de2aea6144951d7690a184f5e9dd61547ec82f8",
+        "host_tick": 300,
+        "client_tick": 300,
+        "observed_gameplay_rtt_ms": [
+          45,
+          46,
+          43,
+          46,
+          45
+        ],
+        "sample_to_visible_ms": {
+          "median": 18.980687500000002,
+          "p95": 38.695541999999996,
+          "max": 38.695541999999996
+        },
+        "responsiveness_target_ms": 40,
+        "responsiveness_target_met": true,
+        "visible_before_confirmation_samples": 10,
+        "movement_continuity": {
+          "max_backward_step_pixels": 0.0,
+          "backward_step_limit_pixels": 8,
+          "total_backward_correction_pixels": 0.0,
+          "max_last_movement_after_release_ms": 0.07312500000000455,
+          "settled_samples": 10,
+          "observation_window_ms": 400
+        },
+        "samples": [
+          {
+            "actual_release_ms": 40.245792,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 10,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.024541999999996733,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 97.479625,
+            "sample_to_visible_ms": 20.205375,
+            "settled_after_release_ms": 0.024541999999996733,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 54.535292,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 31,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.07312500000000455,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 75.404708,
+            "sample_to_visible_ms": 17.417875,
+            "settled_after_release_ms": 0.07312500000000455,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 57.886125,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 51,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.044375000000002274,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 96.85320899999999,
+            "sample_to_visible_ms": 38.695541999999996,
+            "settled_after_release_ms": 0.044375000000002274,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 55.245957999999995,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 72,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.052958000000003835,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 76.146291,
+            "sample_to_visible_ms": 17.058541,
+            "settled_after_release_ms": 0.052958000000003835,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 56.860082999999996,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 94,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.030875000000001762,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 74.68345799999999,
+            "sample_to_visible_ms": 17.747833,
+            "settled_after_release_ms": 0.030875000000001762,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 40.85575,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 115,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.0475410000000025,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 80.25125,
+            "sample_to_visible_ms": 20.334916,
+            "settled_after_release_ms": 0.0475410000000025,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 40.537583000000005,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 136,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.044666999999996904,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 77.358333,
+            "sample_to_visible_ms": 19.7815,
+            "settled_after_release_ms": 0.044666999999996904,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 57.953584,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 158,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.04475000000000051,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 78.67458400000001,
+            "sample_to_visible_ms": 18.71225,
+            "settled_after_release_ms": 0.04475000000000051,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 56.820292,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 179,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.0332080000000019,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 77.694708,
+            "sample_to_visible_ms": 19.146583,
+            "settled_after_release_ms": 0.0332080000000019,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 57.028459,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 201,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.034416000000000224,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 77.228042,
+            "sample_to_visible_ms": 18.814792,
+            "settled_after_release_ms": 0.034416000000000224,
+            "visible_before_confirmation": true
+          }
+        ],
+        "environment": "Disposable TLS/QUIC relay, native loopback through opaque packet proxy",
+        "injected_gameplay_rtt_ms": 40,
+        "jitter_ms": 0,
+        "udp_loss_percent": 0,
+        "udp_packets_received": 1574,
+        "udp_packets_forwarded": 1574,
+        "udp_packets_dropped": 0
+      },
+      {
+        "passed": true,
+        "build": {
+          "version": "0.7.4",
+          "protocol": 8,
+          "fixture_sha256": "836df91878e54798778c48149af65e45799a5f256e6d14a11b10e718cd42242e"
+        },
+        "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+        "host_platform": "macos",
+        "client_platform": "macos",
+        "canonical_state_hash": "8cb0cc53110c8d8b9ade82dcf061a52341e498b15d89ce1570ff6287d9fd17fb",
+        "host_tick": 300,
+        "client_tick": 300,
+        "observed_gameplay_rtt_ms": [
+          87,
+          83,
+          87,
+          85,
+          87,
+          85
+        ],
+        "sample_to_visible_ms": {
+          "median": 19.5166245,
+          "p95": 20.886499999999998,
+          "max": 20.886499999999998
+        },
+        "responsiveness_target_ms": 40,
+        "responsiveness_target_met": true,
+        "visible_before_confirmation_samples": 10,
+        "movement_continuity": {
+          "max_backward_step_pixels": 0.0,
+          "backward_step_limit_pixels": 8,
+          "total_backward_correction_pixels": 0.0,
+          "max_last_movement_after_release_ms": 0.04454199999999986,
+          "settled_samples": 10,
+          "observation_window_ms": 400
+        },
+        "samples": [
+          {
+            "actual_release_ms": 55.301042,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 10,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.034250000000000114,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 114.997333,
+            "sample_to_visible_ms": 19.734208,
+            "settled_after_release_ms": 0.034250000000000114,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 57.868125,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 31,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.031125000000002956,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 117.712958,
+            "sample_to_visible_ms": 19.299041,
+            "settled_after_release_ms": 0.031125000000002956,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 41.532125,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 53,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.03129200000000054,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 138.87570799999997,
+            "sample_to_visible_ms": 20.886499999999998,
+            "settled_after_release_ms": 0.03129200000000054,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 53.566417,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 74,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.04454199999999986,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 112.404084,
+            "sample_to_visible_ms": 17.353084000000003,
+            "settled_after_release_ms": 0.04454199999999986,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 57.533292,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 95,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.023207999999996787,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 116.312292,
+            "sample_to_visible_ms": 18.35925,
+            "settled_after_release_ms": 0.023207999999996787,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 40.730250000000005,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 116,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.04370899999999267,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 138.710667,
+            "sample_to_visible_ms": 20.213124999999998,
+            "settled_after_release_ms": 0.04370899999999267,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 41.58075,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 138,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.03274999999999295,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 136.2315,
+            "sample_to_visible_ms": 20.772458,
+            "settled_after_release_ms": 0.03274999999999295,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 57.93525,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 159,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.03941599999999568,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 118.116333,
+            "sample_to_visible_ms": 17.476041000000002,
+            "settled_after_release_ms": 0.03941599999999568,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 57.40375,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 180,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.013833999999995683,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 95.294375,
+            "sample_to_visible_ms": 18.045167,
+            "settled_after_release_ms": 0.013833999999995683,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 41.442833,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 202,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.03283400000000114,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 117.473583,
+            "sample_to_visible_ms": 20.633917,
+            "settled_after_release_ms": 0.03283400000000114,
+            "visible_before_confirmation": true
+          }
+        ],
+        "environment": "Disposable TLS/QUIC relay, native loopback through opaque packet proxy",
+        "injected_gameplay_rtt_ms": 80,
+        "jitter_ms": 0,
+        "udp_loss_percent": 0,
+        "udp_packets_received": 1649,
+        "udp_packets_forwarded": 1647,
+        "udp_packets_dropped": 0
+      },
+      {
+        "passed": true,
+        "build": {
+          "version": "0.7.4",
+          "protocol": 8,
+          "fixture_sha256": "836df91878e54798778c48149af65e45799a5f256e6d14a11b10e718cd42242e"
+        },
+        "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+        "host_platform": "macos",
+        "client_platform": "macos",
+        "canonical_state_hash": "b1df6ef1bea35a55122377524d86137db7ecad6eaa515b14c25aa0feff0451ee",
+        "host_tick": 300,
+        "client_tick": 300,
+        "observed_gameplay_rtt_ms": [
+          166,
+          164,
+          165,
+          167
+        ],
+        "sample_to_visible_ms": {
+          "median": 19.7631665,
+          "p95": 38.698,
+          "max": 38.698
+        },
+        "responsiveness_target_ms": 40,
+        "responsiveness_target_met": true,
+        "visible_before_confirmation_samples": 10,
+        "movement_continuity": {
+          "max_backward_step_pixels": 0.0,
+          "backward_step_limit_pixels": 8,
+          "total_backward_correction_pixels": 0.0,
+          "max_last_movement_after_release_ms": 0.057332999999999856,
+          "settled_samples": 10,
+          "observation_window_ms": 400
+        },
+        "samples": [
+          {
+            "actual_release_ms": 40.119333,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 10,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.02287499999999909,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 197.288208,
+            "sample_to_visible_ms": 19.298541,
+            "settled_after_release_ms": 0.02287499999999909,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 55.799875,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 32,
+            "direction": "Left",
+            "last_movement_after_release_ms": null,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 190.21675,
+            "sample_to_visible_ms": 20.263208000000002,
+            "settled_after_release_ms": 0.0,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 56.451083,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 53,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.02750000000000341,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 193.4535,
+            "sample_to_visible_ms": 20.833208,
+            "settled_after_release_ms": 0.02750000000000341,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 40.999165999999995,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 75,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.03191700000000708,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 181.005583,
+            "sample_to_visible_ms": 20.679333,
+            "settled_after_release_ms": 0.03191700000000708,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 54.998166,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 96,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.03283400000000114,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 205.66179100000002,
+            "sample_to_visible_ms": 17.067875,
+            "settled_after_release_ms": 0.03283400000000114,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 54.240958,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 118,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.04445900000000336,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 210.025125,
+            "sample_to_visible_ms": 18.625375,
+            "settled_after_release_ms": 0.04445900000000336,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 58.541875,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 139,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.057332999999999856,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 211.834417,
+            "sample_to_visible_ms": 18.058333,
+            "settled_after_release_ms": 0.057332999999999856,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 57.267167,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 160,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.0402909999999963,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 209.618375,
+            "sample_to_visible_ms": 19.427667,
+            "settled_after_release_ms": 0.0402909999999963,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 59.433792,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 181,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.04037500000000449,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 215.800167,
+            "sample_to_visible_ms": 38.698,
+            "settled_after_release_ms": 0.04037500000000449,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 40.74675,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 203,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.040083000000002755,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 211.686041,
+            "sample_to_visible_ms": 20.098666,
+            "settled_after_release_ms": 0.040083000000002755,
+            "visible_before_confirmation": true
+          }
+        ],
+        "environment": "Disposable TLS/QUIC relay, native loopback through opaque packet proxy",
+        "injected_gameplay_rtt_ms": 160,
+        "jitter_ms": 0,
+        "udp_loss_percent": 0,
+        "udp_packets_received": 1702,
+        "udp_packets_forwarded": 1699,
+        "udp_packets_dropped": 0
+      },
+      {
+        "passed": true,
+        "build": {
+          "version": "0.7.4",
+          "protocol": 8,
+          "fixture_sha256": "836df91878e54798778c48149af65e45799a5f256e6d14a11b10e718cd42242e"
+        },
+        "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+        "host_platform": "macos",
+        "client_platform": "macos",
+        "canonical_state_hash": "955b46ce279089af3a75c62ce9219c16d57b3001fd39462f50c388dce0235e19",
+        "host_tick": 300,
+        "client_tick": 300,
+        "observed_gameplay_rtt_ms": [
+          76,
+          84,
+          125,
+          102,
+          87
+        ],
+        "sample_to_visible_ms": {
+          "median": 18.6605625,
+          "p95": 20.884,
+          "max": 20.884
+        },
+        "responsiveness_target_ms": 40,
+        "responsiveness_target_met": true,
+        "visible_before_confirmation_samples": 10,
+        "movement_continuity": {
+          "max_backward_step_pixels": 0.0,
+          "backward_step_limit_pixels": 8,
+          "total_backward_correction_pixels": 0.0,
+          "max_last_movement_after_release_ms": 17.672792,
+          "settled_samples": 10,
+          "observation_window_ms": 400
+        },
+        "samples": [
+          {
+            "actual_release_ms": 59.346250000000005,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 11,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.03399999999999892,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 115.850792,
+            "sample_to_visible_ms": 18.0985,
+            "settled_after_release_ms": 0.03399999999999892,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 58.849582999999996,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 31,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.03345900000000057,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 135.920875,
+            "sample_to_visible_ms": 17.239708,
+            "settled_after_release_ms": 0.03345900000000057,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 41.574167,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 52,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.034290999999996075,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 135.633125,
+            "sample_to_visible_ms": 20.762625,
+            "settled_after_release_ms": 0.034290999999996075,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 60.687167,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 74,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.04074999999999562,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 121.958292,
+            "sample_to_visible_ms": 19.222625,
+            "settled_after_release_ms": 0.04074999999999562,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 58.155,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 96,
+            "direction": "Right",
+            "last_movement_after_release_ms": 17.672792,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 116.051125,
+            "sample_to_visible_ms": 17.957084000000002,
+            "settled_after_release_ms": 17.672792,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 41.222750000000005,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 117,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.03737499999999727,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 99.067458,
+            "sample_to_visible_ms": 20.884,
+            "settled_after_release_ms": 0.03737499999999727,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 59.349875000000004,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 139,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.03283299999999656,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 117.24108299999999,
+            "sample_to_visible_ms": 20.498915999999998,
+            "settled_after_release_ms": 0.03283299999999656,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 56.582542,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 161,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.04354200000000219,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 112.5115,
+            "sample_to_visible_ms": 18.070542,
+            "settled_after_release_ms": 0.04354200000000219,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 40.78625,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 181,
+            "direction": "Right",
+            "last_movement_after_release_ms": 0.04749999999999943,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 136.450708,
+            "sample_to_visible_ms": 20.704792,
+            "settled_after_release_ms": 0.04749999999999943,
+            "visible_before_confirmation": true
+          },
+          {
+            "actual_release_ms": 56.023875000000004,
+            "backward_correction_pixels": 0.0,
+            "canonical_tick": 202,
+            "direction": "Left",
+            "last_movement_after_release_ms": 0.0344999999999942,
+            "max_backward_step_pixels": 0.0,
+            "sample_to_confirmation_ms": 117.33091700000001,
+            "sample_to_visible_ms": 16.810875,
+            "settled_after_release_ms": 0.0344999999999942,
+            "visible_before_confirmation": true
+          }
+        ],
+        "environment": "Disposable TLS/QUIC relay, native loopback through opaque packet proxy",
+        "injected_gameplay_rtt_ms": 80,
+        "jitter_ms": 20,
+        "udp_loss_percent": 5,
+        "udp_packets_received": 1754,
+        "udp_packets_forwarded": 1656,
+        "udp_packets_dropped": 98
+      }
+    ],
+    "limitations": [
+      "Measures production predicted render_position sampled at60Hz, without an actual graphics window or physical input device.",
+      "Injected RTT is the configured four-leg gameplay path delay; observed application probe RTT includes endpoint scheduling.",
+      "Loopback impairment does not establish physical LAN or Linux/macOS hardware interoperability."
+    ]
+  },
+  "before_deployment": {
+    "relay_version": "0.7.3",
+    "result": {
+      "passed": true,
+      "environment": "Darwin arm64",
+      "responsiveness_target_met": true,
+      "cases": [
+        {
+          "passed": true,
+          "build": {
+            "version": "0.7.4",
+            "protocol": 8,
+            "fixture_sha256": "836df91878e54798778c48149af65e45799a5f256e6d14a11b10e718cd42242e"
+          },
+          "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+          "host_platform": "macos",
+          "client_platform": "macos",
+          "canonical_state_hash": "a7b6d670224c2a8e0ac9279bc73bb5cfa3523dc237d75a5d07ca40b895c2ccd3",
+          "host_tick": 300,
+          "client_tick": 300,
+          "observed_gameplay_rtt_ms": [
+            74,
+            72,
+            76,
+            77,
+            72,
+            70,
+            73
+          ],
+          "sample_to_visible_ms": {
+            "median": 19.869124999999997,
+            "p95": 20.877208,
+            "max": 20.877208
+          },
+          "responsiveness_target_ms": 40,
+          "responsiveness_target_met": true,
+          "visible_before_confirmation_samples": 10,
+          "movement_continuity": {
+            "max_backward_step_pixels": 0.0,
+            "backward_step_limit_pixels": 8,
+            "total_backward_correction_pixels": 0.0,
+            "max_last_movement_after_release_ms": 0.09708299999999781,
+            "settled_samples": 10,
+            "observation_window_ms": 400
+          },
+          "samples": [
+            {
+              "actual_release_ms": 56.617416,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 10,
+              "direction": "Right",
+              "last_movement_after_release_ms": 0.05983400000000216,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 95.51525,
+              "sample_to_visible_ms": 18.802083,
+              "settled_after_release_ms": 0.05983400000000216,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 41.015207999999994,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 31,
+              "direction": "Left",
+              "last_movement_after_release_ms": 0.036584000000004835,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 96.608917,
+              "sample_to_visible_ms": 20.296708,
+              "settled_after_release_ms": 0.036584000000004835,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 57.370375,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 52,
+              "direction": "Right",
+              "last_movement_after_release_ms": 0.03829199999999133,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 96.304083,
+              "sample_to_visible_ms": 20.087542,
+              "settled_after_release_ms": 0.03829199999999133,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 56.436459,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 73,
+              "direction": "Left",
+              "last_movement_after_release_ms": 0.04633299999999707,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 97.79104199999999,
+              "sample_to_visible_ms": 17.719292,
+              "settled_after_release_ms": 0.04633299999999707,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 56.889542,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 95,
+              "direction": "Right",
+              "last_movement_after_release_ms": 0.030000000000001137,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 93.956875,
+              "sample_to_visible_ms": 19.383292,
+              "settled_after_release_ms": 0.030000000000001137,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 41.304624999999994,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 117,
+              "direction": "Left",
+              "last_movement_after_release_ms": 0.030791000000007784,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 119.093041,
+              "sample_to_visible_ms": 20.694457999999997,
+              "settled_after_release_ms": 0.030791000000007784,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 55.268167,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 138,
+              "direction": "Right",
+              "last_movement_after_release_ms": null,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 129.479084,
+              "sample_to_visible_ms": 18.670709000000002,
+              "settled_after_release_ms": 0.0,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 40.442875,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 159,
+              "direction": "Left",
+              "last_movement_after_release_ms": 0.026874999999996874,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 101.651458,
+              "sample_to_visible_ms": 19.650707999999998,
+              "settled_after_release_ms": 0.026874999999996874,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 41.139874999999996,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 180,
+              "direction": "Right",
+              "last_movement_after_release_ms": 0.09708299999999781,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 80.224166,
+              "sample_to_visible_ms": 20.377291,
+              "settled_after_release_ms": 0.09708299999999781,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 60.280625,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 202,
+              "direction": "Left",
+              "last_movement_after_release_ms": 0.031582999999997696,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 98.394125,
+              "sample_to_visible_ms": 20.877208,
+              "settled_after_release_ms": 0.031582999999997696,
+              "visible_before_confirmation": true
+            }
+          ],
+          "environment": "Deployed relay; real network; no injected impairment",
+          "injected_gameplay_rtt_ms": null
+        }
+      ],
+      "limitations": [
+        "Measures production predicted render_position sampled at60Hz, without an actual graphics window or physical input device.",
+        "Injected RTT is the configured four-leg gameplay path delay; observed application probe RTT includes endpoint scheduling.",
+        "Loopback impairment does not establish physical LAN or Linux/macOS hardware interoperability."
+      ]
+    }
+  },
+  "deployed": {
+    "relay_version": "0.7.4",
+    "result": {
+      "passed": true,
+      "environment": "Darwin arm64",
+      "responsiveness_target_met": true,
+      "cases": [
+        {
+          "passed": true,
+          "build": {
+            "version": "0.7.4",
+            "protocol": 8,
+            "fixture_sha256": "836df91878e54798778c48149af65e45799a5f256e6d14a11b10e718cd42242e"
+          },
+          "presentation": "Production predicted render_position sampled at 60 Hz; no graphics window",
+          "host_platform": "macos",
+          "client_platform": "macos",
+          "canonical_state_hash": "cef35f0960c3779f66484212f75ff35e2a634e797d826ecb654bbf7d029a1456",
+          "host_tick": 300,
+          "client_tick": 300,
+          "observed_gameplay_rtt_ms": [
+            104,
+            77,
+            72,
+            73,
+            72,
+            83
+          ],
+          "sample_to_visible_ms": {
+            "median": 20.414395999999996,
+            "p95": 37.549375000000005,
+            "max": 37.549375000000005
+          },
+          "responsiveness_target_ms": 40,
+          "responsiveness_target_met": true,
+          "visible_before_confirmation_samples": 10,
+          "movement_continuity": {
+            "max_backward_step_pixels": 0.0,
+            "backward_step_limit_pixels": 8,
+            "total_backward_correction_pixels": 0.0,
+            "max_last_movement_after_release_ms": 0.06504100000000079,
+            "settled_samples": 10,
+            "observation_window_ms": 400
+          },
+          "samples": [
+            {
+              "actual_release_ms": 40.257833,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 11,
+              "direction": "Right",
+              "last_movement_after_release_ms": 0.028209000000003925,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 100.051792,
+              "sample_to_visible_ms": 19.440042000000002,
+              "settled_after_release_ms": 0.028209000000003925,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 40.195166,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 33,
+              "direction": "Left",
+              "last_movement_after_release_ms": 0.03420899999999705,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 131.726208,
+              "sample_to_visible_ms": 19.674083,
+              "settled_after_release_ms": 0.03420899999999705,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 55.655083,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 54,
+              "direction": "Right",
+              "last_movement_after_release_ms": 0.04062499999999858,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 91.534542,
+              "sample_to_visible_ms": 20.87875,
+              "settled_after_release_ms": 0.04062499999999858,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 56.207458,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 76,
+              "direction": "Left",
+              "last_movement_after_release_ms": 0.03616699999999895,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 97.83083300000001,
+              "sample_to_visible_ms": 17.794833,
+              "settled_after_release_ms": 0.03616699999999895,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 41.587958,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 97,
+              "direction": "Right",
+              "last_movement_after_release_ms": 0.024667000000000883,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 102.983125,
+              "sample_to_visible_ms": 20.88,
+              "settled_after_release_ms": 0.024667000000000883,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 55.932084,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 118,
+              "direction": "Left",
+              "last_movement_after_release_ms": 0.030874999999994657,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 111.735917,
+              "sample_to_visible_ms": 16.803584,
+              "settled_after_release_ms": 0.030874999999994657,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 40.246625,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 140,
+              "direction": "Right",
+              "last_movement_after_release_ms": 0.06504100000000079,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 119.522125,
+              "sample_to_visible_ms": 19.958,
+              "settled_after_release_ms": 0.06504100000000079,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 60.106667,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 162,
+              "direction": "Left",
+              "last_movement_after_release_ms": 0.04008299999999565,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 98.085583,
+              "sample_to_visible_ms": 20.875500000000002,
+              "settled_after_release_ms": 0.04008299999999565,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 58.263125,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 183,
+              "direction": "Right",
+              "last_movement_after_release_ms": 0.03249999999999176,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 116.941334,
+              "sample_to_visible_ms": 37.549375000000005,
+              "settled_after_release_ms": 0.03249999999999176,
+              "visible_before_confirmation": true
+            },
+            {
+              "actual_release_ms": 41.416166999999994,
+              "backward_correction_pixels": 0.0,
+              "canonical_tick": 205,
+              "direction": "Left",
+              "last_movement_after_release_ms": 0.026291000000007614,
+              "max_backward_step_pixels": 0.0,
+              "sample_to_confirmation_ms": 96.27725,
+              "sample_to_visible_ms": 20.870791999999998,
+              "settled_after_release_ms": 0.026291000000007614,
+              "visible_before_confirmation": true
+            }
+          ],
+          "environment": "Deployed relay; real network; no injected impairment",
+          "injected_gameplay_rtt_ms": null
+        }
+      ],
+      "limitations": [
+        "Measures production predicted render_position sampled at60Hz, without an actual graphics window or physical input device.",
+        "Injected RTT is the configured four-leg gameplay path delay; observed application probe RTT includes endpoint scheduling.",
+        "Loopback impairment does not establish physical LAN or Linux/macOS hardware interoperability."
+      ]
+    }
+  },
+  "scope": "Production predicted render_position sampled at 60 Hz with strict 40 ms sample-to-visible p95 and canonical/movement checks; no physical display/input/audio claim. WAN cases use the real relay without injected impairment."
+}
