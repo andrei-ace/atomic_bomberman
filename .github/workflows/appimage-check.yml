@@ -41,7 +41,7 @@ jobs:
           test "$#" -eq 1 && test -f "$1"
           mkdir -p build/appimage-compatibility
           docker build --build-arg DISTRIBUTION=${{ matrix.distribution }} -t atomic-appimage-compat - < tools/appimage-test.Dockerfile
-          docker run --rm --network none --user "$(id -u):$(id -g)" \
+          docker run --rm --init --network none --user "$(id -u):$(id -g)" \
             -v "$PWD:/workspace:ro" -v "$PWD/build/appimage-compatibility:/output" \
             atomic-appimage-compat xvfb-run -a -s '-screen 0 1024x768x24' \
             python3 tools/test_appimage_compatibility.py "/workspace/$1" --output /output
