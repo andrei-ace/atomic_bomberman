@@ -18,17 +18,17 @@ locally from your copy of the game.
 
 ## Download and install
 
-Download the **0.7.4** package for your platform and its matching `.sha256` file
-from [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.4).
+Download the **0.7.5** package for your platform and its matching `.sha256` file
+from [GitHub Releases](https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.5).
 The installation guides explain checksum verification and first-run setup.
 
-Version 0.7.4 restores the original scoreboard and board alignment, fills
-widescreen windows with matching scenery, and remembers the window size.
-It also corrects HD display darkening and includes the earlier movement and
-security fixes, optional HD graphics and portable HD import/export.
-See the [release notes](docs/release-notes/0.7.4.md).
+Version 0.7.5 makes the Linux AppImage work on Ubuntu 22.04 and newer, fixes
+startup with newer Mesa graphics drivers, and shortens its filename. It includes
+the original scoreboard and widescreen presentation, remembered window size,
+movement and security fixes, optional HD graphics and portable HD import/export.
+See the [release notes](docs/release-notes/0.7.5.md).
 
-**Multiplayer upgrade:** update clients to 0.7.4 for the latest fixes.
+**Multiplayer upgrade:** update clients to 0.7.5 for the latest fixes.
 Compatible protocol-8 clients and relays in the 0.7.0 family can play together.
 Version 0.6.1 uses protocol 7 and cannot join these games. Existing private server
 links, settings, imported data and prepared HD artwork remain valid.
@@ -37,7 +37,10 @@ links, settings, imported data and prepared HD artwork remain valid.
 | --- | --- | --- |
 | Windows x64 | Windows 10 22H2 or Windows 11 | Extract the ZIP and open **Atomic Bomberman.exe**. [Guide](docs/INSTALL-windows.md) |
 | macOS Apple Silicon | M1 or later | Extract the ZIP and move **Atomic Bomberman.app** to **Applications**. [Guide](docs/INSTALL-macos.md) |
-| Linux x86-64 | Ubuntu 24.04 or newer, X11/XWayland | Make the AppImage executable and run it. [Guide](docs/INSTALL-linux.md) |
+| Linux x86-64 | Ubuntu 22.04 or newer, or compatible Linux with glibc 2.35+, X11/XWayland | Make the AppImage executable and run it. [Guide](docs/INSTALL-linux.md) |
+
+Ubuntu 22.04 support and the shorter AppImage filename start with 0.7.5.
+Published 0.7.4 AppImages require Ubuntu 24.04.
 
 ### First launch
 

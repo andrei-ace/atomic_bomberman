@@ -1,14 +1,20 @@
-# Linux AppImage — 0.7.3
+# Linux AppImage
 
-Requires Linux x86-64, Ubuntu 24.04 or newer, X11 or XWayland, and an OpenGL-capable
+Requires Linux x86-64, Ubuntu 22.04 or newer (or compatible Linux with glibc 2.35+),
+X11 or XWayland, and an OpenGL-capable
 driver (Mesa software rendering is supported). Download the versioned AppImage
-and matching `.AppImage.sha256` from the release assets, then run:
+and matching `.AppImage.sha256` from the release assets, then run the following
+commands, replacing `VERSION` with the downloaded version:
 
 ```sh
-sha256sum -c atomic-bomberman-0.7.3-linux-x86_64.AppImage.sha256
-chmod +x atomic-bomberman-0.7.3-linux-x86_64.AppImage
-./atomic-bomberman-0.7.3-linux-x86_64.AppImage
+sha256sum -c atomic-bomberman-VERSION-x86_64.AppImage.sha256
+chmod +x atomic-bomberman-VERSION-x86_64.AppImage
+./atomic-bomberman-VERSION-x86_64.AppImage
 ```
+
+This baseline and filename apply to version 0.7.5 and newer.
+Published 0.7.4 AppImages retain `-linux-x86_64` in their names and
+require Ubuntu 24.04 or newer.
 
 On first launch choose your original `.7z` archive, `.img`/`.iso` image, or
 extracted game directory containing `COLOR.PAL` and `DATA`. A `.7z` must contain
@@ -31,13 +37,14 @@ image stays at the path where you placed it. Its desktop icon is bundled as PNG.
 To extract once into any writable location, including paths with spaces:
 
 ```sh
-./atomic-bomberman-0.7.3-linux-x86_64.AppImage --appimage-extract
+./atomic-bomberman-VERSION-x86_64.AppImage --appimage-extract
 ./squashfs-root/AppRun
 ```
 
 The AppImage is portable: move or replace it without moving game data. glibc and
-GPU driver libraries come from your system; the package bundles its other desktop
-dependencies. The default graphics backend is X11/XWayland. If graphics fail,
+GPU driver libraries and their GCC/C++ runtimes come from your system; the package
+bundles its other desktop dependencies. Ubuntu 22.04 and newer provide these
+core runtimes. The default graphics backend is X11/XWayland. If graphics fail,
 try `--software-rendering`; the game also retries a failed context once using Mesa.
 
 ## Data, repair and diagnostics
@@ -59,7 +66,7 @@ recover space. The active `assets` directory remains intact.
 Terminal import and validation, without a display:
 
 ```sh
-./atomic-bomberman-0.7.3-linux-x86_64.AppImage \
+./atomic-bomberman-VERSION-x86_64.AppImage \
   --import-source /path/to/original.7z --import-only
 ```
 
@@ -80,7 +87,7 @@ the **Internet** browser automatically. Choose **Host game** or join a listed ga
 
 The client needs outbound TCP 443 and UDP 443; the relay needs both ports inbound.
 UDP is required for gameplay. Keep TCP 443 for login, the browser, and control.
-Version 0.7.3 uses protocol 8 and the 0.7.0 compatibility family. Update the
+Version 0.7.5 uses protocol 8 and the 0.7.0 compatibility family. Update the
 relay and every player together; protocol-7 builds, including 0.6.1, are incompatible.
 Existing links and
 saved profiles survive the upgrade.

@@ -1,9 +1,12 @@
 # Desktop and relay releases
 
-Version **0.7.4**, Rust **1.89.0**, one annotated Git tag for five packages:
-Windows x64 portable ZIP (Windows 10 22H2/11), Linux x86-64 AppImage (Ubuntu 24.04,
+Version **0.7.5**, Rust **1.89.0**, one annotated Git tag for five packages:
+Windows x64 portable ZIP (Windows 10 22H2/11), Linux x86-64 AppImage (Ubuntu 22.04,
 X11/XWayland), Apple Silicon Mac ZIP, and Linux ARM64/amd64 relay archives
 (glibc 2.39 minimum; the existing ARM64 deployment runs Ubuntu 26).
+The AppImage's Ubuntu 22.04 / glibc 2.35 baseline and shortened filename start with
+0.7.5. Published 0.7.4 assets remain unchanged and
+its AppImage still requires Ubuntu 24.04 / glibc 2.39.
 The multiplayer protocol is **8**, with `ABG8`, QUIC ALPN
 `atomic-bomberman/8` and compatibility family **0.7.0**. Shared setup, nicknames
 and the host's arena preview are required. Update the relay and every player
@@ -29,6 +32,8 @@ protocol-8 relays and completed HD caches remain compatible.
 The [0.7.4 update](release-notes/0.7.4.md) restores the original HUD/board layout,
 fills widescreen margins with matching scenery, fixes scene opacity and remembers
 the last windowed size. Prepared HD artwork is reused without regeneration.
+The [0.7.5 update](release-notes/0.7.5.md) lowers the AppImage baseline, fixes newer
+Mesa startup, and requires the actual AppImageHub catalog check before publication.
 
 The movement/consistency and relay-load acceptance gates are documented in
 [WAN consistency](wan-consistency.md). The private 0.5.1 relay deployment and
@@ -40,7 +45,8 @@ remains a separate step.
 Run `tools/check.sh`. Linux additionally needs `libarchive-tools libgtk-3-dev
 librsvg2-common squashfs-tools` alongside the desktop build libraries in README. Run
 `python3 tools/test_release_packages.py` on every platform,
-`python3 tools/test_linux_launcher.py` on Linux and `tools/test_macos_launcher.sh`
+`python3 tools/test_linux_launcher.py` and `python3 tools/test_linux_abi.py` on Linux,
+and `tools/test_macos_launcher.sh`
 on a Mac. Windows runs the equivalent Rust checks through Git Bash and
 `python tools/test_windows_launcher.py` after building its launcher. `bomberman-net` tests deterministic replay, transitions, ownership,
 host start authority, personal colors, disconnects and rematches; relay tests
@@ -73,12 +79,12 @@ python3 tools/compare_headhit.py --exe /path/to/BM95.EXE --network --count 128 \
 Review and commit the intended source, then build from that clean commit:
 
 ```sh
-# Ubuntu 24.04 x86-64:
+# Ubuntu 22.04 x86-64:
 tools/package_linux.sh --release
-python3 tools/linux_release.py verify dist/github/atomic-bomberman-0.7.4-linux-x86_64.AppImage --release
+python3 tools/linux_release.py verify dist/github/atomic-bomberman-0.7.5-x86_64.AppImage --release
 # Apple Silicon Mac:
 tools/package_macos.sh --release
-python3 tools/macos_release.py verify dist/github/atomic-bomberman-0.7.4-macos-arm64.zip --release
+python3 tools/macos_release.py verify dist/github/atomic-bomberman-0.7.5-macos-arm64.zip --release
 # Windows x64 (MSVC C++ tools and Python, PowerShell or Git Bash):
 python tools/windows_release.py build --release
 # Native Linux relay, choose the matching target:
@@ -87,7 +93,7 @@ python3 tools/package_relay.py --target aarch64-unknown-linux-gnu --release
 # Or, on native Linux amd64:
 python3 tools/package_relay.py --target x86_64-unknown-linux-gnu --release
 # Reverify either downloaded relay archive:
-python3 tools/package_relay.py --verify dist/github/atomic-bomberman-0.7.4-relay-linux-x86_64.tar.gz --release
+python3 tools/package_relay.py --verify dist/github/atomic-bomberman-0.7.5-relay-linux-x86_64.tar.gz --release
 ```
 
 The AppImage builder verifies its pinned official type-2 runtime SHA-256; the
@@ -95,7 +101,9 @@ runtime URL is a moving upstream tag, so an upstream replacement fails closed.
 Retain the matching cached runtime or explicitly review/update its commit and
 checksum in `tools/linux_release.py` when upgrading it. It bundles required
 desktop libraries, libarchive, launcher, icon, instructions, diagnostics and
-licenses. glibc and GPU drivers use the host. Verification checks relocation,
+licenses. glibc, GCC/C++ runtimes and GPU drivers use the host. Keeping the
+compiler runtimes with the host avoids shadowing the newer libstdc++ ABI needed
+by Mesa/LLVM on newer distributions. Verification checks relocation,
 dependency closure, original-data/credential exclusion, executable hashes and
 ordinary invocation without FUSE, explicit extraction, concurrent launches,
 exit-code propagation and cleanup. A glibc bootstrap embeds the pinned static
@@ -103,6 +111,35 @@ runtime and supports the detached ELF prefix used by old AppImageLauncher.
 Run `python3 tools/test_appimage_bootstrap.py dist/github/*.AppImage` after
 packaging to exercise that compatibility path. PNG icons avoid legacy SVG
 integration rendering errors.
+
+The builder, standalone verifier and publication gate inspect ELF version needs
+in the outer bootstrap and every packaged executable/library, rejecting glibc
+requirements newer than 2.35. Version definitions alone are not requirements.
+The runtime bootstrap remains dynamically linked; the embedded pinned extractor
+is static and ordinary startup does not require FUSE.
+
+Linux CI tests the same candidate in clean Ubuntu 22.04, 24.04, 26.04 and Debian 12
+containers with networking disabled and without host GTK 3 or libfuse2. Each
+captures the first-run window, checks relocation, extraction and dependencies,
+and opens the packaged graphics diagnostic with the host Mesa driver.
+The final required job runs the unchanged AppImageHub PR worker from catalog
+commit `f3e858ae428345dc69d410900786965d9936cd9e`, including its Firejail sandbox,
+offline startup, naming checks, screenshot and OCR checks. Publication waits for
+both stages. Logs, screenshots, tested hashes and checker revision are retained.
+
+To run the same final check, copy the candidate and this repository's tools to a
+**disposable native Ubuntu 22.04 x86-64 VM**, then run:
+
+```sh
+python3 tools/check_appimage_catalog.py \
+  dist/github/atomic-bomberman-0.7.5-x86_64.AppImage \
+  --install-dependencies --output build/appimage-catalog
+```
+
+The upstream worker installs system components and adjusts kernel settings, so
+run it only in that disposable VM or a fresh GitHub-hosted runner. The command
+serves the exact candidate over loopback HTTP, verifies its downloaded hash and
+runs in PR mode, which generates a local result without publishing catalog data.
 
 Every distribution includes a SHA-256 sidecar and `.build.json` identifying the
 source commit, dirty state, source digest, compiler, target and executable hashes.
@@ -112,7 +149,7 @@ ad-hoc signed, with no Developer ID signing/notarization setup.
 
 ## Coordinated release
 
-Create and push an annotated `v0.7.4` tag only after reviewing the commit and
+Create and push an annotated `v0.7.5` tag only after reviewing the commit and
 platform checks. Its push starts **Desktop and relay release**; the same workflow
 can also be dispatched manually for an existing annotated version tag. The
 workflow builds Linux x86-64 client, Mac ARM64 client, Windows x64 client,

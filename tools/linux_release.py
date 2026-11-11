@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build/verify the Ubuntu 24.04 x86-64 AppImage without original assets."""
+"""Build on Ubuntu 22.04; verify the portable x86-64 AppImage without original assets."""
 import argparse
 import ctypes
 import datetime
@@ -14,12 +14,15 @@ import subprocess
 import tempfile
 import urllib.request
 from macos_release import dependency_notices, run, sha256, version
+from linux_abi import MINIMUM_LINUX, appimage_name, audit_appimage, check_manifest
 
 ROOT = Path(__file__).resolve().parent.parent
 RUNTIME_SHA = '617aa77314d57c8b8e4fae9c3f0b35af7b30d5529cb69e98f64f92510ed98a46'
 RUNTIME_COMMIT = 'fedfad51acc2860b2916a1eef32ba4a500ff31ef'
 RUNTIME_URL = 'https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64'
-SYSTEM = re.compile(r'^(ld-linux.*|lib(c|m|pthread|dl|rt|resolv)\.so\..*|libnss_.*|lib(GL.*|EGL.*|drm.*|gbm.*|vulkan.*)\.so.*)$')
+# Keep compiler runtimes with the host GPU stack: an older bundled libstdc++
+# shadows the newer ABI required by Mesa/LLVM on newer distributions.
+SYSTEM = re.compile(r'^(ld-linux.*|lib(c|m|pthread|dl|rt|resolv|gcc_s|stdc\+\+)\.so\..*|libnss_.*|lib(GL.*|EGL.*|drm.*|gbm.*|vulkan.*)\.so.*)$')
 BINARIES = ['bomberman', 'bomberman-assets', 'hardware-check', 'audio-probe', 'atomic-bomberman-launcher', 'bsdtar']
 
 
@@ -96,12 +99,24 @@ def dependencies(path, environment=None):
     return [Path(match.group(1)) for match in re.finditer(r'=>\s+(/.*?)\s+\(0x[0-9a-f]+\)', output)]
 
 
+def package_copyright(path):
+    for candidate in [Path(path), Path(path).resolve()]:
+        owner = subprocess.run(['dpkg-query', '-S', str(candidate)], capture_output=True, text=True)
+        if owner.returncode == 0:
+            for line in owner.stdout.splitlines():
+                package = line.split(': ')[0].split(':')[0]
+                license_path = Path('/usr/share/doc') / package / 'copyright'
+                if license_path.is_file():
+                    return package, license_path
+    raise ValueError(f'Missing package attribution: {path}')
+
+
 def bundle_libraries(app):
     paths = set()
     system = set()
     for binary in (app / 'usr/bin').iterdir():
         paths.update(dependencies(binary))
-    # Miniquad opens these through dlopen. GPU drivers and glibc use the host.
+    # Miniquad opens these through dlopen. Core runtimes and GPU drivers use the host.
     cache = subprocess.check_output(['ldconfig', '-p'], text=True)
     for soname in ['libX11.so.6', 'libXi.so.6', 'libXcursor.so.1', 'libXrandr.so.2', 'libasound.so.2', 'libudev.so.1']:
         match = re.search(re.escape(soname) + r' .*=> (\S+)', cache)
@@ -120,17 +135,9 @@ def bundle_libraries(app):
         copy(path, app / 'usr/lib' / path.name)
         bundled[path.name] = sha256(path)
         pending.extend(child for child in dependencies(path) if child.name not in bundled)
-        for candidate in [path, path.resolve()]:
-            owner = subprocess.run(['dpkg-query', '-S', str(candidate)], capture_output=True, text=True)
-            if owner.returncode == 0:
-                package = owner.stdout.split(': ')[0].split(':')[0].splitlines()[0]
-                license_path = Path('/usr/share/doc') / package / 'copyright'
-                if license_path.is_file():
-                    copy(license_path, app / 'usr/share/doc/atomic-bomberman/licenses' / f'{package}.copyright')
-                    licenses[path.name] = package
-                    break
-        if path.name not in licenses:
-            raise ValueError(f'Missing desktop library attribution: {path.name}')
+        package, license_path = package_copyright(path)
+        copy(license_path, app / 'usr/share/doc/atomic-bomberman/licenses' / f'{package}.copyright')
+        licenses[path.name] = package
     return {'bundled': bundled, 'system': sorted(system), 'licenses': licenses}
 
 
@@ -142,14 +149,15 @@ def download(url, destination):
 
 def build(clean, emulated_runtime=False):
     if platform.system() != 'Linux' or platform.machine() != 'x86_64':
-        raise ValueError('Build the AppImage on Ubuntu 24.04 x86-64')
+        raise ValueError('Build the AppImage on Ubuntu 22.04 x86-64')
+    release = platform.freedesktop_os_release()
+    if release.get('ID') != 'ubuntu' or release.get('VERSION_ID') != '22.04':
+        raise ValueError('Use Ubuntu 22.04 to preserve the glibc 2.35 baseline')
     info = provenance('x86_64-unknown-linux-gnu', clean)
     if emulated_runtime:
         info['validation'] = {'mode':'embedded runtime under x86 emulation',
                               'native_appimage_entrypoint_verified':False,
                               'reason':'Emulator rejects AppImage ABI marker and memfd execveat'}
-    if 'VERSION_ID="24.04"' not in Path('/etc/os-release').read_text():
-        raise ValueError('Use Ubuntu 24.04 to preserve the glibc baseline')
     checked('cargo', 'build', '--locked', '--release', '-p', 'bomberman', '-p', 'bomberman-assets', '--bins', '--examples')
     (ROOT / 'build').mkdir(exist_ok=True)
     flags = subprocess.check_output(['pkg-config', '--cflags', '--libs', 'gtk+-3.0'], text=True).split()
@@ -193,7 +201,8 @@ def build(clean, emulated_runtime=False):
             copy(ROOT / 'docs' / document, docs / document)
         copy(ROOT / 'LICENSE', docs / 'LICENSE')
         copy(license_path, docs / 'licenses/AppImage-runtime-LICENSE')
-        copy('/usr/share/doc/libarchive13t64/copyright', docs / 'licenses/libarchive-tools.copyright')
+        _, helper_license = package_copyright(helper)
+        copy(helper_license, docs / 'licenses/libarchive-tools.copyright')
         shutil.copytree('/usr/share/common-licenses', docs / 'licenses/common', symlinks=False)
         info['libraries'] = bundle_libraries(app)
         info['dependencies'] = dependency_notices(app, info['target'], docs / 'licenses/THIRD-PARTY-NOTICES.txt')
@@ -202,10 +211,11 @@ def build(clean, emulated_runtime=False):
                                    'bootstrap_unmarked_sha256': sha256(bootstrap), 'bootstrap_bytes': bootstrap.stat().st_size,
                                    'launch_mode': 'automatic extract-and-run',
                                    'legacy_appimagelauncher_compatible': True, 'fuse_required': False}
-        info['minimum_linux'] = 'Ubuntu 24.04, glibc 2.39, X11/XWayland'
+        audit_appimage(bootstrap, app)
+        info['minimum_linux'] = MINIMUM_LINUX
         info['binaries'] = {name: sha256(app / 'usr/bin' / name) for name in BINARIES}
         (docs / 'BUILD-INFO.json').write_text(json.dumps(info, indent=2) + '\n')
-        name = f"atomic-bomberman-{info['version']}-linux-x86_64.AppImage"
+        name = appimage_name(info['version'])
         image = dist / name
         squash = Path(temporary) / 'app.squashfs'
         checked('mksquashfs', str(app), str(squash), '-root-owned', '-noappend', '-comp', 'gzip', '-processors', '2', '-no-progress', stdout=subprocess.DEVNULL)
@@ -227,6 +237,9 @@ def verify(image, clean, emulated_runtime=False):
     if image.with_name(image.name + '.sha256').read_text().split() != [sha256(image), image.name]:
         raise ValueError('AppImage checksum mismatch')
     info = json.loads(image.with_suffix('.build.json').read_text())
+    check_manifest(info)
+    if image.name != appimage_name(info['version']):
+        raise ValueError('AppImage filename must match its version and x86_64 architecture')
     with image.open('rb') as source:
         prefix = bytearray(source.read(info['appimage_runtime']['bootstrap_bytes']))
     prefix[8:11] = b'\0\0\0'
@@ -258,6 +271,7 @@ def verify(image, clean, emulated_runtime=False):
         docs = app / 'usr/share/doc/atomic-bomberman'
         if json.loads((docs / 'BUILD-INFO.json').read_text()) != info:
             raise ValueError('Packaged provenance differs from published metadata')
+        audit_appimage(image, app)
         for path in app.rglob('*'):
             if path.is_symlink() or path.suffix.lower() in {'.img', '.iso', '.7z', '.exe', '.ani', '.rss', '.pem', '.key'} or path.name in {'manifest.json', 'access-token', 'connections.json'}:
                 raise ValueError('Original data, credential, or symlink in package')

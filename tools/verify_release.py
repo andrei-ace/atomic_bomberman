@@ -11,12 +11,13 @@ import zipfile
 from macos_release import sha256
 import package_relay
 import windows_release
+from linux_abi import appimage_name, audit_appimage, check_manifest
 
 
 def expected_packages(version):
     prefix = 'atomic-bomberman-' + version
     return {
-        prefix + '-linux-x86_64': ('.AppImage', 'x86_64-unknown-linux-gnu'),
+        appimage_name(version).removesuffix('.AppImage'): ('.AppImage', 'x86_64-unknown-linux-gnu'),
         prefix + '-macos-arm64': ('.zip', 'aarch64-apple-darwin'),
         prefix + '-windows-x86_64': ('.zip', 'x86_64-pc-windows-msvc'),
         prefix + '-relay-linux-arm64': ('.tar.gz', 'aarch64-unknown-linux-gnu'),
@@ -69,11 +70,13 @@ def verify(directory, version, commit):
                     if hashlib.sha256(data).hexdigest() != digest:
                         raise ValueError('Mac executable hash mismatch')
         else:
+            check_manifest(info)
             image = directory / (name + '.AppImage')
             with tempfile.TemporaryDirectory(prefix='release-appimage-') as temporary:
                 image.chmod(0o755)
                 subprocess.run([str(image), '--appimage-extract'], cwd=temporary, check=True, stdout=subprocess.DEVNULL)
                 app = Path(temporary) / 'squashfs-root'
+                audit_appimage(image, app)
                 embedded = json.loads((app / 'usr/share/doc/atomic-bomberman/BUILD-INFO.json').read_text())
                 if embedded != info:
                     raise ValueError('AppImage external and embedded manifests differ')

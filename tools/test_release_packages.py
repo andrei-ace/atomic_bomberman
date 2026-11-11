@@ -175,6 +175,8 @@ class PackageTests(unittest.TestCase):
 
     def test_five_package_gate_keeps_linux_client_and_relay_distinct(self):
         self.coordinated()
+        self.assertTrue((self.root / f'atomic-bomberman-{VERSION}-x86_64.AppImage').is_file())
+        self.assertFalse((self.root / f'atomic-bomberman-{VERSION}-linux-x86_64.AppImage').exists())
         self.assertEqual(len(verify_release.verify_manifests(self.root, VERSION, SOURCE['commit'])), 5)
         linux_relay = self.root / f'atomic-bomberman-{VERSION}-relay-linux-x86_64.build.json'
         info = json.loads(linux_relay.read_text())

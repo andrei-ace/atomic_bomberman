@@ -1,0 +1,188 @@
+{
+  "format_version": 1,
+  "validated_at_utc": "2026-11-11T11:29:45.720933+00:00",
+  "build_kind": "local development build from uncommitted source; no release published",
+  "source": {
+    "commit": "49ca0b2bc4eb8e96022e336b1faf5a53994a5386",
+    "dirty": true,
+    "sha256": "133be52496e57129a4c91184a80662494af71c9002b408b31e5e40baa87adfbf"
+  },
+  "artifact": {
+    "path": "dist/github/atomic-bomberman-0.7.4-x86_64.AppImage",
+    "sha256": "91d04dfd5fa7c69100ec972a19a2e622faa4bfbadd38e5c6d8c54d46c4636e66",
+    "minimum_linux": "Ubuntu 22.04, glibc 2.35, X11/XWayland"
+  },
+  "environment": {
+    "build": "Ubuntu 22.04 x86-64 under process emulation on Apple Silicon",
+    "runtime": "Ubuntu 22.04 x86-64 guest kernel under QEMU full-system emulation on Apple Silicon",
+    "cpu_model": "Intel Nehalem",
+    "distribution_isolation": "clean exported container filesystems in separate mount, PID and network namespaces",
+    "graphics": "host-distribution Mesa software rendering; no physical device certification"
+  },
+  "repository_checks": {
+    "rust_tests_passed": 426,
+    "format_and_clippy": "passed",
+    "package_boundary_tests_passed": 6,
+    "linux_abi_tests_passed": 6,
+    "changed_workflows_actionlint": "passed"
+  },
+  "native_bootstrap": {
+    "passed": true,
+    "checks": [
+      "plain launch without FUSE",
+      "relocation",
+      "concurrent launches",
+      "legacy detached runtime",
+      "exit status",
+      "cleanup"
+    ]
+  },
+  "compatibility": [
+    {
+      "passed": true,
+      "image": "atomic-bomberman-0.7.4-x86_64.AppImage",
+      "sha256": "91d04dfd5fa7c69100ec972a19a2e622faa4bfbadd38e5c6d8c54d46c4636e66",
+      "os_release": {
+        "NAME": "Ubuntu",
+        "ID": "ubuntu",
+        "PRETTY_NAME": "Ubuntu 22.04.5 LTS",
+        "VERSION_ID": "22.04",
+        "VERSION": "22.04.5 LTS (Jammy Jellyfish)",
+        "VERSION_CODENAME": "jammy",
+        "ID_LIKE": "debian",
+        "HOME_URL": "https://www.ubuntu.com/",
+        "SUPPORT_URL": "https://help.ubuntu.com/",
+        "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+        "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+        "UBUNTU_CODENAME": "jammy"
+      },
+      "network": "disabled by caller",
+      "checks": [
+        "plain startup without FUSE after relocation",
+        "extraction, glibc requirements and dependency closure",
+        "offline first-run window with no original assets or host GTK",
+        "packaged graphics diagnostic starts with host Mesa",
+        "temporary extraction cleanup"
+      ]
+    },
+    {
+      "passed": true,
+      "image": "atomic-bomberman-0.7.4-x86_64.AppImage",
+      "sha256": "91d04dfd5fa7c69100ec972a19a2e622faa4bfbadd38e5c6d8c54d46c4636e66",
+      "os_release": {
+        "NAME": "Ubuntu",
+        "ID": "ubuntu",
+        "PRETTY_NAME": "Ubuntu 24.04.5 LTS",
+        "VERSION_ID": "24.04",
+        "VERSION": "24.04.5 LTS (Noble Numbat)",
+        "VERSION_CODENAME": "noble",
+        "ID_LIKE": "debian",
+        "HOME_URL": "https://www.ubuntu.com/",
+        "SUPPORT_URL": "https://help.ubuntu.com/",
+        "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+        "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+        "UBUNTU_CODENAME": "noble",
+        "LOGO": "ubuntu-logo"
+      },
+      "network": "disabled by caller",
+      "checks": [
+        "plain startup without FUSE after relocation",
+        "extraction, glibc requirements and dependency closure",
+        "offline first-run window with no original assets or host GTK",
+        "packaged graphics diagnostic starts with host Mesa",
+        "temporary extraction cleanup"
+      ]
+    },
+    {
+      "passed": true,
+      "image": "atomic-bomberman-0.7.4-x86_64.AppImage",
+      "sha256": "91d04dfd5fa7c69100ec972a19a2e622faa4bfbadd38e5c6d8c54d46c4636e66",
+      "os_release": {
+        "NAME": "Ubuntu",
+        "ID": "ubuntu",
+        "PRETTY_NAME": "Ubuntu 26.04.1 LTS",
+        "VERSION_ID": "26.04",
+        "VERSION": "26.04.1 LTS (Resolute Raccoon)",
+        "VERSION_CODENAME": "resolute",
+        "ID_LIKE": "debian",
+        "HOME_URL": "https://www.ubuntu.com/",
+        "SUPPORT_URL": "https://help.ubuntu.com/",
+        "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+        "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+        "UBUNTU_CODENAME": "resolute",
+        "LOGO": "ubuntu-logo"
+      },
+      "network": "disabled by caller",
+      "checks": [
+        "plain startup without FUSE after relocation",
+        "extraction, glibc requirements and dependency closure",
+        "offline first-run window with no original assets or host GTK",
+        "packaged graphics diagnostic starts with host Mesa",
+        "temporary extraction cleanup"
+      ]
+    },
+    {
+      "passed": true,
+      "image": "atomic-bomberman-0.7.4-x86_64.AppImage",
+      "sha256": "91d04dfd5fa7c69100ec972a19a2e622faa4bfbadd38e5c6d8c54d46c4636e66",
+      "os_release": {
+        "NAME": "Debian GNU/Linux",
+        "ID": "debian",
+        "PRETTY_NAME": "Debian GNU/Linux 12 (bookworm)",
+        "VERSION_ID": "12",
+        "VERSION": "12 (bookworm)",
+        "VERSION_CODENAME": "bookworm",
+        "HOME_URL": "https://www.debian.org/",
+        "SUPPORT_URL": "https://www.debian.org/support",
+        "BUG_REPORT_URL": "https://bugs.debian.org/"
+      },
+      "network": "disabled by caller",
+      "checks": [
+        "plain startup without FUSE after relocation",
+        "extraction, glibc requirements and dependency closure",
+        "offline first-run window with no original assets or host GTK",
+        "packaged graphics diagnostic starts with host Mesa",
+        "temporary extraction cleanup"
+      ]
+    }
+  ],
+  "catalog": {
+    "passed": true,
+    "catalog_repository": "https://github.com/AppImage/appimage.github.io.git",
+    "catalog_commit": "f3e858ae428345dc69d410900786965d9936cd9e",
+    "image": "atomic-bomberman-0.7.4-x86_64.AppImage",
+    "sha256": "91d04dfd5fa7c69100ec972a19a2e622faa4bfbadd38e5c6d8c54d46c4636e66",
+    "worker_exit_code": 0,
+    "command": [
+      "timeout",
+      "--kill-after=30",
+      "600",
+      "bash",
+      "-e",
+      "code/worker.sh",
+      "data/Atomic_Bomberman"
+    ],
+    "downloaded_sha256": "91d04dfd5fa7c69100ec972a19a2e622faa4bfbadd38e5c6d8c54d46c4636e66",
+    "compatibility": [
+      "X-AppImage-Architecture=x86_64",
+      "X-AppImage-Glibc-Required=GLIBC_2.35",
+      "X-AppImage-Integrate=false",
+      "X-AppImage-Libc=host",
+      "X-AppImage-Runtime=dynamic",
+      "X-AppImage-Self-Contained=false",
+      "X-AppImage-Signature=directory '/home/checker/appimage/build/appimage-catalog/catalog-gntnn26l/home/.gnupg' created keybox '/home/checker/appimage/build/appimage-catalog/catalog-gntnn26l/home/.gnupg/pubring.kbx' created [don't know]: invalid packet (ctb=0a) no signature found the signature could not be verified. Please remember that the signature file (.sig or .asc) should be the first file given on the command line. ",
+      "X-AppImage-Type=2"
+    ],
+    "names": []
+  },
+  "macos": {
+    "app": "dist/Atomic Bomberman.app",
+    "rebuilt": true,
+    "package_signature_provenance_and_help_verified": true
+  },
+  "logs": {
+    "native_validation": "build/linux22/final-native-validation.log",
+    "catalog_worker": "build/appimage-catalog/worker.log",
+    "catalog_screenshot": "build/appimage-catalog/screenshot.png"
+  }
+}

@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: ubuntu-24.04
+          - runner: ubuntu-22.04
             artifact: linux
             python: python3
           - runner: macos-15
@@ -73,6 +73,7 @@ jobs:
         run: |
           bash tools/check.sh
           "${{ matrix.python }}" tools/test_release_packages.py
+          "${{ matrix.python }}" tools/test_linux_abi.py
       - name: Compare portable replay digest
         shell: bash
         run: |
@@ -117,8 +118,14 @@ jobs:
           path: dist/github/*
           if-no-files-found: error
           retention-days: 14
-  publish:
+  appimage-check:
     needs: build
+    uses: ./.github/workflows/appimage-check.yml
+    with:
+      artifact: release-linux
+      ref: ${{ inputs.tag || github.ref_name }}
+  publish:
+    needs: [build, appimage-check]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
