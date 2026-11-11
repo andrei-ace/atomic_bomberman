@@ -1,0 +1,369 @@
+{
+  "version": "0.7.5",
+  "status": "Published, deployed and verified",
+  "verified_at_utc": "2026-11-11T13:14:20.936365+00:00",
+  "release_source_commit": "5069899f407ec8d54e4a5804a5ef6e2475635e93",
+  "release_source_sha256": "0698e39a3f7e0198607d102ababec574b674dad462e4486a1075ac3ec3db128f",
+  "workflow_orchestration_commit": "ccdeafb5db02da0960a58826e6fb3c57824578f4",
+  "workflow_fix": "Docker --init allows the Xvfb startup signal handshake; release tag and package source remain unchanged.",
+  "publication_and_artifact_verification": {
+    "passed": true,
+    "checked_at_utc": "2026-11-11T13:09:10.690924+00:00",
+    "release": "https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.5",
+    "published_at": "2026-11-11T13:07:13Z",
+    "source_commit": "5069899f407ec8d54e4a5804a5ef6e2475635e93",
+    "source_sha256": "0698e39a3f7e0198607d102ababec574b674dad462e4486a1075ac3ec3db128f",
+    "assets_verified": 15,
+    "assets": {
+      "atomic-bomberman-0.7.5-macos-arm64.build.json": {
+        "sha256": "70c63d73aa87138fc8ef61b0eb7e1189db7f71087ae1022586a3e78665d5ab0d",
+        "size_bytes": 34940
+      },
+      "atomic-bomberman-0.7.5-macos-arm64.zip": {
+        "sha256": "68dba300e247cf6826d8e7ac678734e3d06d04e1319cfbea880e11d5700c6bde",
+        "size_bytes": 7616468
+      },
+      "atomic-bomberman-0.7.5-macos-arm64.zip.sha256": {
+        "sha256": "477b4d28e10d131cf6dd42f4a097ee451c55c21c9cbc1152f6d851862c2fdf92",
+        "size_bytes": 105
+      },
+      "atomic-bomberman-0.7.5-relay-linux-arm64.build.json": {
+        "sha256": "6b7220dee862184a597728e3aa22d6df7beec864e9c012d5bd2a623ce1f393ed",
+        "size_bytes": 34274
+      },
+      "atomic-bomberman-0.7.5-relay-linux-arm64.tar.gz": {
+        "sha256": "110a937088046cb882a8ade9def0aca604412233a32ae5fc591e0b81c5af8a30",
+        "size_bytes": 2928199
+      },
+      "atomic-bomberman-0.7.5-relay-linux-arm64.tar.gz.sha256": {
+        "sha256": "60c61a9d1b32761291c79023db69df8444a357a00893645f1677ed9a32b5ce96",
+        "size_bytes": 114
+      },
+      "atomic-bomberman-0.7.5-relay-linux-x86_64.build.json": {
+        "sha256": "c56ddbd072840d382c3e74f9ef8b08135d75c723290d867c028a15acbfe9b1cc",
+        "size_bytes": 34437
+      },
+      "atomic-bomberman-0.7.5-relay-linux-x86_64.tar.gz": {
+        "sha256": "5b7785ca51ae1ed997b46bf07c95624572646f216d85c88a5263ee57d96b7675",
+        "size_bytes": 3025462
+      },
+      "atomic-bomberman-0.7.5-relay-linux-x86_64.tar.gz.sha256": {
+        "sha256": "72d32a09c696e0e80000ca2248024278b688bd551fc6d3667a2d02ff1d3f0183",
+        "size_bytes": 115
+      },
+      "atomic-bomberman-0.7.5-windows-x86_64.build.json": {
+        "sha256": "c2993ce7d238976bd42073f46fd493463cda2e265f013941407d8c3221c85472",
+        "size_bytes": 40468
+      },
+      "atomic-bomberman-0.7.5-windows-x86_64.zip": {
+        "sha256": "110393ec9e81fd33910378695bae46fdf8585208dd934f5fcc3768a0a0a65302",
+        "size_bytes": 7657976
+      },
+      "atomic-bomberman-0.7.5-windows-x86_64.zip.sha256": {
+        "sha256": "a8fc015085138056ec4564daaffab9bb80b633c197a22a5a504a7c68553fb452",
+        "size_bytes": 109
+      },
+      "atomic-bomberman-0.7.5-x86_64.AppImage": {
+        "sha256": "f79b532287fd0b1beb2ea0148f4450e8b907680d63e755c12c6d0f5396909997",
+        "size_bytes": 36054120
+      },
+      "atomic-bomberman-0.7.5-x86_64.AppImage.sha256": {
+        "sha256": "3165a0b02ce3bd5ffbf0c10cfe7b16d442dc69b604a03bf8fbd71607b82a2182",
+        "size_bytes": 105
+      },
+      "atomic-bomberman-0.7.5-x86_64.build.json": {
+        "sha256": "8a9704ec3f55a9343099d083821d83f420eae3f5abb487a2058ac8106f2195c5",
+        "size_bytes": 45507
+      }
+    },
+    "github_digests_and_sidecar_checksums_valid": true,
+    "source_digest_matches_tagged_source": true,
+    "macos_signature_and_relocated_launcher_verified": true,
+    "windows_and_relay_package_boundaries_verified": true,
+    "packages": {
+      "atomic-bomberman-0.7.5-x86_64": "x86_64-unknown-linux-gnu",
+      "atomic-bomberman-0.7.5-macos-arm64": "aarch64-apple-darwin",
+      "atomic-bomberman-0.7.5-windows-x86_64": "x86_64-pc-windows-msvc",
+      "atomic-bomberman-0.7.5-relay-linux-arm64": "aarch64-unknown-linux-gnu",
+      "atomic-bomberman-0.7.5-relay-linux-x86_64": "x86_64-unknown-linux-gnu"
+    }
+  },
+  "release_workflow": {
+    "url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022822405",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 130530101270,
+        "name": "build (ubuntu-24.04, relay-amd64, python3, x86_64-unknown-linux-gnu)",
+        "conclusion": "success",
+        "html_url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022822405/job/130530101270"
+      },
+      {
+        "id": 130530101448,
+        "name": "build (ubuntu-24.04-arm, relay-arm64, python3, aarch64-unknown-linux-gnu)",
+        "conclusion": "success",
+        "html_url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022822405/job/130530101448"
+      },
+      {
+        "id": 130530101807,
+        "name": "build (macos-15, macos, python3)",
+        "conclusion": "success",
+        "html_url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022822405/job/130530101807"
+      },
+      {
+        "id": 130530101950,
+        "name": "build (ubuntu-22.04, linux, python3)",
+        "conclusion": "success",
+        "html_url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022822405/job/130530101950"
+      },
+      {
+        "id": 130530102163,
+        "name": "build (windows-2022, windows, python)",
+        "conclusion": "success",
+        "html_url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022822405/job/130530102163"
+      },
+      {
+        "id": 130540348117,
+        "name": "appimage-check / compatibility (ubuntu-26.04, ubuntu:26.04)",
+        "conclusion": "success",
+        "html_url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022822405/job/130540348117"
+      },
+      {
+        "id": 130540348147,
+        "name": "appimage-check / compatibility (ubuntu-24.04, ubuntu:24.04)",
+        "conclusion": "success",
+        "html_url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022822405/job/130540348147"
+      },
+      {
+        "id": 130540348180,
+        "name": "appimage-check / compatibility (debian-12, debian:12-slim)",
+        "conclusion": "success",
+        "html_url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022822405/job/130540348180"
+      },
+      {
+        "id": 130540348186,
+        "name": "appimage-check / compatibility (ubuntu-22.04, ubuntu:22.04)",
+        "conclusion": "success",
+        "html_url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022822405/job/130540348186"
+      },
+      {
+        "id": 130540748771,
+        "name": "appimage-check / catalog",
+        "conclusion": "success",
+        "html_url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022822405/job/130540748771"
+      },
+      {
+        "id": 130541444907,
+        "name": "publish",
+        "conclusion": "success",
+        "html_url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022822405/job/130541444907"
+      }
+    ]
+  },
+  "main_ci": [
+    {
+      "id": 43022803517,
+      "name": "Linux",
+      "head_sha": "ccdeafb5db02da0960a58826e6fb3c57824578f4",
+      "html_url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022803517",
+      "conclusion": "success"
+    },
+    {
+      "id": 43022803600,
+      "name": "Windows",
+      "head_sha": "ccdeafb5db02da0960a58826e6fb3c57824578f4",
+      "html_url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022803600",
+      "conclusion": "success"
+    },
+    {
+      "id": 43022803705,
+      "name": "macOS",
+      "head_sha": "ccdeafb5db02da0960a58826e6fb3c57824578f4",
+      "html_url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022803705",
+      "conclusion": "success"
+    },
+    {
+      "id": 43022803561,
+      "name": "CodeQL",
+      "head_sha": "ccdeafb5db02da0960a58826e6fb3c57824578f4",
+      "html_url": "https://github.com/andrei-ace/atomic_bomberman/actions/runs/43022803561",
+      "conclusion": "success"
+    }
+  ],
+  "appimage": {
+    "same_published_sha256_in_every_check": "f79b532287fd0b1beb2ea0148f4450e8b907680d63e755c12c6d0f5396909997",
+    "minimum_glibc": "2.35",
+    "runtime_compatibility": {
+      "ubuntu-22.04": {
+        "passed": true,
+        "image": "atomic-bomberman-0.7.5-x86_64.AppImage",
+        "sha256": "f79b532287fd0b1beb2ea0148f4450e8b907680d63e755c12c6d0f5396909997",
+        "os_release": {
+          "NAME": "Ubuntu",
+          "ID": "ubuntu",
+          "PRETTY_NAME": "Ubuntu 22.04.5 LTS",
+          "VERSION_ID": "22.04",
+          "VERSION": "22.04.5 LTS (Jammy Jellyfish)",
+          "VERSION_CODENAME": "jammy",
+          "ID_LIKE": "debian",
+          "HOME_URL": "https://www.ubuntu.com/",
+          "SUPPORT_URL": "https://help.ubuntu.com/",
+          "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+          "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+          "UBUNTU_CODENAME": "jammy"
+        },
+        "network": "disabled by caller",
+        "checks": [
+          "plain startup without FUSE after relocation",
+          "extraction, glibc requirements and dependency closure",
+          "offline first-run window with no original assets or host GTK",
+          "packaged graphics diagnostic starts with host Mesa",
+          "temporary extraction cleanup"
+        ]
+      },
+      "ubuntu-24.04": {
+        "passed": true,
+        "image": "atomic-bomberman-0.7.5-x86_64.AppImage",
+        "sha256": "f79b532287fd0b1beb2ea0148f4450e8b907680d63e755c12c6d0f5396909997",
+        "os_release": {
+          "NAME": "Ubuntu",
+          "ID": "ubuntu",
+          "PRETTY_NAME": "Ubuntu 24.04.5 LTS",
+          "VERSION_ID": "24.04",
+          "VERSION": "24.04.5 LTS (Noble Numbat)",
+          "VERSION_CODENAME": "noble",
+          "ID_LIKE": "debian",
+          "HOME_URL": "https://www.ubuntu.com/",
+          "SUPPORT_URL": "https://help.ubuntu.com/",
+          "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+          "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+          "UBUNTU_CODENAME": "noble",
+          "LOGO": "ubuntu-logo"
+        },
+        "network": "disabled by caller",
+        "checks": [
+          "plain startup without FUSE after relocation",
+          "extraction, glibc requirements and dependency closure",
+          "offline first-run window with no original assets or host GTK",
+          "packaged graphics diagnostic starts with host Mesa",
+          "temporary extraction cleanup"
+        ]
+      },
+      "ubuntu-26.04": {
+        "passed": true,
+        "image": "atomic-bomberman-0.7.5-x86_64.AppImage",
+        "sha256": "f79b532287fd0b1beb2ea0148f4450e8b907680d63e755c12c6d0f5396909997",
+        "os_release": {
+          "NAME": "Ubuntu",
+          "ID": "ubuntu",
+          "PRETTY_NAME": "Ubuntu 26.04.1 LTS",
+          "VERSION_ID": "26.04",
+          "VERSION": "26.04.1 LTS (Resolute Raccoon)",
+          "VERSION_CODENAME": "resolute",
+          "ID_LIKE": "debian",
+          "HOME_URL": "https://www.ubuntu.com/",
+          "SUPPORT_URL": "https://help.ubuntu.com/",
+          "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+          "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+          "UBUNTU_CODENAME": "resolute",
+          "LOGO": "ubuntu-logo"
+        },
+        "network": "disabled by caller",
+        "checks": [
+          "plain startup without FUSE after relocation",
+          "extraction, glibc requirements and dependency closure",
+          "offline first-run window with no original assets or host GTK",
+          "packaged graphics diagnostic starts with host Mesa",
+          "temporary extraction cleanup"
+        ]
+      },
+      "debian-12": {
+        "passed": true,
+        "image": "atomic-bomberman-0.7.5-x86_64.AppImage",
+        "sha256": "f79b532287fd0b1beb2ea0148f4450e8b907680d63e755c12c6d0f5396909997",
+        "os_release": {
+          "NAME": "Debian GNU/Linux",
+          "ID": "debian",
+          "PRETTY_NAME": "Debian GNU/Linux 12 (bookworm)",
+          "VERSION_ID": "12",
+          "VERSION": "12 (bookworm)",
+          "VERSION_CODENAME": "bookworm",
+          "HOME_URL": "https://www.debian.org/",
+          "SUPPORT_URL": "https://www.debian.org/support",
+          "BUG_REPORT_URL": "https://bugs.debian.org/"
+        },
+        "network": "disabled by caller",
+        "checks": [
+          "plain startup without FUSE after relocation",
+          "extraction, glibc requirements and dependency closure",
+          "offline first-run window with no original assets or host GTK",
+          "packaged graphics diagnostic starts with host Mesa",
+          "temporary extraction cleanup"
+        ]
+      }
+    },
+    "actual_catalog_checker": {
+      "passed": true,
+      "catalog_repository": "https://github.com/AppImage/appimage.github.io.git",
+      "catalog_commit": "f3e858ae428345dc69d410900786965d9936cd9e",
+      "image": "atomic-bomberman-0.7.5-x86_64.AppImage",
+      "sha256": "f79b532287fd0b1beb2ea0148f4450e8b907680d63e755c12c6d0f5396909997",
+      "worker_exit_code": 0,
+      "command": [
+        "timeout",
+        "--kill-after=30",
+        "600",
+        "bash",
+        "-e",
+        "code/worker.sh",
+        "data/Atomic_Bomberman"
+      ],
+      "downloaded_sha256": "f79b532287fd0b1beb2ea0148f4450e8b907680d63e755c12c6d0f5396909997",
+      "compatibility": [
+        "X-AppImage-Architecture=x86_64",
+        "X-AppImage-Glibc-Required=GLIBC_2.35",
+        "X-AppImage-Integrate=false",
+        "X-AppImage-Libc=host",
+        "X-AppImage-Runtime=dynamic",
+        "X-AppImage-Self-Contained=false",
+        "X-AppImage-Signature=directory '/home/runner/work/atomic_bomberman/atomic_bomberman/build/appimage-catalog/catalog-9e7gg_t7/home/.gnupg' created keybox '/home/runner/work/atomic_bomberman/atomic_bomberman/build/appimage-catalog/catalog-9e7gg_t7/home/.gnupg/pubring.kbx' created [don't know]: invalid packet (ctb=0a) no signature found the signature could not be verified. Please remember that the signature file (.sig or .asc) should be the first file given on the command line. ",
+        "X-AppImage-Type=2"
+      ],
+      "names": []
+    },
+    "linux_download_verifier": {
+      "passed": true,
+      "sha256": "f79b532287fd0b1beb2ea0148f4450e8b907680d63e755c12c6d0f5396909997",
+      "scope": "Downloaded checksum, provenance, embedded runtime, ELF ABI, dependency closure and help under process emulation. Native release CI separately passed the actual entrypoint and all four desktop environments."
+    }
+  },
+  "local_checks": {
+    "rust_test_executions_passed": 426,
+    "strict_clippy_and_fmt_passed": true,
+    "release_package_tests_passed": true,
+    "native_linux_abi_fixture_tests_passed": 6,
+    "unchanged_capacity_test_consecutive_local_passes": 20
+  },
+  "network_acceptance_cleared": true,
+  "network_evidence": [
+    "0.7.5-deployed-wan.json",
+    "0.7.5-deployed-relay-load.json"
+  ],
+  "deployment_evidence": "0.7.5-relay-deployment.json",
+  "dist": {
+    "published_app_installed": true,
+    "relocated_launcher_help_passed": true,
+    "local_settings_preserved": true,
+    "local_assets_and_hd_cache_unchanged": true,
+    "preserved_local_data_files": 12966,
+    "published_assets_in_dist": 15,
+    "previous_release_directories_retained": true,
+    "settings_activity": "Settings and game log changed before installation while CI was running; their modification timestamps predate installation and current preferences were preserved."
+  },
+  "protocol": 8,
+  "compatibility_family": "0.7.0",
+  "limitations": [
+    "Linux desktop checks use software Mesa in isolated containers; physical Linux graphics, input and audio hardware were not tested here.",
+    "The upstream checker reports a host libc and dynamic bootstrap; the image starts without FUSE and passes its unchanged worker."
+  ]
+}
