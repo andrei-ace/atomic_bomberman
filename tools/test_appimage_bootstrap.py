@@ -8,6 +8,7 @@ import shutil
 import struct
 import subprocess
 import tempfile
+from linux_updates import UPDATE_INFORMATION
 
 
 def main():
@@ -31,6 +32,9 @@ def main():
             return result
 
         help_command()
+        information = subprocess.run([str(image), '--appimage-updateinformation'], env=environment,
+                                     capture_output=True, text=True, timeout=30)
+        assert information.returncode == 0 and information.stdout.strip() == UPDATE_INFORMATION, information.stderr
         with ThreadPoolExecutor(max_workers=2) as executor:
             results = list(executor.map(lambda _: help_command(), range(2)))
             assert len(results) == 2

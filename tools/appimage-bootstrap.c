@@ -87,9 +87,12 @@ int main(int argc, char **argv) {
         perror("Atomic Bomberman: configure AppImage runtime");
         close(fd); rmdir(temporary); return 1;
     }
-    // These explicit runtime operations retain their normal FUSE semantics.
+    // Explicit runtime operations bypass automatic extract-and-run.
     for (int i = 1; i < argc; i++) {
-        if (!strcmp(argv[i], "--appimage-mount")) unsetenv("APPIMAGE_EXTRACT_AND_RUN");
+        if (!strcmp(argv[i], "--appimage-mount")
+            || !strcmp(argv[i], "--appimage-updateinformation")) {
+            unsetenv("APPIMAGE_EXTRACT_AND_RUN");
+        }
     }
     signal(SIGINT, forward_signal);
     signal(SIGTERM, forward_signal);

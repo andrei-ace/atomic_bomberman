@@ -15,6 +15,8 @@ import tempfile
 import urllib.request
 from macos_release import dependency_notices, run, sha256, version
 from linux_abi import MINIMUM_LINUX, appimage_name, audit_appimage, check_manifest
+import linux_appstream
+import linux_updates
 
 ROOT = Path(__file__).resolve().parent.parent
 RUNTIME_SHA = '617aa77314d57c8b8e4fae9c3f0b35af7b30d5529cb69e98f64f92510ed98a46'
@@ -38,6 +40,7 @@ def bootstrap_runtime(runtime):
     executable = ROOT / 'build/atomic-bomberman-runtime'
     checked('cc', '-std=c11', '-O2', '-Wall', '-Wextra', '-Werror', '-I', 'build',
             'tools/appimage-bootstrap.c', '-o', str(executable))
+    executable.write_bytes(linux_updates.embed(executable.read_bytes()))
     return executable
 
 
@@ -196,6 +199,7 @@ def build(clean, emulated_runtime=False):
         copy(icon, app / 'usr/share/icons/hicolor/256x256/apps/atomic-bomberman.png')
         copy(ROOT / 'tools/linux/atomic-bomberman.desktop', app / 'usr/share/applications/atomic-bomberman.desktop')
         copy(ROOT / 'tools/linux/atomic-bomberman.svg', app / 'usr/share/icons/hicolor/scalable/apps/atomic-bomberman.svg')
+        info['appstream'] = linux_appstream.install(app, info['version'])
         for document in ['INSTALL-linux.md', 'online-play.md', 'relay.md', 'hardware-check.md', 'asset-formats.md',
                          'hd-graphics.md', 'third-party-hd-notices.txt']:
             copy(ROOT / 'docs' / document, docs / document)
@@ -211,6 +215,7 @@ def build(clean, emulated_runtime=False):
                                    'bootstrap_unmarked_sha256': sha256(bootstrap), 'bootstrap_bytes': bootstrap.stat().st_size,
                                    'launch_mode': 'automatic extract-and-run',
                                    'legacy_appimagelauncher_compatible': True, 'fuse_required': False}
+        info['appimage_update'] = linux_updates.UPDATE_INFORMATION
         audit_appimage(bootstrap, app)
         info['minimum_linux'] = MINIMUM_LINUX
         info['binaries'] = {name: sha256(app / 'usr/bin' / name) for name in BINARIES}
@@ -228,6 +233,7 @@ def build(clean, emulated_runtime=False):
         image.chmod(0o755)
         image.with_suffix('.build.json').write_text(json.dumps(info, indent=2) + '\n')
         image.with_name(name + '.sha256').write_text(f'{sha256(image)}  {name}\n')
+        linux_updates.generate(image, info['version'])
         verify(image, clean, emulated_runtime)
     print(f'Created {image.relative_to(ROOT)}')
 
@@ -238,6 +244,7 @@ def verify(image, clean, emulated_runtime=False):
         raise ValueError('AppImage checksum mismatch')
     info = json.loads(image.with_suffix('.build.json').read_text())
     check_manifest(info)
+    linux_updates.verify(image, info)
     if image.name != appimage_name(info['version']):
         raise ValueError('AppImage filename must match its version and x86_64 architecture')
     with image.open('rb') as source:
@@ -271,6 +278,7 @@ def verify(image, clean, emulated_runtime=False):
         docs = app / 'usr/share/doc/atomic-bomberman'
         if json.loads((docs / 'BUILD-INFO.json').read_text()) != info:
             raise ValueError('Packaged provenance differs from published metadata')
+        linux_appstream.verify(app, info)
         audit_appimage(image, app)
         for path in app.rglob('*'):
             if path.is_symlink() or path.suffix.lower() in {'.img', '.iso', '.7z', '.exe', '.ani', '.rss', '.pem', '.key'} or path.name in {'manifest.json', 'access-token', 'connections.json'}:
@@ -290,6 +298,15 @@ def verify(image, clean, emulated_runtime=False):
         # Ordinary invocation must work without any environment workaround.
         run_image(['--help'], cwd=temporary, env=runtime_environment, check=True, stdout=subprocess.DEVNULL, timeout=30)
         run_image(['--help'], cwd=temporary, env=dict(runtime_environment, APPIMAGE_EXTRACT_AND_RUN='1'), check=True, stdout=subprocess.DEVNULL, timeout=30)
+        if info.get('appimage_update'):
+            update_environment = dict(runtime_environment)
+            if runtime:
+                update_environment['TARGET_APPIMAGE'] = str(image)
+                update_environment.pop('APPIMAGE_EXTRACT_AND_RUN', None)
+            result = subprocess.run([str(runtime or image), '--appimage-updateinformation'], cwd=temporary,
+                                    env=update_environment, check=True, capture_output=True, text=True, timeout=30)
+            if result.stdout.strip() != info['appimage_update']:
+                raise ValueError('AppImage runtime did not report its embedded update information')
         if list(Path(temporary).glob('atomic-appimage-*')):
             raise ValueError('AppImage launch left temporary extraction directories behind')
         for path in [app / '.DirIcon', app / 'atomic-bomberman.png']:

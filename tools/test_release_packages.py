@@ -13,6 +13,7 @@ import package_relay
 import verify_release
 import windows_release
 import verify_replay_digest
+import linux_updates
 from macos_release import version
 
 VERSION = version()
@@ -188,6 +189,17 @@ class PackageTests(unittest.TestCase):
         linux_relay.unlink()
         with self.assertRaisesRegex(ValueError, 'exactly five'):
             verify_release.verify_manifests(self.root, VERSION, SOURCE['commit'])
+
+    def test_update_enabled_release_requires_the_zsync_asset(self):
+        self.coordinated()
+        manifest = self.root / f'atomic-bomberman-{VERSION}-x86_64.build.json'
+        info = json.loads(manifest.read_text())
+        info['appimage_update'] = linux_updates.UPDATE_INFORMATION
+        manifest.write_text(json.dumps(info))
+        with self.assertRaisesRegex(ValueError, 'zsync file'):
+            verify_release.verify_manifests(self.root, VERSION, SOURCE['commit'])
+        (self.root / f'atomic-bomberman-{VERSION}-x86_64.AppImage.zsync').write_bytes(b'control-file fixture')
+        self.assertEqual(len(verify_release.verify_manifests(self.root, VERSION, SOURCE['commit'])), 5)
 
 
 if __name__ == '__main__':

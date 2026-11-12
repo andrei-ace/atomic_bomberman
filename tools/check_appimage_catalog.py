@@ -94,7 +94,7 @@ class CandidateHandler(http.server.BaseHTTPRequestHandler):
         pass
 
 
-def verify(image, output, install_dependencies):
+def verify(image, output, install_dependencies, expect_appstream=False):
     release = platform.freedesktop_os_release()
     if (platform.system() != 'Linux' or platform.machine() != 'x86_64'
             or release.get('ID') != 'ubuntu' or release.get('VERSION_ID') != '22.04'):
@@ -104,6 +104,15 @@ def verify(image, output, install_dependencies):
     output.mkdir(parents=True, exist_ok=True)
     report = {'passed': False, 'catalog_repository': CATALOG_REPOSITORY, 'catalog_commit': CATALOG_COMMIT,
               'image': image.name, 'sha256': sha256(image), 'worker_exit_code': None}
+    expected_screenshot = None
+    expected_update_information = None
+    if expect_appstream:
+        info = json.loads(image.with_suffix('.build.json').read_text())
+        expected_screenshot = info.get('appstream', {}).get('screenshot')
+        expected_update_information = info.get('appimage_update')
+        if not expected_screenshot:
+            raise ValueError('Candidate manifest is missing its AppStream screenshot')
+        report['expected_appstream_screenshot'] = expected_screenshot
     try:
         with temporary_catalog(output) as catalog:
             checkout(catalog)
@@ -166,10 +175,24 @@ def verify(image, output, install_dependencies):
             report['compatibility'] = sorted({line for line in lines if line.startswith('X-AppImage-')})
             report['names'] = sorted({line for line in lines if re.match(
                 r"^(ERROR|WARNING): ((File name|AppImage name) '|The names of the .* differ: )", line)})
+            screenshot_matches = True
+            update_information_matches = True
+            if expected_screenshot:
+                entry = (output / 'catalog-entry.md').read_text() if (output / 'catalog-entry.md').is_file() else ''
+                screenshot_matches = bool(re.search(
+                    r'^screenshots:[ \t]*\n[ \t]*-[ \t]+' + re.escape(expected_screenshot) + r'[ \t]*$',
+                    entry, re.MULTILINE))
+                report['appstream_screenshot_matches'] = screenshot_matches
+            if expected_update_information:
+                update_information_matches = (
+                    'X-AppImage-UpdateInformation=' + expected_update_information in report['compatibility'])
+                report['appimage_update_information_matches'] = update_information_matches
             with (output / 'diagnosis.md').open('w') as hints:
                 checked('bash', 'code/diagnose.sh', str(output / 'worker.log'), cwd=catalog, stdout=hints)
             report['passed'] = (report['worker_exit_code'] == 0 and not report['names']
                                 and report['downloaded_sha256'] == report['sha256']
+                                and screenshot_matches
+                                and update_information_matches
                                 and (output / 'screenshot.png').is_file())
             if not report['passed']:
                 raise ValueError(f'Catalog check failed; inspect {output / "worker.log"} and diagnosis.md')
@@ -188,8 +211,10 @@ def main():
     parser.add_argument('--output', type=Path, default=Path('build/appimage-catalog'))
     parser.add_argument('--install-dependencies', action='store_true',
                         help='Install the upstream workflow dependencies inside the disposable VM')
+    parser.add_argument('--expect-appstream', action='store_true',
+                        help='Require the generated catalogue page to use the manifest AppStream screenshot')
     args = parser.parse_args()
-    verify(args.image, args.output, args.install_dependencies)
+    verify(args.image, args.output, args.install_dependencies, args.expect_appstream)
 
 
 if __name__ == '__main__':

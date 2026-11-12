@@ -12,6 +12,8 @@ from macos_release import sha256
 import package_relay
 import windows_release
 from linux_abi import appimage_name, audit_appimage, check_manifest
+import linux_appstream
+import linux_updates
 
 
 def expected_packages(version):
@@ -32,8 +34,12 @@ def verify_manifests(directory, version, commit):
     packages = expected_packages(version)
     files = {name + ending for name, (suffix, _) in packages.items()
              for ending in [suffix, suffix + '.sha256', '.build.json']}
+    client_name = appimage_name(version).removesuffix('.AppImage')
+    client_manifest = directory / (client_name + '.build.json')
+    if client_manifest.is_file() and json.loads(client_manifest.read_text()).get('appimage_update'):
+        files.add(client_name + '.AppImage.zsync')
     if {path.name for path in directory.iterdir()} != files:
-        raise ValueError('Expected exactly five packages, five checksums and five build manifests')
+        raise ValueError('Expected exactly five packages, five checksums and five build manifests, plus the declared AppImage zsync file')
     manifests = {}
     for name, (suffix, target) in packages.items():
         archive = directory / (name + suffix)
@@ -72,6 +78,7 @@ def verify(directory, version, commit):
         else:
             check_manifest(info)
             image = directory / (name + '.AppImage')
+            linux_updates.verify(image, info)
             with tempfile.TemporaryDirectory(prefix='release-appimage-') as temporary:
                 image.chmod(0o755)
                 subprocess.run([str(image), '--appimage-extract'], cwd=temporary, check=True, stdout=subprocess.DEVNULL)
@@ -80,6 +87,7 @@ def verify(directory, version, commit):
                 embedded = json.loads((app / 'usr/share/doc/atomic-bomberman/BUILD-INFO.json').read_text())
                 if embedded != info:
                     raise ValueError('AppImage external and embedded manifests differ')
+                linux_appstream.verify(app, info)
                 for binary, digest in info['binaries'].items():
                     if sha256(app / 'usr/bin' / binary) != digest:
                         raise ValueError('AppImage executable hash mismatch')

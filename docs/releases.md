@@ -147,6 +147,29 @@ A development build intentionally records `dirty: true`; it is not a tagged
 release. Local source digests exclude `docs/evidence/`. Mac packaging remains
 ad-hoc signed, with no Developer ID signing/notarization setup.
 
+Linux AppImages also include AppStream metadata under `usr/share/metainfo/`.
+The metadata describes the MIT-licensed reconstruction and its original-data
+requirement, and links to the hosted Classic gameplay screenshot. The image is
+not bundled in the AppImage. Install `appstream` on the Linux packaging host;
+packaging and release verification validate the XML and its recorded hash.
+When changing the workspace version, update the metainfo release history too.
+
+AppImageUpdate reads the standard `.upd_info` ELF section, which follows this
+repository's latest stable GitHub release. Each new AppImage also publishes a
+matching `.AppImage.zsync` file; verification checks its target URL, full-file
+SHA-1 and every generated block checksum. Updates are initiated by the user
+through an external AppImageUpdate-compatible tool.
+
+`tools/repack_linux_appstream.py` can update catalogue/updater packaging around
+an existing verified Linux client. It requires the original published SHA-256,
+keeps every game-payload file unchanged except metainfo and `BUILD-INFO.json`,
+and rebuilds only the small bootstrap on the supported Linux baseline. The
+embedded/external manifests retain the original payload source and add explicit
+repackaging inputs, compiler and original-package hashes. Keep the original
+release files for rollback, validate the candidate, then replace its AppImage,
+checksum, build manifest and zsync file together. A catalogue `/retest` is still
+needed after replacement; preserve the existing version tag.
+
 ## Coordinated release
 
 Create and push an annotated `v0.7.5` tag only after reviewing the commit and

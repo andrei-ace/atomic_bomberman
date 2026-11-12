@@ -1,0 +1,89 @@
+{
+  "format_version": 1,
+  "validated_at_utc": "2026-11-12T15:20:43.391737+00:00",
+  "release": "v0.7.5",
+  "release_url": "https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.5",
+  "repack_validation": {
+    "passed": true,
+    "version": "0.7.5",
+    "base_appimage_sha256": "f79b532287fd0b1beb2ea0148f4450e8b907680d63e755c12c6d0f5396909997",
+    "appimage_sha256": "51bed3d7607b278085f6922967a357f9bbba693b2de53fee808cb9698e7256b8",
+    "changed_files": [
+      "usr/share/doc/atomic-bomberman/BUILD-INFO.json",
+      "usr/share/metainfo/io.github.andrei_ace.AtomicBomberman.metainfo.xml"
+    ],
+    "bootstrap_recompiled_for_update_queries": true,
+    "bootstrap_update_section_added": true,
+    "executables_unchanged": true,
+    "appimage_update": "gh-releases-zsync|andrei-ace|atomic_bomberman|latest|atomic-bomberman-*-x86_64.AppImage.zsync",
+    "compiled_source": {
+      "commit": "5069899f407ec8d54e4a5804a5ef6e2475635e93",
+      "dirty": false,
+      "sha256": "0698e39a3f7e0198607d102ababec574b674dad462e4486a1075ac3ec3db128f"
+    },
+    "appstream": {
+      "id": "io.github.andrei_ace.AtomicBomberman",
+      "path": "usr/share/metainfo/io.github.andrei_ace.AtomicBomberman.metainfo.xml",
+      "sha256": "3aef155188ab92d9c22298211556927b0b91925f85d5230b43f15253a3744806",
+      "screenshot": "https://github.com/user-attachments/assets/e4e612a5-4348-40bc-be67-29af098ff4ed"
+    },
+    "native_appimage_entrypoint_verified": false,
+    "validation_mode": "embedded runtime under emulation"
+  },
+  "public_release": {
+    "release": "https://github.com/andrei-ace/atomic_bomberman/releases/tag/v0.7.5",
+    "tag_commit": "5069899f407ec8d54e4a5804a5ef6e2475635e93",
+    "assets": {
+      "atomic-bomberman-0.7.5-x86_64.AppImage": "51bed3d7607b278085f6922967a357f9bbba693b2de53fee808cb9698e7256b8",
+      "atomic-bomberman-0.7.5-x86_64.AppImage.sha256": "2bdaca0248a54bd2480b39c8e239523e2b69dbed8f1a217f780a474a8655ab42",
+      "atomic-bomberman-0.7.5-x86_64.build.json": "753e82fe421cffa8b27c3003fc7ded701845e1e9fe18c6e69eee745fedfa200b",
+      "atomic-bomberman-0.7.5-x86_64.AppImage.zsync": "1c09f8ed9f4ffe8c009ae2fd229facbf01fc50614b94b2764cfdaa34db414bcd"
+    },
+    "other_assets_unchanged": true
+  },
+  "public_downloads": [
+    {
+      "name": "atomic-bomberman-0.7.5-x86_64.AppImage",
+      "sha256": "51bed3d7607b278085f6922967a357f9bbba693b2de53fee808cb9698e7256b8",
+      "bytes": 36059320
+    },
+    {
+      "name": "atomic-bomberman-0.7.5-x86_64.AppImage.sha256",
+      "sha256": "2bdaca0248a54bd2480b39c8e239523e2b69dbed8f1a217f780a474a8655ab42",
+      "bytes": 105
+    },
+    {
+      "name": "atomic-bomberman-0.7.5-x86_64.build.json",
+      "sha256": "753e82fe421cffa8b27c3003fc7ded701845e1e9fe18c6e69eee745fedfa200b",
+      "bytes": 47239
+    },
+    {
+      "name": "atomic-bomberman-0.7.5-x86_64.AppImage.zsync",
+      "sha256": "1c09f8ed9f4ffe8c009ae2fd229facbf01fc50614b94b2764cfdaa34db414bcd",
+      "bytes": 123575
+    }
+  ],
+  "official_updater_validation": {
+    "passed": true,
+    "updater_release": "2.0.0-alpha-1-20251018",
+    "updater_sha256": "d976cdac667b03dee8cb23fb95ef74b042c406c5cbab3ff294d2b16efeaff84f",
+    "seed_sha256": "15f51ade6761f9e63ac3f1e7208f0cebc60af15cf6835acd2366a595a711a519",
+    "published_appimage_sha256": "51bed3d7607b278085f6922967a357f9bbba693b2de53fee808cb9698e7256b8",
+    "same_version_update_detected": true,
+    "exact_public_image_reconstructed": true,
+    "no_further_update_after_completion": true
+  },
+  "catalogue": {
+    "pull_request": "https://github.com/AppImage/appimage.github.io/pull/11926",
+    "merged": true,
+    "merge_commit": "7a0b0cef162762cf11f7304b0b5e1790173e8b02",
+    "test_run": "https://github.com/AppImage/appimage.github.io/actions/runs/43245732227",
+    "test_run_commit": "3c5279d330731cafc16869b91e4a14e0b46d4218",
+    "test_conclusion": "success",
+    "report_comment": "https://github.com/AppImage/appimage.github.io/pull/11926#issuecomment-6827568195",
+    "missing_update_information_warning": false,
+    "selected_screenshot": "https://github.com/user-attachments/assets/e4e612a5-4348-40bc-be67-29af098ff4ed",
+    "update_information": "gh-releases-zsync|andrei-ace|atomic_bomberman|latest|atomic-bomberman-*-x86_64.AppImage.zsync",
+    "generated_entry": "https://github.com/AppImage/appimage.github.io/blob/master/apps/Atomic_Bomberman.md"
+  }
+}

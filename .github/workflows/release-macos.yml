@@ -67,13 +67,15 @@ jobs:
           test "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")" = "$(git rev-parse HEAD)"
       - name: Linux build dependencies
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y pkg-config libudev-dev libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libgtk-3-dev libarchive-tools librsvg2-common squashfs-tools
+        run: sudo apt-get update && sudo apt-get install -y pkg-config libudev-dev libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libgtk-3-dev libarchive-tools librsvg2-common squashfs-tools appstream zsync
       - name: Source and package checks
         shell: bash
         run: |
           bash tools/check.sh
           "${{ matrix.python }}" tools/test_release_packages.py
           "${{ matrix.python }}" tools/test_linux_abi.py
+          "${{ matrix.python }}" tools/test_linux_appstream.py
+          "${{ matrix.python }}" tools/test_linux_updates.py
       - name: Compare portable replay digest
         shell: bash
         run: |
@@ -146,6 +148,7 @@ jobs:
       - name: Verify all artifacts and publish release
         shell: bash
         run: |
+          sudo apt-get update && sudo apt-get install -y appstream zsync
           export RELEASE_COMMIT=$(gh api "repos/$GH_REPO/commits/$RELEASE_TAG" --jq .sha)
           test "$(gh api "repos/$GH_REPO/git/ref/tags/$RELEASE_TAG" --jq .object.type)" = tag
           python3 tools/verify_release.py --directory release --tag "$RELEASE_TAG" --commit "$RELEASE_COMMIT" --notes release-notes.md
@@ -154,6 +157,6 @@ jobs:
             exit 1
           fi
           test "$(gh api "repos/$GH_REPO/commits/$RELEASE_TAG" --jq .sha)" = "$RELEASE_COMMIT"
-          gh release create "$RELEASE_TAG" release/*.AppImage release/*.zip release/*.tar.gz release/*.sha256 release/*.build.json \
+          gh release create "$RELEASE_TAG" release/*.AppImage release/*.AppImage.zsync release/*.zip release/*.tar.gz release/*.sha256 release/*.build.json \
             --verify-tag --latest --title "Atomic Bomberman ${RELEASE_TAG#v}" \
             --notes-file release-notes.md
